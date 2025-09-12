@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadReports() {
         reportsList.innerHTML = '<p class="text-center">Cargando reportes...</p>';
 
-        if (WEB_APP_URL === 'URL_DE_TU_SCRIPT_VA_AQUI') {
+        if (WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxC2GMVUYiag-R3pIljThXgeuKc2yVSVqyfb9qyyrpK4kU7LqZzJRq9HihMYJU3DP0/exec') {
             reportsList.innerHTML = '<p class="text-center text-warning">La URL del script no está configurada. Mostrando datos de ejemplo.</p>';
             return;
         }
@@ -117,6 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Se añade un parámetro 'action' para que el script sepa que queremos leer datos
             const response = await fetch(`${WEB_APP_URL}?action=read`);
             const data = await response.json();
+
+            // Verificación para asegurar que la respuesta es un array
+            if (!Array.isArray(data)) {
+                console.error("La respuesta del script no es un array:", data);
+                reportsList.innerHTML = '<p class="text-center text-danger">Error: La respuesta del servidor no tiene el formato esperado.</p>';
+                return;
+            }
 
             reportsList.innerHTML = ''; // Limpiar la lista
 
