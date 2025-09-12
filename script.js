@@ -1,7 +1,7 @@
 // ===============================================================================================
 // PASO FINAL: Pega aquí la URL de tu Web App de Google Apps Script
 // ===============================================================================================
-const WEB_APP_URL = 'URL_DE_TU_SCRIPT_VA_AQUI';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxC2GMVUYiag-R3pIljThXgeuKc2yVSVqyfb9qyyrpK4kU7LqZzJRq9HihMYJU3DP0/exec';
 // ===============================================================================================
 
 // DATOS DE EJEMPLO (reemplazables por la carga desde el CSV publicado)
