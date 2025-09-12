@@ -118,6 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${WEB_APP_URL}?action=read`);
             const data = await response.json();
 
+            // Verificación para asegurar que la respuesta es un array
+            if (!Array.isArray(data)) {
+                console.error("La respuesta del script no es un array:", data);
+                reportsList.innerHTML = '<p class="text-center text-danger">Error: La respuesta del servidor no tiene el formato esperado.</p>';
+                return;
+            }
+
             reportsList.innerHTML = ''; // Limpiar la lista
 
             if(data.length === 0){
