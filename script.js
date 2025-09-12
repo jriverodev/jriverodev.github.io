@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function submitReport(e) {
         e.preventDefault();
 
-		if (WEB_APP_URL === 'URL_DE_TU_SCRIPT_VA_AQUI') {
+		if (WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxC2GMVUYiag-R3pIljThXgeuKc2yVSVqyfb9qyyrpK4kU7LqZzJRq9HihMYJU3DP0/exec') {
             showError('Error: La URL del script no ha sido configurada en script.js.');
             return;
         }
