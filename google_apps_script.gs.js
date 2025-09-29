@@ -1,43 +1,103 @@
 // =======================================================
-// SISTEMA DE REPORTES - GOOGLE APPS SCRIPT MEJORADO
+// SISTEMA DE REPORTES - CON DATOS EXTERNOS
 // =======================================================
 
 const CONFIG = {
   SHEET_NAME: 'Reportes',
-  HEADERS: ['timestamp', 'cedula', 'nombre', 'organizacion', 'gerencia', 'placa', 'estado', 'observaciones'],
-  BACKUP_SHEET: 'Respaldo_Reportes'
+  DATA_SHEET: 'Datos_Choferes',
+  HEADERS: ['timestamp', 'cedula', 'nombre', 'organizacion', 'gerencia', 'placa', 'estado', 'observaciones']
 };
 
-// Inicialización de la hoja
-function initializeSheet() {
+// Inicialización de las hojas
+function initializeSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
   
-  if (!sheet) {
-    sheet = ss.insertSheet(CONFIG.SHEET_NAME);
-    sheet.appendRow(CONFIG.HEADERS);
-    sheet.getRange(1, 1, 1, CONFIG.HEADERS.length).setFontWeight('bold');
-    sheet.setFrozenRows(1);
+  // Hoja de reportes
+  let reportSheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+  if (!reportSheet) {
+    reportSheet = ss.insertSheet(CONFIG.SHEET_NAME);
+    reportSheet.appendRow(CONFIG.HEADERS);
+    reportSheet.getRange(1, 1, 1, CONFIG.HEADERS.length).setFontWeight('bold');
+    reportSheet.setFrozenRows(1);
   }
   
-  // Verificar y agregar encabezados si faltan
-  const lastRow = sheet.getLastRow();
-  if (lastRow === 0) {
-    sheet.appendRow(CONFIG.HEADERS);
-    sheet.getRange(1, 1, 1, CONFIG.HEADERS.length).setFontWeight('bold');
+  // Hoja de datos de choferes
+  let dataSheet = ss.getSheetByName(CONFIG.DATA_SHEET);
+  if (!dataSheet) {
+    dataSheet = ss.insertSheet(CONFIG.DATA_SHEET);
+    // Crear estructura inicial de datos
+    const initialData = [
+      ['cedula', 'nombre', 'organizacion', 'gerencia'],
+      ['12345678', 'Juan Perez', 'Contratista', 'Transporte'],
+      ['87654321', 'Maria Rodriguez', 'PDVSA', 'Producción'],
+      ['11223344', 'Carlos Gomez', 'Contratista', 'Mantenimiento'],
+      ['44332211', 'Ana Fernandez', 'PDVSA', 'Transporte']
+    ];
+    dataSheet.getRange(1, 1, initialData.length, initialData[0].length).setValues(initialData);
+    dataSheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+    dataSheet.setFrozenRows(1);
   }
   
-  return sheet;
+  return { reportSheet, dataSheet };
+}
+
+// Obtener datos de choferes desde la hoja
+function getDriverData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const dataSheet = ss.getSheetByName(CONFIG.DATA_SHEET);
+    
+    if (!dataSheet) {
+      console.warn('No se encontró la hoja de datos de choferes');
+      return [];
+    }
+    
+    const data = dataSheet.getDataRange().getValues();
+    
+    if (data.length <= 1) {
+      return [];
+    }
+    
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    const driverData = rows.map(row => {
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    }).filter(driver => driver.cedula && driver.nombre); // Filtrar filas vacías
+    
+    return driverData;
+    
+  } catch (error) {
+    console.error('Error obteniendo datos de choferes:', error);
+    return [];
+  }
+}
+
+// Obtener opciones únicas para dropdowns
+function getDropdownOptions() {
+  const driverData = getDriverData();
+  
+  const organizaciones = [...new Set(driverData.map(item => item.organizacion).filter(Boolean))];
+  const gerencias = [...new Set(driverData.map(item => item.gerencia).filter(Boolean))];
+  
+  return {
+    organizaciones,
+    gerencias
+  };
 }
 
 // Función principal POST
 function doPost(e) {
   try {
-    const sheet = initializeSheet();
+    const { reportSheet } = initializeSheets();
     const lock = LockService.getScriptLock();
     
     try {
-      lock.waitLock(30000); // Esperar máximo 30 segundos
+      lock.waitLock(30000);
       
       const data = JSON.parse(e.postData.contents);
       
@@ -53,12 +113,12 @@ function doPost(e) {
       });
       
       // Insertar fila
-      sheet.appendRow(rowData);
+      reportSheet.appendRow(rowData);
       
       // Formatear la nueva fila
-      const lastRow = sheet.getLastRow();
+      const lastRow = reportSheet.getLastRow();
       const statusColumn = CONFIG.HEADERS.indexOf('estado') + 1;
-      const statusRange = sheet.getRange(lastRow, statusColumn);
+      const statusRange = reportSheet.getRange(lastRow, statusColumn);
       
       if (data.estado === 'Operativa') {
         statusRange.setBackground('#d4edda').setFontColor('#155724');
@@ -67,7 +127,7 @@ function doPost(e) {
       }
       
       // Autoajustar columnas
-      sheet.autoResizeColumns(1, CONFIG.HEADERS.length);
+      reportSheet.autoResizeColumns(1, CONFIG.HEADERS.length);
       
       return createResponse({ 
         result: 'success', 
@@ -100,11 +160,15 @@ function doGet(e) {
         return getStatistics();
       case 'search':
         return searchReports(e);
+      case 'drivers':
+        return getDriversData(e);
+      case 'dropdowns':
+        return getDropdownOptionsData();
       default:
         return createResponse({ 
           message: 'Sistema de Reportes API', 
-          version: '2.0',
-          endpoints: ['read', 'stats', 'search']
+          version: '2.1',
+          endpoints: ['read', 'stats', 'search', 'drivers', 'dropdowns']
         });
     }
     
@@ -116,10 +180,22 @@ function doGet(e) {
   }
 }
 
+// Endpoint para datos de choferes
+function getDriversData(e) {
+  const driverData = getDriverData();
+  return createResponse(driverData);
+}
+
+// Endpoint para opciones de dropdowns
+function getDropdownOptionsData() {
+  const options = getDropdownOptions();
+  return createResponse(options);
+}
+
 // Obtener reportes con paginación
 function getReports(e) {
-  const sheet = initializeSheet();
-  const data = sheet.getDataRange().getValues();
+  const { reportSheet } = initializeSheets();
+  const data = reportSheet.getDataRange().getValues();
   
   if (data.length <= 1) {
     return createResponse([]);
@@ -160,8 +236,8 @@ function getReports(e) {
 
 // Obtener estadísticas
 function getStatistics() {
-  const sheet = initializeSheet();
-  const data = sheet.getDataRange().getValues();
+  const { reportSheet } = initializeSheets();
+  const data = reportSheet.getDataRange().getValues();
   
   if (data.length <= 1) {
     return createResponse({
@@ -208,8 +284,8 @@ function getStatistics() {
 
 // Buscar reportes
 function searchReports(e) {
-  const sheet = initializeSheet();
-  const data = sheet.getDataRange().getValues();
+  const { reportSheet } = initializeSheets();
+  const data = reportSheet.getDataRange().getValues();
   
   if (data.length <= 1) {
     return createResponse([]);
