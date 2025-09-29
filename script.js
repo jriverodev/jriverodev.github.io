@@ -3,20 +3,10 @@
 // ===============================================================================================
 const CONFIG = {
     WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxC2GMVUYiag-R3pIljThXgeuKc2yVSVqyfb9qyyrpK4kU7LqZzJRq9HihMYJU3DP0/exec',
-    VERSION: '2.0',
+    VERSION: '2.1',
     ITEMS_PER_PAGE: 10,
     DEBOUNCE_DELAY: 500
 };
-
-// Datos de ejemplo mejorados
-const personalData = [
-    { cedula: '12345678', nombre: 'Juan Perez', organizacion: 'Contratista', gerencia: 'Transporte' },
-    { cedula: '87654321', nombre: 'Maria Rodriguez', organizacion: 'PDVSA', gerencia: 'Producción' },
-    { cedula: '11223344', nombre: 'Carlos Gomez', organizacion: 'Contratista', gerencia: 'Mantenimiento' },
-    { cedula: '44332211', nombre: 'Ana Fernandez', organizacion: 'PDVSA', gerencia: 'Transporte' },
-    { cedula: '55667788', nombre: 'Pedro Martinez', organizacion: 'Contratista', gerencia: 'Logística' },
-    { cedula: '99887766', nombre: 'Laura Gonzalez', organizacion: 'PDVSA', gerencia: 'Seguridad' }
-];
 
 // Estado global de la aplicación
 const AppState = {
@@ -25,7 +15,9 @@ const AppState = {
     allReports: [],
     filteredReports: [],
     searchTerm: '',
-    isLoading: false
+    isLoading: false,
+    driverData: [],
+    dropdownOptions: {}
 };
 
 // ===============================================================================================
@@ -40,12 +32,16 @@ async function initializeApp() {
         // Configurar versión
         document.getElementById('app-version').textContent = `v${CONFIG.VERSION}`;
         
+        // Cargar datos primero
+        await loadDriverData();
+        await loadDropdownOptions();
+        
         // Inicializar componentes
         initializeEventListeners();
         populateDropdowns();
         setupRealTimeClock();
         
-        // Cargar datos iniciales
+        // Cargar datos de reportes
         await Promise.all([
             loadStatistics(),
             loadReports()
@@ -56,6 +52,54 @@ async function initializeApp() {
     } catch (error) {
         console.error('❌ Error inicializando la aplicación:', error);
         showError('Error al inicializar la aplicación');
+    }
+}
+
+// ===============================================================================================
+// CARGA DE DATOS EXTERNOS
+// ===============================================================================================
+async function loadDriverData() {
+    try {
+        showLoading(true, 'Cargando datos de choferes...');
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=drivers`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        AppState.driverData = data;
+        
+        console.log(`✅ Datos de ${data.length} choferes cargados correctamente`);
+        
+    } catch (error) {
+        console.error('❌ Error cargando datos de choferes:', error);
+        AppState.driverData = [];
+        showError('Error cargando datos de choferes. Algunas funciones pueden no estar disponibles.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadDropdownOptions() {
+    try {
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=dropdowns`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        AppState.dropdownOptions = data;
+        
+        console.log('✅ Opciones de dropdown cargadas correctamente');
+        
+    } catch (error) {
+        console.error('❌ Error cargando opciones de dropdown:', error);
+        AppState.dropdownOptions = {
+            organizaciones: [],
+            gerencias: []
+        };
     }
 }
 
@@ -100,28 +144,29 @@ function populateDropdowns() {
     const organizacionSelect = document.getElementById('organizacion');
     const gerenciaSelect = document.getElementById('gerencia');
 
-    const organizaciones = [...new Set(personalData.map(item => item.organizacion))];
-    const gerencias = [...new Set(personalData.map(item => item.gerencia))];
-
     // Limpiar selects
     organizacionSelect.innerHTML = '<option value="">Seleccione una organización...</option>';
     gerenciaSelect.innerHTML = '<option value="">Seleccione una gerencia...</option>';
 
-    // Llenar organizaciones
-    organizaciones.forEach(org => {
-        const option = document.createElement('option');
-        option.value = org;
-        option.textContent = org;
-        organizacionSelect.appendChild(option);
-    });
+    // Llenar organizaciones desde datos cargados
+    if (AppState.dropdownOptions.organizaciones && AppState.dropdownOptions.organizaciones.length > 0) {
+        AppState.dropdownOptions.organizaciones.forEach(org => {
+            const option = document.createElement('option');
+            option.value = org;
+            option.textContent = org;
+            organizacionSelect.appendChild(option);
+        });
+    }
 
-    // Llenar gerencias
-    gerencias.forEach(ger => {
-        const option = document.createElement('option');
-        option.value = ger;
-        option.textContent = ger;
-        gerenciaSelect.appendChild(option);
-    });
+    // Llenar gerencias desde datos cargados
+    if (AppState.dropdownOptions.gerencias && AppState.dropdownOptions.gerencias.length > 0) {
+        AppState.dropdownOptions.gerencias.forEach(ger => {
+            const option = document.createElement('option');
+            option.value = ger;
+            option.textContent = ger;
+            gerenciaSelect.appendChild(option);
+        });
+    }
 }
 
 function findDriver() {
@@ -138,7 +183,8 @@ function findDriver() {
         return;
     }
 
-    const driver = personalData.find(d => d.cedula === cedula);
+    // Buscar en datos cargados dinámicamente
+    const driver = AppState.driverData.find(d => d.cedula === cedula);
 
     if (driver) {
         nombreInput.value = driver.nombre;
@@ -526,9 +572,14 @@ function setupRealTimeClock() {
     setInterval(updateClock, 1000);
 }
 
-function showLoading(show) {
+function showLoading(show, message = 'Procesando...') {
     const loadingDiv = document.getElementById('loading');
-    loadingDiv.style.display = show ? 'block' : 'none';
+    if (show) {
+        loadingDiv.style.display = 'block';
+        loadingDiv.querySelector('p').textContent = message;
+    } else {
+        loadingDiv.style.display = 'none';
+    }
 }
 
 function showSuccess(message) {
