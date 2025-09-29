@@ -408,3 +408,12 @@ body {
         transform: scale(1);
     }
 }
+
+/* Estados de validación */
+.is-valid {
+    border-color: var(--success-color) !important;
+}
+
+.is-invalid {
+    border-color: var(--danger-color) !important;
+}
