@@ -42,13 +42,15 @@ function initializeSheets() {
 
 // Función principal GET - Compatible con JSONP
 function doGet(e) {
+  const callback = e.parameter.callback;
+
   try {
     const action = e.parameter.action;
-    const callback = e.parameter.callback;
     let responseData;
 
     console.log('📥 GET recibido - Action:', action, 'Callback:', callback);
 
+    // Enrutador de acciones
     switch(action) {
       case 'read':
         responseData = getReports(e);
@@ -70,60 +72,62 @@ function doGet(e) {
           status: 'success', 
           message: '✅ API funcionando correctamente',
           timestamp: new Date().toISOString(),
-          method: 'JSONP',
-          origin: 'https://jriverodev.github.io'
+          method: 'JSONP'
         };
         break;
       default:
         responseData = { 
           message: 'Sistema de Reportes API', 
-          version: '2.1',
+          version: '2.2', // Versión actualizada
+          status: 'info',
           endpoints: ['read', 'stats', 'search', 'drivers', 'dropdowns', 'test'],
           timestamp: new Date().toISOString()
         };
     }
 
-    // Si hay callback, usar JSONP
-    if (callback) {
-      const jsonpResponse = callback + '(' + JSON.stringify(responseData) + ')';
-      return ContentService.createTextOutput(jsonpResponse)
-        .setMimeType(ContentService.MimeType.JAVASCRIPT)
-        .setHeaders({
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        });
-    } else {
-      // Respuesta JSON normal
-      return ContentService.createTextOutput(JSON.stringify(responseData))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders({
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        });
-    }
+    return createJsonResponse(responseData, callback);
 
   } catch(error) {
-    console.error('❌ Error en doGet:', error);
+    console.error('❌ Error en doGet:', error.stack);
+
+    // Crear una respuesta de error estandarizada
     const errorResponse = { 
       result: 'error', 
-      error: error.toString(),
+      error: {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      },
       timestamp: new Date().toISOString()
     };
     
-    const callback = e.parameter.callback;
-    if (callback) {
-      return ContentService.createTextOutput(callback + '(' + JSON.stringify(errorResponse) + ')')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    } else {
-      return ContentService.createTextOutput(JSON.stringify(errorResponse))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders({
-          'Access-Control-Allow-Origin': '*'
-        });
-    }
+    // Devolver siempre una respuesta JSON/JSONP válida
+    return createJsonResponse(errorResponse, callback);
   }
+}
+
+// Función centralizada para crear respuestas JSON/JSONP
+function createJsonResponse(data, callback) {
+  let output;
+  let mimeType;
+
+  if (callback) {
+    // Respuesta JSONP
+    output = `${callback}(${JSON.stringify(data)})`;
+    mimeType = ContentService.MimeType.JAVASCRIPT;
+  } else {
+    // Respuesta JSON estándar
+    output = JSON.stringify(data, null, 2); // pretty print
+    mimeType = ContentService.MimeType.JSON;
+  }
+
+  return ContentService.createTextOutput(output)
+    .setMimeType(mimeType)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*', // O un dominio específico
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
 }
 
 // Función principal POST - Para enviar reportes
