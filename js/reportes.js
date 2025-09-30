@@ -3,7 +3,7 @@
 // ===============================================================================================
 const CONFIG = {
     // ⚠️ ACTUALIZA ESTA URL CON TU WEB APP URL REAL
-    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw3w4n2V5Q7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8k/exec',
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwlNHbAbgD3AZHjmhk8NDfh_uag5HXklXyJoN_i9qUCDbmajJwHfLvEa8lyBEq4HUW0/exec',
     ITEMS_PER_PAGE: 10,
     DEBOUNCE_DELAY: 500,
     REQUEST_TIMEOUT: 15000 // 15 segundos
