@@ -61,17 +61,22 @@ async function initializeChoferesApp() {
 async function testChoferesConnection() {
     try {
         console.log('🔗 Probando conexión con el servidor...');
+        // Usamos fetch normal para test, ya que no es JSONP y Apps Script POST maneja CORS
         const response = await fetch(`${CONFIG_CHOFERES.WEB_APP_URL}?action=test`);
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
         
-        const text = await response.text();
-        const data = JSON.parse(text);
+        const data = await response.json(); // Asumimos que el test devuelve JSON
         
-        console.log('✅ Conexión exitosa:', data);
-        return true;
+        if (data.status === 'success') {
+            console.log('✅ Conexión exitosa:', data);
+            return true;
+        } else {
+            console.error('❌ Conexión fallida o Apps Script reportó un error:', data);
+            return false;
+        }
         
     } catch (error) {
         console.error('❌ Error de conexión:', error);
@@ -87,21 +92,24 @@ async function loadChoferesData() {
         showChoferLoading(true, 'Cargando datos de choferes...');
         
         console.log('📋 Cargando datos de choferes...');
+        // Usamos fetch normal para GET, ya que Apps Script POST maneja CORS
+        // Si tu Apps Script doGet no maneja CORS para JSON estándar, necesitarías JSONP aquí también.
+        // Pero el error original era en createJsonResponse, que afecta a doGet con callback.
+        // Para GET sin callback, Apps Script no permite setear CORS directamente con ContentService.
+        // Si este fetch falla por CORS, tendrías que cambiar a JSONP para GET en choferes.js también.
         const response = await fetch(`${CONFIG_CHOFERES.WEB_APP_URL}?action=drivers`);
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
         
-        const text = await response.text();
-        
-        if (!text) {
-            throw new Error('Respuesta vacía del servidor');
-        }
-        
-        const data = JSON.parse(text);
+        const data = await response.json(); // Asumimos que drivers devuelve JSON
         
         if (!Array.isArray(data)) {
+            // Si la respuesta es un objeto de error de Apps Script, lo manejamos
+            if (data && data.result === 'error') {
+                throw new Error(data.error.message || 'Error desconocido del Apps Script al cargar choferes');
+            }
             throw new Error('Formato de respuesta inválido');
         }
         
@@ -295,28 +303,45 @@ function saveChoferLocally(choferData) {
 }
 
 function validateChoferData(data) {
+    // Resetear validación visual
+    const inputsToValidate = ['nueva-cedula', 'nuevo-nombre', 'nueva-organizacion', 'nueva-gerencia'];
+    inputsToValidate.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+    });
+
     // Validar cédula (solo números, 6-10 dígitos)
     if (!data.cedula || !/^\d{6,10}$/.test(data.cedula)) {
         showFieldErrorChofer(document.getElementById('nueva-cedula'));
         return false;
+    } else {
+        showFieldSuccessChofer(document.getElementById('nueva-cedula'));
     }
     
     // Validar nombre (mínimo 3 caracteres)
     if (!data.nombre || data.nombre.length < 3) {
         showFieldErrorChofer(document.getElementById('nuevo-nombre'));
         return false;
+    } else {
+        showFieldSuccessChofer(document.getElementById('nuevo-nombre'));
     }
     
     // Validar organización
     if (!data.organizacion) {
         showFieldErrorChofer(document.getElementById('nueva-organizacion'));
         return false;
+    } else {
+        showFieldSuccessChofer(document.getElementById('nueva-organizacion'));
     }
     
     // Validar gerencia
     if (!data.gerencia) {
         showFieldErrorChofer(document.getElementById('nueva-gerencia'));
         return false;
+    } else {
+        showFieldSuccessChofer(document.getElementById('nueva-gerencia'));
     }
     
     return true;
