@@ -130,80 +130,140 @@ function createJsonResponse(data, callback) {
     });
 }
 
-// Función principal POST - Para enviar reportes
+// Función principal POST - Refactorizada para manejar múltiples acciones
 function doPost(e) {
+  let response;
+  const lock = LockService.getScriptLock();
+
   try {
-    console.log('📥 POST recibido');
+    lock.waitLock(15000); // Esperar hasta 15 segundos
     
-    const lock = LockService.getScriptLock();
-    
-    try {
-      lock.waitLock(10000);
-      
-      const data = JSON.parse(e.postData.contents);
-      
-      // Validar datos requeridos
-      if (!data.cedula || !data.placa || !data.estado) {
-        throw new Error('Faltan campos requeridos: cédula, placa o estado');
-      }
-      
-      const { reportSheet } = initializeSheets();
-      
-      // Preparar datos
-      const rowData = CONFIG.HEADERS.map(header => {
-        const value = data[header] || '';
-        return header === 'timestamp' && !value ? new Date().toLocaleString('es-VE') : value;
-      });
-      
-      // Insertar fila
-      reportSheet.appendRow(rowData);
-      
-      const lastRow = reportSheet.getLastRow();
-      
-      // Formatear
-      const statusColumn = CONFIG.HEADERS.indexOf('estado') + 1;
-      const statusRange = reportSheet.getRange(lastRow, statusColumn);
-      
-      if (data.estado === 'Operativa') {
-        statusRange.setBackground('#d4edda').setFontColor('#155724');
-      } else {
-        statusRange.setBackground('#f8d7da').setFontColor('#721c24');
-      }
-      
-      const response = { 
-        result: 'success', 
-        message: 'Reporte guardado exitosamente',
-        row: lastRow,
-        timestamp: new Date().toISOString()
-      };
-      
-      return ContentService.createTextOutput(JSON.stringify(response))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders({
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        });
-      
-    } finally {
-      lock.releaseLock();
+    const data = JSON.parse(e.postData.contents);
+    // La acción por defecto es 'submitReport' para mantener la compatibilidad
+    const action = data.action || 'submitReport';
+
+    console.log(`📥 POST recibido - Acción: ${action}`);
+
+    switch(action) {
+      case 'addDriver':
+        response = addDriver(data);
+        break;
+      case 'deleteDriver':
+        response = deleteDriver(data);
+        break;
+      case 'submitReport':
+        response = submitReport(data);
+        break;
+      default:
+        throw new Error(`Acción desconocida: ${action}`);
     }
     
   } catch(error) {
-    console.error('❌ Error en doPost:', error);
-    return ContentService.createTextOutput(JSON.stringify({ 
+    console.error('❌ Error en doPost:', error.stack);
+    response = {
       result: 'error', 
       error: error.toString(),
       timestamp: new Date().toISOString()
-    }))
+    };
+  } finally {
+    lock.releaseLock();
+  }
+
+  // Respuesta centralizada
+  return ContentService.createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON)
     .setHeaders({
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
     });
-  }
 }
 
-// Las funciones auxiliares se mantienen igual...
+// =======================================================
+// FUNCIONES AUXILIARES PARA POST
+// =======================================================
+
+function submitReport(data) {
+  // Validar datos requeridos
+  if (!data.cedula || !data.placa || !data.estado) {
+    throw new Error('Faltan campos requeridos para el reporte: cédula, placa o estado.');
+  }
+
+  const { reportSheet } = initializeSheets();
+
+  // Preparar datos
+  const rowData = CONFIG.HEADERS.map(header => {
+    const value = data[header] || '';
+    return header === 'timestamp' && !value ? new Date().toLocaleString('es-VE') : value;
+  });
+
+  reportSheet.appendRow(rowData);
+  const lastRow = reportSheet.getLastRow();
+
+  // Formatear la fila del estado
+  const statusColumn = CONFIG.HEADERS.indexOf('estado') + 1;
+  const statusRange = reportSheet.getRange(lastRow, statusColumn);
+  if (data.estado === 'Operativa') {
+    statusRange.setBackground('#d4edda').setFontColor('#155724');
+  } else {
+    statusRange.setBackground('#f8d7da').setFontColor('#721c24');
+  }
+
+  return { result: 'success', message: 'Reporte guardado exitosamente.', row: lastRow };
+}
+
+function addDriver(data) {
+  const { dataSheet } = initializeSheets();
+
+  if (!data.cedula || !data.nombre) {
+    throw new Error('La cédula y el nombre son requeridos para agregar un chofer.');
+  }
+
+  const existingData = dataSheet.getDataRange().getValues();
+  const cedulaColumnIndex = existingData[0].indexOf('cedula');
+
+  // Verificar duplicados
+  const isDuplicate = existingData.slice(1).some(row => row[cedulaColumnIndex] == data.cedula);
+  if (isDuplicate) {
+    throw new Error(`El chofer con la cédula ${data.cedula} ya existe.`);
+  }
+
+  // El orden en la hoja es: cedula, nombre, organizacion, gerencia
+  const newRow = [data.cedula, data.nombre, data.organizacion || '', data.gerencia || ''];
+  dataSheet.appendRow(newRow);
+
+  return { result: 'success', message: 'Chofer agregado exitosamente.', driver: data };
+}
+
+function deleteDriver(data) {
+  const { dataSheet } = initializeSheets();
+
+  if (!data.cedula) {
+    throw new Error('La cédula es requerida para eliminar un chofer.');
+  }
+
+  const existingData = dataSheet.getDataRange().getValues();
+  const cedulaColumnIndex = existingData[0].indexOf('cedula');
+
+  // Encontrar la fila a eliminar (las filas son 1-indexadas, saltamos la cabecera)
+  let rowToDelete = -1;
+  for (let i = 1; i < existingData.length; i++) {
+    if (existingData[i][cedulaColumnIndex] == data.cedula) {
+      rowToDelete = i + 1; // +1 porque las filas en Apps Script son 1-based
+      break;
+    }
+  }
+
+  if (rowToDelete === -1) {
+    throw new Error(`No se encontró ningún chofer con la cédula ${data.cedula}.`);
+  }
+
+  dataSheet.deleteRow(rowToDelete);
+
+  return { result: 'success', message: `Chofer con cédula ${data.cedula} eliminado.` };
+}
+
+// Las funciones auxiliares para GET se mantienen igual...
 function getDriversData() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();

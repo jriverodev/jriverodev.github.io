@@ -246,36 +246,39 @@ async function submitChofer(e) {
     }
 }
 
-// Guardar chofer en el servidor
+// Guardar chofer en el servidor usando POST
 async function saveChoferToServer(choferData) {
     try {
-        const params = new URLSearchParams({
-            cedula: choferData.cedula,
-            nombre: choferData.nombre,
-            organizacion: choferData.organizacion,
-            gerencia: choferData.gerencia
+        const response = await fetch(CONFIG_CHOFERES.WEB_APP_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'addDriver',
+                ...choferData
+            })
         });
-        
-        const response = await fetch(`${CONFIG_CHOFERES.WEB_APP_URL}?action=addDriver&${params}`);
-        
+
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.result !== 'success') {
-            throw new Error(result.error || 'Error desconocido al guardar chofer');
+            throw new Error(result.error || 'Error desconocido al guardar chofer desde el servidor');
         }
-        
-        // Agregar a la lista local
+
+        // Agregar a la lista local solo si el servidor confirma
         ChoferesState.driverData.push(choferData);
         
     } catch (error) {
         console.error('Error guardando chofer en servidor:', error);
-        // Si falla el servidor, guardar localmente
+        // Si falla el servidor, guardar localmente como fallback
         saveChoferLocally(choferData);
-        throw new Error('No se pudo conectar con el servidor. El chofer se guardó localmente.');
+        // Informar al usuario que se guardó localmente
+        throw new Error('No se pudo conectar con el servidor. El chofer se ha guardado localmente y se sincronizará más tarde.');
     }
 }
 
@@ -397,41 +400,51 @@ function displayChoferes(choferes) {
     `).join('');
 }
 
+// Eliminar chofer usando POST
 async function eliminarChofer(cedula) {
-    if (!confirm('¿Está seguro de que desea eliminar este chofer?')) {
+    if (!confirm(`¿Está seguro de que desea eliminar al chofer con cédula ${cedula}? Esta acción no se puede deshacer.`)) {
         return;
     }
-    
+
     try {
         if (ChoferesState.isOnline) {
-            // Eliminar del servidor
-            const response = await fetch(`${CONFIG_CHOFERES.WEB_APP_URL}?action=deleteDriver&cedula=${cedula}`);
-            
+            const response = await fetch(CONFIG_CHOFERES.WEB_APP_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'deleteDriver',
+                    cedula: cedula
+                })
+            });
+
             if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
+                throw new Error(`Error del servidor: ${response.status}`);
             }
-            
+
             const result = await response.json();
-            
+
             if (result.result !== 'success') {
-                throw new Error(result.error || 'Error desconocido al eliminar chofer');
+                throw new Error(result.error || 'Error desconocido al eliminar el chofer');
             }
         }
-        
-        // Eliminar localmente
+
+        // Eliminar localmente solo después de confirmación del servidor (si está online)
+        // o directamente si está offline (aunque el botón estaría deshabilitado)
         ChoferesState.driverData = ChoferesState.driverData.filter(c => c.cedula !== cedula);
-        
-        // Actualizar localStorage
+
+        // Actualizar el respaldo en localStorage
         try {
             localStorage.setItem('choferes_backup', JSON.stringify(ChoferesState.driverData));
         } catch (e) {
-            console.warn('No se pudo actualizar localStorage:', e);
+            console.warn('No se pudo actualizar el localStorage:', e);
         }
-        
+
         updateChoferesStats(ChoferesState.driverData);
         filterAndDisplayChoferes();
-        showChoferSuccess('Chofer eliminado correctamente');
-        
+        showChoferSuccess('Chofer eliminado correctamente.');
+
     } catch (error) {
         console.error('Error eliminando chofer:', error);
         showChoferError(`Error al eliminar chofer: ${error.message}`);
