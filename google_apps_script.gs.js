@@ -121,13 +121,11 @@ function createJsonResponse(data, callback) {
     mimeType = ContentService.MimeType.JSON;
   }
 
+  // CORRECCIÓN: Eliminado .setHeaders() ya que no es un método de ContentService.TextOutput
+  // Para JSONP, el navegador no aplica las mismas restricciones CORS porque se carga como un script.
+  // Para POST (doPost), los headers CORS se establecen en la respuesta final de doPost.
   return ContentService.createTextOutput(output)
-    .setMimeType(mimeType)
-    .setHeaders({
-      'Access-Control-Allow-Origin': '*', // O un dominio específico
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
+    .setMimeType(mimeType);
 }
 
 // Función principal POST - Refactorizada para manejar múltiples acciones
