@@ -105,9 +105,16 @@ async function testConnectionJSONP() {
     try {
         console.log('🔗 Probando conexión JSONP...');
         
-        const data = await jsonpRequest(`${CONFIG.WEB_APP_URL}?action=test`);
-        console.log('✅ Conexión JSONP exitosa:', data);
-        return true;
+        // CORRECCIÓN: safeJSONPRequest ahora maneja errores del Apps Script
+        const data = await safeJSONPRequest(`${CONFIG.WEB_APP_URL}?action=test`);
+        
+        if (data && data.status === 'success') {
+            console.log('✅ Conexión JSONP exitosa:', data);
+            return true;
+        } else {
+            console.error('❌ Conexión JSONP fallida o Apps Script reportó un error:', data);
+            return false;
+        }
         
     } catch (error) {
         console.error('❌ Error de conexión JSONP:', error);
@@ -121,7 +128,7 @@ async function testConnectionJSONP() {
 async function loadAllDataJSONP() {
     try {
         // Cargar datos en paralelo con JSONP
-        const [driverData, dropdownOptions, stats, reports] = await Promise.allSettled([
+        const [driverDataResult, dropdownOptionsResult, statsResult, reportsResult] = await Promise.allSettled([
             safeJSONPRequest(`${CONFIG.WEB_APP_URL}?action=drivers`),
             safeJSONPRequest(`${CONFIG.WEB_APP_URL}?action=dropdowns`),
             safeJSONPRequest(`${CONFIG.WEB_APP_URL}?action=stats`),
@@ -129,39 +136,39 @@ async function loadAllDataJSONP() {
         ]);
         
         // Procesar resultados
-        if (driverData.status === 'fulfilled' && driverData.value) {
-            AppState.driverData = driverData.value;
-            console.log(`✅ ${driverData.value.length} choferes cargados via JSONP`);
+        if (driverDataResult.status === 'fulfilled' && driverDataResult.value) {
+            AppState.driverData = driverDataResult.value;
+            console.log(`✅ ${AppState.driverData.length} choferes cargados via JSONP`);
         } else {
-            console.warn('⚠️ No se pudieron cargar los datos de choferes via JSONP');
+            console.warn('⚠️ No se pudieron cargar los datos de choferes via JSONP. Usando datos de ejemplo.');
             AppState.driverData = getExampleDrivers();
         }
         
-        if (dropdownOptions.status === 'fulfilled' && dropdownOptions.value) {
-            AppState.dropdownOptions = dropdownOptions.value;
+        if (dropdownOptionsResult.status === 'fulfilled' && dropdownOptionsResult.value) {
+            AppState.dropdownOptions = dropdownOptionsResult.value;
             populateDropdowns();
             console.log('✅ Dropdowns cargados via JSONP');
         } else {
-            console.warn('⚠️ No se pudieron cargar las opciones de dropdown via JSONP');
+            console.warn('⚠️ No se pudieron cargar las opciones de dropdown via JSONP. Usando datos de ejemplo.');
             AppState.dropdownOptions = getExampleDropdowns();
-            populateDropdowns();
+            populateDropdowns(); // Asegurarse de que los dropdowns se pueblen incluso con ejemplos
         }
         
-        if (stats.status === 'fulfilled' && stats.value) {
-            updateDashboard(stats.value);
+        if (statsResult.status === 'fulfilled' && statsResult.value) {
+            updateDashboard(statsResult.value);
             console.log('✅ Estadísticas cargadas via JSONP');
         } else {
-            console.warn('⚠️ No se pudieron cargar las estadísticas via JSONP');
+            console.warn('⚠️ No se pudieron cargar las estadísticas via JSONP. Usando datos de ejemplo.');
             updateDashboard(getExampleStats());
         }
         
-        if (reports.status === 'fulfilled' && reports.value) {
-            AppState.allReports = reports.value.reports || [];
-            AppState.filteredReports = reports.value.reports || [];
-            displayReports(reports.value.reports || []);
-            console.log(`✅ ${reports.value.reports?.length || 0} reportes cargados via JSONP`);
+        if (reportsResult.status === 'fulfilled' && reportsResult.value) {
+            AppState.allReports = reportsResult.value.reports || [];
+            AppState.filteredReports = reportsResult.value.reports || [];
+            displayReports(reportsResult.value.reports || []);
+            console.log(`✅ ${AppState.allReports.length} reportes cargados via JSONP`);
         } else {
-            console.warn('⚠️ No se pudieron cargar los reportes via JSONP');
+            console.warn('⚠️ No se pudieron cargar los reportes via JSONP. Mostrando lista vacía.');
             displayReports([]);
         }
         
@@ -171,12 +178,20 @@ async function loadAllDataJSONP() {
     }
 }
 
+// CORRECCIÓN: Función para envolver las solicitudes JSONP y manejar errores del Apps Script
 async function safeJSONPRequest(url) {
     try {
-        return await jsonpRequest(url);
+        const responseData = await jsonpRequest(url);
+        // Verificar si la respuesta del Apps Script indica un error
+        if (responseData && responseData.result === 'error') {
+            console.error(`Error reportado por Apps Script para ${url}:`, responseData.error);
+            // Lanzar un error para que Promise.allSettled lo capture como 'rejected'
+            throw new Error(responseData.error.message || 'Error desconocido del Apps Script');
+        }
+        return responseData;
     } catch (error) {
         console.error(`Error en safeJSONPRequest (${url}):`, error);
-        return null;
+        return null; // Devolver null para indicar que la solicitud falló o hubo un error en el script
     }
 }
 
@@ -308,7 +323,7 @@ function populateDropdowns() {
     if (!organizacionSelect || !gerenciaSelect) return;
 
     // Solo actualizar si tenemos datos reales del servidor
-    if (AppState.dropdownOptions.organizaciones.length > 0) {
+    if (AppState.dropdownOptions && AppState.dropdownOptions.organizaciones && AppState.dropdownOptions.organizaciones.length > 0) {
         organizacionSelect.innerHTML = '<option value="">Seleccione una organización...</option>';
         AppState.dropdownOptions.organizaciones.forEach(org => {
             const option = document.createElement('option');
@@ -316,9 +331,12 @@ function populateDropdowns() {
             option.textContent = org;
             organizacionSelect.appendChild(option);
         });
+    } else {
+        // Si no hay datos del servidor, asegúrate de que los valores por defecto estén presentes
+        populateDropdownsWithDefaults();
     }
 
-    if (AppState.dropdownOptions.gerencias.length > 0) {
+    if (AppState.dropdownOptions && AppState.dropdownOptions.gerencias && AppState.dropdownOptions.gerencias.length > 0) {
         gerenciaSelect.innerHTML = '<option value="">Seleccione una gerencia...</option>';
         AppState.dropdownOptions.gerencias.forEach(ger => {
             const option = document.createElement('option');
@@ -326,6 +344,9 @@ function populateDropdowns() {
             option.textContent = ger;
             gerenciaSelect.appendChild(option);
         });
+    } else {
+        // Si no hay datos del servidor, asegúrate de que los valores por defecto estén presentes
+        populateDropdownsWithDefaults();
     }
 }
 
@@ -504,28 +525,49 @@ async function submitReport(e) {
 function validateFormData(data) {
     let isValid = true;
     
+    // Resetear validación visual
+    const inputsToValidate = ['cedula', 'placa', 'organizacion', 'gerencia'];
+    inputsToValidate.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+    });
+
     if (!data.cedula || data.cedula.length < 6) {
         const cedulaInput = document.getElementById('cedula');
         if (cedulaInput) showFieldError(cedulaInput);
         isValid = false;
+    } else {
+        const cedulaInput = document.getElementById('cedula');
+        if (cedulaInput) showFieldSuccess(cedulaInput);
     }
     
     if (!data.placa || data.placa.length < 3) {
         const placaInput = document.getElementById('placa');
         if (placaInput) showFieldError(placaInput);
         isValid = false;
+    } else {
+        const placaInput = document.getElementById('placa');
+        if (placaInput) showFieldSuccess(placaInput);
     }
     
     if (!data.organizacion) {
         const orgSelect = document.getElementById('organizacion');
         if (orgSelect) showFieldError(orgSelect);
         isValid = false;
+    } else {
+        const orgSelect = document.getElementById('organizacion');
+        if (orgSelect) showFieldSuccess(orgSelect);
     }
     
     if (!data.gerencia) {
         const gerenciaSelect = document.getElementById('gerencia');
         if (gerenciaSelect) showFieldError(gerenciaSelect);
         isValid = false;
+    } else {
+        const gerenciaSelect = document.getElementById('gerencia');
+        if (gerenciaSelect) showFieldSuccess(gerenciaSelect);
     }
     
     return isValid;
@@ -648,6 +690,9 @@ function setupPagination() {
     
     if (!paginationContainer || !pagination) return;
     
+    // CORRECCIÓN: Calcular totalPages basado en AppState.filteredReports
+    AppState.totalPages = Math.ceil(AppState.filteredReports.length / CONFIG.ITEMS_PER_PAGE);
+
     if (AppState.totalPages <= 1) {
         paginationContainer.style.display = 'none';
         return;
@@ -690,7 +735,11 @@ function createPaginationButton(text, page, disabled = false, active = false) {
     if (!disabled && !active) {
         button.addEventListener('click', () => {
             AppState.currentPage = page;
-            loadAllDataJSONP();
+            // CORRECCIÓN: Volver a filtrar y mostrar los reportes paginados localmente
+            const startIndex = (AppState.currentPage - 1) * CONFIG.ITEMS_PER_PAGE;
+            const endIndex = startIndex + CONFIG.ITEMS_PER_PAGE;
+            displayReports(AppState.filteredReports.slice(startIndex, endIndex));
+            setupPagination(); // Re-renderizar paginación para actualizar estados
         });
     }
     
