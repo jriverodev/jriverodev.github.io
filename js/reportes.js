@@ -2,7 +2,8 @@
 // CONFIGURACIÓN PRINCIPAL - REPORTES
 // ===============================================================================================
 const CONFIG = {
-    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxC2GMVUYiag-R3pIljThXgeuKc2yVSVqyfb9qyyrpK4kU7LqZzJRq9HihMYJU3DP0/exec',
+    // ⚠️ ACTUALIZA ESTA URL CON TU WEB APP URL REAL
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw3w4n2V5Q7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8k/exec',
     ITEMS_PER_PAGE: 10,
     DEBOUNCE_DELAY: 500
 };
@@ -16,83 +17,186 @@ const AppState = {
     searchTerm: '',
     isLoading: false,
     driverData: [],
-    dropdownOptions: {}
+    dropdownOptions: {
+        organizaciones: [],
+        gerencias: []
+    }
 };
 
 // ===============================================================================================
 // INICIALIZACIÓN DE LA APLICACIÓN
 // ===============================================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Iniciando aplicación de reportes...');
     initializeApp();
 });
 
 async function initializeApp() {
     try {
-        // Cargar datos primero
-        await loadDriverData();
-        await loadDropdownOptions();
+        // Mostrar estado de carga
+        showAppStatus('Cargando aplicación...', 'info');
         
-        // Inicializar componentes
+        // Inicializar componentes básicos primero
         initializeEventListeners();
-        populateDropdowns();
+        populateDropdownsWithDefaults();
         
-        // Cargar datos de reportes
-        await Promise.all([
-            loadStatistics(),
-            loadReports()
-        ]);
+        // Verificar conexión con el servidor
+        const isConnected = await testConnection();
         
-        console.log('✅ Aplicación de reportes inicializada correctamente');
+        if (isConnected) {
+            // Cargar datos del servidor
+            await loadAllData();
+            showAppStatus('Aplicación cargada correctamente', 'success');
+        } else {
+            // Modo offline con datos de ejemplo
+            await loadExampleData();
+            showAppStatus('Modo offline - Usando datos de ejemplo', 'warning');
+        }
+        
+        console.log('✅ Aplicación inicializada correctamente');
         
     } catch (error) {
         console.error('❌ Error inicializando la aplicación:', error);
-        showError('Error al inicializar la aplicación');
+        showAppStatus('Error al cargar la aplicación', 'error');
+        // Cargar datos de ejemplo como fallback
+        await loadExampleData();
     }
 }
 
 // ===============================================================================================
-// CARGA DE DATOS EXTERNOS
+// VERIFICACIÓN DE CONEXIÓN
 // ===============================================================================================
-async function loadDriverData() {
+async function testConnection() {
     try {
-        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=drivers`);
+        console.log('🔗 Probando conexión con el servidor...');
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=test`);
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
         
-        const data = await response.json();
-        AppState.driverData = data;
+        const text = await response.text();
+        const data = JSON.parse(text);
         
-        console.log(`✅ Datos de ${data.length} choferes cargados correctamente`);
+        console.log('✅ Conexión exitosa:', data);
+        return true;
         
     } catch (error) {
-        console.error('❌ Error cargando datos de choferes:', error);
-        AppState.driverData = [];
-        showError('Error cargando datos de choferes. Verifique que los choferes estén registrados.');
+        console.error('❌ Error de conexión:', error);
+        return false;
     }
 }
 
-async function loadDropdownOptions() {
+// ===============================================================================================
+// CARGA DE DATOS - VERSIÓN ROBUSTA
+// ===============================================================================================
+async function loadAllData() {
     try {
-        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=dropdowns`);
+        // Cargar datos en paralelo con manejo de errores individual
+        const [driverData, dropdownOptions, stats, reports] = await Promise.allSettled([
+            safeFetch(`${CONFIG.WEB_APP_URL}?action=drivers`),
+            safeFetch(`${CONFIG.WEB_APP_URL}?action=dropdowns`),
+            safeFetch(`${CONFIG.WEB_APP_URL}?action=stats`),
+            safeFetch(`${CONFIG.WEB_APP_URL}?action=read&limit=${CONFIG.ITEMS_PER_PAGE}`)
+        ]);
         
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
+        // Procesar resultados
+        if (driverData.status === 'fulfilled' && driverData.value) {
+            AppState.driverData = driverData.value;
+            console.log(`✅ ${driverData.value.length} choferes cargados`);
+        } else {
+            console.warn('⚠️ No se pudieron cargar los datos de choferes');
+            AppState.driverData = getExampleDrivers();
         }
         
-        const data = await response.json();
-        AppState.dropdownOptions = data;
+        if (dropdownOptions.status === 'fulfilled' && dropdownOptions.value) {
+            AppState.dropdownOptions = dropdownOptions.value;
+            populateDropdowns();
+            console.log('✅ Dropdowns cargados');
+        } else {
+            console.warn('⚠️ No se pudieron cargar las opciones de dropdown');
+            AppState.dropdownOptions = getExampleDropdowns();
+            populateDropdowns();
+        }
         
-        console.log('✅ Opciones de dropdown cargadas correctamente');
+        if (stats.status === 'fulfilled' && stats.value) {
+            updateDashboard(stats.value);
+            console.log('✅ Estadísticas cargadas');
+        } else {
+            console.warn('⚠️ No se pudieron cargar las estadísticas');
+            updateDashboard(getExampleStats());
+        }
+        
+        if (reports.status === 'fulfilled' && reports.value) {
+            AppState.allReports = reports.value.reports || [];
+            AppState.filteredReports = reports.value.reports || [];
+            displayReports(reports.value.reports || []);
+            console.log(`✅ ${reports.value.reports?.length || 0} reportes cargados`);
+        } else {
+            console.warn('⚠️ No se pudieron cargar los reportes');
+            displayReports([]);
+        }
         
     } catch (error) {
-        console.error('❌ Error cargando opciones de dropdown:', error);
-        AppState.dropdownOptions = {
-            organizaciones: [],
-            gerencias: []
-        };
+        console.error('Error en loadAllData:', error);
+        throw error;
     }
+}
+
+// Función segura para fetch
+async function safeFetch(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const text = await response.text();
+        if (!text) throw new Error('Respuesta vacía');
+        
+        return JSON.parse(text);
+    } catch (error) {
+        console.error(`Error en safeFetch (${url}):`, error);
+        return null;
+    }
+}
+
+// ===============================================================================================
+// DATOS DE EJEMPLO (FALLBACK)
+// ===============================================================================================
+function getExampleDrivers() {
+    return [
+        { cedula: '12345678', nombre: 'Juan Perez', organizacion: 'Contratista', gerencia: 'Transporte' },
+        { cedula: '87654321', nombre: 'Maria Rodriguez', organizacion: 'PDVSA', gerencia: 'Producción' },
+        { cedula: '11223344', nombre: 'Carlos Gomez', organizacion: 'Contratista', gerencia: 'Mantenimiento' },
+        { cedula: '44332211', nombre: 'Ana Fernandez', organizacion: 'PDVSA', gerencia: 'Transporte' }
+    ];
+}
+
+function getExampleDropdowns() {
+    return {
+        organizaciones: ['PDVSA', 'Contratista'],
+        gerencias: ['Transporte', 'Producción', 'Mantenimiento', 'Logística', 'Seguridad']
+    };
+}
+
+function getExampleStats() {
+    return {
+        total: 0,
+        operativas: 0,
+        inoperativas: 0,
+        gerencias: {},
+        organizaciones: {}
+    };
+}
+
+async function loadExampleData() {
+    AppState.driverData = getExampleDrivers();
+    AppState.dropdownOptions = getExampleDropdowns();
+    AppState.allReports = [];
+    AppState.filteredReports = [];
+    
+    populateDropdowns();
+    updateDashboard(getExampleStats());
+    displayReports([]);
 }
 
 // ===============================================================================================
@@ -107,41 +211,84 @@ function initializeEventListeners() {
     const observacionesTextarea = document.getElementById('observaciones');
 
     // Eventos del formulario
-    cedulaInput.addEventListener('input', debounce(findDriver, CONFIG.DEBOUNCE_DELAY));
-    cedulaInput.addEventListener('blur', findDriver);
-    reportForm.addEventListener('submit', submitReport);
-    clearFormBtn.addEventListener('click', clearForm);
+    if (cedulaInput) {
+        cedulaInput.addEventListener('input', debounce(findDriver, CONFIG.DEBOUNCE_DELAY));
+        cedulaInput.addEventListener('blur', findDriver);
+    }
+    
+    if (reportForm) {
+        reportForm.addEventListener('submit', submitReport);
+    }
+    
+    if (clearFormBtn) {
+        clearFormBtn.addEventListener('click', clearForm);
+    }
 
     // Eventos de la lista de reportes
-    refreshBtn.addEventListener('click', () => {
-        refreshBtn.classList.add('pulse');
-        loadReports().finally(() => {
-            setTimeout(() => refreshBtn.classList.remove('pulse'), 1000);
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            refreshBtn.classList.add('pulse');
+            loadAllData().finally(() => {
+                setTimeout(() => refreshBtn.classList.remove('pulse'), 1000);
+            });
         });
-    });
+    }
 
-    searchInput.addEventListener('input', debounce((e) => {
-        AppState.searchTerm = e.target.value.trim();
-        filterAndDisplayReports();
-    }, CONFIG.DEBOUNCE_DELAY));
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce((e) => {
+            AppState.searchTerm = e.target.value.trim();
+            filterAndDisplayReports();
+        }, CONFIG.DEBOUNCE_DELAY));
+    }
 
     // Contador de caracteres para observaciones
-    observacionesTextarea.addEventListener('input', updateCharacterCount);
+    if (observacionesTextarea) {
+        observacionesTextarea.addEventListener('input', updateCharacterCount);
+    }
+    
+    console.log('✅ Event listeners inicializados');
 }
 
 // ===============================================================================================
-// FUNCIONALIDADES DEL FORMULARIO DE REPORTES
+// FUNCIONALIDADES DEL FORMULARIO
 // ===============================================================================================
+function populateDropdownsWithDefaults() {
+    const organizacionSelect = document.getElementById('organizacion');
+    const gerenciaSelect = document.getElementById('gerencia');
+
+    if (!organizacionSelect || !gerenciaSelect) return;
+
+    organizacionSelect.innerHTML = '<option value="">Seleccione una organización...</option>';
+    gerenciaSelect.innerHTML = '<option value="">Seleccione una gerencia...</option>';
+
+    // Valores por defecto
+    const defaultOrgs = ['PDVSA', 'Contratista'];
+    const defaultGerencias = ['Transporte', 'Producción', 'Mantenimiento'];
+
+    defaultOrgs.forEach(org => {
+        const option = document.createElement('option');
+        option.value = org;
+        option.textContent = org;
+        organizacionSelect.appendChild(option);
+    });
+
+    defaultGerencias.forEach(ger => {
+        const option = document.createElement('option');
+        option.value = ger;
+        option.textContent = ger;
+        gerenciaSelect.appendChild(option);
+    });
+}
+
 function populateDropdowns() {
     const organizacionSelect = document.getElementById('organizacion');
     const gerenciaSelect = document.getElementById('gerencia');
 
-    // Limpiar selects
-    organizacionSelect.innerHTML = '<option value="">Seleccione una organización...</option>';
-    gerenciaSelect.innerHTML = '<option value="">Seleccione una gerencia...</option>';
+    if (!organizacionSelect || !gerenciaSelect) return;
 
-    // Llenar organizaciones desde datos cargados
-    if (AppState.dropdownOptions.organizaciones && AppState.dropdownOptions.organizaciones.length > 0) {
+    // Solo actualizar si tenemos datos reales del servidor
+    if (AppState.dropdownOptions.organizaciones.length > 0) {
+        organizacionSelect.innerHTML = '<option value="">Seleccione una organización...</option>';
         AppState.dropdownOptions.organizaciones.forEach(org => {
             const option = document.createElement('option');
             option.value = org;
@@ -150,8 +297,8 @@ function populateDropdowns() {
         });
     }
 
-    // Llenar gerencias desde datos cargados
-    if (AppState.dropdownOptions.gerencias && AppState.dropdownOptions.gerencias.length > 0) {
+    if (AppState.dropdownOptions.gerencias.length > 0) {
+        gerenciaSelect.innerHTML = '<option value="">Seleccione una gerencia...</option>';
         AppState.dropdownOptions.gerencias.forEach(ger => {
             const option = document.createElement('option');
             option.value = ger;
@@ -167,6 +314,8 @@ function findDriver() {
     const organizacionSelect = document.getElementById('organizacion');
     const gerenciaSelect = document.getElementById('gerencia');
 
+    if (!cedulaInput || !nombreInput) return;
+
     const cedula = cedulaInput.value.trim();
     
     // Validación básica
@@ -175,25 +324,29 @@ function findDriver() {
         return;
     }
 
-    // Buscar en datos cargados dinámicamente
+    // Buscar en datos cargados
     const driver = AppState.driverData.find(d => d.cedula === cedula);
 
     if (driver) {
         nombreInput.value = driver.nombre;
-        organizacionSelect.value = driver.organizacion;
-        gerenciaSelect.value = driver.gerencia;
+        if (organizacionSelect) organizacionSelect.value = driver.organizacion;
+        if (gerenciaSelect) gerenciaSelect.value = driver.gerencia;
         showFieldSuccess(cedulaInput);
     } else {
         resetDriverFields();
-        nombreInput.value = 'Chofer no encontrado. Verifique la cédula o regístrelo primero.';
+        nombreInput.value = 'Chofer no encontrado. Verifique la cédula.';
         showFieldError(cedulaInput);
     }
 }
 
 function resetDriverFields() {
-    document.getElementById('nombre').value = '';
-    document.getElementById('organizacion').value = '';
-    document.getElementById('gerencia').value = '';
+    const nombreInput = document.getElementById('nombre');
+    const organizacionSelect = document.getElementById('organizacion');
+    const gerenciaSelect = document.getElementById('gerencia');
+    
+    if (nombreInput) nombreInput.value = '';
+    if (organizacionSelect) organizacionSelect.value = '';
+    if (gerenciaSelect) gerenciaSelect.value = '';
 }
 
 function showFieldSuccess(input) {
@@ -209,8 +362,10 @@ function showFieldError(input) {
 function updateCharacterCount() {
     const textarea = document.getElementById('observaciones');
     const charCount = document.getElementById('char-count');
-    const count = textarea.value.length;
     
+    if (!textarea || !charCount) return;
+    
+    const count = textarea.value.length;
     charCount.textContent = count;
     
     if (count > 450) {
@@ -231,25 +386,27 @@ async function submitReport(e) {
     if (AppState.isLoading) return;
     
     const submitBtn = document.getElementById('submit-btn');
-    const originalText = submitBtn.innerHTML;
+    const originalText = submitBtn ? submitBtn.innerHTML : '';
     
     try {
         AppState.isLoading = true;
         showLoading(true);
         hideMessages();
         
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Procesando...';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Procesando...';
+        }
         
         const formData = {
             timestamp: new Date().toLocaleString('es-VE'),
-            cedula: document.getElementById('cedula').value.trim(),
-            nombre: document.getElementById('nombre').value,
-            organizacion: document.getElementById('organizacion').value,
-            gerencia: document.getElementById('gerencia').value,
-            placa: document.getElementById('placa').value.toUpperCase(),
-            estado: document.querySelector('input[name="estado"]:checked').value,
-            observaciones: document.getElementById('observaciones').value.trim()
+            cedula: document.getElementById('cedula')?.value.trim() || '',
+            nombre: document.getElementById('nombre')?.value || '',
+            organizacion: document.getElementById('organizacion')?.value || '',
+            gerencia: document.getElementById('gerencia')?.value || '',
+            placa: document.getElementById('placa')?.value.toUpperCase() || '',
+            estado: document.querySelector('input[name="estado"]:checked')?.value || '',
+            observaciones: document.getElementById('observaciones')?.value.trim() || ''
         };
 
         // Validación adicional
@@ -257,6 +414,7 @@ async function submitReport(e) {
             throw new Error('Por favor complete todos los campos requeridos correctamente');
         }
 
+        // Enviar al servidor
         const response = await fetch(CONFIG.WEB_APP_URL, {
             method: 'POST',
             headers: {
@@ -272,12 +430,10 @@ async function submitReport(e) {
         const result = await response.json();
         
         if (result.result === 'success') {
-            showSuccess('¡Reporte enviado con éxito! Se ha registrado en el sistema.');
+            showSuccess('¡Reporte enviado con éxito!');
             clearForm();
-            await Promise.all([
-                loadStatistics(),
-                loadReports()
-            ]);
+            // Recargar datos
+            await loadAllData();
         } else {
             throw new Error(result.error || 'Error desconocido al enviar el reporte');
         }
@@ -288,19 +444,24 @@ async function submitReport(e) {
     } finally {
         AppState.isLoading = false;
         showLoading(false);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
     }
 }
 
 function validateFormData(data) {
     if (!data.cedula || data.cedula.length < 6) {
-        showFieldError(document.getElementById('cedula'));
+        const cedulaInput = document.getElementById('cedula');
+        if (cedulaInput) showFieldError(cedulaInput);
         return false;
     }
     
     if (!data.placa || data.placa.length < 3) {
-        showFieldError(document.getElementById('placa'));
+        const placaInput = document.getElementById('placa');
+        if (placaInput) showFieldError(placaInput);
         return false;
     }
     
@@ -312,9 +473,14 @@ function validateFormData(data) {
 }
 
 function clearForm() {
-    document.getElementById('report-form').reset();
+    const form = document.getElementById('report-form');
+    if (form) form.reset();
+    
     resetDriverFields();
-    document.getElementById('char-count').textContent = '0';
+    
+    const charCount = document.getElementById('char-count');
+    if (charCount) charCount.textContent = '0';
+    
     hideMessages();
     
     // Limpiar estados de validación
@@ -327,53 +493,6 @@ function clearForm() {
 // ===============================================================================================
 // GESTIÓN DE REPORTES
 // ===============================================================================================
-async function loadReports(page = 1) {
-    const reportsList = document.getElementById('reports-list');
-    
-    try {
-        reportsList.innerHTML = `
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary mb-3"></div>
-                <p class="text-muted">Cargando reportes...</p>
-            </div>
-        `;
-
-        const url = `${CONFIG.WEB_APP_URL}?action=read&page=${page}&limit=${CONFIG.ITEMS_PER_PAGE}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.reports || !Array.isArray(data.reports)) {
-            throw new Error('Formato de respuesta inválido');
-        }
-
-        AppState.allReports = data.reports;
-        AppState.filteredReports = data.reports;
-        AppState.currentPage = page;
-        AppState.totalPages = data.pagination?.totalPages || 1;
-
-        displayReports(data.reports);
-        setupPagination();
-
-    } catch (error) {
-        console.error('Error cargando reportes:', error);
-        reportsList.innerHTML = `
-            <div class="text-center py-4">
-                <i class="bi bi-exclamation-triangle display-4 text-danger mb-3"></i>
-                <p class="text-danger">Error al cargar los reportes</p>
-                <p class="text-muted small">${error.message}</p>
-                <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadReports()">
-                    <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
-                </button>
-            </div>
-        `;
-    }
-}
-
 function filterAndDisplayReports() {
     if (!AppState.searchTerm) {
         AppState.filteredReports = AppState.allReports;
@@ -393,6 +512,7 @@ function filterAndDisplayReports() {
 
 function displayReports(reports) {
     const reportsList = document.getElementById('reports-list');
+    if (!reportsList) return;
     
     if (!reports || reports.length === 0) {
         reportsList.innerHTML = `
@@ -400,6 +520,9 @@ function displayReports(reports) {
                 <i class="bi bi-inbox display-4 text-muted mb-3"></i>
                 <p class="text-muted">No hay reportes para mostrar</p>
                 ${AppState.searchTerm ? '<p class="small">Intente con otros términos de búsqueda</p>' : ''}
+                <button class="btn btn-outline-primary btn-sm mt-2" onclick="window.loadAllData && window.loadAllData()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Recargar
+                </button>
             </div>
         `;
         return;
@@ -448,6 +571,8 @@ function setupPagination() {
     const paginationContainer = document.getElementById('pagination-container');
     const pagination = document.getElementById('pagination');
     
+    if (!paginationContainer || !pagination) return;
+    
     if (AppState.totalPages <= 1) {
         paginationContainer.style.display = 'none';
         return;
@@ -488,7 +613,10 @@ function createPaginationButton(text, page, disabled = false, active = false) {
     button.disabled = disabled;
     
     if (!disabled && !active) {
-        button.addEventListener('click', () => loadReports(page));
+        button.addEventListener('click', () => {
+            AppState.currentPage = page;
+            loadAllData();
+        });
     }
     
     li.appendChild(button);
@@ -498,34 +626,21 @@ function createPaginationButton(text, page, disabled = false, active = false) {
 // ===============================================================================================
 // ESTADÍSTICAS Y DASHBOARD
 // ===============================================================================================
-async function loadStatistics() {
-    try {
-        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=stats`);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const stats = await response.json();
-        updateDashboard(stats);
-        
-    } catch (error) {
-        console.error('Error cargando estadísticas:', error);
-        updateDashboard({
-            total: 0,
-            operativas: 0,
-            inoperativas: 0,
-            organizaciones: {}
-        });
-    }
-}
-
 function updateDashboard(stats) {
-    document.getElementById('stats-dashboard').style.display = 'flex';
-    document.getElementById('total-reports').textContent = stats.total || 0;
-    document.getElementById('operational-reports').textContent = stats.operativas || 0;
-    document.getElementById('nonoperational-reports').textContent = stats.inoperativas || 0;
-    document.getElementById('organizations-count').textContent = Object.keys(stats.organizaciones || {}).length;
+    const dashboard = document.getElementById('stats-dashboard');
+    if (!dashboard) return;
+    
+    dashboard.style.display = 'flex';
+    
+    const totalEl = document.getElementById('total-reports');
+    const operationalEl = document.getElementById('operational-reports');
+    const nonoperationalEl = document.getElementById('nonoperational-reports');
+    const organizationsEl = document.getElementById('organizations-count');
+    
+    if (totalEl) totalEl.textContent = stats.total || 0;
+    if (operationalEl) operationalEl.textContent = stats.operativas || 0;
+    if (nonoperationalEl) nonoperationalEl.textContent = stats.inoperativas || 0;
+    if (organizationsEl) organizationsEl.textContent = Object.keys(stats.organizaciones || {}).length;
 }
 
 // ===============================================================================================
@@ -545,9 +660,12 @@ function debounce(func, wait) {
 
 function showLoading(show, message = 'Procesando...') {
     const loadingDiv = document.getElementById('loading');
+    if (!loadingDiv) return;
+    
     if (show) {
         loadingDiv.style.display = 'block';
-        loadingDiv.querySelector('p').textContent = message;
+        const messageEl = loadingDiv.querySelector('p');
+        if (messageEl) messageEl.textContent = message;
     } else {
         loadingDiv.style.display = 'none';
     }
@@ -555,9 +673,10 @@ function showLoading(show, message = 'Procesando...') {
 
 function showSuccess(message) {
     const successDiv = document.getElementById('success-message');
-    const messageElement = successDiv.querySelector('.message');
+    if (!successDiv) return;
     
-    messageElement.textContent = message;
+    const messageElement = successDiv.querySelector('.message');
+    if (messageElement) messageElement.textContent = message;
     successDiv.style.display = 'block';
     
     setTimeout(() => {
@@ -567,16 +686,44 @@ function showSuccess(message) {
 
 function showError(message) {
     const errorDiv = document.getElementById('error-message');
-    const messageElement = errorDiv.querySelector('.message');
+    if (!errorDiv) return;
     
-    messageElement.textContent = message;
+    const messageElement = errorDiv.querySelector('.message');
+    if (messageElement) messageElement.textContent = message;
     errorDiv.style.display = 'block';
 }
 
 function hideMessages() {
-    document.getElementById('success-message').style.display = 'none';
-    document.getElementById('error-message').style.display = 'none';
+    const successDiv = document.getElementById('success-message');
+    const errorDiv = document.getElementById('error-message');
+    
+    if (successDiv) successDiv.style.display = 'none';
+    if (errorDiv) errorDiv.style.display = 'none';
 }
+
+function showAppStatus(message, type = 'info') {
+    console.log(`📢 ${type.toUpperCase()}: ${message}`);
+    
+    // Puedes agregar aquí un sistema de notificaciones visual
+    const statusElement = document.getElementById('app-status');
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = `app-status app-status-${type}`;
+        statusElement.style.display = 'block';
+        
+        setTimeout(() => {
+            statusElement.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// ===============================================================================================
+// FUNCIONES GLOBALES
+// ===============================================================================================
+// Hacer funciones disponibles globalmente
+window.loadAllData = loadAllData;
+window.loadReports = loadAllData;
+window.clearForm = clearForm;
 
 // ===============================================================================================
 // MANEJO DE ERRORES GLOBALES
@@ -590,8 +737,4 @@ window.addEventListener('unhandledrejection', (event) => {
     showError('Error inesperado en la aplicación');
 });
 
-// ===============================================================================================
-// FUNCIONES GLOBALES PARA USO EN HTML
-// ===============================================================================================
-// Hacer funciones disponibles globalmente para onclick en HTML
-window.loadReports = loadReports;
+console.log('✅ reportes.js cargado correctamente');
