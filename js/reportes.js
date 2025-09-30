@@ -5,7 +5,8 @@ const CONFIG = {
     // ⚠️ ACTUALIZA ESTA URL CON TU WEB APP URL REAL
     WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw3w4n2V5Q7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8kZQ7XQ8k/exec',
     ITEMS_PER_PAGE: 10,
-    DEBOUNCE_DELAY: 500
+    DEBOUNCE_DELAY: 500,
+    REQUEST_TIMEOUT: 15000 // 15 segundos
 };
 
 // Estado global de la aplicación
@@ -20,7 +21,8 @@ const AppState = {
     dropdownOptions: {
         organizaciones: [],
         gerencias: []
-    }
+    },
+    isOnline: true
 };
 
 // ===============================================================================================
@@ -28,13 +30,14 @@ const AppState = {
 // ===============================================================================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Iniciando aplicación de reportes...');
+    console.log('🔗 URL del script:', CONFIG.WEB_APP_URL);
     initializeApp();
 });
 
 async function initializeApp() {
     try {
         // Mostrar estado de carga
-        showAppStatus('Cargando aplicación...', 'info');
+        showAppStatus('Inicializando aplicación...', 'info');
         
         // Inicializar componentes básicos primero
         initializeEventListeners();
@@ -42,6 +45,7 @@ async function initializeApp() {
         
         // Verificar conexión con el servidor
         const isConnected = await testConnection();
+        AppState.isOnline = isConnected;
         
         if (isConnected) {
             // Cargar datos del servidor
@@ -64,25 +68,50 @@ async function initializeApp() {
 }
 
 // ===============================================================================================
-// VERIFICACIÓN DE CONEXIÓN
+// VERIFICACIÓN DE CONEXIÓN MEJORADA
 // ===============================================================================================
 async function testConnection() {
     try {
-        console.log('🔗 Probando conexión con el servidor...');
-        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=test`);
+        console.log('🔗 Probando conexión con:', CONFIG.WEB_APP_URL);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=test`, {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const text = await response.text();
-        const data = JSON.parse(text);
+        if (!text) throw new Error('Respuesta vacía del servidor');
         
+        const data = JSON.parse(text);
         console.log('✅ Conexión exitosa:', data);
+        
         return true;
         
     } catch (error) {
         console.error('❌ Error de conexión:', error);
+        
+        // Diagnóstico detallado
+        console.log('🔧 Diagnóstico de conexión:');
+        console.log('1. URL:', CONFIG.WEB_APP_URL);
+        console.log('2. Error:', error.message);
+        console.log('3. Tipo:', error.name);
+        
+        if (error.name === 'AbortError') {
+            console.log('4. Causa: Timeout - El servidor no respondió en 10 segundos');
+        } else if (error.message.includes('Failed to fetch')) {
+            console.log('4. Causa: CORS/Network - Verifica la URL y los permisos CORS');
+        } else if (error.message.includes('NetworkError')) {
+            console.log('4. Causa: Network - Problema de red o URL incorrecta');
+        }
+        
         return false;
     }
 }
@@ -143,11 +172,21 @@ async function loadAllData() {
     }
 }
 
-// Función segura para fetch
+// Función segura para fetch con timeout
 async function safeFetch(url) {
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+        
+        const response = await fetch(url, {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         
         const text = await response.text();
         if (!text) throw new Error('Respuesta vacía');
@@ -380,6 +419,9 @@ function updateCharacterCount() {
     }
 }
 
+// ===============================================================================================
+// ENVÍO DE REPORTES - VERSIÓN CORREGIDA
+// ===============================================================================================
 async function submitReport(e) {
     e.preventDefault();
     
@@ -390,12 +432,12 @@ async function submitReport(e) {
     
     try {
         AppState.isLoading = true;
-        showLoading(true);
+        showLoading(true, 'Enviando reporte...');
         hideMessages();
         
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Procesando...';
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Enviando...';
         }
         
         const formData = {
@@ -409,28 +451,38 @@ async function submitReport(e) {
             observaciones: document.getElementById('observaciones')?.value.trim() || ''
         };
 
+        console.log('📤 Enviando datos del reporte:', formData);
+
         // Validación adicional
         if (!validateFormData(formData)) {
             throw new Error('Por favor complete todos los campos requeridos correctamente');
         }
 
-        // Enviar al servidor
+        // Enviar al servidor con timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+
+        console.log('🔗 Enviando POST a:', CONFIG.WEB_APP_URL);
+        
         const response = await fetch(CONFIG.WEB_APP_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
+            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
         
         if (result.result === 'success') {
-            showSuccess('¡Reporte enviado con éxito!');
+            showSuccess('¡Reporte enviado con éxito! Se ha registrado en el sistema.');
             clearForm();
             // Recargar datos
             await loadAllData();
@@ -439,8 +491,37 @@ async function submitReport(e) {
         }
 
     } catch (error) {
-        console.error('Error al enviar el reporte:', error);
-        showError(`Error al enviar el reporte: ${error.message}`);
+        console.error('❌ Error al enviar el reporte:', error);
+        
+        let errorMessage = 'Error al enviar el reporte: ';
+        
+        if (error.name === 'AbortError') {
+            errorMessage += 'Tiempo de espera agotado. El servidor no respondió. Verifique:';
+            errorMessage += '\n• Su conexión a internet';
+            errorMessage += '\n• Que la URL del script sea correcta';
+            errorMessage += '\n• Los permisos del Google Apps Script';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage += 'No se pudo conectar con el servidor. Verifique:';
+            errorMessage += '\n• Su conexión a internet';
+            errorMessage += '\n• Que la URL del script sea correcta';
+            errorMessage += '\n• Los permisos CORS del script';
+        } else if (error.message.includes('NetworkError')) {
+            errorMessage += 'Error de red. Verifique:';
+            errorMessage += '\n• Su conexión a internet';
+            errorMessage += '\n• Que la URL sea accesible desde su navegador';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        showError(errorMessage);
+        
+        // Mostrar ayuda adicional en consola
+        console.log('🔧 Para solucionar este error:');
+        console.log('1. Verifica que la WEB_APP_URL sea correcta:', CONFIG.WEB_APP_URL);
+        console.log('2. Prueba la URL en el navegador:', `${CONFIG.WEB_APP_URL}?action=test`);
+        console.log('3. Verifica los permisos del Google Apps Script');
+        console.log('4. Revisa la consola del Google Apps Script para errores');
+        
     } finally {
         AppState.isLoading = false;
         showLoading(false);
@@ -453,23 +534,33 @@ async function submitReport(e) {
 }
 
 function validateFormData(data) {
+    let isValid = true;
+    
     if (!data.cedula || data.cedula.length < 6) {
         const cedulaInput = document.getElementById('cedula');
         if (cedulaInput) showFieldError(cedulaInput);
-        return false;
+        isValid = false;
     }
     
     if (!data.placa || data.placa.length < 3) {
         const placaInput = document.getElementById('placa');
         if (placaInput) showFieldError(placaInput);
-        return false;
+        isValid = false;
     }
     
-    if (!data.organizacion || !data.gerencia) {
-        return false;
+    if (!data.organizacion) {
+        const orgSelect = document.getElementById('organizacion');
+        if (orgSelect) showFieldError(orgSelect);
+        isValid = false;
     }
     
-    return true;
+    if (!data.gerencia) {
+        const gerenciaSelect = document.getElementById('gerencia');
+        if (gerenciaSelect) showFieldError(gerenciaSelect);
+        isValid = false;
+    }
+    
+    return isValid;
 }
 
 function clearForm() {
@@ -713,8 +804,46 @@ function showAppStatus(message, type = 'info') {
         
         setTimeout(() => {
             statusElement.style.display = 'none';
-        }, 3000);
+        }, 5000);
     }
+}
+
+// ===============================================================================================
+// FUNCIONES DE DIAGNÓSTICO
+// ===============================================================================================
+// Función para probar la conexión manualmente
+async function testConnectionManual() {
+    try {
+        console.log('🧪 Probando conexión manualmente...');
+        showAppStatus('Probando conexión...', 'info');
+        
+        const result = await testConnection();
+        
+        if (result) {
+            showAppStatus('✅ Conexión exitosa con el servidor', 'success');
+            // Recargar datos
+            await loadAllData();
+        } else {
+            showAppStatus('❌ Error de conexión - Verifica la URL y permisos', 'error');
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Error en test manual:', error);
+        showAppStatus('❌ Error en prueba de conexión', 'error');
+        return false;
+    }
+}
+
+// Mostrar información del sistema
+function showSystemInfo() {
+    console.log('🔧 Información del sistema:');
+    console.log('• URL:', CONFIG.WEB_APP_URL);
+    console.log('• Choferes cargados:', AppState.driverData.length);
+    console.log('• Reportes cargados:', AppState.allReports.length);
+    console.log('• Estado conexión:', AppState.isOnline ? 'Online' : 'Offline');
+    console.log('• Organizaciones:', AppState.dropdownOptions.organizaciones);
+    console.log('• Gerencias:', AppState.dropdownOptions.gerencias);
 }
 
 // ===============================================================================================
@@ -724,6 +853,8 @@ function showAppStatus(message, type = 'info') {
 window.loadAllData = loadAllData;
 window.loadReports = loadAllData;
 window.clearForm = clearForm;
+window.testConnection = testConnectionManual;
+window.showSystemInfo = showSystemInfo;
 
 // ===============================================================================================
 // MANEJO DE ERRORES GLOBALES
@@ -737,4 +868,20 @@ window.addEventListener('unhandledrejection', (event) => {
     showError('Error inesperado en la aplicación');
 });
 
+// Detectar cambios en la conexión
+window.addEventListener('online', () => {
+    console.log('🌐 Conexión restaurada');
+    AppState.isOnline = true;
+    showAppStatus('Conexión restaurada - Sincronizando datos...', 'success');
+    loadAllData();
+});
+
+window.addEventListener('offline', () => {
+    console.log('📴 Sin conexión');
+    AppState.isOnline = false;
+    showAppStatus('Sin conexión - Modo offline', 'warning');
+});
+
 console.log('✅ reportes.js cargado correctamente');
+console.log('💡 Usa testConnection() en la consola para probar la conexión');
+console.log('💡 Usa showSystemInfo() para ver información del sistema');
