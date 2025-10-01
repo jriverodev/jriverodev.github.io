@@ -1,73 +1,59 @@
 class GoogleSheetsAPI {
     constructor() {
-        this.SPREADSHEET_ID = '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c'; // Reemplazar con tu ID
-        this.API_KEY = ''; // Opcional para solo lectura
+        this.SPREADSHEET_ID = '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c';
         this.sheetName = 'INVENTARIO';
     }
 
     async loadData() {
-        try {
-            // Método 1: Usando Google Sheets API (necesita API Key)
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SPREADSHEET_ID}/values/${this.sheetName}?key=${this.API_KEY}`;
+        return new Promise((resolve, reject) => {
+            // Usar JSONP para evitar CORS
+            const callbackName = 'jsonpCallback_' + Date.now();
+            const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${this.sheetName}`;
             
-            const response = await fetch(url);
-            const data = await response.json();
+            // Crear script para JSONP
+            const script = document.createElement('script');
+            script.src = url;
             
-            return this.parseSheetData(data.values);
+            // Definir la función callback global
+            window[callbackName] = (data) => {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                resolve(this.parseGoogleData(data));
+            };
             
-        } catch (error) {
-            console.error('Error cargando datos:', error);
-            // Método 2: Fallback con CSV público
-            return this.loadCSVFallback();
-        }
+            script.onerror = () => {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                reject(new Error('Error cargando datos'));
+            };
+            
+            document.head.appendChild(script);
+        });
     }
 
-    parseSheetData(rows) {
-        if (!rows || rows.length < 2) return [];
+    parseGoogleData(data) {
+        if (!data || !data.table || !data.table.rows) return [];
         
-        const headers = rows[0];
-        const data = [];
+        const rows = data.table.rows;
+        const result = [];
         
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
+        rows.forEach((row, rowIndex) => {
             const item = {};
-            
-            headers.forEach((header, index) => {
-                item[header] = row[index] || '';
+            row.c.forEach((cell, colIndex) => {
+                // Mapear columnas según tu estructura
+                const headers = [
+                    'N°', 'DESCRIPCION', 'MARCA', 'MODELO', 'SERIAL', 
+                    'ETIQUETA', 'SECTOR', 'STATUS', 'CUSTODIO RESPONSABLE', 
+                    'CEDULA', 'CARGO', 'OBSERVACIONES'
+                ];
+                
+                if (headers[colIndex]) {
+                    item[headers[colIndex]] = cell ? cell.v : '';
+                }
             });
-            
-            data.push(item);
-        }
+            result.push(item);
+        });
         
-        return data;
-    }
-
-    async loadCSVFallback() {
-        // Alternativa: Exportar Google Sheet como CSV público
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
-        
-        const response = await fetch(csvUrl);
-        const csvText = await response.text();
-        
-        return this.parseCSV(csvText);
-    }
-
-    parseCSV(csvText) {
-        const lines = csvText.split('\n');
-        const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-        const data = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
-            const item = {};
-            
-            headers.forEach((header, index) => {
-                item[header] = values[index] || '';
-            });
-            
-            data.push(item);
-        }
-        
-        return data;
+        return result;
     }
 }
