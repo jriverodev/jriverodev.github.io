@@ -128,6 +128,17 @@ function createJsonResponse(data, callback) {
     .setMimeType(mimeType);
 }
 
+// Function to handle OPTIONS preflight requests for CORS
+function doOptions(e) {
+  return ContentService.createTextOutput()
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+}
+
 // Función principal POST - Refactorizada para manejar múltiples acciones
 function doPost(e) {
   let response;
