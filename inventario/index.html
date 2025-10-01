@@ -1,1 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario - Equipos</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Inventario de Equipos Tecnológicos</h1>
+            <div class="controls">
+                <input type="text" id="searchInput" placeholder="Buscar por trabajador, serial, departamento...">
+                <button id="exportBtn">📥 Exportar Excel</button>
+                <button id="refreshBtn">🔄 Actualizar</button>
+            </div>
+        </header>
 
+        <div class="filters">
+            <select id="deptoFilter">
+                <option value="">Todos los departamentos</option>
+                <option value="SIGAL">SIGAL</option>
+                <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
+                <option value="TLA">TLA</option>
+                <option value="MTTO">MTTO</option>
+            </select>
+            <select id="statusFilter">
+                <option value="">Todos los estados</option>
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="INOPERATIVO">INOPERATIVO</option>
+            </select>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Equipos</h3>
+                <span id="totalEquipos">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Operativos</h3>
+                <span id="operativos">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Departamentos</h3>
+                <span id="totalDeptos">0</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>DESCRIPCION</th>
+                        <th>MARCA</th>
+                        <th>MODELO</th>
+                        <th>SERIAL</th>
+                        <th>ETIQUETA</th>
+                        <th>SECTOR</th>
+                        <th>STATUS</th>
+                        <th>RESPONSABLE</th>
+                        <th>CEDULA</th>
+                        <th>CARGO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Datos cargados dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal para editar -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Editar Equipo</h2>
+                <form id="editForm">
+                    <input type="hidden" id="editRowIndex">
+                    <div class="form-grid">
+                        <input type="text" id="editDescripcion" placeholder="Descripción" required>
+                        <input type="text" id="editMarca" placeholder="Marca">
+                        <input type="text" id="editModelo" placeholder="Modelo">
+                        <input type="text" id="editSerial" placeholder="Serial">
+                        <input type="text" id="editEtiqueta" placeholder="Etiqueta">
+                        <input type="text" id="editSector" placeholder="Sector">
+                        <select id="editStatus">
+                            <option value="OPERATIVO">OPERATIVO</option>
+                            <option value="INOPERATIVO">INOPERATIVO</option>
+                        </select>
+                        <input type="text" id="editResponsable" placeholder="Responsable">
+                        <input type="text" id="editCedula" placeholder="Cédula">
+                        <input type="text" id="editCargo" placeholder="Cargo">
+                        <textarea id="editObservaciones" placeholder="Observaciones"></textarea>
+                    </div>
+                    <button type="submit">💾 Guardar Cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/google-sheets.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
