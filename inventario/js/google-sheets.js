@@ -1,7 +1,7 @@
 class GoogleSheetsAPI {
     constructor() {
         this.SPREADSHEET_ID = '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c'; // Reemplazar con tu ID
-        this.API_KEY = 'TU_API_KEY_AQUI'; // Opcional para solo lectura
+        this.API_KEY = ''; // Opcional para solo lectura
         this.sheetName = 'INVENTARIO';
     }
 
