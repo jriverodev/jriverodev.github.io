@@ -14,17 +14,37 @@ class InventoryApp {
     }
 
     async loadInventory() {
-        try {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="12">Cargando datos...</td></tr>';
-            this.inventoryData = await this.sheetsAPI.loadData();
-            this.filteredData = [...this.inventoryData];
-            this.renderTable();
-            this.updateStats();
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="12">Error cargando datos</td></tr>';
-        }
+    try {
+        console.log('🔄 Iniciando carga de inventario...');
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="12"><div class="loading">🔄 Cargando datos...</div></td></tr>';
+        
+        this.inventoryData = await this.sheetsAPI.loadData();
+        this.filteredData = [...this.inventoryData];
+        
+        console.log('✅ Inventario cargado:', this.inventoryData);
+        this.renderTable();
+        this.updateStats();
+        
+    } catch (error) {
+        console.error('❌ Error en loadInventory:', error);
+        document.getElementById('tableBody').innerHTML = `
+            <tr>
+                <td colspan="12">
+                    <div class="error-message">
+                        ❌ Error cargando datos: ${error.message}
+                        <br><small>Mostrando datos de ejemplo</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        // Forzar datos de ejemplo
+        this.inventoryData = this.sheetsAPI.getSampleData();
+        this.filteredData = [...this.inventoryData];
+        this.renderTable();
+        this.updateStats();
     }
+}
 
     renderTable() {
         const tbody = document.getElementById('tableBody');
