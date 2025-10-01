@@ -6,109 +6,99 @@ class GoogleSheetsAPI {
 
     async loadData() {
         try {
-            console.log('📡 Intentando cargar datos...');
+            console.log('📡 Cargando datos desde Google Sheets...');
             
-            // Método 1: Usar proxy diferente
-            const data = await this.tryMethod1();
-            console.log('✅ Datos cargados con método 1');
-            return data;
-            
-        } catch (error1) {
-            console.error('❌ Método 1 falló:', error1);
-            
-            try {
-                // Método 2: Otro proxy
-                const data = await this.tryMethod2();
-                console.log('✅ Datos cargados con método 2');
+            // Método MEJORADO: Usar JSONP approach
+            const data = await this.loadWithJSONP();
+            if (data && data.length > 0) {
+                console.log('✅ Datos reales cargados:', data.length, 'registros');
                 return data;
-                
-            } catch (error2) {
-                console.error('❌ Método 2 falló:', error2);
-                
-                // Método 3: Datos de ejemplo mejorados
-                console.log('📋 Usando datos de ejemplo...');
-                return this.getSampleData();
+            } else {
+                throw new Error('No se pudieron cargar datos reales');
             }
-        }
-    }
-
-    async tryMethod1() {
-        // Proxy 1: allOrigins con formato raw
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${this.sheetName}`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`;
-        
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const csvText = await response.text();
-        return this.parseCSV(csvText);
-    }
-
-    async tryMethod2() {
-        // Proxy 2: cors-anywhere alternativo
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${this.sheetName}`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`;
-        
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const csvText = await response.text();
-        return this.parseCSV(csvText);
-    }
-
-    parseCSV(csvText) {
-        console.log('📊 Parseando CSV...');
-        
-        const lines = csvText.split('\n').filter(line => line.trim() !== '');
-        
-        if (lines.length < 2) {
-            console.warn('⚠️ CSV vacío');
+            
+        } catch (error) {
+            console.error('❌ Error cargando datos reales:', error);
+            console.log('📋 Usando datos de ejemplo...');
             return this.getSampleData();
         }
-        
-        const headers = this.parseCSVLine(lines[0]);
-        console.log('📋 Headers:', headers);
-        
-        const data = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-            const values = this.parseCSVLine(lines[i]);
-            
-            if (values.length > 0 && values.some(val => val.trim() !== '')) {
-                const item = {};
-                
-                headers.forEach((header, index) => {
-                    item[header] = values[index] || '';
-                });
-                
-                data.push(item);
-            }
-        }
-        
-        console.log(`✅ ${data.length} registros procesados`);
-        return data;
     }
 
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
+    loadWithJSONP() {
+        return new Promise((resolve, reject) => {
+            const callbackName = 'googleSheetsCallback_' + Date.now();
+            const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${this.sheetName}`;
             
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(current.trim().replace(/^"|"$/g, ''));
-                current = '';
-            } else {
-                current += char;
-            }
-        }
+            // Configurar timeout
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(new Error('Timeout cargando datos'));
+            }, 10000);
+            
+            const cleanup = () => {
+                clearTimeout(timeout);
+                if (window[callbackName]) {
+                    delete window[callbackName];
+                }
+                if (script.parentNode) {
+                    document.head.removeChild(script);
+                }
+            };
+            
+            // Configurar callback global
+            window[callbackName] = (response) => {
+                cleanup();
+                if (response && response.table) {
+                    const data = this.parseGoogleVisualization(response);
+                    resolve(data);
+                } else {
+                    reject(new Error('Respuesta inválida de Google Sheets'));
+                }
+            };
+            
+            // Crear y agregar script
+            const script = document.createElement('script');
+            script.src = url;
+            script.onerror = () => {
+                cleanup();
+                reject(new Error('Error de red'));
+            };
+            
+            document.head.appendChild(script);
+        });
+    }
+
+    parseGoogleVisualization(response) {
+        if (!response.table || !response.table.rows) return [];
         
-        result.push(current.trim().replace(/^"|"$/g, ''));
-        return result;
+        const rows = response.table.rows;
+        const data = [];
+        
+        // Headers predefinidos según tu estructura
+        const headers = [
+            'N°', 'DESCRIPCION', 'MARCA', 'MODELO', 'SERIAL', 
+            'ETIQUETA', 'SECTOR', 'STATUS', 'CUSTODIO RESPONSABLE', 
+            'CEDULA', 'CARGO', 'OBSERVACIONES'
+        ];
+        
+        rows.forEach((row, rowIndex) => {
+            const item = {};
+            
+            headers.forEach((header, colIndex) => {
+                if (row.c && row.c[colIndex]) {
+                    item[header] = row.c[colIndex].v || '';
+                } else {
+                    item[header] = '';
+                }
+            });
+            
+            // Solo agregar si tiene al menos algún dato
+            if (Object.values(item).some(value => value !== '')) {
+                data.push(item);
+            }
+        });
+        
+        return data;
     }
 
     getSampleData() {
@@ -126,7 +116,7 @@ class GoogleSheetsAPI {
                 'CUSTODIO RESPONSABLE': 'JUAN ESCALONA',
                 'CEDULA': '15158639',
                 'CARGO': 'SUPERVISOR',
-                'OBSERVACIONES': 'Sistema funcionando con datos de ejemplo'
+                'OBSERVACIONES': 'Sistema funcionando - esperando conexión con Google Sheets'
             },
             {
                 'N°': '2',
@@ -182,7 +172,21 @@ class GoogleSheetsAPI {
                 'CUSTODIO RESPONSABLE': 'GUSTAVO ACOSTA',
                 'CEDULA': '15017120',
                 'CARGO': 'CAPATAZ TRANSPORTE DE PERSONAL LL',
-                'OBSERVACIONES': 'Teclado funcional'
+                'OBSERVACIONES': 'Teclado funcional - datos de ejemplo'
+            },
+            {
+                'N°': '6',
+                'DESCRIPCION': 'IMPRESORA',
+                'MARCA': 'HP',
+                'MODELO': 'LaserJet Pro',
+                'SERIAL': 'ABC123456',
+                'ETIQUETA': '20004567',
+                'SECTOR': 'TLA',
+                'STATUS': 'OPERATIVO',
+                'CUSTODIO RESPONSABLE': 'CARLOS URDANETA',
+                'CEDULA': '14496254',
+                'CARGO': 'INSPECTOR OPERACIONAL',
+                'OBSERVACIONES': 'Impresora láser - datos de demostración'
             }
         ];
     }
