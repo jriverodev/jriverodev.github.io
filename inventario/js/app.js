@@ -14,43 +14,43 @@ class InventoryApp {
     }
 
     async loadInventory() {
-    try {
-        console.log('🔄 Iniciando carga de inventario...');
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="12"><div class="loading">🔄 Cargando datos...</div></td></tr>';
-        
-        this.inventoryData = await this.sheetsAPI.loadData();
-        this.filteredData = [...this.inventoryData];
-        
-        console.log('✅ Inventario cargado:', this.inventoryData);
-        this.renderTable();
-        this.updateStats();
-        
-    } catch (error) {
-        console.error('❌ Error en loadInventory:', error);
-        document.getElementById('tableBody').innerHTML = `
-            <tr>
-                <td colspan="12">
-                    <div class="error-message">
-                        ❌ Error cargando datos: ${error.message}
-                        <br><small>Mostrando datos de ejemplo</small>
-                    </div>
-                </td>
-            </tr>
-        `;
-        
-        // Forzar datos de ejemplo
-        this.inventoryData = this.sheetsAPI.getSampleData();
-        this.filteredData = [...this.inventoryData];
-        this.renderTable();
-        this.updateStats();
+        try {
+            console.log('🔄 Iniciando carga de inventario...');
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="12"><div class="loading">🔄 Cargando datos...</div></td></tr>';
+            
+            this.inventoryData = await this.sheetsAPI.loadData();
+            this.filteredData = [...this.inventoryData];
+            
+            console.log('✅ Inventario cargado:', this.inventoryData.length, 'registros');
+            this.renderTable();
+            this.updateStats();
+            
+        } catch (error) {
+            console.error('❌ Error en loadInventory:', error);
+            document.getElementById('tableBody').innerHTML = `
+                <tr>
+                    <td colspan="12">
+                        <div class="error-message">
+                            ❌ Error cargando datos: ${error.message}
+                            <br><small>Mostrando datos de ejemplo</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Forzar datos de ejemplo
+            this.inventoryData = this.sheetsAPI.getSampleData();
+            this.filteredData = [...this.inventoryData];
+            this.renderTable();
+            this.updateStats();
+        }
     }
-}
 
     renderTable() {
         const tbody = document.getElementById('tableBody');
         
         if (this.filteredData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12">No se encontraron equipos</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12"><div class="no-data">📭 No se encontraron equipos</div></td></tr>';
             return;
         }
 
@@ -98,6 +98,14 @@ class InventoryApp {
         // Modal
         document.querySelector('.close').addEventListener('click', () => {
             this.closeEditModal();
+        });
+
+        // Cerrar modal al hacer clic fuera
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('editModal');
+            if (e.target === modal) {
+                this.closeEditModal();
+            }
         });
     }
 
@@ -155,7 +163,43 @@ class InventoryApp {
     closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
+
+    saveChanges() {
+        const index = document.getElementById('editRowIndex').value;
+        if (index === '') return;
+        
+        // En una versión futura, aquí se guardarían los cambios en Google Sheets
+        alert('💾 En una versión futura, los cambios se guardarán en Google Sheets.\n\nPor ahora, los cambios son solo temporales.');
+        
+        this.closeEditModal();
+    }
+
+    viewDetails(index) {
+        const item = this.filteredData[index];
+        const detalles = `
+🔍 **DETALLES DEL EQUIPO**
+
+📋 **Descripción:** ${item.DESCRIPCION || 'N/A'}
+🏷️ **Marca:** ${item.MARCA || 'N/A'}
+🔧 **Modelo:** ${item.MODELO || 'N/A'}
+🔢 **Serial:** ${item.SERIAL || 'N/A'}
+🏷️ **Etiqueta:** ${item.ETIQUETA || 'N/A'}
+
+🏢 **Sector:** ${item.SECTOR || 'N/A'}
+📊 **Status:** ${item.STATUS || 'N/A'}
+
+👤 **Responsable:** ${item['CUSTODIO RESPONSABLE'] || 'N/A'}
+🆔 **Cédula:** ${item.CEDULA || 'N/A'}
+💼 **Cargo:** ${item.CARGO || 'N/A'}
+
+📝 **Observaciones:** ${item.OBSERVACIONES || 'Ninguna'}
+        `;
+        
+        alert(detalles);
+    }
 }
 
-// Inicializar la aplicación
-const app = new InventoryApp();
+// Inicializar la aplicación cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    window.app = new InventoryApp();
+});
