@@ -6,73 +6,75 @@ class GoogleSheetsAPI {
 
     async loadData() {
         try {
-            console.log('📡 Cargando datos desde Google Sheets...');
+            console.log('📡 Intentando cargar datos...');
             
-            // Método 1: Usar CORS proxy público
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${this.sheetName}`;
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
+            // Método 1: Usar proxy diferente
+            const data = await this.tryMethod1();
+            console.log('✅ Datos cargados con método 1');
+            return data;
             
-            const response = await fetch(proxyUrl);
+        } catch (error1) {
+            console.error('❌ Método 1 falló:', error1);
             
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            const csvText = data.contents;
-            
-            console.log('✅ Datos cargados exitosamente');
-            return this.parseCSV(csvText);
-            
-        } catch (error) {
-            console.error('❌ Error con proxy:', error);
-            
-            // Método 2: Intentar sin proxy (puede fallar por CORS)
             try {
-                console.log('🔄 Intentando método alternativo...');
-                return await this.loadWithoutProxy();
-            } catch (fallbackError) {
-                console.error('❌ Todos los métodos fallaron:', fallbackError);
-                // Método 3: Datos de ejemplo
-                console.log('📋 Cargando datos de ejemplo...');
+                // Método 2: Otro proxy
+                const data = await this.tryMethod2();
+                console.log('✅ Datos cargados con método 2');
+                return data;
+                
+            } catch (error2) {
+                console.error('❌ Método 2 falló:', error2);
+                
+                // Método 3: Datos de ejemplo mejorados
+                console.log('📋 Usando datos de ejemplo...');
                 return this.getSampleData();
             }
         }
     }
 
-    async loadWithoutProxy() {
+    async tryMethod1() {
+        // Proxy 1: allOrigins con formato raw
         const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${this.sheetName}`;
-        const response = await fetch(csvUrl);
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`;
         
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const csvText = await response.text();
+        return this.parseCSV(csvText);
+    }
+
+    async tryMethod2() {
+        // Proxy 2: cors-anywhere alternativo
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${this.sheetName}`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`;
+        
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const csvText = await response.text();
         return this.parseCSV(csvText);
     }
 
     parseCSV(csvText) {
-        console.log('📊 Parseando datos CSV...');
+        console.log('📊 Parseando CSV...');
         
         const lines = csvText.split('\n').filter(line => line.trim() !== '');
         
         if (lines.length < 2) {
-            console.warn('⚠️ CSV vacío o con pocas líneas');
+            console.warn('⚠️ CSV vacío');
             return this.getSampleData();
         }
         
-        // Parsear headers
         const headers = this.parseCSVLine(lines[0]);
-        console.log('📋 Headers encontrados:', headers);
+        console.log('📋 Headers:', headers);
         
         const data = [];
         
         for (let i = 1; i < lines.length; i++) {
             const values = this.parseCSVLine(lines[i]);
             
-            // Solo procesar filas con datos
-            if (values.some(value => value.trim() !== '')) {
+            if (values.length > 0 && values.some(val => val.trim() !== '')) {
                 const item = {};
                 
                 headers.forEach((header, index) => {
@@ -83,7 +85,7 @@ class GoogleSheetsAPI {
             }
         }
         
-        console.log(`✅ ${data.length} registros parseados`);
+        console.log(`✅ ${data.length} registros procesados`);
         return data;
     }
 
@@ -98,19 +100,19 @@ class GoogleSheetsAPI {
             if (char === '"') {
                 inQuotes = !inQuotes;
             } else if (char === ',' && !inQuotes) {
-                result.push(current.trim());
+                result.push(current.trim().replace(/^"|"$/g, ''));
                 current = '';
             } else {
                 current += char;
             }
         }
         
-        result.push(current.trim());
-        return result.map(field => field.replace(/^"|"$/g, ''));
+        result.push(current.trim().replace(/^"|"$/g, ''));
+        return result;
     }
 
     getSampleData() {
-        console.log('🎭 Cargando datos de ejemplo...');
+        console.log('🎭 Generando datos de ejemplo...');
         return [
             {
                 'N°': '1',
@@ -124,7 +126,7 @@ class GoogleSheetsAPI {
                 'CUSTODIO RESPONSABLE': 'JUAN ESCALONA',
                 'CEDULA': '15158639',
                 'CARGO': 'SUPERVISOR',
-                'OBSERVACIONES': 'Ejemplo de datos'
+                'OBSERVACIONES': 'Sistema funcionando con datos de ejemplo'
             },
             {
                 'N°': '2',
@@ -138,7 +140,7 @@ class GoogleSheetsAPI {
                 'CUSTODIO RESPONSABLE': 'JUAN ESCALONA',
                 'CEDULA': '15158639',
                 'CARGO': 'SUPERVISOR',
-                'OBSERVACIONES': 'En reparación'
+                'OBSERVACIONES': 'En reparación - datos de ejemplo'
             },
             {
                 'N°': '3',
@@ -152,7 +154,35 @@ class GoogleSheetsAPI {
                 'CUSTODIO RESPONSABLE': 'MAROLOBIS',
                 'CEDULA': 'S/I',
                 'CARGO': 'S/I',
-                'OBSERVACIONES': ''
+                'OBSERVACIONES': 'Datos de demostración'
+            },
+            {
+                'N°': '4',
+                'DESCRIPCION': 'MONITOR',
+                'MARCA': 'VIT',
+                'MODELO': 'TFT19W80PS',
+                'SERIAL': 'AS9C7BA000345',
+                'ETIQUETA': '1041598',
+                'SECTOR': 'SALA DE OPERACIONES',
+                'STATUS': 'OPERATIVO',
+                'CUSTODIO RESPONSABLE': 'GUSTAVO ACOSTA',
+                'CEDULA': '15017120',
+                'CARGO': 'CAPATAZ TRANSPORTE DE PERSONAL LL',
+                'OBSERVACIONES': 'Ejemplo de monitor'
+            },
+            {
+                'N°': '5',
+                'DESCRIPCION': 'TECLADO',
+                'MARCA': 'IBM',
+                'MODELO': 'SK-811',
+                'SERIAL': '1061581',
+                'ETIQUETA': 'S/E',
+                'SECTOR': 'SALA DE OPERACIONES',
+                'STATUS': 'OPERATIVO',
+                'CUSTODIO RESPONSABLE': 'GUSTAVO ACOSTA',
+                'CEDULA': '15017120',
+                'CARGO': 'CAPATAZ TRANSPORTE DE PERSONAL LL',
+                'OBSERVACIONES': 'Teclado funcional'
             }
         ];
     }
