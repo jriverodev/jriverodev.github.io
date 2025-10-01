@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Inventario - Equipos</title>
+    <title>Sistema de Inventario - Equipos Tecnológicos</title>
     <link rel="stylesheet" href="styles/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -12,7 +12,7 @@
         <header>
             <h1>📊 Inventario de Equipos Tecnológicos</h1>
             <div class="controls">
-                <input type="text" id="searchInput" placeholder="Buscar por trabajador, serial, departamento...">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, departamento...">
                 <button id="exportBtn">📥 Exportar Excel</button>
                 <button id="refreshBtn">🔄 Actualizar</button>
             </div>
@@ -25,6 +25,8 @@
                 <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
                 <option value="TLA">TLA</option>
                 <option value="MTTO">MTTO</option>
+                <option value="CONTRATACION">CONTRATACION</option>
+                <option value="SALA DE MTTO">SALA DE MTTO</option>
             </select>
             <select id="statusFilter">
                 <option value="">Todos los estados</option>
@@ -68,6 +70,11 @@
                 </thead>
                 <tbody id="tableBody">
                     <!-- Datos cargados dinámicamente -->
+                    <tr>
+                        <td colspan="12">
+                            <div class="loading">🔄 Cargando inventario...</div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -76,29 +83,69 @@
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>Editar Equipo</h2>
-                <form id="editForm">
+                <h2>✏️ Editar Equipo</h2>
+                <form id="editForm" onsubmit="return false;">
                     <input type="hidden" id="editRowIndex">
                     <div class="form-grid">
-                        <input type="text" id="editDescripcion" placeholder="Descripción" required>
-                        <input type="text" id="editMarca" placeholder="Marca">
-                        <input type="text" id="editModelo" placeholder="Modelo">
-                        <input type="text" id="editSerial" placeholder="Serial">
-                        <input type="text" id="editEtiqueta" placeholder="Etiqueta">
-                        <input type="text" id="editSector" placeholder="Sector">
-                        <select id="editStatus">
-                            <option value="OPERATIVO">OPERATIVO</option>
-                            <option value="INOPERATIVO">INOPERATIVO</option>
-                        </select>
-                        <input type="text" id="editResponsable" placeholder="Responsable">
-                        <input type="text" id="editCedula" placeholder="Cédula">
-                        <input type="text" id="editCargo" placeholder="Cargo">
-                        <textarea id="editObservaciones" placeholder="Observaciones"></textarea>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <input type="text" id="editDescripcion" placeholder="Descripción" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Marca</label>
+                            <input type="text" id="editMarca" placeholder="Marca">
+                        </div>
+                        <div class="form-group">
+                            <label>Modelo</label>
+                            <input type="text" id="editModelo" placeholder="Modelo">
+                        </div>
+                        <div class="form-group">
+                            <label>Serial</label>
+                            <input type="text" id="editSerial" placeholder="Serial">
+                        </div>
+                        <div class="form-group">
+                            <label>Etiqueta</label>
+                            <input type="text" id="editEtiqueta" placeholder="Etiqueta">
+                        </div>
+                        <div class="form-group">
+                            <label>Sector</label>
+                            <input type="text" id="editSector" placeholder="Sector">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="editStatus">
+                                <option value="OPERATIVO">OPERATIVO</option>
+                                <option value="INOPERATIVO">INOPERATIVO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsable</label>
+                            <input type="text" id="editResponsable" placeholder="Responsable">
+                        </div>
+                        <div class="form-group">
+                            <label>Cédula</label>
+                            <input type="text" id="editCedula" placeholder="Cédula">
+                        </div>
+                        <div class="form-group">
+                            <label>Cargo</label>
+                            <input type="text" id="editCargo" placeholder="Cargo">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Observaciones</label>
+                            <textarea id="editObservaciones" placeholder="Observaciones" rows="3"></textarea>
+                        </div>
                     </div>
-                    <button type="submit">💾 Guardar Cambios</button>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn-cancel" onclick="app.closeEditModal()">❌ Cancelar</button>
+                        <button type="button" class="btn-save" onclick="app.saveChanges()">💾 Guardar Cambios</button>
+                    </div>
                 </form>
             </div>
         </div>
+
+        <footer>
+            <p>Sistema de Inventario - Desarrollado para gestión de equipos tecnológicos</p>
+        </footer>
     </div>
 
     <script src="js/google-sheets.js"></script>
