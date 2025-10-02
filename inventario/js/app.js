@@ -401,35 +401,42 @@ async saveToGoogleSheets(action, data) {
       ...data
     };
     
-    // Usar fetch con modo 'cors' y manejar la respuesta
+    // Usar fetch sin modo cors específico (dejar por defecto)
     const response = await fetch(this.webAppUrl, {
       method: 'POST',
-      mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload)
     });
     
+    // Verificar si la respuesta es OK
     if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Error HTTP ${response.status}: ${errorText}`);
     }
     
+    // Intentar parsear la respuesta como JSON
     const result = await response.json();
     console.log(`✅ Respuesta de Google Sheets:`, result);
     
-    if (result.success) {
+    if (result && result.success) {
+      this.showNotification(`✅ ${result.message || 'Operación exitosa'}`, 'success');
       return true;
     } else {
-      throw new Error(result.error || 'Error desconocido');
+      throw new Error(result.error || 'Error desconocido en la operación');
     }
     
   } catch (error) {
     console.error(`❌ Error en ${action}:`, error);
     
     // Mostrar error específico al usuario
-    this.showNotification(`❌ Error: ${error.message}`, 'error');
+    let errorMessage = error.message;
+    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+      errorMessage = 'Error de conexión. Verifica tu internet o la URL del script.';
+    }
     
+    this.showNotification(`❌ ${errorMessage}`, 'error');
     return false;
   }
 }
