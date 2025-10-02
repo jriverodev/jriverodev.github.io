@@ -11,7 +11,7 @@ class InventoryApp {
     this.inventoryData = [];
     this.filteredData = [];
     // URL de la Web App de Google Apps Script - REEMPLAZAR CON TU URL
-    this.webAppUrl = 'https://script.google.com/macros/s/1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c/exec';
+    this.webAppUrl = 'https://script.google.com/macros/s/AKfycby-yuPxKCGc0dt_CaHyF4IKwCbI3-pcICgwpLYq3N4oiLcNj0EHPwkCCZKROX7H962Z/exec';
     this.init();
   }
 
