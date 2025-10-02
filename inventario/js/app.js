@@ -392,31 +392,47 @@ class InventoryApp {
    * @param {Object} data - Datos a enviar
    * @returns {boolean} True si la operación fue exitosa
    */
-  async saveToGoogleSheets(action, data) {
-    try {
-      const payload = {
-        action: action,
-        ...data
-      };
-      
-      // ENVIAR PETICIÓN A GOOGLE APPS SCRIPT
-      const response = await fetch(this.webAppUrl, {
-        method: 'POST',
-        mode: 'no-cors', // No-cors para evitar problemas CORS
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      console.log(`✅ ${action} enviado a Google Sheets`);
-      return true;
-      
-    } catch (error) {
-      console.error(`❌ Error en ${action}:`, error);
-      return false;
+async saveToGoogleSheets(action, data) {
+  try {
+    console.log(`📤 Enviando ${action} a Google Sheets...`, data);
+    
+    const payload = {
+      action: action,
+      ...data
+    };
+    
+    // Usar fetch con modo 'cors' y manejar la respuesta
+    const response = await fetch(this.webAppUrl, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
     }
+    
+    const result = await response.json();
+    console.log(`✅ Respuesta de Google Sheets:`, result);
+    
+    if (result.success) {
+      return true;
+    } else {
+      throw new Error(result.error || 'Error desconocido');
+    }
+    
+  } catch (error) {
+    console.error(`❌ Error en ${action}:`, error);
+    
+    // Mostrar error específico al usuario
+    this.showNotification(`❌ Error: ${error.message}`, 'error');
+    
+    return false;
   }
+}
 
   /**
    * VER DETALLES - Muestra información completa del equipo
