@@ -13,7 +13,7 @@ class InventoryApp {
     this.inventoryData = [];
     this.filteredData = [];
     // URL de la Web App de Google Apps Script - ACTUALIZAR CON TU URL
-    this.webAppUrl = 'https://script.google.com/macros/s/AKfycbwVuxATkz35w8W1kR-CkOzvRPFEzD7LG0H6regH3nsneo7ki9Mw3zwmyYO357cuh6kF/exec';
+    this.webAppUrl = 'https://script.google.com/macros/s/AKfycbwO7ge--VuiGRWV1ZkJAaXvcd11giM7lZ-cTgtyunKEChADHkA3N4uNlDXEh8OvkYc/exec';
     this.SPREADSHEET_ID = '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c';
     this.init();
   }
