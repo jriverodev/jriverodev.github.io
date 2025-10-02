@@ -13,6 +13,7 @@
             <h1>📊 Inventario de Equipos Tecnológicos</h1>
             <div class="controls">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, departamento...">
+                <button id="addNewBtn">➕ Agregar Equipo</button>
                 <button id="exportBtn">📥 Exportar Excel</button>
                 <button id="refreshBtn">🔄 Actualizar</button>
             </div>
@@ -47,6 +48,18 @@
             <div class="stat-card">
                 <h3>Departamentos</h3>
                 <span id="totalDeptos">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>CPUs</h3>
+                <span id="totalCPUs">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Laptops</h3>
+                <span id="totalLaptops">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Usuarios Únicos</h3>
+                <span id="totalUsuarios">0</span>
             </div>
         </div>
 
@@ -88,7 +101,7 @@
                     <input type="hidden" id="editRowIndex">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Descripción</label>
+                            <label>Descripción *</label>
                             <input type="text" id="editDescripcion" placeholder="Descripción" required>
                         </div>
                         <div class="form-group">
@@ -138,6 +151,69 @@
                     <div class="modal-buttons">
                         <button type="button" class="btn-cancel" onclick="app.closeEditModal()">❌ Cancelar</button>
                         <button type="button" class="btn-save" onclick="app.saveChanges()">💾 Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para agregar nuevo -->
+        <div id="addModal" class="modal">
+            <div class="modal-content">
+                <span class="close-add">&times;</span>
+                <h2>➕ Agregar Nuevo Equipo</h2>
+                <form id="addForm" onsubmit="return false;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Descripción *</label>
+                            <input type="text" id="addDescripcion" placeholder="Descripción" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Marca</label>
+                            <input type="text" id="addMarca" placeholder="Marca">
+                        </div>
+                        <div class="form-group">
+                            <label>Modelo</label>
+                            <input type="text" id="addModelo" placeholder="Modelo">
+                        </div>
+                        <div class="form-group">
+                            <label>Serial</label>
+                            <input type="text" id="addSerial" placeholder="Serial">
+                        </div>
+                        <div class="form-group">
+                            <label>Etiqueta</label>
+                            <input type="text" id="addEtiqueta" placeholder="Etiqueta">
+                        </div>
+                        <div class="form-group">
+                            <label>Sector</label>
+                            <input type="text" id="addSector" placeholder="Sector">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="addStatus">
+                                <option value="OPERATIVO">OPERATIVO</option>
+                                <option value="INOPERATIVO">INOPERATIVO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsable</label>
+                            <input type="text" id="addResponsable" placeholder="Responsable">
+                        </div>
+                        <div class="form-group">
+                            <label>Cédula</label>
+                            <input type="text" id="addCedula" placeholder="Cédula">
+                        </div>
+                        <div class="form-group">
+                            <label>Cargo</label>
+                            <input type="text" id="addCargo" placeholder="Cargo">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Observaciones</label>
+                            <textarea id="addObservaciones" placeholder="Observaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn-cancel" onclick="app.closeAddModal()">❌ Cancelar</button>
+                        <button type="button" class="btn-save" onclick="app.addNewItem()">💾 Agregar Equipo</button>
                     </div>
                 </form>
             </div>
