@@ -330,3 +330,87 @@ footer {
         width: 95%;
     }
 }
+
+/* Agrega estos estilos al final de tu style.css */
+
+/* Botón eliminar */
+.btn-delete {
+    background: #dc3545 !important;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 2px;
+}
+
+.btn-delete:hover {
+    background: #c82333 !important;
+}
+
+/* Botón agregar nuevo */
+#addNewBtn {
+    background: #28a745 !important;
+}
+
+#addNewBtn:hover {
+    background: #218838 !important;
+}
+
+/* Notificaciones */
+.notification {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Mejoras para stats */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card h3 {
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card span {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    display: block;
+}
+
+/* Campos requeridos */
+.form-group label[for*="Descripcion"]::after {
+    content: " *";
+    color: #dc3545;
+}
