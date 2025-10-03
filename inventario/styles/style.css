@@ -1,375 +1,1285 @@
 * {
+
+
+
     margin: 0;
+
+
     padding: 0;
+
+
     box-sizing: border-box;
+
+
 }
+
+
+
+
 
 body {
+
+
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+
     background: #f5f5f5;
+
+
     color: #333;
+
+
 }
+
+
+
+
 
 .container {
+
+
     max-width: 1400px;
+
+
     margin: 0 auto;
+
+
     padding: 20px;
+
+
 }
+
+
+
+
 
 header {
+
+
     background: white;
+
+
     padding: 20px;
+
+
     border-radius: 10px;
+
+
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+
     margin-bottom: 20px;
+
+
 }
 
-h1 {
-    color: #007bff;
-    margin-bottom: 15px;
-    font-size: 24px;
-}
+
+
+
 
 .controls {
+
+
     display: flex;
+
+
     gap: 10px;
+
+
     margin-top: 15px;
+
+
     flex-wrap: wrap;
+
+
 }
+
+
+
+
 
 input, select, button {
+
+
     padding: 10px;
+
+
     border: 1px solid #ddd;
+
+
     border-radius: 5px;
-    font-size: 14px;
+
+
 }
 
-input[type="text"] {
-    flex-grow: 1;
-    min-width: 250px;
-}
+
+
+
 
 button {
+
+
     background: #007bff;
+
+
     color: white;
+
+
     border: none;
+
+
     cursor: pointer;
-    transition: background 0.3s, transform 0.1s;
+
+
+    transition: background 0.3s;
+
+
 }
+
+
+
+
 
 button:hover {
+
+
     background: #0056b3;
+
+
 }
 
-button:active {
-    transform: translateY(1px);
-}
+
+
+
 
 .filters {
+
+
     display: flex;
+
+
     gap: 10px;
+
+
     margin-bottom: 20px;
-    flex-wrap: wrap;
+
+
 }
 
-/* Mejoras para stats */
+
+
+
+
 .stats {
+
+
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+
     gap: 15px;
+
+
     margin-bottom: 20px;
+
+
 }
+
+
+
+
 
 .stat-card {
+
+
     background: white;
-    padding: 15px;
+
+
+    padding: 20px;
+
+
     border-radius: 8px;
+
+
     text-align: center;
+
+
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
+
+
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
-}
+
+
+
 
 .stat-card h3 {
+
+
     color: #666;
-    font-size: 12px;
+
+
+    font-size: 14px;
+
+
     margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+
 }
+
+
+
+
 
 .stat-card span {
+
+
     font-size: 24px;
+
+
     font-weight: bold;
+
+
     color: #007bff;
-    display: block;
+
+
 }
 
-/* Tabla de Inventario */
+
+
+
 .table-container {
+
+
     background: white;
+
+
     border-radius: 10px;
+
+
+    overflow: hidden;
+
+
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    overflow-x: auto; /* Permite scroll horizontal en pantallas pequeñas */
+
 }
 
-.inventory-table {
+
+
+
+table {
+
+
     width: 100%;
+
+
     border-collapse: collapse;
-    min-width: 1200px; /* Ancho mínimo para la tabla */
+
+
+
+
+
+
+
 }
 
-.inventory-table th, .inventory-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee;
+
+
+
+th, td {
+
+
+    padding: 12px;
+
+
     text-align: left;
-    white-space: nowrap;
+
+
+    border-bottom: 1px solid #eee;
+
 }
 
-.inventory-table th {
-    background-color: #f8f9fa;
-    color: #333;
-    text-transform: uppercase;
-    font-size: 12px;
+
+
+
+th {
+
+
+    background: #f8f9fa;
+
+
+    font-weight: 600;
+
+
     position: sticky;
+
+
     top: 0;
+
 }
 
-.inventory-table tr:hover {
-    background-color: #f1f1f1;
+
+
+
+tr:hover {
+
+
+    background: #f8f9fa;
+
+
+
 }
 
-/* Estilo para el campo STATUS */
+
+
+
 .status {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 5px;
+
+
+    padding: 4px 8px;
+
+
+    border-radius: 12px;
+
+
     font-size: 12px;
+
+
     font-weight: bold;
+
 }
 
-.operativo {
-    background-color: #e6ffed;
-    color: #00873c;
+
+
+
+.status.operativo {
+
+
+    background: #d4edda;
+
+
+    color: #155724;
+
+
+
 }
 
-.inoperativo {
-    background-color: #ffe6e6;
-    color: #c0392b;
+
+
+
+.status.inoperativo {
+
+
+    background: #f8d7da;
+
+
+    color: #721c24;
+
+
+
+
+
 }
 
-.no-results {
-    text-align: center !important;
-    font-style: italic;
-    color: #999;
-    padding: 40px !important;
-}
 
-/* Botones de Acción en la tabla */
-.btn-action {
+
+
+.btn-edit, .btn-view {
+
+
     padding: 5px 10px;
-    font-size: 12px;
-    margin-right: 5px;
-    background: #007bff;
+
+
+    margin: 0 2px;
+
+
+    border: none;
+
+
+    border-radius: 4px;
+
+
+    cursor: pointer;
+
 }
 
-.edit-btn {
+
+
+.btn-edit {
+
+
     background: #ffc107;
-    color: #333;
-}
-.edit-btn:hover {
-    background: #e0a800;
+
+
+    color: #212529;
+
 }
 
-.delete-btn {
-    background: #dc3545;
-}
-.delete-btn:hover {
-    background: #c82333;
+
+
+.btn-view {
+
+
+    background: #17a2b8;
+
+
+    color: white;
+
+
 }
 
-/* Footer */
-footer {
-    text-align: center;
-    padding: 20px;
-    margin-top: 30px;
-    color: #888;
-    font-size: 12px;
-}
 
-/* NOTIFICACIONES FLOTANTES */
-.notification {
-    transition: opacity 0.3s;
-}
-.notification.error {
-  background: #f8d7da !important;
-  color: #721c24 !important;
-  border: 1px solid #f5c6cb !important;
-}
 
-/* Modales */
+
+
+/* Modal */
+
+
 .modal {
-    display: none; /* Oculto por defecto */
-    /* === PROPIEDADES CLAVE PARA LA SUPERPOSICIÓN === */
-    position: fixed; /* Fija la posición relativa a la ventana (viewport) */
-    z-index: 1000; /* Asegura que esté por encima de todo */
+
+
+    display: none;
+
+
+    position: fixed;
+
+
+    z-index: 1000;
+
+
     left: 0;
+
+
     top: 0;
+
+
     width: 100%;
+
+
     height: 100%;
-    overflow-y: auto; /* Permite desplazamiento dentro del modal si es muy largo */
-    background-color: rgba(0,0,0,0.4); /* Fondo semi-transparente */
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s;
+
+
+    background: rgba(0,0,0,0.5);
+
+
 }
+
+
+
+
 
 .modal-content {
-    background-color: #fefefe;
-    padding: 30px;
+
+
+    background: white;
+
+
+    margin: 5% auto;
+
+
+    padding: 20px;
+
+
     border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+
+
     width: 90%;
-    max-width: 700px;
-    position: relative;
-    /* Añadido margen superior e inferior para que el modal no se pegue a los bordes verticales en scroll */
-    margin: 40px auto; 
-    animation: slideUp 0.3s;
+
+
+    max-width: 800px;
+
+
+    max-height: 80vh;
+
+
+    overflow-y: auto;
+
+
 }
 
-/* Títulos del modal */
-.modal-content h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #007bff;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
+
+
+
+
+.close {
+
+
+    float: right;
+
+
+    font-size: 28px;
+
+
+    font-weight: bold;
+
+
+    cursor: pointer;
+
+
 }
 
-/* Agrupación de inputs dentro del modal */
+
+
+
+
 .form-grid {
+
+
     display: grid;
+
+
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+
     gap: 15px;
+
+
+    margin: 20px 0;
+
+
 }
+
+
+
+
+
+.form-grid input, .form-grid select, .form-grid textarea {
+
+
+    width: 100%;
+
+
+    padding: 10px;
+
+
+    border: 1px solid #ddd;
+
+
+    border-radius: 5px;
+
+
+}
+
+
+
+
+
+.form-grid textarea {
+
+
+    grid-column: 1 / -1;
+
+
+    height: 80px;
+
+
+    resize: vertical;
+
+
+}
+
+
+
+
+
+@media (max-width: 768px) {
+
+
+    .controls {
+
+
+        flex-direction: column;
+
+
+    }
+
+
+    
+
+
+    .table-container {
+
+
+        overflow-x: auto;
+
+
+    }
+
+
+    
+
+
+    .form-grid {
+
+
+        grid-template-columns: 1fr;
+
+
+    }
+
+
+}
+
+
+
+
+
+.loading {
+
+
+    text-align: center;
+
+
+    padding: 20px;
+
+
+    color: #666;
+
+
+    font-style: italic;
+
+
+}
+
+
+
+
+
+.error-message {
+
+
+    text-align: center;
+
+
+    padding: 20px;
+
+
+    color: #d32f2f;
+
+
+    background: #ffebee;
+
+
+    border-radius: 5px;
+
+
+    border-left: 4px solid #d32f2f;
+
+}
+
+
+
+
+.success-message {
+
+
+    text-align: center;
+
+
+    padding: 20px;
+
+
+    color: #2e7d32;
+
+
+    background: #e8f5e8;
+
+
+    border-radius: 5px;
+
+
+    border-left: 4px solid #2e7d32;
+
+}
+
+
+
+
+/* Agrega al final de tu style.css existente */
+
+
+
+
+.loading {
+
+
+    text-align: center;
+
+
+    padding: 20px;
+
+
+    color: #666;
+
+
+    font-style: italic;
+
+
+    background: #f8f9fa;
+
+
+    border-radius: 5px;
+
+
+}
+
+
+
+.error-message {
+
+
+    text-align: center;
+
+
+    padding: 20px;
+
+
+    color: #d32f2f;
+
+
+    background: #ffebee;
+
+
+    border-radius: 5px;
+
+
+    border-left: 4px solid #d32f2f;
+
+
+    margin: 10px 0;
+
+
+}
+
+
+
+.no-data {
+
+
+    text-align: center;
+
+
+    padding: 30px;
+
+
+    color: #666;
+
+
+    font-style: italic;
+
+
+    background: #f8f9fa;
+
+
+    border-radius: 5px;
+
+
+}
+
+
+
 
 .form-group {
+
+
     display: flex;
+
+
     flex-direction: column;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
 
 .form-group label {
-    font-weight: bold;
+
+
+    font-weight: 600;
+
+
     margin-bottom: 5px;
-    color: #555;
+
+
+    color: #333;
+
+
+    font-size: 14px;
+
+
 }
 
-.form-group input, 
-.form-group select, 
-.form-group textarea {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    width: 100%;
-    box-sizing: border-box; /* Importante para el full-width */
-}
+
+
+
 
 .form-group.full-width {
+
+
     grid-column: 1 / -1;
+
+
 }
+
+
+
+
 
 .modal-buttons {
-    margin-top: 25px;
-    text-align: right;
+
+
+    display: flex;
+
+
+    gap: 10px;
+
+
+    justify-content: flex-end;
+
+
+    margin-top: 20px;
+
+
+    padding-top: 20px;
+
+
+    border-top: 1px solid #eee;
+
+
 }
+
+
+
+
 
 .btn-cancel {
-    background: #6c757d;
+
+
+    background: #6c757d !important;
+
+
 }
+
+
+
+
 
 .btn-cancel:hover {
-    background: #5a6268;
+
+
+    background: #545b62 !important;
+
+
 }
+
+
+
+
 
 .btn-save {
-    background: #28a745;
+
+
+    background: #28a745 !important;
+
+
 }
+
+
+
+
 
 .btn-save:hover {
-    background: #1e7e34;
+
+
+    background: #218838 !important;
+
+
 }
 
-.modal-buttons button {
-    margin-left: 10px;
-    padding: 10px 20px;
+
+
+
+
+footer {
+
+
+    text-align: center;
+
+
+    margin-top: 30px;
+
+
+    padding: 20px;
+
+
+    color: #666;
+
+
+    border-top: 1px solid #eee;
+
+
+    font-size: 14px;
+
+
 }
 
-/* Animaciones */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+
+
+
+
+/* Responsive improvements */
+
+
+@media (max-width: 768px) {
+
+
+    .form-grid {
+
+
+        grid-template-columns: 1fr;
+
+
+    }
+
+
+    
+
+
+    .modal-buttons {
+
+
+        flex-direction: column;
+
+
+    }
+
+
+    
+
+
+    .modal-content {
+
+
+        margin: 10% auto;
+
+
+        width: 95%;
+
+
+    }
+
 }
 
-@keyframes slideUp {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+
+
+
+/* Agrega estos estilos al final de tu style.css */
+
+
+
+
+
+/* Botón eliminar */
+
+
+.btn-delete {
+
+
+    background: #dc3545 !important;
+
+
+    color: white;
+
+
+    border: none;
+
+
+    padding: 5px 10px;
+
+
+    border-radius: 4px;
+
+
+    cursor: pointer;
+
+
+    margin: 0 2px;
+
 }
 
-/* Campos requeridos - Añadido más campos */
-.form-group label[for*="Descripcion"]::after,
-.form-group label[for*="STATUS"]::after,
-.form-group label[for*="SECTOR"]::after
-{
+
+
+
+.btn-delete:hover {
+
+
+    background: #c82333 !important;
+
+}
+
+
+
+
+/* Botón agregar nuevo */
+
+#addNewBtn {
+
+
+    background: #28a745 !important;
+
+
+}
+
+
+
+#addNewBtn:hover {
+
+
+    background: #218838 !important;
+
+
+}
+
+
+
+
+
+/* Notificaciones */
+
+
+.notification {
+
+
+    animation: slideIn 0.3s ease-out;
+
+
+}
+
+
+
+
+
+@keyframes slideIn {
+
+
+    from {
+
+
+        transform: translateX(100%);
+
+
+        opacity: 0;
+
+
+    }
+
+
+    to {
+
+
+        transform: translateX(0);
+
+
+        opacity: 1;
+
+
+    }
+
+
+}
+
+
+
+
+
+/* Mejoras para stats */
+
+
+.stats {
+
+
+    display: grid;
+
+
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+
+    gap: 15px;
+
+
+    margin-bottom: 20px;
+
+
+}
+
+
+
+
+
+.stat-card {
+
+
+    background: white;
+
+
+    padding: 15px;
+
+
+    border-radius: 8px;
+
+
+    text-align: center;
+
+
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+
+    transition: transform 0.2s;
+
+
+}
+
+
+
+
+
+.stat-card:hover {
+
+
+    transform: translateY(-2px);
+
+
+}
+
+
+
+
+
+.stat-card h3 {
+
+
+    color: #666;
+
+
+    font-size: 12px;
+
+
+    margin-bottom: 5px;
+
+
+    text-transform: uppercase;
+
+
+    letter-spacing: 0.5px;
+
+
+}
+
+
+
+
+
+.stat-card span {
+
+
+    font-size: 24px;
+
+
+    font-weight: bold;
+
+
+    color: #007bff;
+
+
+    display: block;
+
+}
+
+
+
+/* Campos requeridos */
+
+.form-group label[for*="Descripcion"]::after {
+
+
     content: " *";
+
+
     color: #dc3545;
+
+
 }
+
+
+
+
+
+.notification.error {
+
+
+  background: #f8d7da !important;
+
+
+  color: #721c24 !important;
+
+
+  border: 1px solid #f5c6cb !important;
+
+}
+
+
+
+
 
 /* Filas modificadas */
-.row-modified {
-    background-color: #fff3cd; /* Amarillo suave para indicar localmente modificado */
+.modified-row {
+  background: #fff3cd !important;
+  border-left: 3px solid #ffc107;
 }
 
 .modified-badge {
-    display: inline-block;
-    background-color: #ffc107;
-    color: #333;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    margin-left: 5px;
-    font-weight: bold;
+  color: #856404;
+  font-size: 12px;
+  margin-left: 5px;
 }
 
-/* Responsividad para la tabla en móviles */
-@media (max-width: 768px) {
-    .controls {
-        flex-direction: column;
-    }
-    .filters {
-        flex-direction: column;
-    }
-    /* Estilos para hacer la tabla deslizable */
-    .table-container {
-        overflow-x: auto;
-    }
-    .inventory-table th, .inventory-table td {
-        white-space: nowrap; /* Evita que el texto se rompa */
-        padding: 8px 12px;
-    }
-    .inventory-table th:nth-child(2), .inventory-table td:nth-child(2) {
-        min-width: 150px; /* Asegura un ancho mínimo para la descripción */
-    }
-    .modal-content {
-        width: 95%;
-        margin: 20px auto;
-        /* Permitir que el contenido se desplace en pantallas pequeñas */
-        max-height: 90vh; 
-        overflow-y: auto;
-    }
-    .form-grid {
-        grid-template-columns: 1fr; /* Una columna en móvil */
-    }
+/* Botón limpiar */
+#clearLocalBtn {
+  background: #6c757d !important;
+}
+
+#clearLocalBtn:hover {
+  background: #545b62 !important;
+}
+
+/* Mejora para estadísticas */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
 }
