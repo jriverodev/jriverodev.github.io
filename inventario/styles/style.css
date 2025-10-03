@@ -213,13 +213,14 @@ footer {
 /* Modales */
 .modal {
     display: none; /* Oculto por defecto */
-    position: fixed; /* Fija la posición relativa a la ventana del navegador */
+    /* === PROPIEDADES CLAVE PARA LA SUPERPOSICIÓN === */
+    position: fixed; /* Fija la posición relativa a la ventana (viewport) */
     z-index: 1000; /* Asegura que esté por encima de todo */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow-y: auto; /* Permite desplazamiento dentro del modal si es muy largo */
     background-color: rgba(0,0,0,0.4); /* Fondo semi-transparente */
     justify-content: center;
     align-items: center;
@@ -234,6 +235,8 @@ footer {
     width: 90%;
     max-width: 700px;
     position: relative;
+    /* Añadido margen superior e inferior para que el modal no se pegue a los bordes verticales en scroll */
+    margin: 40px auto; 
     animation: slideUp 0.3s;
 }
 
@@ -362,6 +365,9 @@ footer {
     .modal-content {
         width: 95%;
         margin: 20px auto;
+        /* Permitir que el contenido se desplace en pantallas pequeñas */
+        max-height: 90vh; 
+        overflow-y: auto;
     }
     .form-grid {
         grid-template-columns: 1fr; /* Una columna en móvil */
