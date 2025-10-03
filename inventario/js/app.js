@@ -1,25 +1,19 @@
 /**
- * CLASE PRINCIPAL DE LA APLICACIÓN DE INVENTARIO
- * Sistema completo de gestión con persistencia en Google Sheets
- * Usa JSONP para evitar problemas CORS
+ * SISTEMA DE INVENTARIO - VERSIÓN HÍBRIDA
+ * Usa localStorage como caché y permite exportación manual
  */
 
 class InventoryApp {
-  /**
-   * CONSTRUCTOR - Inicializa la aplicación con configuración
-   */
   constructor() {
     this.sheetsAPI = new GoogleSheetsAPI();
     this.inventoryData = [];
     this.filteredData = [];
-    // URL de la Web App de Google Apps Script - ACTUALIZAR CON TU URL
-    this.webAppUrl = 'https://script.google.com/macros/s/AKfycbwO7ge--VuiGRWV1ZkJAaXvcd11giM7lZ-cTgtyunKEChADHkA3N4uNlDXEh8OvkYc/exec';
-    this.SPREADSHEET_ID = '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c';
+    this.localStorageKey = 'inventoryData_v2';
     this.init();
   }
 
   /**
-   * INICIALIZACIÓN - Carga datos y configura la aplicación
+   * INICIALIZACIÓN - Carga datos desde Google Sheets o localStorage
    */
   async init() {
     await this.loadInventory();
@@ -27,50 +21,142 @@ class InventoryApp {
     this.renderTable();
     this.updateStats();
     
-    // Probar conexión con Google Apps Script
-    this.testConnection();
+    console.log('🚀 Sistema de Inventario iniciado');
+    console.log('💾 Los cambios se guardan en localStorage');
+    console.log('📤 Usa "Exportar Excel" para descargar datos actualizados');
   }
 
   /**
-   * PROBAR CONEXIÓN CON GOOGLE APPS SCRIPT
+   * CARGAR INVENTARIO - Estrategia híbrida
    */
-  async testConnection() {
+  async loadInventory() {
     try {
-      const result = await this.makeJSONPRequest('test', {});
-      if (result && result.success) {
-        console.log('✅ Conexión con Google Apps Script: OK', result.message);
-      } else {
-        console.warn('⚠️ Conexión con Google Apps Script: Limitada', result?.error);
+      console.log('🔄 Cargando inventario...');
+      this.showLoadingMessage('🔄 Cargando datos...');
+      
+      // PRIMERO: Intentar cargar desde localStorage (más rápido)
+      const localData = this.loadFromLocalStorage();
+      if (localData && localData.length > 0) {
+        console.log('💾 Datos cargados desde localStorage:', localData.length, 'registros');
+        this.inventoryData = localData;
+        this.filteredData = [...this.inventoryData];
+        this.renderTable();
+        this.updateStats();
       }
+      
+      // LUEGO: Cargar desde Google Sheets en segundo plano
+      await this.loadFromGoogleSheets();
+      
     } catch (error) {
-      console.warn('⚠️ No se pudo conectar con Google Apps Script:', error.message);
+      console.error('❌ Error en loadInventory:', error);
+      this.handleLoadError(error);
     }
   }
 
   /**
-   * CARGAR INVENTARIO - Obtiene datos de Google Sheets
+   * CARGAR DESDE GOOGLE SHEETS - Actualizar datos base
    */
-  async loadInventory() {
+  async loadFromGoogleSheets() {
     try {
-      console.log('🔄 Iniciando carga de inventario...');
-      this.showLoadingMessage('🔄 Cargando datos desde Google Sheets...');
+      console.log('🌐 Actualizando desde Google Sheets...');
+      const googleData = await this.sheetsAPI.loadData();
       
-      this.inventoryData = await this.sheetsAPI.loadData();
-      this.filteredData = [...this.inventoryData];
-      
-      console.log('✅ Inventario cargado:', this.inventoryData.length, 'registros');
-      this.renderTable();
-      this.updateStats();
+      if (googleData && googleData.length > 0) {
+        // Combinar datos: mantener cambios locales, agregar nuevos de Google Sheets
+        this.mergeData(googleData);
+        console.log('✅ Datos actualizados desde Google Sheets:', googleData.length, 'registros');
+      }
       
     } catch (error) {
-      console.error('❌ Error en loadInventory:', error);
-      this.showErrorMessage(`❌ Error cargando datos: ${error.message}`);
-      
-      // Usar datos de ejemplo como fallback
+      console.warn('⚠️ No se pudo actualizar desde Google Sheets:', error.message);
+      // No mostramos error al usuario, usamos datos locales
+    }
+  }
+
+  /**
+   * COMBINAR DATOS - Fusiona datos locales con datos de Google Sheets
+   */
+  mergeData(googleData) {
+    const localData = this.inventoryData;
+    
+    // Si no hay datos locales, usar datos de Google Sheets
+    if (localData.length === 0) {
+      this.inventoryData = googleData;
+      this.filteredData = [...googleData];
+      this.saveToLocalStorage();
+      return;
+    }
+    
+    // Estrategia de fusión inteligente
+    const mergedData = [...googleData];
+    
+    // Buscar registros modificados localmente y mantener los cambios
+    localData.forEach(localItem => {
+      if (localItem._modified) { // Marcar items modificados localmente
+        const existingIndex = mergedData.findIndex(gItem => 
+          gItem.SERIAL === localItem.SERIAL && gItem.SERIAL !== ''
+        );
+        
+        if (existingIndex !== -1) {
+          // Reemplazar con versión local modificada
+          mergedData[existingIndex] = { ...localItem };
+        } else {
+          // Agregar nuevo item local
+          mergedData.push({ ...localItem });
+        }
+      }
+    });
+    
+    this.inventoryData = mergedData;
+    this.filteredData = [...mergedData];
+    this.saveToLocalStorage();
+  }
+
+  /**
+   * CARGAR DESDE LOCALSTORAGE
+   */
+  loadFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem(this.localStorageKey);
+      if (saved) {
+        const data = JSON.parse(saved);
+        console.log('📁 Datos locales cargados:', data.length, 'registros');
+        return data;
+      }
+    } catch (error) {
+      console.error('❌ Error cargando de localStorage:', error);
+    }
+    return null;
+  }
+
+  /**
+   * GUARDAR EN LOCALSTORAGE
+   */
+  saveToLocalStorage() {
+    try {
+      localStorage.setItem(this.localStorageKey, JSON.stringify(this.inventoryData));
+      localStorage.setItem(`${this.localStorageKey}_timestamp`, new Date().toISOString());
+      console.log('💾 Datos guardados en localStorage');
+    } catch (error) {
+      console.error('❌ Error guardando en localStorage:', error);
+    }
+  }
+
+  /**
+   * MANEJAR ERROR DE CARGA
+   */
+  handleLoadError(error) {
+    this.showErrorMessage(`❌ Error cargando datos: ${error.message}`);
+    
+    // Intentar cargar datos de ejemplo
+    try {
       this.inventoryData = this.sheetsAPI.getSampleData();
       this.filteredData = [...this.inventoryData];
       this.renderTable();
       this.updateStats();
+      this.showNotification('📋 Usando datos de ejemplo', 'warning');
+    } catch (fallbackError) {
+      console.error('❌ Error incluso con datos de ejemplo:', fallbackError);
     }
   }
 
@@ -96,7 +182,7 @@ class InventoryApp {
         <td colspan="12">
           <div class="error-message">
             ${message}
-            <br><small>Mostrando datos de ejemplo</small>
+            <br><small>Los cambios se guardarán localmente</small>
           </div>
         </td>
       </tr>
@@ -104,7 +190,7 @@ class InventoryApp {
   }
 
   /**
-   * RENDERIZAR TABLA - Muestra los datos en la interfaz
+   * RENDERIZAR TABLA
    */
   renderTable() {
     const tbody = document.getElementById('tableBody');
@@ -115,7 +201,7 @@ class InventoryApp {
     }
 
     tbody.innerHTML = this.filteredData.map((item, index) => `
-      <tr>
+      <tr class="${item._modified ? 'modified-row' : ''}">
         <td>${item['N°'] || index + 1}</td>
         <td>${this.escapeHtml(item.DESCRIPCION || '')}</td>
         <td>${this.escapeHtml(item.MARCA || '')}</td>
@@ -131,25 +217,27 @@ class InventoryApp {
           <button class="btn-edit" onclick="app.openEditModal(${index})" title="Editar">✏️</button>
           <button class="btn-view" onclick="app.viewDetails(${index})" title="Ver detalles">👁️</button>
           <button class="btn-delete" onclick="app.deleteItem(${index})" title="Eliminar">🗑️</button>
+          ${item._modified ? '<span class="modified-badge" title="Modificado localmente">🔄</span>' : ''}
         </td>
       </tr>
     `).join('');
   }
 
   /**
-   * ESCAPAR HTML - Prevenir inyección XSS
+   * ESCAPAR HTML
    */
   escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
   /**
-   * CONFIGURAR EVENTOS - Controladores para la interfaz
+   * CONFIGURAR EVENTOS
    */
   setupEventListeners() {
-    // Búsqueda en tiempo real
+    // Búsqueda
     document.getElementById('searchInput').addEventListener('input', (e) => {
       this.filterData(e.target.value);
     });
@@ -176,7 +264,12 @@ class InventoryApp {
       this.exportToExcel();
     });
 
-    // Cerrar modales
+    // Nuevo botón: Limpiar datos locales
+    document.getElementById('clearLocalBtn').addEventListener('click', () => {
+      this.clearLocalData();
+    });
+
+    // Modales
     document.querySelector('.close').addEventListener('click', () => {
       this.closeEditModal();
     });
@@ -192,17 +285,10 @@ class InventoryApp {
       if (e.target === editModal) this.closeEditModal();
       if (e.target === addModal) this.closeAddModal();
     });
-
-    // Enter en búsqueda
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        this.filterData(e.target.value);
-      }
-    });
   }
 
   /**
-   * FILTRAR DATOS - Aplica búsqueda y filtros
+   * FILTRAR DATOS
    */
   filterData(searchTerm = '') {
     const deptoFilter = document.getElementById('deptoFilter').value;
@@ -211,7 +297,7 @@ class InventoryApp {
     this.filteredData = this.inventoryData.filter(item => {
       const matchesSearch = !searchTerm || 
         Object.values(item).some(value => 
-          value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+          value && value.toString().toLowerCase().includes(searchTerm.toLowerCase())
         );
       
       const matchesDepto = !deptoFilter || item.SECTOR === deptoFilter;
@@ -225,14 +311,13 @@ class InventoryApp {
   }
 
   /**
-   * ACTUALIZAR ESTADÍSTICAS - Calcula y muestra contadores
+   * ACTUALIZAR ESTADÍSTICAS
    */
   updateStats() {
     const total = this.filteredData.length;
     const operativos = this.filteredData.filter(item => item.STATUS === 'OPERATIVO').length;
     const departamentos = new Set(this.filteredData.map(item => item.SECTOR)).size;
     
-    // Contadores específicos
     const cpus = this.filteredData.filter(item => 
       item.DESCRIPCION && item.DESCRIPCION.toUpperCase().includes('CPU')
     ).length;
@@ -246,23 +331,24 @@ class InventoryApp {
       .map(item => item['CUSTODIO RESPONSABLE'])
     ).size;
 
-    // Actualizar interfaz
+    const modificados = this.filteredData.filter(item => item._modified).length;
+
     document.getElementById('totalEquipos').textContent = total;
     document.getElementById('operativos').textContent = operativos;
     document.getElementById('totalDeptos').textContent = departamentos;
     document.getElementById('totalCPUs').textContent = cpus;
     document.getElementById('totalLaptops').textContent = laptops;
     document.getElementById('totalUsuarios').textContent = usuariosUnicos;
+    document.getElementById('modificados').textContent = modificados;
   }
 
   /**
-   * ABRIR MODAL DE EDICIÓN
+   * MODALES DE EDICIÓN
    */
   openEditModal(index) {
     const item = this.filteredData[index];
     const modal = document.getElementById('editModal');
     
-    // Llenar formulario con datos actuales
     document.getElementById('editRowIndex').value = index;
     document.getElementById('editDescripcion').value = item.DESCRIPCION || '';
     document.getElementById('editMarca').value = item.MARCA || '';
@@ -279,13 +365,9 @@ class InventoryApp {
     modal.style.display = 'block';
   }
 
-  /**
-   * ABRIR MODAL DE AGREGAR
-   */
   openAddModal() {
     const modal = document.getElementById('addModal');
     
-    // Limpiar formulario
     document.getElementById('addDescripcion').value = '';
     document.getElementById('addMarca').value = '';
     document.getElementById('addModelo').value = '';
@@ -301,9 +383,6 @@ class InventoryApp {
     modal.style.display = 'block';
   }
 
-  /**
-   * CERRAR MODALES
-   */
   closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
   }
@@ -313,13 +392,12 @@ class InventoryApp {
   }
 
   /**
-   * GUARDAR CAMBIOS - Actualiza registro en Google Sheets
+   * GUARDAR CAMBIOS - Solo en localStorage
    */
   async saveChanges() {
     const index = document.getElementById('editRowIndex').value;
     if (index === '') return;
     
-    // Obtener valores actualizados
     const updatedItem = {
       'DESCRIPCION': document.getElementById('editDescripcion').value,
       'MARCA': document.getElementById('editMarca').value,
@@ -331,45 +409,35 @@ class InventoryApp {
       'CUSTODIO RESPONSABLE': document.getElementById('editResponsable').value,
       'CEDULA': document.getElementById('editCedula').value,
       'CARGO': document.getElementById('editCargo').value,
-      'OBSERVACIONES': document.getElementById('editObservaciones').value
+      'OBSERVACIONES': document.getElementById('editObservaciones').value,
+      '_modified': true, // Marcar como modificado localmente
+      '_modifiedAt': new Date().toISOString()
     };
     
-    // Validar campos requeridos
     if (!updatedItem.DESCRIPCION.trim()) {
       this.showNotification('❌ La descripción es obligatoria', 'error');
       return;
     }
     
-    // Mostrar carga
-    this.showNotification('🔄 Guardando cambios en Google Sheets...', 'info');
-    
-    // Actualizar en memoria local inmediatamente
+    // Actualizar en memoria
     this.filteredData[index] = { ...this.filteredData[index], ...updatedItem };
     this.inventoryData = [...this.filteredData];
     
-    // Intentar guardar en Google Sheets via JSONP
-    const success = await this.makeJSONPRequest('update', {
-      rowIndex: parseInt(index),
-      ...updatedItem
-    });
+    // Guardar en localStorage
+    this.saveToLocalStorage();
     
     // Actualizar interfaz
     this.renderTable();
     this.updateStats();
     this.closeEditModal();
     
-    if (success) {
-      this.showNotification('✅ Cambios guardados en Google Sheets', 'success');
-    } else {
-      this.showNotification('⚠️ Cambios guardados solo localmente', 'warning');
-    }
+    this.showNotification('✅ Cambios guardados localmente', 'success');
   }
 
   /**
    * AGREGAR NUEVO EQUIPO
    */
   async addNewItem() {
-    // Obtener valores del formulario
     const newItem = {
       'N°': this.inventoryData.length + 1,
       'DESCRIPCION': document.getElementById('addDescripcion').value,
@@ -382,29 +450,30 @@ class InventoryApp {
       'CUSTODIO RESPONSABLE': document.getElementById('addResponsable').value,
       'CEDULA': document.getElementById('addCedula').value,
       'CARGO': document.getElementById('addCargo').value,
-      'OBSERVACIONES': document.getElementById('addObservaciones').value
+      'OBSERVACIONES': document.getElementById('addObservaciones').value,
+      '_modified': true,
+      '_modifiedAt': new Date().toISOString(),
+      '_new': true // Marcar como nuevo
     };
     
-    // Validar campos requeridos
     if (!newItem.DESCRIPCION.trim()) {
       this.showNotification('❌ La descripción es obligatoria', 'error');
       return;
     }
     
-    // Mostrar carga
-    this.showNotification('🔄 Agregando nuevo equipo...', 'info');
-    
-    // Agregar a memoria local
+    // Agregar a memoria
     this.inventoryData.push(newItem);
     this.filteredData = [...this.inventoryData];
     
-    // Por ahora, guardamos solo localmente (para agregar en Sheets necesitaríamos POST)
+    // Guardar en localStorage
+    this.saveToLocalStorage();
+    
+    // Actualizar interfaz
     this.renderTable();
     this.updateStats();
     this.closeAddModal();
     
     this.showNotification('✅ Equipo agregado localmente', 'success');
-    console.log('➕ Nuevo equipo agregado (local):', newItem);
   }
 
   /**
@@ -417,102 +486,86 @@ class InventoryApp {
     
     const deletedItem = this.filteredData[index];
     
-    // Mostrar carga
-    this.showNotification('🔄 Eliminando equipo...', 'info');
+    // Marcar como eliminado en lugar de borrar completamente
+    this.filteredData[index].STATUS = 'ELIMINADO';
+    this.filteredData[index]._modified = true;
+    this.filteredData[index]._modifiedAt = new Date().toISOString();
     
-    // Eliminar de memoria local
-    this.filteredData.splice(index, 1);
-    this.inventoryData = this.inventoryData.filter(item => item !== deletedItem);
+    this.inventoryData = [...this.filteredData];
+    this.saveToLocalStorage();
     
-    // Intentar eliminar de Google Sheets via JSONP
-    const success = await this.makeJSONPRequest('update', {
-      rowIndex: parseInt(index),
-      DESCRIPCION: '', // Marcar como vacío para "eliminar"
-      STATUS: 'ELIMINADO'
-    });
-    
-    // Actualizar interfaz
     this.renderTable();
     this.updateStats();
     
-    if (success) {
-      this.showNotification('🗑️ Equipo eliminado de Google Sheets', 'warning');
-    } else {
-      this.showNotification('🗑️ Equipo eliminado solo localmente', 'warning');
+    this.showNotification('🗑️ Equipo marcado como eliminado', 'warning');
+  }
+
+  /**
+   * EXPORTAR A EXCEL - Incluye todos los datos locales
+   */
+  exportToExcel() {
+    try {
+      const data = this.inventoryData.map(item => {
+        const exportItem = { ...item };
+        // Remover campos internos
+        delete exportItem._modified;
+        delete exportItem._modifiedAt;
+        delete exportItem._new;
+        return exportItem;
+      });
+      
+      if (data.length === 0) {
+        this.showNotification('📭 No hay datos para exportar', 'warning');
+        return;
+      }
+      
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+      
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `inventario_actualizado_${date}.xlsx`;
+      XLSX.writeFile(wb, filename);
+      
+      this.showNotification(`📥 ${filename} descargado`, 'success');
+      
+      console.log('💾 Excel exportado con', data.length, 'registros');
+      
+    } catch (error) {
+      console.error('❌ Error exportando Excel:', error);
+      this.showNotification('❌ Error al exportar Excel', 'error');
     }
   }
 
   /**
-   * REALIZAR PETICIÓN JSONP - Para evitar problemas CORS
+   * LIMPIAR DATOS LOCALES - Volver a datos originales
    */
-  makeJSONPRequest(action, data) {
-    return new Promise((resolve) => {
-      const callbackName = 'jsonpCallback_' + Date.now();
-      let url = `${this.webAppUrl}?callback=${callbackName}&action=${action}`;
+  clearLocalData() {
+    if (!confirm('¿Estás seguro de que quieres limpiar todos los cambios locales?\n\nSe perderán todas las modificaciones y se recargarán los datos originales.')) {
+      return;
+    }
+    
+    try {
+      localStorage.removeItem(this.localStorageKey);
+      localStorage.removeItem(`${this.localStorageKey}_timestamp`);
       
-      // Agregar parámetros según la acción
-      if (action === 'update') {
-        url += `&rowIndex=${data.rowIndex}`;
-        // Agregar todos los campos a actualizar
-        Object.keys(data).forEach(key => {
-          if (key !== 'rowIndex' && data[key] !== undefined) {
-            url += `&${key}=${encodeURIComponent(data[key])}`;
-          }
-        });
-      } else if (action === 'test') {
-        // No necesita parámetros adicionales
-      }
+      this.showNotification('🧹 Datos locales limpiados', 'info');
       
-      // Configurar timeout
-      const timeout = setTimeout(() => {
-        cleanup();
-        console.warn(`⏰ Timeout en petición ${action}`);
-        resolve(false);
-      }, 10000);
+      // Recargar desde Google Sheets
+      this.loadInventory();
       
-      const cleanup = () => {
-        clearTimeout(timeout);
-        if (window[callbackName]) {
-          delete window[callbackName];
-        }
-        if (script.parentNode) {
-          document.head.removeChild(script);
-        }
-      };
-      
-      // Configurar callback global
-      window[callbackName] = (response) => {
-        cleanup();
-        
-        if (response && response.success) {
-          console.log(`✅ ${action} exitoso:`, response);
-          resolve(true);
-        } else {
-          console.error(`❌ ${action} falló:`, response);
-          resolve(false);
-        }
-      };
-      
-      // Crear script para JSONP
-      const script = document.createElement('script');
-      script.src = url;
-      script.onerror = () => {
-        cleanup();
-        console.error(`❌ Error de red en ${action}`);
-        resolve(false);
-      };
-      
-      document.head.appendChild(script);
-      
-    });
+    } catch (error) {
+      console.error('❌ Error limpiando datos locales:', error);
+      this.showNotification('❌ Error limpiando datos locales', 'error');
+    }
   }
 
   /**
-   * VER DETALLES DEL EQUIPO
+   * VER DETALLES
    */
   viewDetails(index) {
     const item = this.filteredData[index];
-    const detalles = `
+    let detalles = `
 🔍 **DETALLES DEL EQUIPO**
 
 📋 **Descripción:** ${item.DESCRIPCION || 'N/A'}
@@ -529,43 +582,19 @@ class InventoryApp {
 💼 **Cargo:** ${item.CARGO || 'N/A'}
 
 📝 **Observaciones:** ${item.OBSERVACIONES || 'Ninguna'}
-    `;
+`;
+    
+    if (item._modified) {
+      detalles += `\n🔄 **Modificado localmente:** ${new Date(item._modifiedAt).toLocaleString()}`;
+    }
     
     alert(detalles);
-  }
-
-  /**
-   * EXPORTAR A EXCEL
-   */
-  exportToExcel() {
-    try {
-      const data = this.filteredData;
-      
-      if (data.length === 0) {
-        this.showNotification('📭 No hay datos para exportar', 'warning');
-        return;
-      }
-      
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-      
-      const date = new Date().toISOString().split('T')[0];
-      XLSX.writeFile(wb, `inventario_equipos_${date}.xlsx`);
-      
-      this.showNotification('📥 Excel exportado correctamente', 'success');
-      
-    } catch (error) {
-      console.error('❌ Error exportando Excel:', error);
-      this.showNotification('❌ Error al exportar Excel', 'error');
-    }
   }
 
   /**
    * MOSTRAR NOTIFICACIÓN
    */
   showNotification(message, type = 'info') {
-    // Crear elemento de notificación
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
@@ -587,7 +616,6 @@ class InventoryApp {
     
     document.body.appendChild(notification);
     
-    // Remover después de 4 segundos
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
@@ -595,9 +623,6 @@ class InventoryApp {
     }, 4000);
   }
 
-  /**
-   * OBTENER COLOR DE NOTIFICACIÓN
-   */
   getNotificationColor(type) {
     const colors = {
       success: '#d4edda',
