@@ -1,14 +1,10 @@
 /**
- * SISTEMA DE INVENTARIO - VERSIÓN HÍBRIDA CON PERSISTENCIA REMOTA
- * Usa localStorage como caché y envía los cambios a Google Sheets (Apps Script)
- * * Requiere: 
- * 1. js/google-sheets.js (con WEB_APP_URL configurada)
- * 2. js/export.js (para la exportación a Excel)
+ * SISTEMA DE INVENTARIO - VERSIÓN HÍBRIDA
+ * Usa localStorage como caché y permite exportación manual
  */
 
 class InventoryApp {
   constructor() {
-    // La instancia de GoogleSheetsAPI debe estar definida en google-sheets.js
     this.sheetsAPI = new GoogleSheetsAPI();
     this.inventoryData = [];
     this.filteredData = [];
@@ -26,445 +22,388 @@ class InventoryApp {
     this.updateStats();
     
     console.log('🚀 Sistema de Inventario iniciado');
-    console.log('💾 Los cambios se guardan en localStorage Y se intentan enviar a Google Sheets.');
+    console.log('💾 Los cambios se guardan en localStorage');
+    console.log('📤 Usa "Exportar Excel" para descargar datos actualizados');
   }
 
-  // --- MÉTODOS DE CARGA Y ALMACENAMIENTO LOCAL ---
-
   /**
-   * CARGAR INVENTARIO - Estrategia híbrida: Local cache + Remote Sync
+   * CARGAR INVENTARIO - Estrategia híbrida
    */
   async loadInventory() {
     try {
-        console.log('🔄 Cargando inventario...');
-        this.showLoadingMessage('🔄 Cargando datos, por favor espere...', 'info');
-        
-        // 1. Intentar cargar desde localStorage (cache)
-        const localData = this.loadFromLocalStorage();
-        if (localData && localData.length > 0) {
-            console.log('💾 Datos cargados desde localStorage:', localData.length, 'registros');
-            this.inventoryData = localData;
-            this.filterData();
-            this.renderTable();
-            this.updateStats();
-        }
-        
-        // 2. Cargar desde Google Sheets en segundo plano
-        const remoteData = await this.sheetsAPI.loadData();
-        
-        // 3. Fusión de datos: Los datos locales modificados tienen prioridad
-        this.inventoryData = this.mergeData(this.inventoryData, remoteData);
-        this.saveToLocalStorage(this.inventoryData);
-        
-        this.filterData();
-        this.renderTable();
-        this.updateStats();
-        this.showLoadingMessage('✅ Inventario actualizado.', 'success');
-        
+      console.log('🔄 Cargando inventario...');
+      this.showLoadingMessage('🔄 Cargando datos...');
+      
+      // PRIMERO: Intentar cargar desde localStorage (más rápido)
+      const localData = this.loadFromLocalStorage();
+      if (localData && localData.length > 0) {
+        console.log('💾 Datos cargados desde localStorage:', localData.length, 'registros');
+        this.inventoryData = localData;
+        this.filteredData = [...this.inventoryData];
+      }
+      
+      // LUEGO: Cargar desde Google Sheets en segundo plano (para obtener lo más reciente)
+      const sheetData = await this.sheetsAPI.loadData();
+      
+      // SI HAY DATOS DE GOOGLE SHEETS, SOBRESCRIBIR Y ACTUALIZAR LOCALSTORAGE
+      if (sheetData && sheetData.length > 0) {
+        // Combinar datos locales con datos de la hoja de cálculo
+        this.inventoryData = sheetData;
+        this.saveToLocalStorage();
+      }
+      
+      this.filteredData = [...this.inventoryData];
+
     } catch (error) {
-        this.showLoadingMessage('❌ Error de carga inicial. Usando datos de caché.', 'error');
-        console.error('Error al cargar y fusionar inventario:', error);
+      console.error('❌ Error general al cargar inventario:', error);
+      this.showNotification('Error al cargar datos. Usando caché local.', 'error');
+    } finally {
+      this.hideLoadingMessage();
     }
   }
 
+  /**
+   * LÓGICA DE LOCALSTORAGE
+   */
   loadFromLocalStorage() {
     const data = localStorage.getItem(this.localStorageKey);
     return data ? JSON.parse(data) : [];
   }
 
-  saveToLocalStorage(data) {
-    localStorage.setItem(this.localStorageKey, JSON.stringify(data));
-  }
-  
-  /**
-   * Combina datos locales (cache) y remotos (Sheets), priorizando los cambios locales.
-   */
-  mergeData(localData, remoteData) {
-    if (!localData || localData.length === 0) return remoteData;
-
-    // Crear un mapa de datos locales usando 'N°' como clave
-    const localMap = new Map();
-    localData.forEach(item => {
-        if (item['N°']) {
-            localMap.set(String(item['N°']), item);
-        }
-    });
-
-    const merged = [];
-
-    // Priorizar datos remotos si no hay conflicto local
-    remoteData.forEach(remoteItem => {
-        const id = String(remoteItem['N°']);
-        const localItem = localMap.get(id);
-
-        if (localItem && localItem._modified) {
-            // El ítem existe y fue modificado localmente: usar la versión local
-            merged.push(localItem);
-            localMap.delete(id);
-        } else {
-            // Usar la versión remota (fresca)
-            merged.push(remoteItem);
-        }
-    });
-    
-    // Agregar ítems completamente nuevos que se crearon localmente
-    localMap.forEach(item => {
-        if (item._new) {
-            merged.push(item);
-        }
-    });
-
-    // Limpiar las claves de estado temporales en la data final
-    return merged.map(item => {
-        const cleanItem = { ...item };
-        delete cleanItem._modified;
-        delete cleanItem._new;
-        delete cleanItem._modifiedAt;
-        return cleanItem;
-    });
-  }
-
-  clearLocalData() {
-    // Usamos una notificación modal custom en lugar de window.confirm()
-    if (!window.confirm('¿Estás seguro de que quieres borrar todos los datos guardados localmente (caché)? Se recargarán los datos solo desde Google Sheets.')) {
-        return;
-    }
-    
-    localStorage.removeItem(this.localStorageKey);
-    this.showLoadingMessage('🗑️ Caché local eliminada. Recargando inventario...', 'success');
-    this.loadInventory();
-  }
-
-
-  // --- MÉTODOS DE ESCRITURA MODIFICADOS (CRUD Remoto) ---
-
-  /**
-   * Guarda los cambios en el inventario local y envía la actualización a Google Sheets.
-   * @param {number} rowIndex - El índice de la fila en el array filteredData.
-   */
-  async saveChanges(rowIndex) {
-    this.showLoadingMessage('⏳ Guardando cambios...', 'info');
-    
-    const form = document.getElementById('editModalForm');
-    const originalItem = this.filteredData[rowIndex];
-    const updatedData = {};
-    
-    // El índice de la hoja es el N° - 1 (para coincidir con el índice de la API de Apps Script)
-    const sheetRowIndex = originalItem['N°'] && !String(originalItem['N°']).includes('NEW-') 
-        ? parseInt(originalItem['N°']) - 1 
-        : null; 
-    
-    const headers = ['DESCRIPCION', 'MARCA', 'MODELO', 'SERIAL', 'ETIQUETA', 'SECTOR', 'STATUS', 'CUSTODIO RESPONSABLE', 'CEDULA', 'CARGO', 'OBSERVACIONES'];
-    
-    // 1. Recoger datos del formulario
-    headers.forEach(header => {
-        const inputId = 'edit' + header.replace(/\s/g, '');
-        const value = form.querySelector(`#${inputId}`).value.trim();
-        updatedData[header] = value;
-    });
-    
-    // Validar campo obligatorio
-    if (!updatedData.DESCRIPCION) {
-        this.showNotification('La Descripción es un campo obligatorio.', 'error');
-        return;
-    }
-
-    // 2. Actualizar el inventario local y marcar
-    let itemToUpdate = this.inventoryData.find(item => item['N°'] === originalItem['N°']);
-
-    if (itemToUpdate) {
-        Object.assign(itemToUpdate, updatedData);
-        itemToUpdate._modified = true;
-        itemToUpdate._modifiedAt = new Date().toISOString();
-        this.saveToLocalStorage(this.inventoryData);
-        
-        let syncSuccess = false;
-
-        // 3. Intentar actualizar Google Sheets (Apps Script)
-        if (sheetRowIndex !== null && sheetRowIndex >= 0) {
-            const result = await this.sheetsAPI.updateInventoryItem(sheetRowIndex, updatedData);
-
-            if (result.success) {
-                // Si la actualización remota es exitosa, se considera sincronizado
-                delete itemToUpdate._modified; 
-                delete itemToUpdate._modifiedAt;
-                this.saveToLocalStorage(this.inventoryData);
-                this.showLoadingMessage('✅ Equipo editado y sincronizado con Google Sheets.', 'success');
-                syncSuccess = true;
-            } 
-        } 
-        
-        if (!syncSuccess) {
-            this.showLoadingMessage('⚠️ Equipo editado localmente. No se pudo sincronizar de inmediato.', 'warning');
-        }
-    }
-
-    this.closeEditModal();
-    this.filterData();
-    this.renderTable();
-    this.updateStats();
+  saveToLocalStorage() {
+    localStorage.setItem(this.localStorageKey, JSON.stringify(this.inventoryData));
   }
 
   /**
-   * Agrega un nuevo equipo al inventario local y lo envía a Google Sheets.
-   */
-  async addNewItem() {
-    // 1. Recoger datos
-    const newItem = this.collectAddFormData();
-    if (!newItem.DESCRIPCION) {
-      this.showNotification('La Descripción es un campo obligatorio.', 'error');
-      return;
-    }
-    this.showLoadingMessage('⏳ Agregando equipo...', 'info');
-
-    let syncSuccess = false;
-    
-    // 2. Intentar agregar a Google Sheets primero
-    const result = await this.sheetsAPI.addInventoryItem(newItem);
-    
-    if (result.success) {
-        // 3. Si es exitoso, agregar el nuevo ítem a la lista local con su N° remoto
-        newItem['N°'] = result.newRowNumber; // Usar el número de fila real asignado por Apps Script
-        syncSuccess = true;
-        this.showLoadingMessage('✅ Equipo agregado y sincronizado con Google Sheets.', 'success');
-    } else {
-        // 4. Si falla, agregarlo solo localmente y marcarlo como nuevo/modificado
-        const tempId = 'NEW-' + Date.now();
-        newItem['N°'] = tempId; 
-        newItem._new = true;
-        newItem._modifiedAt = new Date().toISOString();
-        this.showLoadingMessage(`⚠️ Equipo agregado SÓLO localmente. Error remoto: ${result.error}.`, 'warning');
-    }
-
-    // 5. Guardar en local y actualizar UI
-    this.inventoryData.push(newItem);
-    this.saveToLocalStorage(this.inventoryData);
-    
-    this.closeAddModal();
-    this.filterData();
-    this.renderTable();
-    this.updateStats();
-  }
-
-  /**
-   * Elimina un equipo del inventario local y lo elimina físicamente en Google Sheets.
-   * @param {number} rowIndex - El índice de la fila en el array filteredData.
-   */
-  async deleteItem(rowIndex) {
-    // Sustituto de window.confirm()
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este equipo PERMANENTEMENTE? Esta acción borrará la fila en Google Sheets.')) {
-        return;
-    }
-    
-    this.showLoadingMessage('⏳ Eliminando equipo...', 'info');
-    const originalItem = this.filteredData[rowIndex];
-    
-    // sheetRowIndex es el N° - 1
-    const sheetRowIndex = originalItem['N°'] && !String(originalItem['N°']).includes('NEW-') 
-        ? parseInt(originalItem['N°']) - 1 
-        : null;
-
-    let deletionSuccessful = false;
-
-    if (originalItem['N°'].toString().includes('NEW-')) {
-        // Caso 1: Ítem nuevo (NEW-...) que nunca se sincronizó
-        this.showLoadingMessage('🗑️ Eliminado de la caché local (nunca fue sincronizado).', 'success');
-        deletionSuccessful = true;
-
-    } else if (sheetRowIndex !== null && sheetRowIndex >= 1) { // >= 1 porque 0 es la fila de headers
-        // Caso 2: Ítem sincronizado: Intentar eliminar en Google Sheets
-        const result = await this.sheetsAPI.deleteInventoryItem(sheetRowIndex);
-        
-        if (result.success) {
-            this.showLoadingMessage('🗑️ Equipo eliminado permanentemente de Google Sheets.', 'success');
-            deletionSuccessful = true;
-        } else {
-            this.showLoadingMessage(`⚠️ Error al eliminar remotamente: ${result.error}.`, 'error');
-            return;
-        }
-    } else {
-        this.showLoadingMessage('❌ No se puede eliminar: ID de registro inválido o no encontrado.', 'error');
-        return;
-    }
-
-    // Si la eliminación fue exitosa (local o remota), actualizar la caché
-    if (deletionSuccessful) {
-        this.inventoryData = this.inventoryData.filter(item => item['N°'] !== originalItem['N°']);
-        this.saveToLocalStorage(this.inventoryData);
-        this.filterData();
-        this.renderTable();
-        this.updateStats();
-    }
-  }
-  
-  // --- MÉTODOS DE UI Y DE UTILIDAD ---
-
-  /**
-   * Filtra los datos del inventario basándose en la búsqueda y los selectores.
-   */
-  filterData() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const deptoFilter = document.getElementById('deptoFilter').value;
-    const statusFilter = document.getElementById('statusFilter').value;
-    
-    let filtered = this.inventoryData.filter(item => {
-        // Filtro de Búsqueda (busca en todos los valores)
-        const searchMatch = Object.values(item).some(value => 
-            String(value).toLowerCase().includes(searchTerm)
-        );
-
-        // Filtro de Departamento
-        const deptoMatch = !deptoFilter || (item.SECTOR || '').toUpperCase() === deptoFilter.toUpperCase();
-
-        // Filtro de Estado
-        const statusMatch = !statusFilter || (item.STATUS || '').toUpperCase() === statusFilter.toUpperCase();
-
-        return searchMatch && deptoMatch && statusMatch;
-    });
-
-    this.filteredData = filtered;
-  }
-
-  /**
-   * Dibuja la tabla HTML con los datos filtrados.
+   * RENDERIZADO Y ESTADÍSTICAS
    */
   renderTable() {
     const tableBody = document.getElementById('inventoryTableBody');
-    tableBody.innerHTML = ''; // Limpia tabla
-    
+    tableBody.innerHTML = '';
+
     if (this.filteredData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="13" class="no-results">No se encontraron equipos que coincidan con los filtros.</td></tr>';
-        return;
+      tableBody.innerHTML = '<tr><td colspan="13" class="no-results">No se encontraron equipos que coincidan con los filtros o la búsqueda.</td></tr>';
+      return;
     }
 
     this.filteredData.forEach((item, index) => {
-        const row = document.createElement('tr');
-        // Clase para indicar ítem modificado localmente
-        if (item._modified || item._new) {
-            row.classList.add('row-modified');
-        }
+      const row = tableBody.insertRow();
+      const statusClass = item.STATUS === 'OPERATIVO' ? 'operativo' : 'inoperativo';
+      const isModifiedClass = item.isModified ? 'row-modified' : '';
 
-        const columns = ['N°', 'DESCRIPCION', 'MARCA', 'MODELO', 'SERIAL', 'ETIQUETA', 'SECTOR', 'STATUS', 'CUSTODIO RESPONSABLE', 'CEDULA', 'CARGO', 'OBSERVACIONES'];
-        
-        columns.forEach(col => {
-            const cell = document.createElement('td');
-            cell.textContent = item[col] || '';
-            
-            if (col === 'STATUS') {
-                const statusClass = (item.STATUS || '').toLowerCase() === 'operativo' ? 'operativo' : 'inoperativo';
-                cell.innerHTML = `<span class="status ${statusClass}">${item.STATUS || 'N/A'}</span>`;
-            }
-            if (col === 'N°' && (item._modified || item._new)) {
-                // Añadir badge para indicar modificaciones/nuevos locales
-                const badge = `<span title="Guardado localmente, requiere sincronización" class="modified-badge">💾</span>`;
-                cell.innerHTML = `${item['N°'] || ''} ${badge}`;
-            }
-            row.appendChild(cell);
-        });
+      row.className = isModifiedClass;
 
-        // Columna de Acciones
-        const actionsCell = document.createElement('td');
-        actionsCell.classList.add('actions-cell');
-        actionsCell.innerHTML = `
-            <button class="btn-action edit-btn" onclick="app.showEditModal(${index})">✏️ Editar</button>
-            <button class="btn-action delete-btn" onclick="app.deleteItem(${index})">🗑️ Eliminar</button>
-        `;
-        row.appendChild(actionsCell);
-
-        tableBody.appendChild(row);
+      row.innerHTML = `
+        <td>${item['N°']}</td>
+        <td>${item.DESCRIPCION}</td>
+        <td>${item.MARCA}</td>
+        <td>${item.MODELO}</td>
+        <td>${item.SERIAL}</td>
+        <td>${item.ETIQUETA}</td>
+        <td>${item.SECTOR}</td>
+        <td><span class="status ${statusClass}">${item.STATUS}</span></td>
+        <td>${item['CUSTODIO RESPONSABLE']}</td>
+        <td>${item.CEDULA}</td>
+        <td>${item.CARGO}</td>
+        <td>
+            ${item.OBSERVACIONES || ''}
+            ${item.isModified ? '<span class="modified-badge">Modificado</span>' : ''}
+        </td>
+        <td>
+          <button class="btn-action edit-btn" onclick="app.openEditModal(${item['N°']})">✏️ Editar</button>
+          <button class="btn-action delete-btn" onclick="app.deleteItem(${item['N°']})">🗑️ Eliminar</button>
+        </td>
+      `;
     });
   }
 
-  /**
-   * Actualiza los contadores de estadísticas.
-   */
   updateStats() {
     const total = this.inventoryData.length;
-    const operativo = this.inventoryData.filter(item => (item.STATUS || '').toUpperCase() === 'OPERATIVO').length;
-    const inoperativo = this.inventoryData.filter(item => (item.STATUS || '').toUpperCase() === 'INOPERATIVO').length;
+    const operativos = this.inventoryData.filter(item => item.STATUS === 'OPERATIVO').length;
+    const inoperativos = total - operativos;
 
     document.getElementById('totalCount').textContent = total;
-    document.getElementById('operativoCount').textContent = operativo;
-    document.getElementById('inoperativoCount').textContent = inoperativo;
+    document.getElementById('operativoCount').textContent = operativos;
+    document.getElementById('inoperativoCount').textContent = inoperativos;
   }
 
   /**
-   * Configura todos los listeners de eventos para inputs y botones.
+   * LÓGICA DE BÚSQUEDA Y FILTRADO
+   */
+  applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+    const depto = document.getElementById('deptoFilter').value;
+    const status = document.getElementById('statusFilter').value;
+
+    this.filteredData = this.inventoryData.filter(item => {
+      // Filtrar por Sector
+      if (depto && item.SECTOR !== depto) return false;
+      // Filtrar por Status
+      if (status && item.STATUS !== status) return false;
+      
+      // Filtrar por Búsqueda (busca en varios campos clave)
+      if (search) {
+        const searchableFields = [
+          item.DESCRIPCION, item.SERIAL, item.ETIQUETA, item['CUSTODIO RESPONSABLE'], item.CEDULA, item.CARGO, item.OBSERVACIONES
+        ].map(val => (val || '').toLowerCase());
+        
+        return searchableFields.some(field => field.includes(search));
+      }
+      
+      return true;
+    });
+
+    this.renderTable();
+  }
+
+  /**
+   * MANEJO DE EVENTOS
    */
   setupEventListeners() {
-    // Filtros de búsqueda
-    document.getElementById('searchInput').addEventListener('input', () => {
-        this.filterData();
-        this.renderTable();
-        this.updateStats();
-    });
+    document.getElementById('searchInput').addEventListener('input', () => this.applyFilters());
+    document.getElementById('deptoFilter').addEventListener('change', () => this.applyFilters());
+    document.getElementById('statusFilter').addEventListener('change', () => this.applyFilters());
+    document.getElementById('addNewBtn').addEventListener('click', () => this.openAddModal());
+    document.getElementById('clearLocalBtn').addEventListener('click', () => this.clearLocalStorage());
+    document.getElementById('refreshBtn').addEventListener('click', () => this.refreshData());
     
-    document.getElementById('deptoFilter').addEventListener('change', () => {
-        this.filterData();
-        this.renderTable();
-        this.updateStats();
-    });
+    // Event listener para el formulario de agregar (CORRECCIÓN CLAVE)
+    document.getElementById('addModalForm').addEventListener('submit', (e) => this.addNewItem(e));
+    
+    // Event listener para el formulario de edición
+    document.getElementById('editModalForm').addEventListener('submit', (e) => this.saveEditItem(e));
+  }
 
-    document.getElementById('statusFilter').addEventListener('change', () => {
-        this.filterData();
-        this.renderTable();
-        this.updateStats();
-    });
+  /**
+   * CRUD: AGREGAR NUEVO ITEM
+   */
+  addNewItem(e) {
+    e.preventDefault(); // Detener el envío del formulario
     
-    // Botones de acción principales
-    document.getElementById('addNewBtn').addEventListener('click', () => this.showAddModal());
-    document.getElementById('refreshBtn').addEventListener('click', () => this.loadInventory());
-    document.getElementById('clearLocalBtn').addEventListener('click', () => this.clearLocalData());
-    
-    // Event listeners para los botones de cerrar modales
-    document.querySelector('.modal-add .btn-cancel').addEventListener('click', () => this.closeAddModal());
-    document.querySelector('.modal-edit .btn-cancel').addEventListener('click', () => this.closeEditModal());
-    
-    // Manejo de submits de formularios (previene recarga y llama a la función de guardado)
-    document.querySelector('.modal-add form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.addNewItem();
-    });
-    
-    document.querySelector('.modal-edit form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const rowIndex = parseInt(document.getElementById('editModalForm').dataset.rowIndex);
-        this.saveChanges(rowIndex);
-    });
+    // 1. Capturar valores
+    const newDescripcion = document.getElementById('addDescripcion').value.trim();
+    const newStatus = document.getElementById('addSTATUS').value;
+    const newSector = document.getElementById('addSECTOR').value;
+
+    // 2. VALIDACIÓN (Lógica corregida)
+    if (!newDescripcion || !newStatus || !newSector) {
+      this.showNotification('⚠️ Faltan campos obligatorios: Descripción, Status y Sector.', 'warning');
+      return;
+    }
+
+    // 3. Crear nuevo objeto
+    const newItem = {
+      'N°': this.getNextId(),
+      'DESCRIPCION': newDescripcion,
+      'MARCA': document.getElementById('addMarca').value.trim(),
+      'MODELO': document.getElementById('addModelo').value.trim(),
+      'SERIAL': document.getElementById('addSerial').value.trim(),
+      'ETIQUETA': document.getElementById('addEtiqueta').value.trim(),
+      'SECTOR': newSector,
+      'STATUS': newStatus,
+      'CUSTODIO RESPONSABLE': document.getElementById('addResponsable').value.trim(),
+      'CEDULA': document.getElementById('addCedula').value.trim(),
+      'CARGO': document.getElementById('addCargo').value.trim(),
+      'OBSERVACIONES': document.getElementById('addObservaciones').value.trim(),
+      'isModified': true // Marcar como modificado localmente
+    };
+
+    // 4. Agregar a los datos, guardar y actualizar UI
+    this.inventoryData.unshift(newItem); // Añadir al inicio
+    this.saveToLocalStorage();
+    this.applyFilters();
+    this.updateStats();
+    this.closeAddModal();
+    this.showNotification(`✅ Equipo N°${newItem['N°']} agregado correctamente.`, 'success');
   }
   
-  /**
-   * Recoge los datos del formulario de "Agregar Nuevo Equipo".
-   */
-  collectAddFormData() {
-    const newItem = {};
-    const headers = ['DESCRIPCION', 'MARCA', 'MODELO', 'SERIAL', 'ETIQUETA', 'SECTOR', 'STATUS', 'CUSTODIO RESPONSABLE', 'CEDULA', 'CARGO', 'OBSERVACIONES'];
-    headers.forEach(header => {
-        const inputId = 'add' + header.replace(/\s/g, '');
-        const input = document.getElementById(inputId);
-        if (input) {
-            newItem[header] = input.value.trim();
-        }
-    });
-    // El N° se asigna después de la sincronización remota o como NEW-XXXX localmente
-    newItem['N°'] = ''; 
-    return newItem;
-  }
-
-  // --- MÉTODOS DE NOTIFICACIÓN Y MODALES ---
-
-  showLoadingMessage(message, type = 'info') {
-    this.showNotification(message, type); 
+  getNextId() {
+    // Genera el siguiente N° consecutivo
+    const maxId = this.inventoryData.reduce((max, item) => Math.max(max, parseInt(item['N°']) || 0), 0);
+    return (maxId + 1).toString();
   }
 
   /**
-   * Muestra una notificación simple flotante (sustituto de alert()).
+   * CRUD: ELIMINAR ITEM
    */
+  deleteItem(id) {
+    // Reemplazamos alert() con un modal/confirmación simulada o simplemente eliminamos
+    if (!confirm(`¿Está seguro de eliminar el equipo N°${id}? Esta acción solo es local.`)) {
+        return;
+    }
+
+    const initialLength = this.inventoryData.length;
+    this.inventoryData = this.inventoryData.filter(item => parseInt(item['N°']) !== parseInt(id));
+
+    if (this.inventoryData.length < initialLength) {
+        this.saveToLocalStorage();
+        this.applyFilters();
+        this.updateStats();
+        this.showNotification(`🗑️ Equipo N°${id} eliminado.`, 'info');
+    } else {
+        this.showNotification('Error al eliminar el equipo.', 'error');
+    }
+  }
+
+  /**
+   * CRUD: EDITAR ITEM
+   */
+  openEditModal(id) {
+    const itemToEdit = this.inventoryData.find(item => parseInt(item['N°']) === parseInt(id));
+    if (!itemToEdit) {
+      this.showNotification('Error: Equipo no encontrado para edición.', 'error');
+      return;
+    }
+
+    document.getElementById('editRowNumber').textContent = id;
+    document.getElementById('editModalForm').setAttribute('data-row-index', id);
+
+    // Llenar el formulario con los datos del equipo
+    document.getElementById('editDescripcion').value = itemToEdit.DESCRIPCION || '';
+    document.getElementById('editMarca').value = itemToEdit.MARCA || '';
+    document.getElementById('editModelo').value = itemToEdit.MODELO || '';
+    document.getElementById('editSerial').value = itemToEdit.SERIAL || '';
+    document.getElementById('editEtiqueta').value = itemToEdit.ETIQUETA || '';
+    document.getElementById('editSECTOR').value = itemToEdit.SECTOR || '';
+    document.getElementById('editSTATUS').value = itemToEdit.STATUS || '';
+    document.getElementById('editResponsable').value = itemToEdit['CUSTODIO RESPONSABLE'] || '';
+    document.getElementById('editCedula').value = itemToEdit.CEDULA || '';
+    document.getElementById('editCargo').value = itemToEdit.CARGO || '';
+    document.getElementById('editObservaciones').value = itemToEdit.OBSERVACIONES || '';
+
+    this.showModal('editModal');
+  }
+
+  saveEditItem(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('editModalForm').getAttribute('data-row-index');
+    const index = this.inventoryData.findIndex(item => parseInt(item['N°']) === parseInt(id));
+
+    if (index === -1) {
+      this.showNotification('Error: Equipo a editar no encontrado.', 'error');
+      return;
+    }
+    
+    // Capturar nuevos valores
+    const newDescripcion = document.getElementById('editDescripcion').value.trim();
+    const newStatus = document.getElementById('editSTATUS').value;
+    const newSector = document.getElementById('editSECTOR').value;
+
+    // Validación
+    if (!newDescripcion || !newStatus || !newSector) {
+      this.showNotification('⚠️ Faltan campos obligatorios: Descripción, Status y Sector.', 'warning');
+      return;
+    }
+
+    // Actualizar el objeto en el array
+    this.inventoryData[index] = {
+      ...this.inventoryData[index], // Mantener campos originales si existen
+      'DESCRIPCION': newDescripcion,
+      'MARCA': document.getElementById('editMarca').value.trim(),
+      'MODELO': document.getElementById('editModelo').value.trim(),
+      'SERIAL': document.getElementById('editSerial').value.trim(),
+      'ETIQUETA': document.getElementById('editEtiqueta').value.trim(),
+      'SECTOR': newSector,
+      'STATUS': newStatus,
+      'CUSTODIO RESPONSABLE': document.getElementById('editResponsable').value.trim(),
+      'CEDULA': document.getElementById('editCedula').value.trim(),
+      'CARGO': document.getElementById('editCargo').value.trim(),
+      'OBSERVACIONES': document.getElementById('editObservaciones').value.trim(),
+      'isModified': true // Marcar como modificado
+    };
+
+    this.saveToLocalStorage();
+    this.applyFilters();
+    this.updateStats();
+    this.closeEditModal();
+    this.showNotification(`✅ Equipo N°${id} guardado correctamente.`, 'success');
+  }
+
+  /**
+   * MANEJO DE MODALES
+   */
+  showModal(id) {
+    document.getElementById(id).style.display = 'flex'; // Usamos flex para centrar
+  }
+
+  closeAddModal() {
+    document.getElementById('addModalForm').reset();
+    document.getElementById('addModal').style.display = 'none';
+  }
+
+  closeEditModal() {
+    document.getElementById('editModalForm').reset();
+    document.getElementById('editModal').style.display = 'none';
+  }
+
+  openAddModal() {
+    this.showModal('addModal');
+  }
+
+  /**
+   * HERRAMIENTAS
+   */
+  clearLocalStorage() {
+    if (confirm('¿Está seguro de que desea limpiar la caché (datos guardados localmente)? Los datos se recargarán desde Google Sheets.')) {
+        localStorage.removeItem(this.localStorageKey);
+        this.inventoryData = [];
+        this.filteredData = [];
+        this.showNotification('🧹 Caché local limpiada. Actualizando datos...', 'info');
+        this.loadInventory();
+        this.renderTable();
+        this.updateStats();
+    }
+  }
+
+  async refreshData() {
+    this.showNotification('🔄 Recargando datos de Google Sheets...', 'info');
+    await this.loadInventory();
+    this.applyFilters();
+    this.updateStats();
+    this.showNotification('✅ Datos actualizados.', 'success');
+  }
+
+  /**
+   * MENSAJES DE ESTADO
+   */
+  showLoadingMessage(message) {
+    // Implementar un indicador de carga visible
+    let loading = document.getElementById('loadingIndicator');
+    if (!loading) {
+        loading = document.createElement('div');
+        loading.id = 'loadingIndicator';
+        loading.textContent = message;
+        loading.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: bold;
+        `;
+        document.body.appendChild(loading);
+    } else {
+        loading.textContent = message;
+    }
+  }
+
+  hideLoadingMessage() {
+    const loading = document.getElementById('loadingIndicator');
+    if (loading) {
+        loading.parentNode.removeChild(loading);
+    }
+  }
+
   showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
-    
     notification.style.cssText = `
       position: fixed;
       top: 20px;
@@ -491,54 +430,35 @@ class InventoryApp {
   }
 
   getNotificationColor(type) {
-    const colors = { success: '#d4edda', error: '#f8d7da', warning: '#fff3cd', info: '#d1ecf1' };
+    const colors = {
+      success: '#d4edda',
+      error: '#f8d7da',
+      warning: '#fff3cd',
+      info: '#d1ecf1'
+    };
     return colors[type] || colors.info;
   }
 
   getNotificationTextColor(type) {
-    const colors = { success: '#155724', error: '#721c24', warning: '#856404', info: '#0c5460' };
+    const colors = {
+      success: '#155724',
+      error: '#721c24',
+      warning: '#856404',
+      info: '#0c5460'
+    };
     return colors[type] || colors.info;
   }
-  
+
   getNotificationBorderColor(type) {
-    const colors = { success: '#c3e6cb', error: '#f5c6cb', warning: '#ffeeba', info: '#bee5eb' };
+    const colors = {
+      success: '#c3e6cb',
+      error: '#f5c6cb',
+      warning: '#ffeeba',
+      info: '#bee5eb'
+    };
     return colors[type] || colors.info;
-  }
-  
-  showAddModal() {
-    document.getElementById('addModal').style.display = 'flex';
-  }
-
-  closeAddModal() {
-    document.getElementById('addModal').style.display = 'none';
-    document.getElementById('addModalForm').reset();
-  }
-
-  showEditModal(rowIndex) {
-    const item = this.filteredData[rowIndex];
-    document.getElementById('editModal').style.display = 'flex';
-    document.getElementById('editModalForm').dataset.rowIndex = rowIndex;
-    document.getElementById('editRowNumber').textContent = item['N°'] || 'Nuevo';
-
-    const headers = ['DESCRIPCION', 'MARCA', 'MODELO', 'SERIAL', 'ETIQUETA', 'SECTOR', 'STATUS', 'CUSTODIO RESPONSABLE', 'CEDULA', 'CARGO', 'OBSERVACIONES'];
-    headers.forEach(header => {
-        const inputId = 'edit' + header.replace(/\s/g, '');
-        const input = document.getElementById(inputId);
-        if (input) {
-            // Asegurarse de que el sector y status se muestren correctamente en el select
-            if (input.tagName === 'SELECT') {
-                input.value = (item[header] || '').toUpperCase();
-            } else {
-                input.value = item[header] || '';
-            }
-        }
-    });
-  }
-
-  closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
   }
 }
 
-// Inicialización de la aplicación al cargar el script
+// Inicializar la aplicación
 const app = new InventoryApp();
