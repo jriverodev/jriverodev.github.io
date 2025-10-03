@@ -1250,3 +1250,36 @@ footer {
   border: 1px solid #f5c6cb !important;
 
 }
+
+
+
+
+
+/* Filas modificadas */
+.modified-row {
+  background: #fff3cd !important;
+  border-left: 3px solid #ffc107;
+}
+
+.modified-badge {
+  color: #856404;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+/* Botón limpiar */
+#clearLocalBtn {
+  background: #6c757d !important;
+}
+
+#clearLocalBtn:hover {
+  background: #545b62 !important;
+}
+
+/* Mejora para estadísticas */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
