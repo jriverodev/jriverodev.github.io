@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Inventario - Equipos Tecnológicos</title>
     <link rel="stylesheet" href="styles/style.css">
-    <!-- Librería para Exportar a Excel -->
+    <!-- Librería para manejar archivos Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -13,35 +13,17 @@
         <header>
             <h1>📊 Inventario de Equipos Tecnológicos</h1>
             <div class="controls">
-                <input type="search" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, etiqueta...">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, departamento...">
                 <button id="addNewBtn">➕ Agregar Equipo</button>
                 <button id="exportBtn">📥 Exportar Excel</button>
-                <button id="clearLocalBtn">🧹 Limpiar Locales</button>
+                <button id="clearLocalBtn">🧹 Limpiar Caché</button>
                 <button id="refreshBtn">🔄 Actualizar</button>
             </div>
         </header>
 
-        <div class="filters">
-            <select id="deptoFilter">
-                <option value="">Todos los departamentos</option>
-                <option value="SIGAL">SIGAL</option>
-                <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
-                <option value="TLA">TLA</option>
-                <option value="MTTO">MTTO</option>
-                <option value="CONTRATACION">CONTRATACION</option>
-                <option value="SALA DE MTTO">SALA DE MTTO</option>
-                <option value="CONTABILIDAD">CONTABILIDAD</option>
-            </select>
-            <select id="statusFilter">
-                <option value="">Todos los estados</option>
-                <option value="OPERATIVO">OPERATIVO</option>
-                <option value="INOPERATIVO">INOPERATIVO</option>
-            </select>
-        </div>
-
         <div class="stats">
             <div class="stat-card">
-                <h3>Total Equipos</h3>
+                <h3>Total de Equipos</h3>
                 <span id="totalCount">0</span>
             </div>
             <div class="stat-card">
@@ -54,79 +36,97 @@
             </div>
         </div>
 
+        <div class="filters">
+            <select id="deptoFilter">
+                <option value="">Todos los sectores</option>
+                <option value="SIGAL">SIGAL</option>
+                <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
+                <option value="TLA">TLA</option>
+                <option value="MTTO">MTTO</option>
+                <option value="CONTRATACION">CONTRATACION</option>
+                <option value="SALA DE MTTO">SALA DE MTTO</option>
+            </select>
+            <select id="statusFilter">
+                <option value="">Todos los Status</option>
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="INOPERATIVO">INOPERATIVO</option>
+            </select>
+        </div>
+
         <div class="table-container">
             <table class="inventory-table">
                 <thead>
                     <tr>
                         <th>N°</th>
-                        <th>Descripción</th>
-                        <th>Marca</th>
-                        <th>Modelo</th>
-                        <th>Serial</th>
-                        <th>Etiqueta</th>
-                        <th>Sector</th>
-                        <th>Status</th>
-                        <th>Custodio Responsable</th>
-                        <th>Cédula</th>
-                        <th>Cargo</th>
-                        <th>Observaciones</th>
-                        <th>Acciones</th>
+                        <th>DESCRIPCION</th>
+                        <th>MARCA</th>
+                        <th>MODELO</th>
+                        <th>SERIAL</th>
+                        <th>ETIQUETA</th>
+                        <th>SECTOR</th>
+                        <th>STATUS</th>
+                        <th>CUSTODIO RESPONSABLE</th>
+                        <th>CEDULA</th>
+                        <th>CARGO</th>
+                        <th>OBSERVACIONES</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="inventoryTableBody">
-                    <!-- Filas cargadas por js/app.js -->
+                    <!-- Filas cargadas por JavaScript -->
                 </tbody>
             </table>
         </div>
-
-        <!-- Modal para AGREGAR Equipo -->
-        <div id="addModal" class="modal-overlay">
-            <div class="modal-content modal-add">
+        
+        <!-- MODAL AGREGAR EQUIPO -->
+        <div id="addModal" class="modal modal-add">
+            <div class="modal-content">
                 <h2>➕ Agregar Nuevo Equipo</h2>
                 <form id="addModalForm">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label for="addDescripcion">Descripción *</label>
-                            <input type="text" id="addDescripcion" placeholder="Laptop, Monitor, etc." required>
+                        <div class="form-group full-width">
+                            <label for="addDescripcion">Descripción</label>
+                            <input type="text" id="addDescripcion" placeholder="Laptop, Monitor, Teléfono IP...">
                         </div>
                         <div class="form-group">
                             <label for="addMarca">Marca</label>
-                            <input type="text" id="addMarca" placeholder="HP, Samsung, etc.">
+                            <input type="text" id="addMarca" placeholder="DELL, HP, Cisco">
                         </div>
                         <div class="form-group">
                             <label for="addModelo">Modelo</label>
-                            <input type="text" id="addModelo" placeholder="Elitebook, SyncMaster, etc.">
+                            <input type="text" id="addModelo" placeholder="Latitude 5420, P2419H">
                         </div>
                         <div class="form-group">
                             <label for="addSerial">Serial</label>
-                            <input type="text" id="addSerial" placeholder="Número de Serial">
+                            <input type="text" id="addSerial" placeholder="Número de serie del equipo">
                         </div>
                         <div class="form-group">
                             <label for="addEtiqueta">Etiqueta</label>
-                            <input type="text" id="addEtiqueta" placeholder="N° de Etiqueta">
+                            <input type="text" id="addEtiqueta" placeholder="N° de Etiqueta (si aplica)">
                         </div>
                         <div class="form-group">
-                            <label for="addSector">Sector</label>
-                            <select id="addSector">
+                            <label for="addSECTOR">Sector</label>
+                            <select id="addSECTOR">
+                                <option value="">Seleccione</option>
                                 <option value="SIGAL">SIGAL</option>
                                 <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
                                 <option value="TLA">TLA</option>
                                 <option value="MTTO">MTTO</option>
                                 <option value="CONTRATACION">CONTRATACION</option>
                                 <option value="SALA DE MTTO">SALA DE MTTO</option>
-                                <option value="CONTABILIDAD">CONTABILIDAD</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="addStatus">Status</label>
-                            <select id="addStatus">
+                            <label for="addSTATUS">Status</label>
+                            <select id="addSTATUS">
+                                <option value="">Seleccione</option>
                                 <option value="OPERATIVO">OPERATIVO</option>
                                 <option value="INOPERATIVO">INOPERATIVO</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="addCustodioResponsable">Custodio Responsable</label>
-                            <input type="text" id="addCustodioResponsable" placeholder="Responsable">
+                            <label for="addResponsable">Custodio Responsable</label>
+                            <input type="text" id="addResponsable" placeholder="Nombre completo del custodio">
                         </div>
                         <div class="form-group">
                             <label for="addCedula">Cédula</label>
@@ -138,25 +138,26 @@
                         </div>
                         <div class="form-group full-width">
                             <label for="addObservaciones">Observaciones</label>
-                            <textarea id="addObservaciones" placeholder="Observaciones" rows="3"></textarea>
+                            <textarea id="addObservaciones" placeholder="Detalles o notas importantes" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-buttons">
-                        <button type="button" class="btn-cancel">❌ Cancelar</button>
+                        <button type="button" class="btn-cancel" onclick="app.closeAddModal()">❌ Cancelar</button>
+                        <!-- Usamos type="submit" para que la app.js capture el evento -->
                         <button type="submit" class="btn-save">💾 Agregar Equipo</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Modal para EDITAR Equipo -->
-        <div id="editModal" class="modal-overlay">
-            <div class="modal-content modal-edit">
-                <h2>✏️ Editar Equipo N° <span id="editRowNumber"></span></h2>
+        <!-- MODAL EDITAR EQUIPO -->
+        <div id="editModal" class="modal modal-edit">
+            <div class="modal-content">
+                <h2>✏️ Editar Equipo N°: <span id="editRowNumber"></span></h2>
                 <form id="editModalForm" data-row-index="">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label for="editDescripcion">Descripción *</label>
+                        <div class="form-group full-width">
+                            <label for="editDescripcion">Descripción</label>
                             <input type="text" id="editDescripcion" required>
                         </div>
                         <div class="form-group">
@@ -176,27 +177,28 @@
                             <input type="text" id="editEtiqueta">
                         </div>
                         <div class="form-group">
-                            <label for="editSector">Sector</label>
-                            <select id="editSector">
+                            <label for="editSECTOR">Sector</label>
+                            <select id="editSECTOR">
+                                <option value="">Seleccione</option>
                                 <option value="SIGAL">SIGAL</option>
                                 <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
                                 <option value="TLA">TLA</option>
                                 <option value="MTTO">MTTO</option>
                                 <option value="CONTRATACION">CONTRATACION</option>
                                 <option value="SALA DE MTTO">SALA DE MTTO</option>
-                                <option value="CONTABILIDAD">CONTABILIDAD</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="editStatus">Status</label>
-                            <select id="editStatus">
+                            <label for="editSTATUS">Status</label>
+                            <select id="editSTATUS">
+                                <option value="">Seleccione</option>
                                 <option value="OPERATIVO">OPERATIVO</option>
                                 <option value="INOPERATIVO">INOPERATIVO</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="editCustodioResponsable">Custodio Responsable</label>
-                            <input type="text" id="editCustodioResponsable">
+                            <label for="editResponsable">Custodio Responsable</label>
+                            <input type="text" id="editResponsable">
                         </div>
                         <div class="form-group">
                             <label for="editCedula">Cédula</label>
@@ -212,19 +214,21 @@
                         </div>
                     </div>
                     <div class="modal-buttons">
-                        <button type="button" class="btn-cancel">❌ Cancelar</button>
+                        <button type="button" class="btn-cancel" onclick="app.closeEditModal()">❌ Cancelar</button>
+                        <!-- Usamos type="submit" para que la app.js capture el evento -->
                         <button type="submit" class="btn-save">💾 Guardar Cambios</button>
                     </div>
                 </form>
             </div>
         </div>
 
+
         <footer>
             <p>Sistema de Inventario - Desarrollado para gestión de equipos tecnológicos</p>
         </footer>
     </div>
 
-    <!-- Scripts de la Aplicación -->
+    <!-- Carga de scripts -->
     <script src="js/google-sheets.js"></script>
     <script src="js/export.js"></script>
     <script src="js/app.js"></script>
