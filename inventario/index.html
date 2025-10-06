@@ -83,6 +83,7 @@
                         <th>RESPONSABLE</th>
                         <th>CEDULA</th>
                         <th>CARGO</th>
+                        <th>OBSERVACIONES</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
@@ -100,62 +101,61 @@
         <!-- Modal para editar -->
         <div id="editModal" class="modal">
             <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>✏️ Editar Equipo</h2>
-                <form id="editForm" onsubmit="return false;">
-                    <input type="hidden" id="editRowIndex">
+                <span class="close" onclick="app.closeEditModal()">&times;</span>
+                <h2>✏️ Editar Equipo <span id="editRowNumber" class="row-number"></span></h2>
+                <form id="editModalForm">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label>Descripción *</label>
-                            <input type="text" id="editDescripcion" placeholder="Descripción" required>
+                         <div class="form-group">
+                            <label for="editDescripcion">Descripción *</label>
+                            <input type="text" id="editDescripcion" required>
                         </div>
                         <div class="form-group">
-                            <label>Marca</label>
-                            <input type="text" id="editMarca" placeholder="Marca">
+                            <label for="editMarca">Marca</label>
+                            <input type="text" id="editMarca">
                         </div>
                         <div class="form-group">
-                            <label>Modelo</label>
-                            <input type="text" id="editModelo" placeholder="Modelo">
+                            <label for="editModelo">Modelo</label>
+                            <input type="text" id="editModelo">
                         </div>
                         <div class="form-group">
-                            <label>Serial</label>
-                            <input type="text" id="editSerial" placeholder="Serial">
+                            <label for="editSerial">Serial</label>
+                            <input type="text" id="editSerial">
                         </div>
                         <div class="form-group">
-                            <label>Etiqueta</label>
-                            <input type="text" id="editEtiqueta" placeholder="Etiqueta">
+                            <label for="editEtiqueta">Etiqueta</label>
+                            <input type="text" id="editEtiqueta">
                         </div>
                         <div class="form-group">
-                            <label>Sector</label>
-                            <input type="text" id="editSector" placeholder="Sector">
+                            <label for="editSector">Sector *</label>
+                            <input type="text" id="editSector" required>
                         </div>
                         <div class="form-group">
-                            <label>Status</label>
-                            <select id="editStatus">
+                            <label for="editStatus">Status *</label>
+                            <select id="editStatus" required>
                                 <option value="OPERATIVO">OPERATIVO</option>
                                 <option value="INOPERATIVO">INOPERATIVO</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Responsable</label>
-                            <input type="text" id="editResponsable" placeholder="Responsable">
+                            <label for="editResponsable">Responsable</label>
+                            <input type="text" id="editResponsable">
                         </div>
                         <div class="form-group">
-                            <label>Cédula</label>
-                            <input type="text" id="editCedula" placeholder="Cédula">
+                            <label for="editCedula">Cédula</label>
+                            <input type="text" id="editCedula">
                         </div>
                         <div class="form-group">
-                            <label>Cargo</label>
-                            <input type="text" id="editCargo" placeholder="Cargo">
+                            <label for="editCargo">Cargo</label>
+                            <input type="text" id="editCargo">
                         </div>
                         <div class="form-group full-width">
-                            <label>Observaciones</label>
-                            <textarea id="editObservaciones" placeholder="Observaciones" rows="3"></textarea>
+                            <label for="editObservaciones">Observaciones</label>
+                            <textarea id="editObservaciones" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-buttons">
                         <button type="button" class="btn-cancel" onclick="app.closeEditModal()">❌ Cancelar</button>
-                        <button type="button" class="btn-save" onclick="app.saveChanges()">💾 Guardar Cambios</button>
+                        <button type="submit" class="btn-save">💾 Guardar Cambios</button>
                     </div>
                 </form>
             </div>
@@ -164,61 +164,61 @@
         <!-- Modal para agregar nuevo -->
         <div id="addModal" class="modal">
             <div class="modal-content">
-                <span class="close-add">&times;</span>
+                <span class="close-add" onclick="app.closeAddModal()">&times;</span>
                 <h2>➕ Agregar Nuevo Equipo</h2>
-                <form id="addForm" onsubmit="return false;">
-                    <div class="form-grid">
+                <form id="addModalForm">
+                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Descripción *</label>
-                            <input type="text" id="addDescripcion" placeholder="Descripción" required>
+                            <label for="addDescripcion">Descripción *</label>
+                            <input type="text" id="addDescripcion" required>
                         </div>
                         <div class="form-group">
-                            <label>Marca</label>
-                            <input type="text" id="addMarca" placeholder="Marca">
+                            <label for="addMarca">Marca</label>
+                            <input type="text" id="addMarca">
                         </div>
                         <div class="form-group">
-                            <label>Modelo</label>
-                            <input type="text" id="addModelo" placeholder="Modelo">
+                            <label for="addModelo">Modelo</label>
+                            <input type="text" id="addModelo">
                         </div>
                         <div class="form-group">
-                            <label>Serial</label>
-                            <input type="text" id="addSerial" placeholder="Serial">
+                            <label for="addSerial">Serial</label>
+                            <input type="text" id="addSerial">
                         </div>
                         <div class="form-group">
-                            <label>Etiqueta</label>
-                            <input type="text" id="addEtiqueta" placeholder="Etiqueta">
+                            <label for="addEtiqueta">Etiqueta</label>
+                            <input type="text" id="addEtiqueta">
                         </div>
                         <div class="form-group">
-                            <label>Sector</label>
-                            <input type="text" id="addSector" placeholder="Sector">
+                            <label for="addSector">Sector *</label>
+                            <input type="text" id="addSector" required>
                         </div>
                         <div class="form-group">
-                            <label>Status</label>
-                            <select id="addStatus">
+                            <label for="addStatus">Status *</label>
+                            <select id="addStatus" required>
                                 <option value="OPERATIVO">OPERATIVO</option>
                                 <option value="INOPERATIVO">INOPERATIVO</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Responsable</label>
-                            <input type="text" id="addResponsable" placeholder="Responsable">
+                            <label for="addResponsable">Responsable</label>
+                            <input type="text" id="addResponsable">
                         </div>
                         <div class="form-group">
-                            <label>Cédula</label>
-                            <input type="text" id="addCedula" placeholder="Cédula">
+                            <label for="addCedula">Cédula</label>
+                            <input type="text" id="addCedula">
                         </div>
                         <div class="form-group">
-                            <label>Cargo</label>
-                            <input type="text" id="addCargo" placeholder="Cargo">
+                            <label for="addCargo">Cargo</label>
+                            <input type="text" id="addCargo">
                         </div>
                         <div class="form-group full-width">
-                            <label>Observaciones</label>
-                            <textarea id="addObservaciones" placeholder="Observaciones" rows="3"></textarea>
+                            <label for="addObservaciones">Observaciones</label>
+                            <textarea id="addObservaciones" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-buttons">
                         <button type="button" class="btn-cancel" onclick="app.closeAddModal()">❌ Cancelar</button>
-                        <button type="button" class="btn-save" onclick="app.addNewItem()">💾 Agregar Equipo</button>
+                        <button type="submit" class="btn-save">💾 Agregar Equipo</button>
                     </div>
                 </form>
             </div>

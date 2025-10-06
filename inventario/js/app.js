@@ -4,8 +4,8 @@
  */
 
 class InventoryApp {
-  constructor() {
-    this.sheetsAPI = new GoogleSheetsAPI();
+  constructor(sheetsAPI) {
+    this.sheetsAPI = sheetsAPI;
     this.inventoryData = [];
     this.filteredData = [];
     this.localStorageKey = 'inventoryData_v2';
@@ -89,9 +89,11 @@ class InventoryApp {
     this.filteredData.forEach((item, index) => {
       const row = tableBody.insertRow();
       const statusClass = item.STATUS === 'OPERATIVO' ? 'operativo' : 'inoperativo';
-      const isModifiedClass = item.isModified ? 'row-modified' : '';
 
-      row.className = isModifiedClass;
+      // Verificamos si la fila ha sido modificada y aplicamos la clase correspondiente
+      if (item.isModified) {
+          row.classList.add('row-modified');
+      }
 
       row.innerHTML = `
         <td>${item['N°']}</td>
@@ -118,13 +120,22 @@ class InventoryApp {
   }
 
   updateStats() {
-    const total = this.inventoryData.length;
-    const operativos = this.inventoryData.filter(item => item.STATUS === 'OPERATIVO').length;
-    const inoperativos = total - operativos;
+    const data = this.inventoryData;
+    const total = data.length;
+    const operativos = data.filter(item => item.STATUS === 'OPERATIVO').length;
+    const depts = new Set(data.map(item => item.SECTOR)).size;
+    const cpus = data.filter(item => (item.DESCRIPCION || '').toUpperCase().includes('CPU')).length;
+    const laptops = data.filter(item => (item.DESCRIPCION || '').toUpperCase().includes('LAPTOP')).length;
+    const uniqueUsers = new Set(data.map(item => item['CUSTODIO RESPONSABLE'])).size;
+    const modified = data.filter(item => item.isModified).length;
 
-    document.getElementById('totalCount').textContent = total;
-    document.getElementById('operativoCount').textContent = operativos;
-    document.getElementById('inoperativoCount').textContent = inoperativos;
+    document.getElementById('totalEquipos').textContent = total;
+    document.getElementById('operativos').textContent = operativos;
+    document.getElementById('totalDeptos').textContent = depts;
+    document.getElementById('totalCPUs').textContent = cpus;
+    document.getElementById('totalLaptops').textContent = laptops;
+    document.getElementById('totalUsuarios').textContent = uniqueUsers;
+    document.getElementById('modificados').textContent = modified;
   }
 
   /**
@@ -177,21 +188,20 @@ class InventoryApp {
   /**
    * CRUD: AGREGAR NUEVO ITEM
    */
-  addNewItem(e) {
-    e.preventDefault(); // Detener el envío del formulario
-    
-    // 1. Capturar valores
-    const newDescripcion = document.getElementById('addDescripcion').value.trim();
-    const newStatus = document.getElementById('addSTATUS').value;
-    const newSector = document.getElementById('addSECTOR').value;
+  async addNewItem(e) {
+    e.preventDefault();
+    this.showLoadingMessage('💾 Guardando nuevo equipo...');
 
-    // 2. VALIDACIÓN (Lógica corregida)
+    const newDescripcion = document.getElementById('addDescripcion').value.trim();
+    const newStatus = document.getElementById('addStatus').value;
+    const newSector = document.getElementById('addSector').value;
+
     if (!newDescripcion || !newStatus || !newSector) {
-      this.showNotification('⚠️ Faltan campos obligatorios: Descripción, Status y Sector.', 'warning');
+      this.showNotification('⚠️ Faltan campos obligatorios.', 'warning');
+      this.hideLoadingMessage();
       return;
     }
 
-    // 3. Crear nuevo objeto
     const newItem = {
       'N°': this.getNextId(),
       'DESCRIPCION': newDescripcion,
@@ -205,20 +215,25 @@ class InventoryApp {
       'CEDULA': document.getElementById('addCedula').value.trim(),
       'CARGO': document.getElementById('addCargo').value.trim(),
       'OBSERVACIONES': document.getElementById('addObservaciones').value.trim(),
-      'isModified': true // Marcar como modificado localmente
     };
 
-    // 4. Agregar a los datos, guardar y actualizar UI
-    this.inventoryData.unshift(newItem); // Añadir al inicio
-    this.saveToLocalStorage();
-    this.applyFilters();
-    this.updateStats();
-    this.closeAddModal();
-    this.showNotification(`✅ Equipo N°${newItem['N°']} agregado correctamente.`, 'success');
+    const result = await this.sheetsAPI.addInventoryItem(newItem);
+    this.hideLoadingMessage();
+
+    if (result.success) {
+      newItem.rowIndex = result.rowIndex; // Guardar el nuevo índice de fila
+      this.inventoryData.unshift(newItem);
+      this.saveToLocalStorage();
+      this.applyFilters();
+      this.updateStats();
+      this.closeAddModal();
+      this.showNotification('✅ Equipo agregado en Google Sheets.', 'success');
+    } else {
+      this.showNotification(`❌ Error: ${result.error}`, 'error');
+    }
   }
   
   getNextId() {
-    // Genera el siguiente N° consecutivo
     const maxId = this.inventoryData.reduce((max, item) => Math.max(max, parseInt(item['N°']) || 0), 0);
     return (maxId + 1).toString();
   }
@@ -226,22 +241,29 @@ class InventoryApp {
   /**
    * CRUD: ELIMINAR ITEM
    */
-  deleteItem(id) {
-    // Reemplazamos alert() con un modal/confirmación simulada o simplemente eliminamos
-    if (!confirm(`¿Está seguro de eliminar el equipo N°${id}? Esta acción solo es local.`)) {
+  async deleteItem(id) {
+    const itemToDelete = this.inventoryData.find(item => parseInt(item['N°']) === parseInt(id));
+    if (!itemToDelete) {
+      this.showNotification('Error: Equipo no encontrado.', 'error');
+      return;
+    }
+
+    if (!confirm(`¿Seguro que quieres eliminar el equipo N°${id}? Esta acción es permanente.`)) {
         return;
     }
 
-    const initialLength = this.inventoryData.length;
-    this.inventoryData = this.inventoryData.filter(item => parseInt(item['N°']) !== parseInt(id));
+    this.showLoadingMessage('🗑️ Eliminando equipo...');
+    const result = await this.sheetsAPI.deleteInventoryItem(itemToDelete.rowIndex);
+    this.hideLoadingMessage();
 
-    if (this.inventoryData.length < initialLength) {
-        this.saveToLocalStorage();
-        this.applyFilters();
-        this.updateStats();
-        this.showNotification(`🗑️ Equipo N°${id} eliminado.`, 'info');
+    if (result.success) {
+      this.inventoryData = this.inventoryData.filter(item => parseInt(item['N°']) !== parseInt(id));
+      this.saveToLocalStorage();
+      this.applyFilters();
+      this.updateStats();
+      this.showNotification('🗑️ Equipo eliminado de Google Sheets.', 'success');
     } else {
-        this.showNotification('Error al eliminar el equipo.', 'error');
+      this.showNotification(`❌ Error: ${result.error}`, 'error');
     }
   }
 
@@ -264,8 +286,8 @@ class InventoryApp {
     document.getElementById('editModelo').value = itemToEdit.MODELO || '';
     document.getElementById('editSerial').value = itemToEdit.SERIAL || '';
     document.getElementById('editEtiqueta').value = itemToEdit.ETIQUETA || '';
-    document.getElementById('editSECTOR').value = itemToEdit.SECTOR || '';
-    document.getElementById('editSTATUS').value = itemToEdit.STATUS || '';
+    document.getElementById('editSector').value = itemToEdit.SECTOR || '';
+    document.getElementById('editStatus').value = itemToEdit.STATUS || '';
     document.getElementById('editResponsable').value = itemToEdit['CUSTODIO RESPONSABLE'] || '';
     document.getElementById('editCedula').value = itemToEdit.CEDULA || '';
     document.getElementById('editCargo').value = itemToEdit.CARGO || '';
@@ -274,50 +296,48 @@ class InventoryApp {
     this.showModal('editModal');
   }
 
-  saveEditItem(e) {
+  async saveEditItem(e) {
     e.preventDefault();
-    
+    this.showLoadingMessage('💾 Actualizando equipo...');
+
     const id = document.getElementById('editModalForm').getAttribute('data-row-index');
     const index = this.inventoryData.findIndex(item => parseInt(item['N°']) === parseInt(id));
 
     if (index === -1) {
-      this.showNotification('Error: Equipo a editar no encontrado.', 'error');
-      return;
-    }
-    
-    // Capturar nuevos valores
-    const newDescripcion = document.getElementById('editDescripcion').value.trim();
-    const newStatus = document.getElementById('editSTATUS').value;
-    const newSector = document.getElementById('editSECTOR').value;
-
-    // Validación
-    if (!newDescripcion || !newStatus || !newSector) {
-      this.showNotification('⚠️ Faltan campos obligatorios: Descripción, Status y Sector.', 'warning');
+      this.showNotification('Error: Equipo no encontrado.', 'error');
+      this.hideLoadingMessage();
       return;
     }
 
-    // Actualizar el objeto en el array
-    this.inventoryData[index] = {
-      ...this.inventoryData[index], // Mantener campos originales si existen
-      'DESCRIPCION': newDescripcion,
+    const updatedItem = {
+      ...this.inventoryData[index],
+      'DESCRIPCION': document.getElementById('editDescripcion').value.trim(),
       'MARCA': document.getElementById('editMarca').value.trim(),
       'MODELO': document.getElementById('editModelo').value.trim(),
       'SERIAL': document.getElementById('editSerial').value.trim(),
       'ETIQUETA': document.getElementById('editEtiqueta').value.trim(),
-      'SECTOR': newSector,
-      'STATUS': newStatus,
+      'SECTOR': document.getElementById('editSector').value.trim(),
+      'STATUS': document.getElementById('editStatus').value,
       'CUSTODIO RESPONSABLE': document.getElementById('editResponsable').value.trim(),
       'CEDULA': document.getElementById('editCedula').value.trim(),
       'CARGO': document.getElementById('editCargo').value.trim(),
       'OBSERVACIONES': document.getElementById('editObservaciones').value.trim(),
-      'isModified': true // Marcar como modificado
+      'isModified': false // La modificación se confirma en el backend
     };
 
-    this.saveToLocalStorage();
-    this.applyFilters();
-    this.updateStats();
-    this.closeEditModal();
-    this.showNotification(`✅ Equipo N°${id} guardado correctamente.`, 'success');
+    const result = await this.sheetsAPI.updateInventoryItem(updatedItem.rowIndex, updatedItem);
+    this.hideLoadingMessage();
+
+    if (result.success) {
+      this.inventoryData[index] = updatedItem;
+      this.saveToLocalStorage();
+      this.applyFilters();
+      this.updateStats();
+      this.closeEditModal();
+      this.showNotification('✅ Equipo actualizado en Google Sheets.', 'success');
+    } else {
+      this.showNotification(`❌ Error: ${result.error}`, 'error');
+    }
   }
 
   /**
@@ -460,5 +480,10 @@ class InventoryApp {
   }
 }
 
-// Inicializar la aplicación
-const app = new InventoryApp();
+let app; // Declarar en el ámbito global para que sea accesible desde el HTML
+
+// Inicializar la aplicación una vez que el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', () => {
+    const sheetsAPI = new GoogleSheetsAPI();
+    app = new InventoryApp(sheetsAPI);
+});
