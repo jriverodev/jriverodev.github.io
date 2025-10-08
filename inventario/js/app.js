@@ -417,28 +417,6 @@ class InventoryApp {
     }
 }
 
-
-
-
-
-
-// Global callbacks for Google API scripts
-function gapiLoaded() {
-  // This function is called when the main Google API client library is loaded.
-  console.log("Google API client library loaded.");
-  // If your app initializes gapi client here, trigger it.
-  // Otherwise, this might just be a placeholder for now.
-}
-
-function gisLoaded() {
-  // This function is called when the Google Identity Services library is loaded.
-  console.log("Google Identity Services library loaded.");
-}
-
-
-
-
-
 // --- Punto de Entrada de la Aplicación ---
 document.addEventListener('DOMContentLoaded', () => {
     const api = new GoogleSheetsAPI();
