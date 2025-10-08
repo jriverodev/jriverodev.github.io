@@ -73,18 +73,35 @@ class GoogleSheetsAPI {
         });
     }
 
+    normalizeHeader(header) {
+        const upperHeader = (header || '').toUpperCase().trim();
+        const headerMap = {
+            'CUSTODIO RESPONSABLE': 'RESPONSABLE',
+            'Nº': 'N°',
+            'NO.': 'N°',
+            'NUMERO': 'N°',
+            'SERIALES': 'SERIAL',
+            'ETIQUETAS': 'ETIQUETA',
+            'OBSERVACION': 'OBSERVACIONES',
+            'ESTADO': 'STATUS'
+        };
+        return headerMap[upperHeader] || upperHeader;
+    }
+
     parseGoogleVisualization(response) {
         if (!response || !response.table || !response.table.cols || !response.table.rows) {
             console.warn("La respuesta de Google Visualization API no tiene el formato esperado.");
             return [];
         }
 
-        const headers = response.table.cols.map(col => col.label || col.id);
+        const headers = response.table.cols.map(col => this.normalizeHeader(col.label || col.id));
+
         const data = response.table.rows.map(row => {
             const item = {};
             headers.forEach((header, index) => {
+                if (!header) return; // Ignorar columnas sin cabecera
                 const cell = row.c[index];
-                item[header] = cell ? (cell.f || cell.v) : ''; // Priorizar valor formateado 'f' si existe
+                item[header] = cell ? (cell.f || cell.v) : ''; // Priorizar valor formateado 'f'
             });
             return item;
         });
