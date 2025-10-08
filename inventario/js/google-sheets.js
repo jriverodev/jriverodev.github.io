@@ -1,112 +1,78 @@
-// google-sheets.js
-// Official Google Sheets API implementation for reading data
-
 class GoogleSheetsAPI {
     constructor() {
-        // --- CONFIGURATION: Replace with your values ---
+        // --- CONFIGURACIÓN ---
+        // Mueve todos los valores configurables a este objeto para fácil acceso.
         this.config = {
-            // Your Google Sheets Spreadsheet ID (from the sheet's URL)
-            spreadsheetId: '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c', // e.g., '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
-            // Your API key from Google Cloud Console
-            apiKey: 'https://script.google.com/macros/s/AKfycbwO7ge--VuiGRWV1ZkJAaXvcd11giM7lZ-cTgtyunKEChADHkA3N4uNlDXEh8OvkYc/exec',
-            // The name of the specific sheet/tab within your spreadsheet
-            sheetName: 'INVENTARIO'
+            spreadsheetId: '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c',
+            sheetName: 'INVENTARIO',
+            // IMPORTANTE: Esta URL debe ser reemplazada por la URL de tu propia
+            // Google Apps Script Web App desplegada. De lo contrario, las operaciones
+            // de escritura (agregar, editar, eliminar) no funcionarán.
+            webAppUrl: 'https://script.google.com/macros/s/AKfycbwO7ge--VuiGRWV1ZkJAaXvcd11giM7lZ-cTgtyunKEChADHkA3N4uNlDXEh8OvkYc/exec'
         };
-
-        // API discovery document and required permissions (read-only in this case)
-        this.discoveryDoc = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-        this.scopes = 'https://www.googleapis.com/auth/spreadsheets.readonly';
-        
-        this.gapiInited = false;
-        this.gisInited = false;
     }
 
-    /**
-     * Initializes the Google API client. This must be called before any other operations.
-     * Include the Google API script in your HTML: <script async defer src="https://apis.google.com/js/api.js"></script>
-     */
-    async initializeGapiClient() {
-        console.log('🔄 Initializing Google API client...');
-        try {
-            await gapi.client.init({
-                apiKey: this.config.apiKey,
-                discoveryDocs: [this.discoveryDoc],
-            });
-            this.gapiInited = true;
-            console.log('✅ Google API client initialized.');
-        } catch (error) {
-            console.error('❌ Error initializing Google API client:', error);
-        }
-    }
+    // --- LECTURA DE DATOS (usando JSONP para evitar problemas de CORS) ---
 
-    /**
-     * Main function to load data from the configured Google Sheet.
-     * @returns {Promise<Array>} A promise that resolves with an array of inventory items.
-     */
     async loadData() {
-        console.log('📡 Loading data from Google Sheets via API...');
-        
-        // Ensure the API client is initialized
-        if (!this.gapiInited) {
-            console.log('Google API client not ready, initializing...');
-            await this.initializeGapiClient();
-        }
-
+        console.log('📡 Cargando datos desde Google Sheets...');
         try {
-            // Use the spreadsheets.values.get method of the Sheets API
-            const response = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: this.config.spreadsheetId,
-                range: `${this.config.sheetName}!A:Z`, // Adjust range as needed (A:Z gets all columns)
-            });
-
-            const data = this.parseSheetData(response.result);
-            console.log(`✅ Data loaded successfully: ${data.length} records processed.`);
+            // Se utiliza JSONP para leer datos de una hoja de cálculo pública de Google.
+            // Esto es un truco común para eludir las restricciones de CORS del navegador
+            // sin necesidad de un backend intermediario.
+            const data = await this.loadWithJSONP();
+            if (!data || data.length === 0) {
+                console.warn('⚠️ No se recibieron datos de Google Sheets, se usarán datos de ejemplo.');
+                return this.getSampleData();
+            }
+            console.log(`✅ Datos de Google Sheets cargados: ${data.length} registros.`);
             return data;
-
         } catch (error) {
-            console.error('❌ Fatal error loading from Google Sheets API:', error);
-            // Fallback to sample data if the API call fails
-            console.log('📋 Falling back to sample data...');
+            console.error('❌ Error crítico al cargar datos de Google Sheets:', error);
+            console.log('📋 Usando datos de ejemplo como respaldo...');
             return this.getSampleData();
         }
     }
 
-    /**
-     * Parses the raw data from the Sheets API into a structured array of objects.
-     * Assumes the first row contains the headers/column names.
-     * @param {Object} result The result object from the Sheets API.
-     * @returns {Array} An array of objects representing the sheet rows.
-     */
-    parseSheetData(result) {
-        if (!result || !result.values || result.values.length === 0) {
-            console.warn('⚠️ No data found in the sheet or range.');
-            return [];
-        }
+    loadWithJSONP() {
+        return new Promise((resolve, reject) => {
+            const callbackName = `googleSheetsCallback_${Date.now()}`;
+            const scriptId = `jsonp_${callbackName}`;
+            const url = `https://docs.google.com/spreadsheets/d/${this.config.spreadsheetId}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${this.config.sheetName}`;
 
-        const rows = result.values;
-        const headers = rows[0].map(header => this.normalizeHeader(header)); // Normalize the headers from the first row
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(new Error('Timeout: La solicitud a Google Sheets ha tardado demasiado.'));
+            }, 10000);
 
-        // Start from the second row (index 1) to skip the header row
-        const data = rows.slice(1).map((row, rowIndex) => {
-            const item = {};
-            headers.forEach((header, colIndex) => {
-                // Map each header to the corresponding cell value; use empty string if cell is undefined
-                item[header] = row[colIndex] || '';
-            });
-            // Assign a unique ID for internal tracking
-            item.uniqueId = `row_${rowIndex}_${Date.now()}`;
-            return item;
+            const cleanup = () => {
+                clearTimeout(timeout);
+                delete window[callbackName];
+                document.getElementById(scriptId)?.remove();
+            };
+
+            window[callbackName] = (response) => {
+                cleanup();
+                if (response.status === 'error') {
+                    const errorMessage = response.errors.map(e => e.detailed_message).join(', ');
+                    reject(new Error(`Error de Google Sheets: ${errorMessage}`));
+                    return;
+                }
+                const data = this.parseGoogleVisualization(response);
+                resolve(data);
+            };
+
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = url;
+            script.onerror = () => {
+                cleanup();
+                reject(new Error('Error de red al intentar cargar el script de Google Sheets.'));
+            };
+            document.head.appendChild(script);
         });
-
-        // Filter out completely empty rows
-        return data.filter(item => Object.values(item).some(value => value !== ''));
     }
 
-    /**
-     * Normalizes header names to ensure consistent keys in the data objects.
-     * @param {string} header The original header string from the sheet.
-     * @returns {string} The normalized header string.
-     */
     normalizeHeader(header) {
         const upperHeader = (header || '').toUpperCase().trim();
         const headerMap = {
@@ -122,30 +88,85 @@ class GoogleSheetsAPI {
         return headerMap[upperHeader] || upperHeader;
     }
 
-    /**
-     * Provides sample data as a fallback in case the API request fails.
-     * @returns {Array} An array of sample inventory items.
-     */
+    parseGoogleVisualization(response) {
+        if (!response || !response.table || !response.table.cols || !response.table.rows) {
+            console.warn("La respuesta de Google Visualization API no tiene el formato esperado.");
+            return [];
+        }
+
+        const headers = response.table.cols.map(col => this.normalizeHeader(col.label || col.id));
+
+        const data = response.table.rows.map(row => {
+            const item = {};
+            headers.forEach((header, index) => {
+                if (!header) return; // Ignorar columnas sin cabecera
+                const cell = row.c[index];
+                item[header] = cell ? (cell.f || cell.v) : ''; // Priorizar valor formateado 'f'
+            });
+            return item;
+        });
+
+        return data;
+    }
+
     getSampleData() {
-        console.log("📋 Generating sample data for demonstration.");
+        console.log("📋 Generando datos de ejemplo para demostración.");
         return [
-            { 'N°': '1', 'DESCRIPCION': 'LAPTOP DEMO', 'MARCA': 'HP', 'MODELO': 'ELITEBOOK', 'SERIAL': 'DEMO111', 'ETIQUETA': '1041594', 'SECTOR': 'SIGAL', 'STATUS': 'OPERATIVO', 'RESPONSABLE': 'JESÚS RIVERO', 'CEDULA': '18635848', 'CARGO': 'JEFE DE INFORMÁTICA', 'OBSERVACIONES': 'Este es un dato de ejemplo.', 'uniqueId': 'sample_1' },
-            { 'N°': '2', 'DESCRIPCION': 'MONITOR DEMO', 'MARCA': 'SAMSUNG', 'MODELO': 'SYNCMASTER', 'SERIAL': 'DEMO222', 'ETIQUETA': '1041595', 'SECTOR': 'SALA DE OPERACIONES', 'STATUS': 'INOPERATIVO', 'RESPONSABLE': 'ANTONIO PEREZ', 'CEDULA': '15017121', 'CARGO': 'OPERADOR', 'OBSERVACIONES': 'Pantalla dañada.', 'uniqueId': 'sample_2' },
+            { 'N°': '1', 'DESCRIPCION': 'LAPTOP DEMO', 'MARCA': 'HP', 'MODELO': 'ELITEBOOK', 'SERIAL': 'DEMO111', 'ETIQUETA': '1041594', 'SECTOR': 'SIGAL', 'STATUS': 'OPERATIVO', 'RESPONSABLE': 'JESÚS RIVERO', 'CEDULA': '18635848', 'CARGO': 'JEFE DE INFORMÁTICA', 'OBSERVACIONES': 'Este es un dato de ejemplo.' },
+            { 'N°': '2', 'DESCRIPCION': 'MONITOR DEMO', 'MARCA': 'SAMSUNG', 'MODELO': 'SYNCMASTER', 'SERIAL': 'DEMO222', 'ETIQUETA': '1041595', 'SECTOR': 'SALA DE OPERACIONES', 'STATUS': 'INOPERATIVO', 'RESPONSABLE': 'ANTONIO PEREZ', 'CEDULA': '15017121', 'CARGO': 'OPERADOR', 'OBSERVACIONES': 'Pantalla dañada.' },
         ];
     }
-}
 
-// --- Load the Google API Client Library ---
-/* 
- * This function is called automatically when the external 'api.js' script loads.
- * Add this script to your HTML: <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
- */
-function gapiLoaded() {
-    gapi.load('client', () => {
-        // The client is loaded, but we'll initialize it when the GoogleSheetsAPI class is instantiated.
-        console.log('🎉 Google API client library loaded.');
-    });
-}
+    // --- ESCRITURA (a través de Google Apps Script Web App) ---
 
-// Make the class available globally if needed
-window.GoogleSheetsAPI = GoogleSheetsAPI;
+    async sendAction(action, data) {
+        // Validar que la URL de la Web App ha sido configurada.
+        if (!this.config.webAppUrl || this.config.webAppUrl.includes('AKfycb...')) {
+            const errorMsg = 'La URL de la Web App de Google no está configurada. Las operaciones de escritura están deshabilitadas.';
+            console.error(`❌ ${errorMsg}`);
+            return { success: false, error: errorMsg };
+        }
+        
+        console.log(`📤 Enviando acción '${action}' a Google Sheets...`, data);
+        
+        try {
+            const response = await fetch(this.config.webAppUrl, {
+                method: 'POST',
+                mode: 'cors', // El script de Google debe permitirlo
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, ...data }),
+            });
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'La API de Google devolvió un error no especificado.');
+            }
+
+            console.log(`✅ Acción '${action}' exitosa:`, result);
+            return result;
+
+        } catch (error) {
+            console.error(`❌ Fallo en la acción '${action}':`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // --- Métodos de Interfaz Pública ---
+    // Estos métodos simplifican las llamadas desde InventoryApp.
+
+    addInventoryItem(newItem) {
+        // El 'N°' lo asignará el script de Google para evitar duplicados.
+        const { ['N°']: _, ...itemToSend } = newItem;
+        return this.sendAction('add', { newItem: itemToSend });
+    }
+
+    updateInventoryItem(itemNumber, updates) {
+        // Asegurarse de que el N° (identificador de fila) se envía.
+        return this.sendAction('update', { itemNumber, updates });
+    }
+    
+    deleteInventoryItem(itemNumber) {
+        return this.sendAction('delete', { itemNumber });
+    }
+}
