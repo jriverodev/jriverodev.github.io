@@ -127,7 +127,7 @@ class InventoryApp {
         <td>${item.ETIQUETA || ''}</td>
         <td>${item.SECTOR || ''}</td>
         <td><span class="status ${item.STATUS === 'OPERATIVO' ? 'operativo' : 'inoperativo'}">${item.STATUS || 'N/A'}</span></td>
-        <td>${item['RESPONSABLE'] || ''}</td>
+        <td>${item.RESPONSABLE || ''}</td>
         <td>${item.CEDULA || ''}</td>
         <td>${item.CARGO || ''}</td>
         <td>${item.OBSERVACIONES || ''}</td>
@@ -177,7 +177,7 @@ class InventoryApp {
     form.querySelector('#editETIQUETA').value = item.ETIQUETA || '';
     form.querySelector('#editSECTOR').value = item.SECTOR || '';
     form.querySelector('#editSTATUS').value = item.STATUS || 'OPERATIVO';
-    form.querySelector('#editRESPONSABLE').value = item['RESPONSABLE'] || '';
+    form.querySelector('#editRESPONSABLE').value = item.RESPONSABLE || '';
     form.querySelector('#editCEDULA').value = item.CEDULA || '';
     form.querySelector('#editCARGO').value = item.CARGO || '';
     form.querySelector('#editOBSERVACIONES').value = item.OBSERVACIONES || '';
@@ -251,7 +251,7 @@ class InventoryApp {
       ETIQUETA: form.querySelector('#addETIQUETA').value,
       SECTOR: form.querySelector('#addSECTOR').value,
       STATUS: form.querySelector('#addSTATUS').value,
-      'RESPONSABLE': form.querySelector('#addRESPONSABLE').value,
+      RESPONSABLE: form.querySelector('#addRESPONSABLE').value,
       CEDULA: form.querySelector('#addCEDULA').value,
       CARGO: form.querySelector('#addCARGO').value,
       OBSERVACIONES: form.querySelector('#addOBSERVACIONES').value,
@@ -287,7 +287,7 @@ class InventoryApp {
       ETIQUETA: form.querySelector('#editETIQUETA').value,
       SECTOR: form.querySelector('#editSECTOR').value,
       STATUS: form.querySelector('#editSTATUS').value,
-      'RESPONSABLE': form.querySelector('#editRESPONSABLE').value,
+      RESPONSABLE: form.querySelector('#editRESPONSABLE').value,
       CEDULA: form.querySelector('#editCEDULA').value,
       CARGO: form.querySelector('#editCARGO').value,
       OBSERVACIONES: form.querySelector('#editOBSERVACIONES').value,
