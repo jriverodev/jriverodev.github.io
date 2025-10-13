@@ -8,7 +8,7 @@ class GoogleSheetsAPI {
     constructor() {
         this.config = {
             // IMPORTANTE: Reemplaza esta URL por la de tu Web App desplegada.
-            webAppUrl: 'https://script.google.com/macros/s/AKfycbyMqJISEsCUOXbrLG5GEYRX8UaW0gPRAUALVRF8NKJgODmgOxxHopraLLQvE8UMRl2H/exec'
+            webAppUrl: 'https://script.google.com/macros/s/AKfycbyCTLdRAPiX_7q01UIAQtZk3JtLjPUKdHTTlamNqOVSPiVtQ51T8lfsLOo5yhcKniw0/exec'
         };
     }
 
