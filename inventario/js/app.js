@@ -177,7 +177,7 @@ class InventoryApp {
     form.querySelector('#editETIQUETA').value = item.ETIQUETA || '';
     form.querySelector('#editSECTOR').value = item.SECTOR || '';
     form.querySelector('#editSTATUS').value = item.STATUS || 'OPERATIVO';
-    form.querySelector('#editRESPONSABLE').value = item['CUSTODIO RESPONSABLE'] || '';
+    form.querySelector('#editRESPONSABLE').value = item['RESPONSABLE'] || '';
     form.querySelector('#editCEDULA').value = item.CEDULA || '';
     form.querySelector('#editCARGO').value = item.CARGO || '';
     form.querySelector('#editOBSERVACIONES').value = item.OBSERVACIONES || '';
@@ -251,7 +251,7 @@ class InventoryApp {
       ETIQUETA: form.querySelector('#addETIQUETA').value,
       SECTOR: form.querySelector('#addSECTOR').value,
       STATUS: form.querySelector('#addSTATUS').value,
-      'CUSTODIO RESPONSABLE': form.querySelector('#addRESPONSABLE').value,
+      'RESPONSABLE': form.querySelector('#addRESPONSABLE').value,
       CEDULA: form.querySelector('#addCEDULA').value,
       CARGO: form.querySelector('#addCARGO').value,
       OBSERVACIONES: form.querySelector('#addOBSERVACIONES').value,
@@ -287,7 +287,7 @@ class InventoryApp {
       ETIQUETA: form.querySelector('#editETIQUETA').value,
       SECTOR: form.querySelector('#editSECTOR').value,
       STATUS: form.querySelector('#editSTATUS').value,
-      'CUSTODIO RESPONSABLE': form.querySelector('#editRESPONSABLE').value,
+      'RESPONSABLE': form.querySelector('#editRESPONSABLE').value,
       CEDULA: form.querySelector('#editCEDULA').value,
       CARGO: form.querySelector('#editCARGO').value,
       OBSERVACIONES: form.querySelector('#editOBSERVACIONES').value,
