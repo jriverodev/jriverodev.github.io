@@ -75,6 +75,17 @@ function doGet(e) {
   }
 }
 
+/**
+ * Función para manejar las peticiones OPTIONS (preflight de CORS).
+ * Es necesaria para que los navegadores permitan las peticiones POST con Content-Type JSON.
+ */
+function doOptions(e) {
+  return ContentService.createTextOutput()
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 
 // --- FUNCIONES CRUD (Create, Read, Update, Delete) ---
 
