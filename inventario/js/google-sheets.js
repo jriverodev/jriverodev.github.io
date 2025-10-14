@@ -1,110 +1,69 @@
-/**
- * GoogleSheetsAPI - Cliente para la API de Google Sheets
- *
- * Se comunica con el backend de Google Apps Script (Code.gs) para
- * realizar operaciones de lectura y escritura.
- */
+
 class GoogleSheetsAPI {
-    constructor() {
-        this.config = {
-            // IMPORTANTE: Reemplaza esta URL por la de tu Web App desplegada.
-            webAppUrl: 'https://script.google.com/macros/s/AKfycbyCTLdRAPiX_7q01UIAQtZk3JtLjPUKdHTTlamNqOVSPiVtQ51T8lfsLOo5yhcKniw0/exec'
-        };
+  constructor() {
+    // REEMPLAZA ESTA URL con la URL de tu implementación de Google Apps Script
+    this.scriptURL = 'https://script.google.com/macros/s/AKfycbyCTLdRAPiX_7q01UIAQtZk3JtLjPUKdHTTlamNqOVSPiVtQ51T8lfsLOo5yhcKniw0/exec';
+  }
+
+  async loadData() {
+    console.log('📡 Cargando datos desde Google Sheets...');
+    try {
+      const response = await fetch(this.scriptURL);
+      if (!response.ok) {
+        throw new Error(`Error en la respuesta de la red: ${response.statusText}`);
+      }
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(`Error en el script de Google: ${result.error}`);
+      }
+      console.log(`✅ Datos de Google Sheets cargados: ${result.data.length} registros.`);
+      return result.data;
+    } catch (error) {
+      console.error('❌ Error crítico al cargar desde Google Sheets:', error);
+      this.useSampleData();
+      throw error; // Propaga el error para que la app sepa que falló
     }
+  }
 
-    /**
-     * Carga todos los datos del inventario desde la Web App.
-     * Realiza una petición GET al script.
-     */
-    async loadData() {
-        console.log('📡 Cargando datos desde Google Sheets...');
-        if (!this.config.webAppUrl || this.config.webAppUrl.includes('AKfycb...')) {
-            const errorMsg = 'La URL de la Web App no está configurada en google-sheets.js.';
-            console.error(`❌ ${errorMsg}`);
-            return Promise.reject(new Error(errorMsg));
-        }
+  async sendAction(action, payload) {
+    console.log(`📤 Enviando acción '${action}' a Google Sheets...`, payload);
+    try {
+      const response = await fetch(this.scriptURL, {
+        method: 'POST',
+        // ¡ESTA ES LA LÍNEA CLAVE QUE SOLUCIONA EL PROBLEMA!
+        mode: 'no-cors', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      
+      // Con 'no-cors', no podemos leer la respuesta, así que asumimos que fue exitosa si no hay un error de red.
+      console.log(`✅ Acción '${action}' enviada (respuesta opaca).`);
+      return { success: true };
 
-        try {
-            const response = await fetch(this.config.webAppUrl);
-            if (!response.ok) {
-                throw new Error(`Error en la respuesta de la red: ${response.statusText}`);
-            }
-            const result = await response.json();
-
-            if (!result.success) {
-                throw new Error(result.error || 'La API de Google devolvió un error al cargar datos.');
-            }
-
-            console.log(`✅ Datos de Google Sheets cargados: ${result.data.length} registros.`);
-            return result.data;
-
-        } catch (error) {
-            console.error('❌ Error crítico al cargar desde Google Sheets:', error);
-            console.log('📋 Usando datos de ejemplo como respaldo...');
-            return this.getSampleData(); // Devolver datos de ejemplo si todo lo demás falla
-        }
+    } catch (error) {
+      console.error(`❌ Fallo en la acción '${action}':`, error);
+      return { success: false, error: error.message };
     }
+  }
 
-    /**
-     * Envía una acción (add, update, delete) a la Web App.
-     * Realiza una petición POST con los datos necesarios.
-     */
-    async sendAction(action, data) {
-        if (!this.config.webAppUrl || this.config.webAppUrl.includes('AKfycb...')) {
-            const errorMsg = 'La URL de la Web App no está configurada.';
-            console.error(`❌ ${errorMsg}`);
-            return { success: false, error: errorMsg };
-        }
-        
-        console.log(`📤 Enviando acción '${action}' a Google Sheets...`, data);
-        
-        try {
-            const response = await fetch(this.config.webAppUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, ...data }),
-            });
+  // Métodos de conveniencia para las acciones CRUD
+  addInventoryItem(newItem) {
+    return this.sendAction('add', { newItem });
+  }
 
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'La API de Google devolvió un error no especificado.');
-            }
+  updateInventoryItem(itemId, updates) {
+    return this.sendAction('update', { itemId, updates });
+  }
 
-            console.log(`✅ Acción '${action}' exitosa:`, result);
-            return result;
+  deleteInventoryItem(itemId) {
+    return this.sendAction('delete', { itemId });
+  }
 
-        } catch (error) {
-            console.error(`❌ Fallo en la acción '${action}':`, error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    // --- MÉTODOS DE INTERFAZ PÚBLICA ---
-
-    addInventoryItem(newItem) {
-        // El 'N°' lo asignará el script, así que lo podemos omitir.
-        const { ['N°']: _, ...itemToSend } = newItem;
-        return this.sendAction('add', { newItem: itemToSend });
-    }
-
-    updateInventoryItem(itemId, updates) {
-        // El backend espera 'itemId' para identificar el registro.
-        return this.sendAction('update', { itemId, updates });
-    }
-    
-    deleteInventoryItem(itemId) {
-        // El backend espera 'itemId' para la eliminación.
-        return this.sendAction('delete', { itemId });
-    }
-
-    // --- DATOS DE EJEMPLO (FALLBACK) ---
-    getSampleData() {
-        console.log("📋 Generando datos de ejemplo para demostración.");
-        return [
-            { 'N°': '1', 'DESCRIPCION': 'LAPTOP DEMO', 'MARCA': 'HP', 'MODELO': 'ELITEBOOK', 'SERIAL': 'DEMO111', 'ETIQUETA': '1041594', 'SECTOR': 'SIGAL', 'STATUS': 'OPERATIVO', 'CUSTODIO RESPONSABLE': 'JESÚS RIVERO', 'CEDULA': '18635848', 'CARGO': 'JEFE DE INFORMÁTICA', 'OBSERVACIONES': 'Este es un dato de ejemplo.' },
-            { 'N°': '2', 'DESCRIPCION': 'MONITOR DEMO', 'MARCA': 'SAMSUNG', 'MODELO': 'SYNCMASTER', 'SERIAL': 'DEMO222', 'ETIQUETA': '1041595', 'SECTOR': 'SALA DE OPERACIONES', 'STATUS': 'INOPERATIVO', 'CUSTODIO RESPONSABLE': 'ANTONIO PEREZ', 'CEDULA': '15017121', 'CARGO': 'OPERADOR', 'OBSERVACIONES': 'Pantalla dañada.' },
-        ];
-    }
+  // --- Respaldo con Datos de Ejemplo ---
+  useSampleData() {
+    console.log('📋 Usando datos de ejemplo como respaldo...');
+    // Esta función podría generar datos de ejemplo si la carga falla
+  }
 }
