@@ -61,7 +61,7 @@ class GoogleSheetsAPI {
         try {
             const response = await fetch(this.config.webAppUrl, {
                 method: 'POST',
-                mode: 'cors',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action, ...data }),
             });
