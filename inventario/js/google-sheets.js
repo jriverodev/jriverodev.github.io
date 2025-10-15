@@ -1,12 +1,12 @@
 class GoogleSheetsAPI {
   constructor() {
     // Este valor DEBE SER REEMPLAZADO en el Paso 3.
-    this.scriptURL = 'PEGA_AQUÍ_LA_NUEVA_URL_DE_IMPLEMENTACIÓN';
+    this.scriptURL = 'https://script.google.com/macros/s/AKfycbyCTLdRAPiX_7q01UIAQtZk3JtLjPUKdHTTlamNqOVSPiVtQ51T8lfsLOo5yhcKniw0/exec';
   }
 
   async loadData() {
     console.log('📡 Cargando datos desde Google Sheets...');
-    if (this.scriptURL === 'PEGA_AQUÍ_LA_NUEVA_URL_DE_IMPLEMENTACIÓN') {
+    if (this.scriptURL === 'https://script.google.com/macros/s/AKfycbyCTLdRAPiX_7q01UIAQtZk3JtLjPUKdHTTlamNqOVSPiVtQ51T8lfsLOo5yhcKniw0/exec') {
       console.error('URL del script no configurada en google-sheets.js');
       return this.useSampleData();
     }
