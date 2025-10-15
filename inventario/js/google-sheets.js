@@ -1,6 +1,6 @@
 class GoogleSheetsAPI {
   constructor() {
-    // La URL de tu script. No la cambies, está correcta.
+    // Esta es la URL de tu script. No la cambies.
     this.scriptURL = 'https://script.google.com/macros/s/AKfycbyCTLdRAPiX_7q01UIAQtZk3JtLjPUKdHTTlamNqOVSPiVtQ51T8lfsLOo5yhcKniw0/exec';
   }
 
@@ -40,18 +40,16 @@ class GoogleSheetsAPI {
     }
   }
 
-  // --- Métodos de ayuda para las acciones ---
-
   addInventoryItem(newItem) {
-    return this.sendAction('add', { newItem: newItem });
+    return this.sendAction('add', { newItem });
   }
 
   updateInventoryItem(itemId, updates) {
-    return this.sendAction('update', { itemId: itemId, updates: updates });
+    return this.sendAction('update', { itemId, updates });
   }
 
   deleteInventoryItem(itemId) {
-    return this.sendAction('delete', { itemId: itemId });
+    return this.sendAction('delete', { itemId });
   }
   
   useSampleData() {
