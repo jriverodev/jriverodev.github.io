@@ -78,127 +78,64 @@
             </table>
         </div>
 
-        <!-- Modal para editar -->
-        <div id="editModal" class="modal">
+        <!-- Modal unificado para agregar/editar -->
+        <div id="entryModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>✏️ Editar Equipo <span id="editRowNumber" class="row-number"></span></h2>
-                <form id="editModalForm">
+                <h2 id="modalTitle"></h2>
+                <form id="entryForm">
                     <div class="form-grid">
-                         <div class="form-group">
-                            <label for="editDESCRIPCION">Descripción *</label>
-                            <input type="text" id="editDESCRIPCION" required>
+                        <div class="form-group">
+                            <label for="DESCRIPCION">Descripción *</label>
+                            <input type="text" id="DESCRIPCION" name="DESCRIPCION" required>
                         </div>
                         <div class="form-group">
-                            <label for="editMARCA">Marca</label>
-                            <input type="text" id="editMARCA">
+                            <label for="MARCA">Marca</label>
+                            <input type="text" id="MARCA" name="MARCA">
                         </div>
                         <div class="form-group">
-                            <label for="editMODELO">Modelo</label>
-                            <input type="text" id="editMODELO">
+                            <label for="MODELO">Modelo</label>
+                            <input type="text" id="MODELO" name="MODELO">
                         </div>
                         <div class="form-group">
-                            <label for="editSERIAL">Serial</label>
-                            <input type="text" id="editSERIAL">
+                            <label for="SERIAL">Serial</label>
+                            <input type="text" id="SERIAL" name="SERIAL">
                         </div>
                         <div class="form-group">
-                            <label for="editETIQUETA">Etiqueta</label>
-                            <input type="text" id="editETIQUETA">
+                            <label for="ETIQUETA">Etiqueta</label>
+                            <input type="text" id="ETIQUETA" name="ETIQUETA">
                         </div>
                         <div class="form-group">
-                            <label for="editSECTOR">Sector *</label>
-                            <input type="text" id="editSECTOR" required>
+                            <label for="SECTOR">Sector *</label>
+                            <input type="text" id="SECTOR" name="SECTOR" required>
                         </div>
                         <div class="form-group">
-                            <label for="editSTATUS">Status *</label>
-                            <select id="editSTATUS" required>
+                            <label for="STATUS">Status *</label>
+                            <select id="STATUS" name="STATUS" required>
                                 <option value="OPERATIVO">OPERATIVO</option>
                                 <option value="INOPERATIVO">INOPERATIVO</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="editRESPONSABLE">Responsable</label>
-                            <input type="text" id="editRESPONSABLE">
+                            <label for="RESPONSABLE">Responsable</label>
+                            <input type="text" id="RESPONSABLE" name="RESPONSABLE">
                         </div>
                         <div class="form-group">
-                            <label for="editCEDULA">Cédula</label>
-                            <input type="text" id="editCEDULA">
+                            <label for="CEDULA">Cédula</label>
+                            <input type="text" id="CEDULA" name="CEDULA">
                         </div>
                         <div class="form-group">
-                            <label for="editCARGO">Cargo</label>
-                            <input type="text" id="editCARGO">
+                            <label for="CARGO">Cargo</label>
+                            <input type="text" id="CARGO" name="CARGO">
                         </div>
                         <div class="form-group full-width">
-                            <label for="editOBSERVACIONES">Observaciones</label>
-                            <textarea id="editOBSERVACIONES" rows="3"></textarea>
+                            <label for="OBSERVACIONES">Observaciones</label>
+                            <textarea id="OBSERVACIONES" name="OBSERVACIONES" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-buttons">
                         <button type="button" class="btn-cancel">❌ Cancelar</button>
-                        <button type="submit" class="btn-save">💾 Guardar Cambios</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Modal para agregar nuevo -->
-        <div id="addModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>➕ Agregar Nuevo Equipo</h2>
-                <form id="addModalForm">
-                     <div class="form-grid">
-                        <div class="form-group">
-                            <label for="addDESCRIPCION">Descripción *</label>
-                            <input type="text" id="addDESCRIPCION" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="addMARCA">Marca</label>
-                            <input type="text" id="addMARCA">
-                        </div>
-                        <div class="form-group">
-                            <label for="addMODELO">Modelo</label>
-                            <input type="text" id="addMODELO">
-                        </div>
-                        <div class="form-group">
-                            <label for="addSERIAL">Serial</label>
-                            <input type="text" id="addSERIAL">
-                        </div>
-                        <div class="form-group">
-                            <label for="addETIQUETA">Etiqueta</label>
-                            <input type="text" id="addETIQUETA">
-                        </div>
-                        <div class="form-group">
-                            <label for="addSECTOR">Sector *</label>
-                            <input type="text" id="addSECTOR" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="addSTATUS">Status *</label>
-                            <select id="addSTATUS" required>
-                                <option value="OPERATIVO">OPERATIVO</option>
-                                <option value="INOPERATIVO">INOPERATIVO</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="addRESPONSABLE">Responsable</label>
-                            <input type="text" id="addRESPONSABLE">
-                        </div>
-                        <div class="form-group">
-                            <label for="addCEDULA">Cédula</label>
-                            <input type="text" id="addCEDULA">
-                        </div>
-                        <div class="form-group">
-                            <label for="addCARGO">Cargo</label>
-                            <input type="text" id="addCARGO">
-                        </div>
-                        <div class="form-group full-width">
-                            <label for="addOBSERVACIONES">Observaciones</label>
-                            <textarea id="addOBSERVACIONES" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="btn-cancel">❌ Cancelar</button>
-                        <button type="submit" class="btn-save">💾 Agregar Equipo</button>
+                        <button type="submit" class="btn-save" id="saveButton"></button>
                     </div>
                 </form>
             </div>
