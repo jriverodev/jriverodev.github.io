@@ -1,10 +1,7 @@
-/**
- * SISTEMA DE INVENTARIO - Google Apps Script Backend (Versión Definitiva)
- * Este script maneja correctamente las solicitudes GET, POST y OPTIONS para CORS.
- */
+// CÓDIGO FINAL Y COMPLETO
 
 const SPREADSHEET_ID = '1tm1OKWzWB8K1y9i_CvBoI5xPLW7hjxDIqJ8qaowZa1c';
-const SHEET_NAME = 'INVENTARIO';
+const SHEET_NAME = 'INVENTARIOV2';
 const ID_COLUMN_NAME = 'N°';
 
 function doPost(e) {
@@ -20,7 +17,6 @@ function doPost(e) {
     }
     return createJsonResponse({ success: true, data: result });
   } catch (error) {
-    Logger.log(`Error en doPost: ${error.toString()}`);
     return createJsonResponse({ success: false, error: error.toString() });
   }
 }
@@ -37,7 +33,6 @@ function doGet(e) {
     });
     return createJsonResponse({ success: true, data: jsonData });
   } catch (error) {
-    Logger.log(`Error en doGet: ${error.toString()}`);
     return createJsonResponse({ success: false, error: error.toString() });
   }
 }
@@ -55,25 +50,23 @@ function createJsonResponse(responseObject) {
   const output = ContentService.createTextOutput(jsonString);
   output.setMimeType(ContentService.MimeType.JSON);
   output.setHeader('Access-Control-Allow-Origin', '*');
-  output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   return output;
 }
 
-// --- Funciones de la Hoja de Cálculo ---
+// --- El resto de las funciones ---
 function getSheet() { return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME); }
 function getHeaders() { return getSheet().getRange(1, 1, 1, getSheet().getLastColumn()).getValues()[0]; }
 function addRecord(newItem) {
   const sheet = getSheet();
   const headers = getHeaders();
-  const newId = sheet.getLastRow() + 1; // Corrección para un ID más fiable
+  const newId = sheet.getLastRow() + 1;
   newItem[ID_COLUMN_NAME] = newId;
   const newRow = headers.map(header => newItem[header] || '');
   sheet.appendRow(newRow);
   return { newId: newId };
 }
 function updateRecord(itemId, updates) {
-  if (!itemId) throw new Error("ID es requerido para actualizar.");
+  if (!itemId) throw new Error("ID es requerido.");
   const sheet = getSheet();
   const headers = getHeaders();
   const idColumnIndex = headers.indexOf(ID_COLUMN_NAME);
@@ -91,16 +84,16 @@ function updateRecord(itemId, updates) {
   throw new Error(`ID no encontrado: ${itemId}`);
 }
 function deleteRecord(itemId) {
-  if (!itemId) throw new Error("ID es requerido para eliminar.");
+  if (!itemId) throw new Error("ID es requerido.");
   const sheet = getSheet();
   const headers = getHeaders();
   const idColumnIndex = headers.indexOf(ID_COLUMN_NAME);
   const data = sheet.getDataRange().getValues();
   for (let i = data.length - 1; i >= 1; i--) {
-    if (String(data[i][idColumnIndex]) === String(itemId)) {
-      sheet.deleteRow(i + 1);
-      return { deletedId: itemId };
-    }
+      if (String(data[i][idColumnIndex]) === String(itemId)) {
+          sheet.deleteRow(i + 1);
+          return { deletedId: itemId };
+      }
   }
   throw new Error(`ID no encontrado: ${itemId}`);
 }

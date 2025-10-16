@@ -1,7 +1,7 @@
 class GoogleSheetsAPI {
   constructor() {
     // Esta es la URL de tu script. No la cambies.
-    this.scriptURL = 'https://script.google.com/macros/s/AKfycby4w-jehAAE8bT4KLLCcxMT6cRbY6v9QK24QuxMpMIh37-SB8j7XO5hM30R79XRL9aS/exec';
+    this.scriptURL = 'https://script.google.com/macros/s/AKfycbxxLA9dN70xC-e6fOMvTAmiKUZtzeFkClWLRp71zcxERWo6XAAwJT5VFx_CyANm6pY8/exec';
   }
 
   async loadData() {
