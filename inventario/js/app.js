@@ -10,10 +10,11 @@
 class InventoryApp {
   constructor(api) {
     this.api = api; // Instancia de GoogleSheetsAPI
-    this.inventoryData = []; // Todos los datos del inventario
-    this.filteredData = []; // Datos filtrados que se muestran en la tabla
-    this.currentEditItemId = null; // ID ('N°') del item que se está editando
-    this.localStorageKey = 'inventoryData_v3'; // Clave para el caché local
+    this.inventoryData = [];
+    this.filteredData = [];
+    this.currentModalMode = 'add'; // 'add' or 'edit'
+    this.currentEditItemId = null;
+    this.localStorageKey = 'inventoryData_v3';
 
     this.init();
   }
@@ -152,40 +153,48 @@ class InventoryApp {
 
   // --- MANEJO DE MODALES ---
 
-  showAddModal() {
-    document.getElementById('addModalForm').reset();
-    document.getElementById('addModal').style.display = 'flex';
-  }
-
-  closeAddModal() {
-    document.getElementById('addModal').style.display = 'none';
-  }
-
-  showEditModal(itemId) {
-    const item = this.inventoryData.find(d => String(d['N°']) === String(itemId));
-    if (!item) {
-      this.showNotification(`Error: No se encontró el equipo con ID: ${itemId}`, 'error');
-      return;
-    }
+  showModal(mode = 'add', itemId = null) {
+    this.currentModalMode = mode;
     this.currentEditItemId = itemId;
-    document.getElementById('editRowNumber').textContent = item['N°'];
-    const form = document.getElementById('editModalForm');
-    form.querySelector('#editDESCRIPCION').value = item.DESCRIPCION || '';
-    form.querySelector('#editMARCA').value = item.MARCA || '';
-    form.querySelector('#editMODELO').value = item.MODELO || '';
-    form.querySelector('#editSERIAL').value = item.SERIAL || '';
-    form.querySelector('#editETIQUETA').value = item.ETIQUETA || '';
-    form.querySelector('#editSECTOR').value = item.SECTOR || '';
-    form.querySelector('#editSTATUS').value = item.STATUS || 'OPERATIVO';
-    form.querySelector('#editRESPONSABLE').value = item.RESPONSABLE || '';
-    form.querySelector('#editCEDULA').value = item.CEDULA || '';
-    form.querySelector('#editCARGO').value = item.CARGO || '';
-    form.querySelector('#editOBSERVACIONES').value = item.OBSERVACIONES || '';
-    document.getElementById('editModal').style.display = 'flex';
+
+    const modal = document.getElementById('entryModal');
+    const title = modal.querySelector('#modalTitle');
+    const form = modal.querySelector('#entryForm');
+    const saveButton = modal.querySelector('#saveButton');
+
+    form.reset();
+
+    if (mode === 'edit') {
+      const item = this.inventoryData.find(d => String(d['N°']) === String(itemId));
+      if (!item) {
+        this.showNotification(`Error: No se encontró el equipo con ID: ${itemId}`, 'error');
+        return;
+      }
+      title.innerHTML = `✏️ Editar Equipo <span class="row-number">${item['N°']}</span>`;
+      saveButton.innerHTML = '💾 Guardar Cambios';
+
+      // Llenar el formulario con los datos del item de forma explícita
+      form.querySelector('#DESCRIPCION').value = item.DESCRIPCION || '';
+      form.querySelector('#MARCA').value = item.MARCA || '';
+      form.querySelector('#MODELO').value = item.MODELO || '';
+      form.querySelector('#SERIAL').value = item.SERIAL || '';
+      form.querySelector('#ETIQUETA').value = item.ETIQUETA || '';
+      form.querySelector('#SECTOR').value = item.SECTOR || '';
+      form.querySelector('#STATUS').value = item.STATUS || 'OPERATIVO';
+      form.querySelector('#RESPONSABLE').value = item.RESPONSABLE || '';
+      form.querySelector('#CEDULA').value = item.CEDULA || '';
+      form.querySelector('#CARGO').value = item.CARGO || '';
+      form.querySelector('#OBSERVACIONES').value = item.OBSERVACIONES || '';
+    } else {
+      title.innerHTML = '➕ Agregar Nuevo Equipo';
+      saveButton.innerHTML = '💾 Agregar Equipo';
+    }
+
+    modal.style.display = 'flex';
   }
 
-  closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
+  closeModal() {
+    document.getElementById('entryModal').style.display = 'none';
     this.currentEditItemId = null;
   }
 
@@ -198,7 +207,7 @@ class InventoryApp {
         if (button) {
             const action = button.dataset.action;
             const id = button.dataset.id;
-            if (action === 'edit') this.showEditModal(id);
+            if (action === 'edit') this.showModal('edit', id);
             if (action === 'delete') this.handleDeleteItem(id);
         }
     });
@@ -209,7 +218,7 @@ class InventoryApp {
     document.getElementById('statusFilter').addEventListener('change', () => this.applyFiltersAndRender());
 
     // Botones principales
-    document.getElementById('addNewBtn').addEventListener('click', () => this.showAddModal());
+    document.getElementById('addNewBtn').addEventListener('click', () => this.showModal('add'));
     document.getElementById('refreshBtn').addEventListener('click', () => this.refreshData());
     document.getElementById('clearLocalBtn').addEventListener('click', () => this.clearLocalData());
     document.getElementById('exportBtn').addEventListener('click', () => {
@@ -223,90 +232,52 @@ class InventoryApp {
         this.showNotification(`✅ Exportación completada: ${filename}`, 'success');
     });
 
-    // Modal close/cancel buttons
-    document.querySelectorAll('.modal .close, .modal .btn-cancel').forEach(el => {
-        el.addEventListener('click', () => {
-            const modal = el.closest('.modal');
-            if (modal.id === 'addModal') {
-                this.closeAddModal();
-            } else if (modal.id === 'editModal') {
-                this.closeEditModal();
-            }
-        });
-    });
-
-    // Formularios
-    document.getElementById('addModalForm').addEventListener('submit', (e) => this.handleAddItem(e));
-    document.getElementById('editModalForm').addEventListener('submit', (e) => this.handleEditItem(e));
+    // Modal unificado
+    const entryModal = document.getElementById('entryModal');
+    entryModal.querySelector('.close').addEventListener('click', () => this.closeModal());
+    entryModal.querySelector('.btn-cancel').addEventListener('click', () => this.closeModal());
+    entryModal.querySelector('#entryForm').addEventListener('submit', (e) => this.handleFormSubmit(e));
   }
 
-  async handleAddItem(e) {
+  async handleFormSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const newItem = {
-      DESCRIPCION: form.querySelector('#addDESCRIPCION').value,
-      MARCA: form.querySelector('#addMARCA').value,
-      MODELO: form.querySelector('#addMODELO').value,
-      SERIAL: form.querySelector('#addSERIAL').value,
-      ETIQUETA: form.querySelector('#addETIQUETA').value,
-      SECTOR: form.querySelector('#addSECTOR').value,
-      STATUS: form.querySelector('#addSTATUS').value,
-      RESPONSABLE: form.querySelector('#addRESPONSABLE').value,
-      CEDULA: form.querySelector('#addCEDULA').value,
-      CARGO: form.querySelector('#addCARGO').value,
-      OBSERVACIONES: form.querySelector('#addOBSERVACIONES').value,
-    };
+    const formData = new FormData(form);
+    const itemData = Object.fromEntries(formData.entries());
 
-    if (!newItem.DESCRIPCION) {
+    // Fix for select elements not being captured correctly by FormData
+    itemData.STATUS = form.querySelector('#STATUS').value;
+
+    if (!itemData.DESCRIPCION) {
       this.showNotification('La Descripción es un campo obligatorio.', 'error');
       return;
     }
 
-    this.showLoadingMessage('⏳ Agregando equipo...', 'info');
-    const result = await this.api.addInventoryItem(newItem);
-
-    if (result.success) {
-      this.showNotification('✅ Equipo agregado correctamente.', 'success');
-      this.closeAddModal();
-      await this.refreshData();
-    } else {
-      this.showNotification(`❌ Error al agregar: ${result.error}`, 'error');
-    }
-  }
-
-  async handleEditItem(e) {
-    e.preventDefault();
-    if (!this.currentEditItemId) return;
-
-    const form = e.target;
-    const updates = {
-      DESCRIPCION: form.querySelector('#editDESCRIPCION').value,
-      MARCA: form.querySelector('#editMARCA').value,
-      MODELO: form.querySelector('#editMODELO').value,
-      SERIAL: form.querySelector('#editSERIAL').value,
-      ETIQUETA: form.querySelector('#editETIQUETA').value,
-      SECTOR: form.querySelector('#editSECTOR').value,
-      STATUS: form.querySelector('#editSTATUS').value,
-      RESPONSABLE: form.querySelector('#editRESPONSABLE').value,
-      CEDULA: form.querySelector('#editCEDULA').value,
-      CARGO: form.querySelector('#editCARGO').value,
-      OBSERVACIONES: form.querySelector('#editOBSERVACIONES').value,
-    };
-
-    this.showLoadingMessage('⏳ Guardando cambios...', 'info');
-    const result = await this.api.updateInventoryItem(this.currentEditItemId, updates);
-
-    if (result.success) {
-      this.showNotification('✅ Equipo actualizado correctamente.', 'success');
-      const index = this.inventoryData.findIndex(item => String(item['N°']) === String(this.currentEditItemId));
-      if (index !== -1) {
-        this.inventoryData[index] = { ...this.inventoryData[index], ...updates };
-        this.saveToLocalStorage();
-        this.applyFiltersAndRender();
+    if (this.currentModalMode === 'add') {
+      this.showLoadingMessage('⏳ Agregando equipo...', 'info');
+      const result = await this.api.addInventoryItem(itemData);
+      if (result.success) {
+        this.showNotification('✅ Equipo agregado correctamente.', 'success');
+        this.closeModal();
+        await this.refreshData();
+      } else {
+        this.showNotification(`❌ Error al agregar: ${result.error}`, 'error');
       }
-      this.closeEditModal();
     } else {
-      this.showNotification(`❌ Error al actualizar: ${result.error}`, 'error');
+      this.showLoadingMessage('⏳ Guardando cambios...', 'info');
+      const result = await this.api.updateInventoryItem(this.currentEditItemId, itemData);
+      if (result.success) {
+        this.showNotification('✅ Equipo actualizado correctamente.', 'success');
+        const index = this.inventoryData.findIndex(item => String(item['N°']) === String(this.currentEditItemId));
+        if (index !== -1) {
+          this.inventoryData[index] = { ...this.inventoryData[index], ...itemData };
+          this.saveToLocalStorage();
+          this.applyFiltersAndRender();
+        }
+        this.closeModal();
+      } else {
+        this.showNotification(`❌ Error al actualizar: ${result.error}`, 'error');
+      }
     }
   }
 
