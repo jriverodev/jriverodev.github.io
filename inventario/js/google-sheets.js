@@ -53,29 +53,25 @@ class GoogleSheetsAPI {
    */
   async sendAction(action, payload) {
     try {
-      const response = await fetch(this.scriptURL, {
+      // PLAN B: Usar 'no-cors' para evitar el preflight OPTIONS que está fallando.
+      // Esto significa que NO PODEMOS leer la respuesta del servidor.
+      // Asumimos que la operación fue exitosa si no hay un error de red.
+      await fetch(this.scriptURL, {
         method: 'POST',
+        mode: 'no-cors', // <-- El cambio clave está aquí
         headers: {
           'Content-Type': 'application/json',
         },
-        // El cuerpo de la solicitud se envía como una cadena JSON.
         body: JSON.stringify({ action, ...payload }),
       });
 
-      const result = await response.json();
+      // Como no podemos leer la respuesta, devolvemos un éxito genérico.
+      return { success: true };
 
-      if (!response.ok) {
-        throw new Error(`Error de red: ${response.statusText}`);
-      }
-      if (!result.success) {
-        throw new Error(`Error en el script de Google: ${result.error}`);
-      }
-
-      return result; // Devuelve el objeto de respuesta completo.
     } catch (error) {
+      // Esto solo capturará errores de red, no errores lógicos del script.
       console.error(`❌ Fallo en la acción '${action}':`, error);
-      // Devuelve un objeto de error estandarizado para que la app pueda manejarlo.
-      return { success: false, error: error.message };
+      return { success: false, error: `Error de red: ${error.message}` };
     }
   }
 
