@@ -1,7 +1,8 @@
 class GoogleSheetsAPI {
   constructor() {
-    // Esta es la URL de tu script. No la cambies.
-    this.scriptURL = 'https://script.google.com/macros/s/AKfycbyXX7UE7Po-EQCkD1X9-XmhGct2PaDRHKogM13gdAyD2nA5w4ZpAfCgXITNpqmp7Gb3/exec';
+    // IMPORTANTE: Debes reemplazar esta URL por la URL de tu propia implementación de Google Apps Script.
+    // Sigue las instrucciones en el archivo DEPLOYMENT_GUIDE.md para obtener tu URL.
+    this.scriptURL = 'REEMPLAZA_ESTA_URL_CON_LA_TUYA';
   }
 
   async loadData() {
