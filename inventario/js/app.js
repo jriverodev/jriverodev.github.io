@@ -1,75 +1,100 @@
 /**
- * SISTEMA DE INVENTARIO - Lógica Principal de la Aplicación
- *
- * Se encarga de:
- * - Gestionar los datos del inventario (carga, filtrado, guardado).
- * - Renderizar la tabla y las estadísticas.
- * - Manejar los eventos de la interfaz de usuario (botones, modales, formularios).
- * - Comunicarse con la GoogleSheetsAPI para las operaciones de backend.
+ * =====================================================================================
+ * SISTEMA DE INVENTARIO - LÓGICA PRINCIPAL DE LA APLICACIÓN (FRONTEND)
+ * =====================================================================================
+ * @description
+ * Esta clase `InventoryApp` es el corazón de la interfaz de usuario. Se encarga de:
+ * - Orquestar la carga inicial de datos.
+ * - Manejar toda la interacción del usuario (clics en botones, filtros, búsquedas).
+ * - Renderizar y actualizar la tabla de inventario y las estadísticas.
+ * - Gestionar el modal para añadir y editar equipos.
+ * - Comunicarse con la `GoogleSheetsAPI` para persistir los cambios en el backend.
  */
 class InventoryApp {
+  /**
+   * @param {GoogleSheetsAPI} api - Una instancia de la clase GoogleSheetsAPI para la comunicación con el backend.
+   */
   constructor(api) {
-    this.api = api; // Instancia de GoogleSheetsAPI
-    this.inventoryData = [];
-    this.filteredData = [];
-    this.currentModalMode = 'add'; // 'add' or 'edit'
-    this.currentEditItemId = null;
-    this.localStorageKey = 'inventoryData_v3';
+    this.api = api;
+    this.inventoryData = []; // Contiene TODOS los datos del inventario (caché local).
+    this.filteredData = []; // Contiene los datos que se muestran en la tabla después de aplicar filtros.
+    this.currentModalMode = 'add'; // Puede ser 'add' o 'edit'.
+    this.currentEditItemId = null; // Almacena el ID del item que se está editando.
+    this.localStorageKey = 'inventoryData_v3'; // Clave para el almacenamiento local.
 
     this.init();
   }
 
   /**
-   * INICIALIZACIÓN - Configura la app y carga los datos iniciales.
+   * @description Método de inicialización. Configura los listeners de eventos y carga los datos iniciales.
    */
   async init() {
-    console.log('🚀 Inicializando la aplicación...');
+    console.log('🚀 Inicializando la aplicación de inventario...');
     this.setupEventListeners();
     await this.loadInitialData();
-    console.log('✅ Aplicación inicializada.');
+    console.log('✅ Aplicación inicializada y lista.');
   }
 
   // --- MÉTODOS DE CARGA Y MANEJO DE DATOS ---
 
+  /**
+   * @description Carga los datos iniciales, priorizando el caché local para una carga rápida
+   * y luego actualizando desde Google Sheets en segundo plano.
+   */
   async loadInitialData() {
-    this.showLoadingMessage('🔄 Cargando datos...');
+    this.showLoadingMessage('🔄 Cargando datos locales...');
     const localData = this.loadFromLocalStorage();
     if (localData && localData.length > 0) {
       console.log(`💾 Datos cargados desde caché local: ${localData.length} registros.`);
       this.inventoryData = localData;
       this.applyFiltersAndRender();
     }
+    // Siempre intenta refrescar los datos desde la fuente autoritativa (Google Sheets).
     await this.refreshData();
   }
 
+  /**
+   * @description Fuerza la recarga de datos desde Google Sheets, actualiza el caché local
+   * y re-renderiza la interfaz.
+   */
   async refreshData() {
     this.showLoadingMessage('📡 Actualizando desde Google Sheets...');
     try {
       const data = await this.api.loadData();
-      if (data && data.length > 0) {
+      // Solo actualiza si la API devolvió datos válidos.
+      if (data && Array.isArray(data)) {
         this.inventoryData = data;
         this.saveToLocalStorage();
         this.applyFiltersAndRender();
-        this.showNotification('✅ Inventario actualizado.', 'success');
+        this.showNotification('✅ Inventario actualizado correctamente.', 'success');
       } else {
-        throw new Error('No se recibieron datos o los datos están vacíos.');
+        // Esto puede ocurrir si la API devuelve un error pero no lanza una excepción.
+        throw new Error('No se recibieron datos válidos desde la API.');
       }
     } catch (error) {
       console.error('❌ Error al refrescar los datos:', error);
-      this.showNotification('❌ No se pudieron actualizar los datos. Se mantiene la vista local.', 'error');
-      // No se limpia la `inventoryData` para mantener los datos de caché si existen.
-      this.applyFiltersAndRender(); // Re-render para quitar el mensaje de "cargando"
+      this.showNotification('❌ No se pudieron actualizar los datos. Revisa la conexión o la configuración del script.', 'error');
+      // Mantiene los datos locales si la actualización falla.
+      this.applyFiltersAndRender();
     }
   }
 
+  /**
+   * @description Guarda el estado actual del inventario en el localStorage del navegador.
+   */
   saveToLocalStorage() {
     try {
       localStorage.setItem(this.localStorageKey, JSON.stringify(this.inventoryData));
     } catch (e) {
       console.error('Error al guardar en localStorage:', e);
+      this.showNotification('No se pudo guardar el caché local.', 'warning');
     }
   }
 
+  /**
+   * @description Carga los datos del inventario desde el localStorage.
+   * @returns {Array|null} - Los datos parseados o null si no hay nada.
+   */
   loadFromLocalStorage() {
     try {
       const data = localStorage.getItem(this.localStorageKey);
@@ -80,19 +105,26 @@ class InventoryApp {
     }
   }
 
+  /**
+   * @description Limpia el caché de datos del localStorage y fuerza una recarga desde el servidor.
+   */
   clearLocalData() {
-    if (confirm('¿Estás seguro de que quieres limpiar el caché local? Se recargarán los datos desde Google Sheets.')) {
+    if (confirm('¿Estás seguro de que quieres limpiar el caché local? Se forzará una recarga completa desde Google Sheets.')) {
       localStorage.removeItem(this.localStorageKey);
       this.inventoryData = [];
       this.filteredData = [];
-      this.applyFiltersAndRender();
+      this.applyFiltersAndRender(); // Limpia la tabla visualmente.
       this.showNotification('🧹 Caché local limpiado.', 'info');
       this.refreshData();
     }
   }
 
-  // --- MÉTODOS DE MANEJO DE LA INTERFAZ (UI) ---
+  // --- MÉTODOS DE RENDERIZADO Y MANEJO DE LA INTERFAZ (UI) ---
 
+  /**
+   * @description Aplica todos los filtros actuales (búsqueda, departamento, estado)
+   * a los datos del inventario y luego llama a `renderTable` y `updateStats`.
+   */
   applyFiltersAndRender() {
     const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
     const deptoFilter = document.getElementById('deptoFilter')?.value || '';
@@ -111,20 +143,24 @@ class InventoryApp {
     this.updateStats();
   }
 
+  /**
+   * @description Dibuja la tabla de inventario en el DOM con los datos filtrados.
+   */
   renderTable() {
     const tableBody = document.getElementById('inventoryTableBody');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '';
+    tableBody.innerHTML = ''; // Limpia la tabla antes de redibujar.
 
     if (this.filteredData.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="13" class="no-results">No se encontraron equipos.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="13" class="no-results">🚫 No se encontraron equipos con los filtros actuales.</td></tr>';
       return;
     }
 
     this.filteredData.forEach(item => {
       const row = document.createElement('tr');
-      const itemId = item['N°'];
+      const itemId = item['N°']; // Usa el ID de la hoja de cálculo.
+      row.dataset.itemId = itemId; // Añade el ID a la fila para referencia.
       row.innerHTML = `
         <td>${itemId || ''}</td>
         <td>${item.DESCRIPCION || ''}</td>
@@ -147,6 +183,9 @@ class InventoryApp {
     });
   }
 
+  /**
+   * @description Actualiza las tarjetas de estadísticas (Total, Operativos, Inoperativos).
+   */
   updateStats() {
     const total = this.inventoryData.length;
     const operativo = this.inventoryData.filter(item => item.STATUS === 'OPERATIVO').length;
@@ -157,8 +196,13 @@ class InventoryApp {
     document.getElementById('inoperativoCount').textContent = inoperativo;
   }
 
-  // --- MANEJO DE MODALES ---
+  // --- MANEJO DEL MODAL ---
 
+  /**
+   * @description Muestra el modal para añadir o editar un registro.
+   * @param {string} mode - 'add' o 'edit'.
+   * @param {string|number|null} itemId - El ID del item a editar (solo en modo 'edit').
+   */
   showModal(mode = 'add', itemId = null) {
     this.currentModalMode = mode;
     this.currentEditItemId = itemId;
@@ -168,7 +212,7 @@ class InventoryApp {
     const form = modal.querySelector('#entryForm');
     const saveButton = modal.querySelector('#saveButton');
 
-    form.reset();
+    form.reset(); // Limpia el formulario de valores anteriores.
 
     if (mode === 'edit') {
       const item = this.inventoryData.find(d => String(d['N°']) === String(itemId));
@@ -176,21 +220,15 @@ class InventoryApp {
         this.showNotification(`Error: No se encontró el equipo con ID: ${itemId}`, 'error');
         return;
       }
-      title.innerHTML = `✏️ Editar Equipo <span class="row-number">${item['N°']}</span>`;
+      title.innerHTML = `✏️ Editando Equipo (ID: <span class="row-number">${item['N°']}</span>)`;
       saveButton.innerHTML = '💾 Guardar Cambios';
 
-      // Llenar el formulario con los datos del item de forma explícita
-      form.querySelector('#DESCRIPCION').value = item.DESCRIPCION || '';
-      form.querySelector('#MARCA').value = item.MARCA || '';
-      form.querySelector('#MODELO').value = item.MODELO || '';
-      form.querySelector('#SERIAL').value = item.SERIAL || '';
-      form.querySelector('#ETIQUETA').value = item.ETIQUETA || '';
-      form.querySelector('#SECTOR').value = item.SECTOR || '';
-      form.querySelector('#STATUS').value = item.STATUS || 'OPERATIVO';
-      form.querySelector('#RESPONSABLE').value = item.RESPONSABLE || '';
-      form.querySelector('#CEDULA').value = item.CEDULA || '';
-      form.querySelector('#CARGO').value = item.CARGO || '';
-      form.querySelector('#OBSERVACIONES').value = item.OBSERVACIONES || '';
+      // Rellena el formulario con los datos del item.
+      for (const key in item) {
+        if (form.elements[key]) {
+          form.elements[key].value = item[key];
+        }
+      }
     } else {
       title.innerHTML = '➕ Agregar Nuevo Equipo';
       saveButton.innerHTML = '💾 Agregar Equipo';
@@ -199,6 +237,9 @@ class InventoryApp {
     modal.style.display = 'flex';
   }
 
+  /**
+   * @description Cierra el modal de entrada.
+   */
   closeModal() {
     document.getElementById('entryModal').style.display = 'none';
     this.currentEditItemId = null;
@@ -206,8 +247,12 @@ class InventoryApp {
 
   // --- MANEJO DE EVENTOS Y ACCIONES CRUD ---
 
+  /**
+   * @description Configura todos los event listeners de la aplicación para evitar अव्यवस्था en el HTML.
+   */
   setupEventListeners() {
-    // Event delegation for table actions
+    // Usa delegación de eventos en la tabla para manejar los botones de acción.
+    // Esto es más eficiente que añadir un listener a cada botón.
     document.getElementById('inventoryTableBody').addEventListener('click', (e) => {
         const button = e.target.closest('button.btn-action');
         if (button) {
@@ -218,18 +263,18 @@ class InventoryApp {
         }
     });
 
-    // Filtros
+    // Filtros y búsqueda
     document.getElementById('searchInput').addEventListener('input', () => this.applyFiltersAndRender());
     document.getElementById('deptoFilter').addEventListener('change', () => this.applyFiltersAndRender());
     document.getElementById('statusFilter').addEventListener('change', () => this.applyFiltersAndRender());
 
-    // Botones principales
+    // Botones de la cabecera
     document.getElementById('addNewBtn').addEventListener('click', () => this.showModal('add'));
     document.getElementById('refreshBtn').addEventListener('click', () => this.refreshData());
     document.getElementById('clearLocalBtn').addEventListener('click', () => this.clearLocalData());
     document.getElementById('exportBtn').addEventListener('click', () => {
         if (this.filteredData.length === 0) {
-            this.showNotification('No hay datos para exportar.', 'warning');
+            this.showNotification('No hay datos filtrados para exportar.', 'warning');
             return;
         }
         const date = new Date().toISOString().split('T')[0];
@@ -238,83 +283,96 @@ class InventoryApp {
         this.showNotification(`✅ Exportación completada: ${filename}`, 'success');
     });
 
-    // Modal unificado
+    // Eventos del modal
     const entryModal = document.getElementById('entryModal');
     entryModal.querySelector('.close').addEventListener('click', () => this.closeModal());
     entryModal.querySelector('.btn-cancel').addEventListener('click', () => this.closeModal());
     entryModal.querySelector('#entryForm').addEventListener('submit', (e) => this.handleFormSubmit(e));
   }
 
+  /**
+   * @description Maneja el envío del formulario del modal (tanto para añadir como para editar).
+   */
   async handleFormSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
     const itemData = Object.fromEntries(formData.entries());
 
-    // Fix for select elements not being captured correctly by FormData
-    itemData.STATUS = form.querySelector('#STATUS').value;
-
-    if (!itemData.DESCRIPCION) {
-      this.showNotification('La Descripción es un campo obligatorio.', 'error');
+    // Validación básica
+    if (!itemData.DESCRIPCION || !itemData.SECTOR) {
+      this.showNotification('Los campos "Descripción" y "Sector" son obligatorios.', 'error');
       return;
     }
 
+    const actionText = this.currentModalMode === 'add' ? 'agregando' : 'actualizando';
+    this.showLoadingMessage(`⏳ ${actionText} equipo...`);
+
+    let result;
     if (this.currentModalMode === 'add') {
-      this.showLoadingMessage('⏳ Agregando equipo...', 'info');
-      const result = await this.api.addInventoryItem(itemData);
-      if (result.success) {
-        this.showNotification('✅ Equipo agregado correctamente.', 'success');
-        this.closeModal();
-        await this.refreshData();
-      } else {
-        this.showNotification(`❌ Error al agregar: ${result.error}`, 'error');
-      }
+      result = await this.api.addInventoryItem(itemData);
     } else {
-      this.showLoadingMessage('⏳ Guardando cambios...', 'info');
-      const result = await this.api.updateInventoryItem(this.currentEditItemId, itemData);
-      if (result.success) {
-        this.showNotification('✅ Equipo actualizado correctamente.', 'success');
-        this.closeModal();
-        await this.refreshData();
-      } else {
-        this.showNotification(`❌ Error al actualizar: ${result.error}`, 'error');
-      }
+      result = await this.api.updateInventoryItem(this.currentEditItemId, itemData);
+    }
+
+    if (result.success) {
+      this.showNotification(`✅ Equipo ${actionText.slice(0, -2)}ado correctamente.`, 'success');
+      this.closeModal();
+      await this.refreshData(); // Recarga los datos para mostrar el cambio.
+    } else {
+      this.showNotification(`❌ Error al ${actionText.slice(0, -2)}ar: ${result.error}`, 'error');
     }
   }
 
+  /**
+   * @description Maneja la lógica para eliminar un item.
+   * @param {string|number} itemId - El ID del item a eliminar.
+   */
   async handleDeleteItem(itemId) {
-    if (!confirm(`¿Estás seguro de que quieres eliminar el equipo N° ${itemId}? Esta acción es permanente.`)) {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el equipo N° ${itemId}? Esta acción no se puede deshacer.`)) {
       return;
     }
 
-    this.showLoadingMessage('⏳ Eliminando equipo...', 'info');
+    this.showLoadingMessage('⏳ Eliminando equipo...');
     const result = await this.api.deleteInventoryItem(itemId);
 
     if (result.success) {
       this.showNotification('🗑️ Equipo eliminado permanentemente.', 'success');
-      await this.refreshData();
+      await this.refreshData(); // Recarga los datos para que el item desaparezca.
     } else {
       this.showNotification(`❌ Error al eliminar: ${result.error}`, 'error');
     }
   }
 
-  // --- MÉTODOS DE NOTIFICACIÓN ---
+  // --- MÉTODOS DE NOTIFICACIÓN Y UTILIDADES ---
 
+  /**
+   * @description Muestra una notificación temporal de carga.
+   * @param {string} message - El mensaje a mostrar.
+   */
   showLoadingMessage(message = 'Cargando...') {
-    this.showNotification(message, 'info', 2000);
+    this.showNotification(message, 'info', 2500);
   }
 
+  /**
+   * @description Muestra una notificación flotante en la esquina de la pantalla.
+   * @param {string} message - El texto de la notificación.
+   * @param {string} type - 'info', 'success', 'warning', o 'error'.
+   * @param {number} duration - Duración en milisegundos.
+   */
   showNotification(message, type = 'info', duration = 4000) {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
+    // Elimina la notificación después de la duración especificada.
     setTimeout(() => notification.remove(), duration);
   }
 }
 
-// --- PUNTO DE ENTRADA ---
+// --- PUNTO DE ENTRADA DE LA APLICACIÓN ---
+// Se asegura de que el DOM esté completamente cargado antes de inicializar la app.
 document.addEventListener('DOMContentLoaded', () => {
   const api = new GoogleSheetsAPI();
-  window.app = new InventoryApp(api);
+  window.app = new InventoryApp(api); // Expone la app globalmente para depuración.
 });
