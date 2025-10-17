@@ -46,13 +46,19 @@ class InventoryApp {
     this.showLoadingMessage('📡 Actualizando desde Google Sheets...');
     try {
       const data = await this.api.loadData();
-      this.inventoryData = data;
-      this.saveToLocalStorage();
-      this.applyFiltersAndRender();
-      this.showNotification('✅ Inventario actualizado.', 'success');
+      if (data && data.length > 0) {
+        this.inventoryData = data;
+        this.saveToLocalStorage();
+        this.applyFiltersAndRender();
+        this.showNotification('✅ Inventario actualizado.', 'success');
+      } else {
+        throw new Error('No se recibieron datos o los datos están vacíos.');
+      }
     } catch (error) {
       console.error('❌ Error al refrescar los datos:', error);
-      this.showNotification('❌ No se pudieron actualizar los datos desde Google Sheets.', 'error');
+      this.showNotification('❌ No se pudieron actualizar los datos. Se mantiene la vista local.', 'error');
+      // No se limpia la `inventoryData` para mantener los datos de caché si existen.
+      this.applyFiltersAndRender(); // Re-render para quitar el mensaje de "cargando"
     }
   }
 
@@ -268,13 +274,8 @@ class InventoryApp {
       const result = await this.api.updateInventoryItem(this.currentEditItemId, itemData);
       if (result.success) {
         this.showNotification('✅ Equipo actualizado correctamente.', 'success');
-        const index = this.inventoryData.findIndex(item => String(item['N°']) === String(this.currentEditItemId));
-        if (index !== -1) {
-          this.inventoryData[index] = { ...this.inventoryData[index], ...itemData };
-          this.saveToLocalStorage();
-          this.applyFiltersAndRender();
-        }
         this.closeModal();
+        await this.refreshData();
       } else {
         this.showNotification(`❌ Error al actualizar: ${result.error}`, 'error');
       }
@@ -291,9 +292,7 @@ class InventoryApp {
 
     if (result.success) {
       this.showNotification('🗑️ Equipo eliminado permanentemente.', 'success');
-      this.inventoryData = this.inventoryData.filter(item => String(item['N°']) !== String(itemId));
-      this.saveToLocalStorage();
-      this.applyFiltersAndRender();
+      await this.refreshData();
     } else {
       this.showNotification(`❌ Error al eliminar: ${result.error}`, 'error');
     }
