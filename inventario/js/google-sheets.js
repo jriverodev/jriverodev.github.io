@@ -13,7 +13,7 @@ class GoogleSheetsAPI {
      * @description La URL de la Web App implementada en Google Apps Script.
      * !! IMPORTANTE: Reemplaza esta URL por la URL de tu propia implementación.
      */
-    this.scriptURL = 'https://script.google.com/macros/s/AKfycbzLpV-uwdms4y1CpG-bntrnOl0vFjN4KeLmDJY1A7EHIXZSVPKzf1KLPEszMFMTTjkk/exec';
+    this.scriptURL = 'https://script.google.com/macros/s/AKfycbw-XLbZz0mftHudeI4cqjkzDV2CFR21fXRZykm9B0kvxTJzClZD4RjRotxMWtlRShuY/exec';
   }
 
   /**
