@@ -72,9 +72,25 @@ function getHeaders() {
 function addRecord(newItem) {
   const sheet = getSheet();
   const headers = getHeaders();
-  const newId = sheet.getLastRow(); // Corregido para evitar saltos de ID
+  const idColumnIndex = headers.indexOf(ID_COLUMN_NAME);
+  if (idColumnIndex === -1) {
+    throw new Error(`La columna de ID "${ID_COLUMN_NAME}" no fue encontrada.`);
+  }
+
+  let maxId = 0;
+  if (sheet.getLastRow() > 1) {
+    const idRange = sheet.getRange(2, idColumnIndex + 1, sheet.getLastRow() - 1, 1);
+    const idValues = idRange.getValues();
+    maxId = idValues.reduce((max, row) => {
+      const id = Number(row[0]);
+      return id > max ? id : max;
+    }, 0);
+  }
+
+  const newId = maxId + 1;
   newItem[ID_COLUMN_NAME] = newId;
-  const newRow = headers.map(header => newItem[header] || '');
+
+  const newRow = headers.map(header => newItem[header] !== undefined ? newItem[header] : '');
   sheet.appendRow(newRow);
   return { newId: newId };
 }
