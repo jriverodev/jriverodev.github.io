@@ -109,40 +109,26 @@ class GoogleSheetsAPI {
     try {
 
 
-      // PLAN B: Usar 'no-cors' para evitar el preflight OPTIONS que está fallando.
-
-
-      // Esto significa que NO PODEMOS leer la respuesta del servidor.
-
-
-      // Asumimos que la operación fue exitosa si no hay un error de red.
-
-
-      await fetch(this.scriptURL, {
-
+      const response = await fetch(this.scriptURL, {
         method: 'POST',
-
-
-        mode: 'no-cors', // <-- El cambio clave está aquí
-
         headers: {
-
           'Content-Type': 'application/json',
-
         },
-
-
         body: JSON.stringify({ action, ...payload }),
-
+        redirect: 'follow', // Google Apps Script a menudo redirige, esto lo maneja.
       });
 
+      if (!response.ok) {
+        throw new Error(`Error de red: ${response.statusText}`);
+      }
 
+      const result = await response.json();
 
+      if (!result.success) {
+          throw new Error(`Error en el script de Google: ${result.error}`);
+      }
 
-      // Como no podemos leer la respuesta, devolvemos un éxito genérico.
-
-
-      return { success: true };
+      return result;
 
 
 
