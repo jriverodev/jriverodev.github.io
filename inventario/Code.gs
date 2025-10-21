@@ -28,12 +28,11 @@ function getSheet() {
  * @description Maneja las solicitudes GET para leer todos los datos del inventario.
  */
 function doGet(e) {
-  let response;
   try {
     const sheet = getSheet();
     const data = sheet.getDataRange().getValues();
     const headers = data.shift() || [];
-    
+
     const jsonData = data.map(row => {
       const obj = {};
       headers.forEach((header, index) => {
@@ -42,17 +41,13 @@ function doGet(e) {
       return obj;
     });
 
-    response = { success: true, data: jsonData };
+    const response = { success: true, data: jsonData };
+    return createJsonResponse(response);
 
   } catch (error) {
     console.error('❌ Error en doGet:', error.stack);
-    response = { success: false, error: error.toString() };
+    return createJsonResponse({ success: false, error: error.toString() });
   }
-  
-  // Devuelve la respuesta como JSON, añadiendo las cabeceras CORS
-  return ContentService.createTextOutput(JSON.stringify(response))
-    .setMimeType(ContentService.MimeType.JSON)
-    .addHttpHeader('Access-Control-Allow-Origin', '*');
 }
 
 /**
@@ -63,12 +58,14 @@ function doPost(e) {
   let response;
 
   try {
-    lock.waitLock(15000);
+    lock.waitLock(15000); // Esperar hasta 15 segundos para evitar escrituras simultáneas
 
     const requestData = JSON.parse(e.postData.contents);
     const action = requestData.action;
 
-    if (!action) throw new Error("No se especificó una acción.");
+    if (!action) {
+      throw new Error("No se especificó una acción (add, update, delete).");
+    }
 
     switch (action) {
       case 'add':
@@ -91,24 +88,36 @@ function doPost(e) {
     lock.releaseLock();
   }
 
-  // Devuelve la respuesta como JSON con las cabeceras CORS
-  return ContentService.createTextOutput(JSON.stringify(response))
+  return createJsonResponse(response);
+}
+
+/**
+ * @description Crea una respuesta JSON estándar con las cabeceras CORS correctas.
+ */
+function createJsonResponse(data) {
+  const output = JSON.stringify(data, null, 2);
+  return ContentService.createTextOutput(output)
     .setMimeType(ContentService.MimeType.JSON)
-    .addHttpHeader('Access-Control-Allow-Origin', '*');
+    .addHttpHeader('Access-Control-Allow-Origin', '*')
+    .addHttpHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .addHttpHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 /**
  * @description Maneja las solicitudes OPTIONS (pre-vuelo) para CORS.
  */
 function doOptions(e) {
-  return ContentService.createTextOutput()
-    .addHttpHeader('Access-Control-Allow-Origin', '*')
-    .addHttpHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    .addHttpHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return ContentService.createTextOutput()
+      .addHttpHeader('Access-Control-Allow-Origin', '*')
+      .addHttpHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      .addHttpHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 // --- FUNCIONES CRUD ---
 
+/**
+ * @description Añade un nuevo registro al inventario.
+ */
 function addRecord(newItem) {
   if (!newItem || typeof newItem !== 'object') {
     throw new Error("Datos para añadir inválidos.");
@@ -118,7 +127,9 @@ function addRecord(newItem) {
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const idColumnIndex = headers.indexOf(CONFIG.ID_COLUMN_NAME);
 
-  if (idColumnIndex === -1) throw new Error(`Columna ID "${CONFIG.ID_COLUMN_NAME}" no encontrada.`);
+  if (idColumnIndex === -1) {
+    throw new Error(`La columna de ID "${CONFIG.ID_COLUMN_NAME}" no fue encontrada.`);
+  }
 
   let maxId = 0;
   if (sheet.getLastRow() > 1) {
@@ -134,6 +145,9 @@ function addRecord(newItem) {
   return { success: true, newId: newId };
 }
 
+/**
+ * @description Actualiza un registro existente basado en su ID.
+ */
 function updateRecord(itemId, updates) {
   if (!itemId) throw new Error("ID requerido para actualizar.");
   if (!updates || typeof updates !== 'object') throw new Error("Datos para actualizar inválidos.");
@@ -142,6 +156,10 @@ function updateRecord(itemId, updates) {
   const data = sheet.getDataRange().getValues();
   const headers = data.shift();
   const idColumnIndex = headers.indexOf(CONFIG.ID_COLUMN_NAME);
+
+  if (idColumnIndex === -1) throw new Error(`Columna de ID "${CONFIG.ID_COLUMN_NAME}" no encontrada.`);
+
+  const rowIndex = data.findIndex(row => String(row[idColumnIndex]) === String(itemId));
 
   if (idColumnIndex === -1) throw new Error(`Columna ID "${CONFIG.ID_COLUMN_NAME}" no encontrada.`);
 
@@ -158,6 +176,9 @@ function updateRecord(itemId, updates) {
   return { success: true, updatedId: itemId };
 }
 
+/**
+ * @description Elimina un registro de la hoja basado en su ID.
+ */
 function deleteRecord(itemId) {
   if (!itemId) throw new Error("ID requerido para eliminar.");
 
@@ -166,7 +187,7 @@ function deleteRecord(itemId) {
   const headers = data.shift();
   const idColumnIndex = headers.indexOf(CONFIG.ID_COLUMN_NAME);
 
-  if (idColumnIndex === -1) throw new Error(`Columna ID "${CONFIG.ID_COLUMN_NAME}" no encontrada.`);
+  if (idColumnIndex === -1) throw new Error(`Columna de ID "${CONFIG.ID_COLUMN_NAME}" no encontrada.`);
 
   for (let i = data.length - 1; i >= 0; i--) {
     if (String(data[i][idColumnIndex]) === String(itemId)) {
@@ -175,5 +196,5 @@ function deleteRecord(itemId) {
     }
   }
 
-  throw new Error(`Item con ID "${itemId}" no encontrado.`);
+  throw new Error(`Item con ID "${itemId}" no encontrado para eliminar.`);
 }
