@@ -1,153 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Inventario - Equipos Tecnológicos</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="styles/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Inventario - Equipos Tecnológicos</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="styles/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📊 Inventario de Equipos Tecnológicos</h1>
-            <div class="controls">
-                <input type="text" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, departamento...">
-                <button id="addNewBtn">➕ Agregar Equipo</button>
-                <button id="exportBtn">📥 Exportar Excel</button>
-                <button id="clearLocalBtn">🧹 Limpiar Locales</button>
-                <button id="refreshBtn">🔄 Actualizar</button>
-            </div>
-        </header>
+  <div class="container">
+    <header>
+      <h1>📊 Inventario de Equipos Tecnológicos</h1>
+      <div class="controls">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, departamento..." />
+        <button id="addNewBtn">➕ Agregar Equipo</button>
+        <button id="exportBtn">📥 Exportar Excel</button>
+        <button id="clearLocalBtn">🧹 Limpiar Locales</button>
+        <button id="refreshBtn">🔄 Actualizar</button>
+      </div>
+    </header>
 
-        <div class="filters">
-            <select id="deptoFilter">
-                <option value="">Todos los departamentos</option>
-                <option value="SIGAL">SIGAL</option>
-                <option value="SALA DE OPERACIONES">SALA DE OPERACIONES</option>
-                <option value="TLA">TLA</option>
-                <option value="MTTO">MTTO</option>
-                <option value="CONTRATACION">CONTRATACION</option>
-                <option value="SALA DE MTTO">SALA DE MTTO</option>
-            </select>
-            <select id="statusFilter">
-                <option value="">Todos los estados</option>
-                <option value="OPERATIVO">OPERATIVO</option>
-                <option value="INOPERATIVO">INOPERATIVO</option>
-            </select>
-        </div>
-
-        <div class="stats">
-            <div class="stat-card">
-                <h3>Total Equipos</h3>
-                <span id="totalCount">0</span>
-            </div>
-            <div class="stat-card">
-                <h3>Operativos</h3>
-                <span id="operativoCount">0</span>
-            </div>
-            <div class="stat-card">
-                <h3>Inoperativos</h3>
-                <span id="inoperativoCount">0</span>
-            </div>
-        </div>
-
-        <div class="table-container">
-            <table id="inventoryTable">
-                <thead>
-                    <tr>
-                        <th>N°</th>
-                        <th>DESCRIPCION</th>
-                        <th>MARCA</th>
-                        <th>MODELO</th>
-                        <th>SERIAL</th>
-                        <th>ETIQUETA</th>
-                        <th>SECTOR</th>
-                        <th>STATUS</th>
-                        <th>RESPONSABLE</th>
-                        <th>CEDULA</th>
-                        <th>CARGO</th>
-                        <th>OBSERVACIONES</th>
-                        <th>ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody id="inventoryTableBody">
-                    <!-- Datos cargados dinámicamente -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Modal unificado para agregar/editar -->
-        <div id="entryModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2 id="modalTitle"></h2>
-                <form id="entryForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="DESCRIPCION">Descripción *</label>
-                            <input type="text" id="DESCRIPCION" name="DESCRIPCION" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="MARCA">Marca</label>
-                            <input type="text" id="MARCA" name="MARCA">
-                        </div>
-                        <div class="form-group">
-                            <label for="MODELO">Modelo</label>
-                            <input type="text" id="MODELO" name="MODELO">
-                        </div>
-                        <div class="form-group">
-                            <label for="SERIAL">Serial</label>
-                            <input type="text" id="SERIAL" name="SERIAL">
-                        </div>
-                        <div class="form-group">
-                            <label for="ETIQUETA">Etiqueta</label>
-                            <input type="text" id="ETIQUETA" name="ETIQUETA">
-                        </div>
-                        <div class="form-group">
-                            <label for="SECTOR">Sector *</label>
-                            <input type="text" id="SECTOR" name="SECTOR" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="STATUS">Status *</label>
-                            <select id="STATUS" name="STATUS" required>
-                                <option value="OPERATIVO">OPERATIVO</option>
-                                <option value="INOPERATIVO">INOPERATIVO</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="RESPONSABLE">Responsable</label>
-                            <input type="text" id="RESPONSABLE" name="RESPONSABLE">
-                        </div>
-                        <div class="form-group">
-                            <label for="CEDULA">Cédula</label>
-                            <input type="text" id="CEDULA" name="CEDULA">
-                        </div>
-                        <div class="form-group">
-                            <label for="CARGO">Cargo</label>
-                            <input type="text" id="CARGO" name="CARGO">
-                        </div>
-                        <div class="form-group full-width">
-                            <label for="OBSERVACIONES">Observaciones</label>
-                            <textarea id="OBSERVACIONES" name="OBSERVACIONES" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="btn-cancel">❌ Cancelar</button>
-                        <button type="submit" class="btn-save" id="saveButton"></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <footer>
-            <p>Sistema de Inventario - Desarrollado para gestión de equipos tecnológicos</p>
-        </footer>
+    <div class="filters">
+      <select id="deptoFilter"><option value="">Todos los departamentos</option></select>
+      <select id="statusFilter"><option value="">Todos los estados</option></select>
     </div>
 
-    <script src="js/google-sheets.js" defer></script>
-    <script src="js/export.js" defer></script>
-    <script src="js/app.js" defer></script>
+    <div class="stats">
+      <div class="stat-card"><h3>Total Equipos</h3><span id="totalCount">0</span></div>
+      <div class="stat-card"><h3>Operativos</h3><span id="operativoCount">0</span></div>
+      <div class="stat-card"><h3>Inoperativos</h3><span id="inoperativoCount">0</span></div>
+    </div>
+
+    <div class="table-container">
+      <table id="inventoryTable" aria-describedby="inventoryCaption">
+        <caption id="inventoryCaption" class="visually-hidden">Tabla de inventario</caption>
+        <thead id="tableHead"></thead>
+        <tbody id="inventoryTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="entryModal" class="modal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" aria-label="Cerrar">&times;</button>
+        <h2 id="modalTitle"></h2>
+        <form id="entryForm">
+          <div id="formFields" class="form-grid"></div>
+          <div class="modal-buttons">
+            <button type="button" class="btn-cancel">❌ Cancelar</button>
+            <button type="submit" class="btn-save" id="saveButton">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer><p>Sistema de Inventario - Desarrollado para gestión de equipos tecnológicos</p></footer>
+  </div>
+
+  <script>
+    // CONFIGURA: coloca aquí la URL del Web App (Apps Script deploy) y la API_KEY sólo temporalmente para pruebas.
+    // En producción NO dejes apiKey en el frontend público.
+    window.INVENTORY_CONFIG = {
+      WEBAPP_URL: 'https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec',
+      API_KEY: '' // <<-- no dejes en repositorio público. Mejor: servidor intermedio o auth.
+    };
+  </script>
+
+  <script src="js/app.js" defer></script>
+  <script src="js/export.js" defer></script>
 </body>
 </html>
