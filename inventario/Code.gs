@@ -120,7 +120,7 @@ function doOptions(e) {
  */
 function addRecord(newItem) {
   if (!newItem || typeof newItem !== 'object') {
-    throw new Error("Los datos para añadir el nuevo item son inválidos.");
+    throw new Error("Datos para añadir inválidos.");
   }
 
   const sheet = getSheet();
@@ -149,8 +149,8 @@ function addRecord(newItem) {
  * @description Actualiza un registro existente basado en su ID.
  */
 function updateRecord(itemId, updates) {
-  if (!itemId) throw new Error("El ID del item es requerido para actualizar.");
-  if (!updates || typeof updates !== 'object') throw new Error("Los datos para actualizar son inválidos.");
+  if (!itemId) throw new Error("ID requerido para actualizar.");
+  if (!updates || typeof updates !== 'object') throw new Error("Datos para actualizar inválidos.");
 
   const sheet = getSheet();
   const data = sheet.getDataRange().getValues();
@@ -161,9 +161,11 @@ function updateRecord(itemId, updates) {
 
   const rowIndex = data.findIndex(row => String(row[idColumnIndex]) === String(itemId));
 
-  if (rowIndex === -1) {
-    throw new Error(`Item con ID "${itemId}" no encontrado para actualizar.`);
-  }
+  if (idColumnIndex === -1) throw new Error(`Columna ID "${CONFIG.ID_COLUMN_NAME}" no encontrada.`);
+
+  const rowIndex = data.findIndex(row => String(row[idColumnIndex]) === String(itemId));
+
+  if (rowIndex === -1) throw new Error(`Item con ID "${itemId}" no encontrado.`);
 
   headers.forEach((header, colIndex) => {
     if (updates.hasOwnProperty(header)) {
@@ -178,7 +180,7 @@ function updateRecord(itemId, updates) {
  * @description Elimina un registro de la hoja basado en su ID.
  */
 function deleteRecord(itemId) {
-  if (!itemId) throw new Error("El ID del item es requerido para eliminar.");
+  if (!itemId) throw new Error("ID requerido para eliminar.");
 
   const sheet = getSheet();
   const data = sheet.getDataRange().getValues();
