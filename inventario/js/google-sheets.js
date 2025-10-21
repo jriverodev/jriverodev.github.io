@@ -28,7 +28,7 @@ class GoogleSheetsAPI {
 
      */
 
-    this.scriptURL = 'https://script.google.com/macros/s/AKfycbyBektC9mnVW7RHhMv41PndkSlDb9ehoOeUwQCpqJe1ugQHgGHxHw1z0qJjtXzw3dgK/exec';
+    this.scriptURL = 'https://script.google.com/macros/s/AKfycbxdhD0tU5OSveUQNGGReKMLETALlIKjljd5zkJC6y6Viw_jF6o8AFY2d-Z9GuUo7sWY/exec';
 
   }
 
