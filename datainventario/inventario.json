@@ -403,42 +403,6 @@
     },
     "obsGenerales": "-"
   },
-        "monitor": {
-          "marca": "VIT",
-          "modelo": "SIN INFORMACION",
-          "serial": "A59C7BA007978",
-          "etiqueta": "11085776",
-          "status": "OPERATIVO",
-          "obs": "-"
-        },
-        "teclado": {
-          "marca": "HP",
-          "modelo": "KU 0316",
-          "serial": "BC3720EVBVX0YA",
-          "etiqueta": "SIN INFORMACION",
-          "status": "OPERATIVO",
-          "obs": "-"
-        },
-        "mouse": {
-          "marca": "GENIUS",
-          "modelo": "SIN INFORMACION",
-          "serial": "SIN INFORMACION",
-          "etiqueta": "SIN INFORMACION",
-          "status": "OPERATIVO",
-          "obs": "-"
-        },
-        "telefono": {
-          "marca": "AVAYA",
-          "modelo": "NTY505",
-          "serial": "11WZ112501H9",
-          "etiqueta": "SIN INFORMACION",
-          "status": "OPERATIVO",
-          "obs": "-"
-          }
-      }
-    },
-    "obsGenerales": "-"
-  },
   {
     "responsable": "JOAN BARRERA",
     "cedula": "12844648",
