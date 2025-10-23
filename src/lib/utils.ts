@@ -77,8 +77,8 @@ export function formatEquipment(equipment: Equipment | undefined): string {
     equipment.etiqueta,
     equipment.status,
     equipment.obs,
-  ].map(p => p || 'S/I'); // S/I for 'Sin Información'
-  return parts.join(' / ');
+  ].map(p => (p || 'S/I').trim()); // S/I for 'Sin Información'
+  return parts.join('/');
 }
 
 export function formatDesktopEquipment(desktop: DesktopEquipment | undefined): string {
