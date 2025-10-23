@@ -1,8 +1,11 @@
 import { getInventoryItems } from "@/lib/actions";
 import InventoryDashboard from "@/components/inventory-dashboard";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { migrateData } from "@/lib/migration";
 
 export default async function Home() {
+  // Nota: La migración solo se ejecutará si la colección está vacía.
+  await migrateData();
   const initialItems = await getInventoryItems();
 
   return (

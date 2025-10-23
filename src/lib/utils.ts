@@ -1,15 +1,37 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { Equipment, InventoryItem } from "./definitions";
+import type { Equipment, InventoryItem, DesktopEquipment } from "./definitions";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function formatEquipment(equipment: Equipment | undefined): string {
-  if (!equipment) return 'N/A / N/A / N/A / N/A / N/A / -';
-  return `${equipment.marca || 'N/A'} / ${equipment.modelo || 'N/A'} / ${equipment.serial || 'N/A'} / ${equipment.etiqueta || 'N/A'} / ${equipment.status || 'N/A'} / ${equipment.obs || '-'}`;
+  if (!equipment) return 'N/A';
+  const parts = [
+    equipment.marca,
+    equipment.modelo,
+    equipment.serial,
+    equipment.etiqueta,
+    equipment.status,
+    equipment.obs,
+  ].map(p => p || 'N/A');
+  return parts.join(' / ');
 }
+
+function formatDesktopEquipment(desktop: DesktopEquipment | undefined): string {
+  if (!desktop) return 'N/A';
+  
+  const parts = [];
+  if (desktop.cpu) parts.push(`CPU: ${formatEquipment(desktop.cpu)}`);
+  if (desktop.monitor) parts.push(`Monitor: ${formatEquipment(desktop.monitor)}`);
+  if (desktop.teclado) parts.push(`Teclado: ${formatEquipment(desktop.teclado)}`);
+  if (desktop.mouse) parts.push(`Mouse: ${formatEquipment(desktop.mouse)}`);
+  if (desktop.telefono) parts.push(`Teléfono: ${formatEquipment(desktop.telefono)}`);
+  
+  return parts.length > 0 ? parts.join('; ') : 'N/A';
+}
+
 
 export function exportToCSV(data: InventoryItem[]) {
   const headers = 'Responsable,Cédula,Cargo,Sector,Status General,Laptop,Escritorio,Obs Generales\n';
@@ -21,7 +43,7 @@ export function exportToCSV(data: InventoryItem[]) {
       `"${item.sector}"`,
       `"${item.statusGeneral}"`,
       `"${formatEquipment(item.equipo1?.laptop)}"`,
-      `"${formatEquipment(item.equipo2?.escritorio)}"`,
+      `"${formatDesktopEquipment(item.equipo2?.escritorio)}"`,
       `"${item.obsGenerales}"`
     ].join(',')
   ).join('\n');

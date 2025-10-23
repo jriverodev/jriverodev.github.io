@@ -7,6 +7,14 @@ export type Equipment = {
   obs?: string;
 };
 
+export type DesktopEquipment = {
+  cpu?: Equipment;
+  monitor?: Equipment;
+  teclado?: Equipment;
+  mouse?: Equipment;
+  telefono?: Equipment;
+}
+
 export type InventoryItem = {
   id: string;
   responsable: string;
@@ -15,7 +23,7 @@ export type InventoryItem = {
   sector: string;
   statusGeneral: "OPERATIVO" | "INOPERATIVO" | "ROBADO" | "MIXTO";
   equipo1?: { laptop?: Equipment };
-  equipo2?: { escritorio?: Equipment };
+  equipo2?: { escritorio?: DesktopEquipment };
   obsGenerales: string;
 };
 
