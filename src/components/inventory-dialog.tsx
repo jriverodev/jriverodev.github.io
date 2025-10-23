@@ -134,7 +134,6 @@ export function InventoryDialog({
   onSuccess,
 }: InventoryDialogProps) {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   const form = useForm<InventoryFormValues>({
     resolver: zodResolver(formSchema),
@@ -147,39 +146,42 @@ export function InventoryDialog({
 
 
   async function onSubmit(values: InventoryFormValues) {
-    setIsSubmitting(true);
-    try {
-      const plainValues = JSON.parse(JSON.stringify(values));
+    // We use JSON.parse(JSON.stringify()) to remove undefined values and create a plain object
+    const plainValues = JSON.parse(JSON.stringify(values));
+    
+    const action = item
+      ? updateInventoryItem(item.id, plainValues)
+      : addInventoryItem(plainValues);
 
-      const result = await (item
-        ? updateInventoryItem(item.id, plainValues)
-        : addInventoryItem(plainValues));
-
+    action.then(result => {
       if (result.success) {
         toast({ title: "Éxito", description: result.message });
         setIsOpen(false);
         onSuccess();
       } else {
         toast({
-          title: "Error",
+          title: "Error al guardar",
           description: result.message,
           variant: "destructive",
         });
       }
-    } catch (error) {
-       toast({
+    }).catch(error => {
+      console.error("Submit error:", error);
+      toast({
         title: "Error inesperado",
         description: "Ha ocurrido un error al guardar.",
         variant: "destructive",
       });
-    } finally {
-        setIsSubmitting(false);
-    }
+    }).finally(() => {
+      // Re-enable the form fields/button if needed, react-hook-form handles isSubmitting
+    });
   }
 
   const handleClose = () => {
     setIsOpen(false);
   }
+
+  const { isSubmitting } = form.formState;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
