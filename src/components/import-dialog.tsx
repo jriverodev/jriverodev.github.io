@@ -66,18 +66,19 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: header => header.trim(),
       complete: async (results) => {
         try {
           const parsedData = results.data
             .map((row: any) => parseCSVRow(row))
             .filter(
-              (item) => item.responsable && item.cedula 
+              (item) => item.responsable // Solo requerimos que el responsable exista
             ) as InventoryItemForm[];
 
           if(parsedData.length === 0) {
             toast({
               title: "Sin datos",
-              description: "El archivo CSV está vacío o no tiene el formato correcto.",
+              description: "El archivo CSV está vacío o no contiene filas con un 'Responsable' válido.",
               variant: "destructive",
             });
             setIsProcessing(false);
