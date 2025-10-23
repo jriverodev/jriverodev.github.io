@@ -7,6 +7,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  writeBatch
 } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import { db } from "./firebase";
@@ -37,6 +38,23 @@ export async function addInventoryItem(itemData: InventoryItemForm) {
   }
 }
 
+export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
+  const batch = writeBatch(db);
+  try {
+    items.forEach((item) => {
+      const docRef = doc(collection(db, "inventario"));
+      batch.set(docRef, item);
+    });
+    await batch.commit();
+    revalidatePath("/");
+    return { success: true, message: `${items.length} elementos importados exitosamente.` };
+  } catch (error) {
+    console.error("Error importing documents:", error);
+    return { success: false, message: "Error al importar los elementos." };
+  }
+}
+
+
 export async function updateInventoryItem(id: string, itemData: InventoryItemForm) {
   try {
     await updateDoc(doc(db, "inventario", id), itemData);
@@ -57,4 +75,3 @@ export async function deleteInventoryItem(id: string) {
     console.error("Error deleting document:", error);
     return { success: false, message: "Error al eliminar el elemento." };
   }
-}

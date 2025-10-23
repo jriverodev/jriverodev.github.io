@@ -1,11 +1,10 @@
-
 "use server";
 
 import { collection, getDocs, writeBatch, doc } from "firebase/firestore";
 import { db } from "./firebase";
 import type { InventoryItemForm, Equipment, DesktopEquipment } from "./definitions";
 
-const inventoryData = [
+const inventoryData: any[] = [
  {
   "RESPONSABLE": "JUAN ESCALONA",
   "CEDULA": 15158639,
@@ -210,7 +209,7 @@ const inventoryData = [
   "RESPONSABLE": "ORLANDO VELASQUEZ",
   "CEDULA": 14085245,
   "CARGO": "CAPATAZ TRANSPORTE DE PERSONAL OCC",
-  "SECTOR": "CONTRATACION",
+  "SECTOR": "CONTRATacion",
   "STATUS GENERAL": "OPERATIVO",
   "EQUIPO 1: LAPTOP (Marca/Modelo/Serial/Etiqueta/Status/Obs)": "NO APLICA",
   "EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)": "CPU: VIT/M2100-01-01/A001227968/18001214/OPERATIVO/-; Monitor: VIT/SIN INFORMACION/GLOHSHAD15804/SIN INFORMACION/OPERATIVO/-; Teclado: LENOVO/SK-8825/5199741/SIN INFORMACION/OPERATIVO/-; Mouse: AOC/MS121/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-",

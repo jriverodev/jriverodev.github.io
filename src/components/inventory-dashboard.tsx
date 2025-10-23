@@ -16,10 +16,12 @@ import {
   PlusCircle,
   RefreshCw,
   Search,
+  Upload,
 } from "lucide-react";
 import InventoryTable from "./inventory-table";
 import StatusChart from "./status-chart";
 import { InventoryDialog } from "./inventory-dialog";
+import { ImportDialog } from "./import-dialog";
 import { exportToCSV } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "./ui/card";
@@ -34,6 +36,7 @@ export default function InventoryDashboard({
   const [sectorFilter, setSectorFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const router = useRouter();
@@ -80,7 +83,10 @@ export default function InventoryDashboard({
                 <Button onClick={() => setIsDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Agregar Fila
                 </Button>
-                <Button variant="outline" onClick={() => exportToCSV(filteredItems)}>
+                 <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" /> Importar CSV
+                </Button>
+                <Button variant="outline" onClick={() => exportToCSV(filteredItems, 'inventario.csv')}>
                     <Download className="mr-2 h-4 w-4" /> Exportar CSV
                 </Button>
                 <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
@@ -143,6 +149,9 @@ export default function InventoryDashboard({
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
       />
+      <ImportDialog
+        isOpen={isImportOpen}
+        setIsOpen={setIsImportOpen}
+      />
     </div>
-  );
-}
+  
