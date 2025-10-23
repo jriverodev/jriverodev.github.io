@@ -1,7 +1,9 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Output 'standalone' to produce a smaller build, optimal for Docker and other containerized environments.
+  // https://nextjs.org/docs/app/api-reference/next-config-js/output
+  output: 'standalone',
   typescript: {
     ignoreBuildErrors: true,
   },
