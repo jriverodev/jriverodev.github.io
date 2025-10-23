@@ -18,7 +18,7 @@ function parseEquipmentString(equipString: string): Equipment | undefined {
   if (serial && serial !== 'SIN INFORMACION') result.serial = serial;
   if (etiqueta && etiqueta !== 'SIN INFORMACION') result.etiqueta = etiqueta;
   if (status && status !== 'SIN INFORMACION') result.status = status;
-  if (obs && obs !== 'SIN INFORMACION' && obs !== '-') result.obs = obs;
+  if (obs && obs !== 'SIN INFORMACION' && obs.trim() !== '-') result.obs = obs;
   
   return Object.keys(result).length > 0 ? result : undefined;
 }
