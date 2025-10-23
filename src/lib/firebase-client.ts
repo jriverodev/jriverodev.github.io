@@ -14,8 +14,8 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
+let auth: Auth | undefined = undefined;
+let db: Firestore | undefined = undefined;
 
 // Initialize Firebase for client-side
 if (typeof window !== 'undefined') {

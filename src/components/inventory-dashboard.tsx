@@ -26,7 +26,6 @@ import { exportToCSV } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "./ui/card";
 import { getInventoryItems } from "@/lib/actions";
-import { useUser } from "@/hooks/use-user";
 
 export default function InventoryDashboard() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -39,7 +38,6 @@ export default function InventoryDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
-  const { user } = useUser();
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -49,10 +47,8 @@ export default function InventoryDashboard() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchItems();
-    }
-  }, [user]);
+    fetchItems();
+  }, []);
   
   const sectors = useMemo(
     () => ["all", ...Array.from(new Set(items.map((item) => item.sector)))],
