@@ -21,7 +21,12 @@ const removeUndefined = (obj: any): any => {
     return Object.keys(obj).reduce((acc, key) => {
       const value = obj[key];
       if (value !== undefined) {
-        acc[key] = removeUndefined(value);
+        // Recursively process nested objects
+        const cleanedValue = removeUndefined(value);
+        // Only include key if the cleaned value is not an empty object (or is not an object)
+        if (typeof cleanedValue !== 'object' || cleanedValue === null || Array.isArray(cleanedValue) || Object.keys(cleanedValue).length > 0) {
+          acc[key] = cleanedValue;
+        }
       }
       return acc;
     }, {} as {[key: string]: any});
@@ -46,14 +51,14 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
 
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
-    const cleanData = JSON.parse(JSON.stringify(itemData));
+    const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     await addDoc(collection(serverDB, "inventario"), cleanData);
     revalidatePath("/");
-    return { success: true, message: "Elemento agregado exitosamente." };
+    return JSON.parse(JSON.stringify({ success: true, message: "Elemento agregado exitosamente." }));
   } catch (error) {
     console.error("Error adding document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al agregar el elemento.";
-    return { success: false, message: errorMessage };
+    return JSON.parse(JSON.stringify({ success: false, message: errorMessage }));
   }
 }
 
@@ -62,31 +67,30 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
   try {
     items.forEach((item) => {
       const docRef = doc(collection(serverDB, "inventario"));
-      const cleanItem = JSON.parse(JSON.stringify(item));
+      const cleanItem = removeUndefined(JSON.parse(JSON.stringify(item)));
       batch.set(docRef, cleanItem);
     });
     await batch.commit();
     revalidatePath("/");
-    return { success: true, message: `${items.length} elementos importados exitosamente.` };
+    return JSON.parse(JSON.stringify({ success: true, message: `${items.length} elementos importados exitosamente.` }));
   } catch (error) {
     console.error("Error importing documents:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al importar los elementos.";
-    return { success: false, message: errorMessage };
+    return JSON.parse(JSON.stringify({ success: false, message: errorMessage }));
   }
 }
 
 
-export async function updateInventoryItem(id: string, itemData: InventoryItemForm) {
+export async function updateInventoryItem(id: string, itemData: Partial<InventoryItemForm>) {
   try {
-    // Sanitize the object to ensure it's a plain object for the server action
-    const cleanData = JSON.parse(JSON.stringify(removeUndefined(itemData)));
+    const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
-    return { success: true, message: "Elemento actualizado exitosamente." };
+    return JSON.parse(JSON.stringify({ success: true, message: "Elemento actualizado exitosamente." }));
   } catch (error) {
     console.error("Error updating document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al actualizar el elemento.";
-    return { success: false, message: errorMessage };
+    return JSON.parse(JSON.stringify({ success: false, message: errorMessage }));
   }
 }
 

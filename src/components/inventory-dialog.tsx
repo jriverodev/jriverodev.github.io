@@ -141,19 +141,20 @@ export function InventoryDialog({
   });
   
   React.useEffect(() => {
-    form.reset(getDefaultValues(item));
+    if (isOpen) {
+      form.reset(getDefaultValues(item));
+    }
   }, [item, form, isOpen]);
 
 
   async function onSubmit(values: InventoryFormValues) {
-    // We use JSON.parse(JSON.stringify()) to remove undefined values and create a plain object
-    const plainValues = JSON.parse(JSON.stringify(values));
-    
-    const action = item
-      ? updateInventoryItem(item.id, plainValues)
-      : addInventoryItem(plainValues);
+    try {
+      const plainValues = JSON.parse(JSON.stringify(values));
+      
+      const result = await (item
+        ? updateInventoryItem(item.id, plainValues)
+        : addInventoryItem(plainValues));
 
-    action.then(result => {
       if (result.success) {
         toast({ title: "Éxito", description: result.message });
         setIsOpen(false);
@@ -165,20 +166,20 @@ export function InventoryDialog({
           variant: "destructive",
         });
       }
-    }).catch(error => {
+    } catch (error) {
       console.error("Submit error:", error);
       toast({
         title: "Error inesperado",
         description: "Ha ocurrido un error al guardar.",
         variant: "destructive",
       });
-    }).finally(() => {
-      // Re-enable the form fields/button if needed, react-hook-form handles isSubmitting
-    });
+    }
   }
 
   const handleClose = () => {
-    setIsOpen(false);
+    if (!form.formState.isSubmitting) {
+        setIsOpen(false);
+    }
   }
 
   const { isSubmitting } = form.formState;
