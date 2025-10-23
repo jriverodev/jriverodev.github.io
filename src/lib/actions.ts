@@ -20,12 +20,12 @@ const removeUndefined = (obj: any): any => {
   } else if (obj !== null && typeof obj === 'object') {
     return Object.keys(obj).reduce((acc, key) => {
       const value = obj[key];
+      // Only include key if value is not undefined
       if (value !== undefined) {
-        // Recursively process nested objects
         const cleanedValue = removeUndefined(value);
-        // Only include key if the cleaned value is not an empty object (or is not an object)
+         // Only include key if the cleaned value is not an empty object (unless it's an array)
         if (typeof cleanedValue !== 'object' || cleanedValue === null || Array.isArray(cleanedValue) || Object.keys(cleanedValue).length > 0) {
-          acc[key] = cleanedValue;
+            acc[key] = cleanedValue;
         }
       }
       return acc;
@@ -33,6 +33,7 @@ const removeUndefined = (obj: any): any => {
   }
   return obj;
 };
+
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   try {
@@ -54,11 +55,11 @@ export async function addInventoryItem(itemData: InventoryItemForm) {
     const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     await addDoc(collection(serverDB, "inventario"), cleanData);
     revalidatePath("/");
-    return JSON.parse(JSON.stringify({ success: true, message: "Elemento agregado exitosamente." }));
+    return { success: true, message: "Elemento agregado exitosamente." };
   } catch (error) {
     console.error("Error adding document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al agregar el elemento.";
-    return JSON.parse(JSON.stringify({ success: false, message: errorMessage }));
+    return { success: false, message: errorMessage };
   }
 }
 
@@ -72,11 +73,11 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
     });
     await batch.commit();
     revalidatePath("/");
-    return JSON.parse(JSON.stringify({ success: true, message: `${items.length} elementos importados exitosamente.` }));
+    return { success: true, message: `${items.length} elementos importados exitosamente.` };
   } catch (error) {
     console.error("Error importing documents:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al importar los elementos.";
-    return JSON.parse(JSON.stringify({ success: false, message: errorMessage }));
+    return { success: false, message: errorMessage };
   }
 }
 
@@ -86,11 +87,11 @@ export async function updateInventoryItem(id: string, itemData: Partial<Inventor
     const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
-    return JSON.parse(JSON.stringify({ success: true, message: "Elemento actualizado exitosamente." }));
+    return { success: true, message: "Elemento actualizado exitosamente." };
   } catch (error) {
     console.error("Error updating document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al actualizar el elemento.";
-    return JSON.parse(JSON.stringify({ success: false, message: errorMessage }));
+    return { success: false, message: errorMessage };
   }
 }
 
