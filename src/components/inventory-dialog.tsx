@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -31,12 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import type { InventoryItem } from "@/lib/definitions";
 import { addInventoryItem, updateInventoryItem } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
@@ -77,6 +70,7 @@ interface InventoryDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   item?: InventoryItem | null;
+  onSuccess: () => void;
 }
 
 const renderEquipmentFields = (form: any, basePath: string, label: string) => (
@@ -137,6 +131,7 @@ export function InventoryDialog({
   isOpen,
   setIsOpen,
   item,
+  onSuccess,
 }: InventoryDialogProps) {
   const { toast } = useToast();
   const form = useForm<InventoryFormValues>({
@@ -146,7 +141,7 @@ export function InventoryDialog({
   
   React.useEffect(() => {
     form.reset(getDefaultValues(item));
-  }, [item, form]);
+  }, [item, form, isOpen]);
 
 
   async function onSubmit(values: InventoryFormValues) {
@@ -157,7 +152,7 @@ export function InventoryDialog({
     if (result.success) {
       toast({ title: "Éxito", description: result.message });
       setIsOpen(false);
-      form.reset();
+      onSuccess();
     } else {
       toast({
         title: "Error",
@@ -167,8 +162,12 @@ export function InventoryDialog({
     }
   }
 
+  const handleClose = () => {
+    setIsOpen(false);
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{item ? "Editar Elemento" : "Agregar Elemento"}</DialogTitle>
@@ -264,24 +263,21 @@ export function InventoryDialog({
                   />
                   
                   <Separator className="my-6" />
-
-                  <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-                    <AccordionItem value="item-1">
-                      <AccordionTrigger className="text-lg">Equipos</AccordionTrigger>
-                      <AccordionContent className="pt-4 space-y-4">
-                        {renderEquipmentFields(form, "equipo1.laptop", "Laptop")}
-                        
-                        <h3 className="text-md font-medium pt-4">Equipo de Escritorio</h3>
-                        <div className="space-y-4">
-                            {renderEquipmentFields(form, "equipo2.escritorio.cpu", "CPU")}
-                            {renderEquipmentFields(form, "equipo2.escritorio.monitor", "Monitor")}
-                            {renderEquipmentFields(form, "equipo2.escritorio.teclado", "Teclado")}
-                            {renderEquipmentFields(form, "equipo2.escritorio.mouse", "Mouse")}
-                            {renderEquipmentFields(form, "equipo2.escritorio.telefono", "Teléfono")}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                  
+                  <h3 className="text-lg font-medium">Equipos</h3>
+                  
+                  <div className="space-y-4">
+                    {renderEquipmentFields(form, "equipo1.laptop", "Laptop")}
+                    
+                    <h4 className="font-semibold text-foreground pt-4">Equipo de Escritorio</h4>
+                    <div className="space-y-4 pl-4 border-l">
+                        {renderEquipmentFields(form, "equipo2.escritorio.cpu", "CPU")}
+                        {renderEquipmentFields(form, "equipo2.escritorio.monitor", "Monitor")}
+                        {renderEquipmentFields(form, "equipo2.escritorio.teclado", "Teclado")}
+                        {renderEquipmentFields(form, "equipo2.escritorio.mouse", "Mouse")}
+                        {renderEquipmentFields(form, "equipo2.escritorio.telefono", "Teléfono")}
+                    </div>
+                  </div>
                  
                  <Separator className="my-6" />
                  
@@ -301,7 +297,7 @@ export function InventoryDialog({
               </div>
             </div>
             <DialogFooter className="pt-6 border-t mt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button type="submit">
@@ -314,5 +310,3 @@ export function InventoryDialog({
     </Dialog>
   );
 }
-
-    

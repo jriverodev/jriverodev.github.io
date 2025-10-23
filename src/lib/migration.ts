@@ -1,7 +1,8 @@
+// This file is intended to run only once to populate the database.
+// It is called from a server action `checkAndMigrateData` if the DB is empty.
+// We are removing the "use server" and export as it's not a server action itself.
 
-"use server";
-
-import { collection, getDocs, writeBatch, doc } from "firebase/firestore";
+import { collection, writeBatch, doc } from "firebase/firestore";
 import { db } from "./firebase";
 import { parseCSVRow } from "./utils";
 import type { InventoryItemForm } from "./definitions";
@@ -96,7 +97,7 @@ const inventoryData: any[] = [
   "SECTOR": "SALA DE OPERACIONES",
   "STATUS GENERAL": "OPERATIVO",
   "EQUIPO 1: LAPTOP (Marca/Modelo/Serial/Etiqueta/Status/Obs)": "NO APLICA",
-  "EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)": "CPU: VIT/E2350/02H610M71SL/280173991/OPERATIVO/-; Monitor: VIT/ZP2200/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-; Teclado: VIT/SIN INFORMACION/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-; Mouse: VIT/SIN INFORMACION/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-; Teléfono: NO APLICA"
+  "EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)": "CPU: VIT/E2350/02H610M71SL/280173991/OPERATIVO/-; Monitor: VIT/ZP2200/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-; Teclado: VIT/SIN INFORMACION/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-; Mouse: VIT/SIN INFORMACION/SIN INFORMacion/SIN INFORMACION/OPERATIVO/-; Teléfono: NO APLICA"
  },
  {
   "RESPONSABLE": "FRANCO WILMER",
@@ -324,13 +325,6 @@ export async function migrateData() {
   console.log("Iniciando la migración de datos a Firestore...");
   const inventoryCollection = collection(db, "inventario");
 
-  // Verificar si la colección ya tiene datos
-  const existingDocs = await getDocs(inventoryCollection);
-  if (!existingDocs.empty) {
-    console.log("La base de datos ya contiene datos. No se requiere migración.");
-    return;
-  }
-
   const batch = writeBatch(db);
   const transformedData = inventoryData.map(item => {
     const row = {
@@ -363,5 +357,3 @@ export async function migrateData() {
     console.error("Error durante la migración de datos:", error);
   }
 }
-
-    

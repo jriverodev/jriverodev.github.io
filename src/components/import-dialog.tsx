@@ -23,9 +23,10 @@ import { Download, FileWarning } from "lucide-react";
 interface ImportDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function ImportDialog({ isOpen, setIsOpen }: ImportDialogProps) {
+export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -89,6 +90,7 @@ export function ImportDialog({ isOpen, setIsOpen }: ImportDialogProps) {
             toast({ title: "Éxito", description: result.message });
             setFile(null);
             setIsOpen(false);
+            onSuccess();
           } else {
             toast({
               title: "Error",

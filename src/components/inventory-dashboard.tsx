@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, startTransition } from "react";
+import { useState, useMemo, startTransition, useEffect } from "react";
 import type { InventoryItem } from "@/lib/definitions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,22 +25,35 @@ import { ImportDialog } from "./import-dialog";
 import { exportToCSV } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "./ui/card";
+import { getInventoryItems } from "@/lib/actions";
+import { useUser } from "@/hooks/use-user";
 
-export default function InventoryDashboard({
-  initialItems,
-}: {
-  initialItems: InventoryItem[];
-}) {
-  const [items] = useState<InventoryItem[]>(initialItems);
+export default function InventoryDashboard() {
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
+  const { user } = useUser();
 
+  const fetchItems = async () => {
+    setIsLoading(true);
+    const fetchedItems = await getInventoryItems();
+    setItems(fetchedItems);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchItems();
+    }
+  }, [user]);
+  
   const sectors = useMemo(
     () => ["all", ...Array.from(new Set(items.map((item) => item.sector)))],
     [items]
@@ -70,6 +83,7 @@ export default function InventoryDashboard({
   const handleRefresh = () => {
     setIsRefreshing(true);
     startTransition(() => {
+      fetchItems();
       router.refresh();
       setIsRefreshing(false);
     });
@@ -136,7 +150,7 @@ export default function InventoryDashboard({
         <div className="md:col-span-2">
           <Card>
             <CardContent className="p-0">
-              <InventoryTable items={filteredItems} />
+              <InventoryTable items={filteredItems} loading={isLoading} onRefresh={fetchItems} />
             </CardContent>
           </Card>
         </div>
@@ -148,10 +162,12 @@ export default function InventoryDashboard({
       <InventoryDialog
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
+        onSuccess={fetchItems}
       />
       <ImportDialog
         isOpen={isImportOpen}
         setIsOpen={setIsImportOpen}
+        onSuccess={fetchItems}
       />
     </div>
   );

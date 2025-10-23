@@ -1,12 +1,36 @@
-import { getInventoryItems } from "@/lib/actions";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/use-user";
 import InventoryDashboard from "@/components/inventory-dashboard";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { migrateData } from "@/lib/migration";
+import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/firebase";
 
-export default async function Home() {
-  // Nota: La migración solo se ejecutará si la colección está vacía.
-  await migrateData();
-  const initialItems = await getInventoryItems();
+export default function Home() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+            <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -14,10 +38,16 @@ export default async function Home() {
         <h1 className="text-3xl font-bold font-headline text-primary">
           EquipoTrack
         </h1>
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-muted-foreground hidden sm:block">{user.email}</p>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            Cerrar Sesión
+          </Button>
+          <ThemeToggle />
+        </div>
       </header>
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
-        <InventoryDashboard initialItems={initialItems} />
+        <InventoryDashboard />
       </main>
     </div>
   );
