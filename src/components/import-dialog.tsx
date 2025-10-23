@@ -67,19 +67,24 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
       header: true,
       skipEmptyLines: true,
       transformHeader: header => header.trim(),
+      delimiter: ",", // Forzar la coma como delimitador principal
       complete: async (results) => {
         try {
           if (results.errors.length > 0) {
-            const firstError = results.errors[0];
-            const errorMessage = `Fila ${firstError.row}: ${firstError.message}`;
-            console.error("CSV Parsing errors:", results.errors);
-            toast({
-              title: "Error de formato CSV",
-              description: `Se encontraron errores al leer el archivo. ${errorMessage}`,
-              variant: "destructive",
-            });
-            setIsProcessing(false);
-            return;
+            // Filtrar errores comunes que no son críticos, como "mismatched fields"
+            const criticalErrors = results.errors.filter(e => e.code !== 'TooFewFields' && e.code !== 'TooManyFields');
+            if (criticalErrors.length > 0) {
+              const firstError = criticalErrors[0];
+              const errorMessage = `Fila ${firstError.row}: ${firstError.message}`;
+              console.error("CSV Parsing errors:", criticalErrors);
+              toast({
+                title: "Error de formato CSV",
+                description: `Se encontraron errores críticos al leer el archivo. ${errorMessage}`,
+                variant: "destructive",
+              });
+              setIsProcessing(false);
+              return;
+            }
           }
 
           const parsedData = results.data
