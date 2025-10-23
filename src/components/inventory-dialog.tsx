@@ -134,6 +134,8 @@ export function InventoryDialog({
   onSuccess,
 }: InventoryDialogProps) {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  
   const form = useForm<InventoryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: getDefaultValues(item)
@@ -145,23 +147,33 @@ export function InventoryDialog({
 
 
   async function onSubmit(values: InventoryFormValues) {
-    // Sanitize the data to create a plain object before sending to the server action
-    const plainValues = JSON.parse(JSON.stringify(values));
+    setIsSubmitting(true);
+    try {
+      const plainValues = JSON.parse(JSON.stringify(values));
 
-    const result = item
-      ? await updateInventoryItem(item.id, plainValues)
-      : await addInventoryItem(plainValues);
+      const result = await (item
+        ? updateInventoryItem(item.id, plainValues)
+        : addInventoryItem(plainValues));
 
-    if (result.success) {
-      toast({ title: "Éxito", description: result.message });
-      setIsOpen(false);
-      onSuccess();
-    } else {
-      toast({
-        title: "Error",
-        description: result.message,
+      if (result.success) {
+        toast({ title: "Éxito", description: result.message });
+        setIsOpen(false);
+        onSuccess();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+       toast({
+        title: "Error inesperado",
+        description: "Ha ocurrido un error al guardar.",
         variant: "destructive",
       });
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -300,11 +312,11 @@ export function InventoryDialog({
               </div>
             </div>
             <DialogFooter className="pt-6 border-t mt-4">
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Cancelar
               </Button>
-              <Button type="submit">
-                {item ? "Guardar Cambios" : "Crear Elemento"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (item ? "Guardando..." : "Creando...") : (item ? "Guardar Cambios" : "Crear Elemento")}
               </Button>
             </DialogFooter>
           </form>
