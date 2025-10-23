@@ -13,6 +13,22 @@ import { revalidatePath } from "next/cache";
 import { serverDB } from "./firebase-server";
 import type { InventoryItem, InventoryItemForm } from "./definitions";
 
+// Helper to remove undefined values from nested objects
+const removeUndefined = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefined);
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((acc, key) => {
+      const value = obj[key];
+      if (value !== undefined) {
+        acc[key] = removeUndefined(value);
+      }
+      return acc;
+    }, {} as {[key: string]: any});
+  }
+  return obj;
+};
+
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   try {
     const querySnapshot = await getDocs(collection(serverDB, "inventario"));
@@ -62,7 +78,8 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
 
 export async function updateInventoryItem(id: string, itemData: InventoryItemForm) {
   try {
-    const cleanData = JSON.parse(JSON.stringify(itemData));
+    // Sanitize the object to ensure it's a plain object for the server action
+    const cleanData = JSON.parse(JSON.stringify(removeUndefined(itemData)));
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
     return { success: true, message: "Elemento actualizado exitosamente." };

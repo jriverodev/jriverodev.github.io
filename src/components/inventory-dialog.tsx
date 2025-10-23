@@ -145,9 +145,12 @@ export function InventoryDialog({
 
 
   async function onSubmit(values: InventoryFormValues) {
+    // Sanitize the data to create a plain object before sending to the server action
+    const plainValues = JSON.parse(JSON.stringify(values));
+
     const result = item
-      ? await updateInventoryItem(item.id, values)
-      : await addInventoryItem(values);
+      ? await updateInventoryItem(item.id, plainValues)
+      : await addInventoryItem(plainValues);
 
     if (result.success) {
       toast({ title: "Éxito", description: result.message });
