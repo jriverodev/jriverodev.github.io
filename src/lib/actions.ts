@@ -16,25 +16,28 @@ import type { InventoryItem, InventoryItemForm } from "./definitions";
 
 // Helper to remove undefined values from nested objects
 const removeUndefined = (obj: any): any => {
-  if (Array.isArray(obj)) {
-    return obj.map(removeUndefined);
-  } else if (obj !== null && typeof obj === 'object') {
-    return Object.keys(obj).reduce((acc, key) => {
-      const value = obj[key];
-      // Only include key if value is not undefined
-      if (value !== undefined) {
-        const cleanedValue = removeUndefined(value);
-         // Only include key if the cleaned value is not an empty object (unless it's an array)
-        if (typeof cleanedValue !== 'object' || cleanedValue === null || Array.isArray(cleanedValue) || Object.keys(cleanedValue).length > 0) {
-            acc[key] = cleanedValue;
+    if (obj === undefined) {
+        return null; // Convert top-level undefined to null
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(removeUndefined);
+    }
+    if (obj !== null && typeof obj === 'object') {
+        if (Object.keys(obj).length === 0) {
+            return null; // Convert empty objects to null
         }
-      }
-      return acc;
-    }, {} as {[key: string]: any});
-  }
-  return obj;
+        return Object.entries(obj).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+                const cleanedValue = removeUndefined(value);
+                if (cleanedValue !== null) {
+                    (acc as any)[key] = cleanedValue;
+                }
+            }
+            return acc;
+        }, {});
+    }
+    return obj;
 };
-
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   try {
@@ -69,10 +72,11 @@ export async function getInventoryItemById(id: string): Promise<InventoryItem | 
 
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
-    const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
+    const cleanData = JSON.parse(JSON.stringify(itemData));
+    const result = { success: true, message: "Elemento agregado exitosamente." };
     await addDoc(collection(serverDB, "inventario"), cleanData);
     revalidatePath("/");
-    return { success: true, message: "Elemento agregado exitosamente." };
+    return result;
   } catch (error) {
     console.error("Error adding document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al agregar el elemento.";
@@ -88,9 +92,10 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
       const cleanItem = removeUndefined(JSON.parse(JSON.stringify(item)));
       batch.set(docRef, cleanItem);
     });
+    const result = { success: true, message: `${items.length} elementos importados exitosamente.` };
     await batch.commit();
     revalidatePath("/");
-    return { success: true, message: `${items.length} elementos importados exitosamente.` };
+    return result;
   } catch (error) {
     console.error("Error importing documents:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al importar los elementos.";
@@ -100,11 +105,13 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
 
 
 export async function updateInventoryItem(id: string, itemData: Partial<InventoryItemForm>) {
-  try {
-    const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
+   try {
+    const cleanData = JSON.parse(JSON.stringify(itemData));
+    const result = { success: true, message: "Elemento actualizado exitosamente." };
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
-    return { success: true, message: "Elemento actualizado exitosamente." };
+    revalidatePath(`/item/${id}`);
+    return result;
   } catch (error) {
     console.error("Error updating document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al actualizar el elemento.";
@@ -114,9 +121,10 @@ export async function updateInventoryItem(id: string, itemData: Partial<Inventor
 
 export async function deleteInventoryItem(id: string) {
   try {
+    const result = { success: true, message: "Elemento eliminado exitosamente." };
     await deleteDoc(doc(serverDB, "inventario", id));
     revalidatePath("/");
-    return { success: true, message: "Elemento eliminado exitosamente." };
+    return result;
   } catch (error) {
     console.error("Error deleting document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al eliminar el elemento.";
@@ -136,9 +144,10 @@ export async function deleteAllInventoryItems() {
       batch.delete(doc.ref);
     });
     
+    const result = { success: true, message: "Todos los registros han sido eliminados." };
     await batch.commit();
     revalidatePath("/");
-    return { success: true, message: "Todos los registros han sido eliminados." };
+    return result;
   } catch (error) {
     console.error("Error deleting all documents:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al eliminar los registros.";

@@ -2,7 +2,7 @@ import { getInventoryItemById } from "@/lib/actions";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn, getStatusBadgeClass, formatEquipment, formatDesktopEquipment } from "@/lib/utils";
+import { cn, getStatusBadgeClass } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import type { Equipment, DesktopEquipment } from "@/lib/definitions";
 
 function EquipmentDetail({ equipment, title }: { equipment: Equipment | undefined, title: string }) {
-    if (!equipment || Object.keys(equipment).length === 0) return null;
+    if (!equipment || Object.keys(equipment).filter(k => equipment[k as keyof Equipment]).length === 0) return null;
 
     return (
         <div className="rounded-lg border p-4">
@@ -28,7 +28,7 @@ function EquipmentDetail({ equipment, title }: { equipment: Equipment | undefine
 }
 
 function DesktopDetail({ desktop, title }: { desktop: DesktopEquipment | undefined, title: string }) {
-    if (!desktop || Object.keys(desktop).length === 0) return null;
+     if (!desktop || Object.keys(desktop).filter(k => desktop[k as keyof DesktopEquipment]).length === 0) return null;
     
     return (
         <Card>
@@ -36,17 +36,11 @@ function DesktopDetail({ desktop, title }: { desktop: DesktopEquipment | undefin
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                {Object.keys(desktop).length > 0 ? (
-                    <>
-                        <EquipmentDetail equipment={desktop.cpu} title="CPU" />
-                        <EquipmentDetail equipment={desktop.monitor} title="Monitor" />
-                        <EquipmentDetail equipment={desktop.teclado} title="Teclado" />
-                        <EquipmentDetail equipment={desktop.mouse} title="Mouse" />
-                        <EquipmentDetail equipment={desktop.telefono} title="Teléfono" />
-                    </>
-                ) : (
-                    <p className="text-muted-foreground">No aplica</p>
-                )}
+                <EquipmentDetail equipment={desktop.cpu} title="CPU" />
+                <EquipmentDetail equipment={desktop.monitor} title="Monitor" />
+                <EquipmentDetail equipment={desktop.teclado} title="Teclado" />
+                <EquipmentDetail equipment={desktop.mouse} title="Mouse" />
+                <EquipmentDetail equipment={desktop.telefono} title="Teléfono" />
             </CardContent>
         </Card>
     );

@@ -66,7 +66,8 @@ export default function InventoryTable({ items, loading, onRefresh }: InventoryT
 
   const handleRowClick = (item: InventoryItem, e: React.MouseEvent<HTMLTableRowElement>) => {
     // Evita la navegación si se hace clic en el área del menú de acciones
-    if ((e.target as HTMLElement).closest('[data-radix-dropdown-menu-trigger]')) {
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-radix-dropdown-menu-trigger]') || target.closest('[data-radix-dropdown-menu-content]')) {
       return;
     }
     router.push(`/item/${item.id}`);
