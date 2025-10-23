@@ -31,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
   AccordionContent,
@@ -41,6 +40,7 @@ import {
 import type { InventoryItem } from "@/lib/definitions";
 import { addInventoryItem, updateInventoryItem } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "./ui/separator";
 
 const equipmentSchema = z.object({
   marca: z.string().optional(),
@@ -79,14 +79,17 @@ interface InventoryDialogProps {
   item?: InventoryItem | null;
 }
 
-const renderEquipmentFields = (form: any, basePath: string) => (
-  <div className="grid grid-cols-2 gap-4">
-    <FormField control={form.control} name={`${basePath}.marca`} render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.modelo`} render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.serial`} render={({ field }) => (<FormItem><FormLabel>Serial</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.etiqueta`} render={({ field }) => (<FormItem><FormLabel>Etiqueta</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.status`} render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.obs`} render={({ field }) => (<FormItem><FormLabel>Obs.</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+const renderEquipmentFields = (form: any, basePath: string, label: string) => (
+  <div className="space-y-4 rounded-md border p-4">
+    <h4 className="font-semibold text-foreground">{label}</h4>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <FormField control={form.control} name={`${basePath}.marca`} render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+      <FormField control={form.control} name={`${basePath}.modelo`} render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+      <FormField control={form.control} name={`${basePath}.serial`} render={({ field }) => (<FormItem><FormLabel>Serial</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+      <FormField control={form.control} name={`${basePath}.etiqueta`} render={({ field }) => (<FormItem><FormLabel>Etiqueta</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+      <FormField control={form.control} name={`${basePath}.status`} render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+      <FormField control={form.control} name={`${basePath}.obs`} render={({ field }) => (<FormItem><FormLabel>Obs.</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+    </div>
   </div>
 );
 
@@ -166,7 +169,7 @@ export function InventoryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{item ? "Editar Elemento" : "Agregar Elemento"}</DialogTitle>
           <DialogDescription>
@@ -177,9 +180,10 @@ export function InventoryDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="max-h-[70vh] p-1">
-              <div className="space-y-4 p-4">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="max-h-[75vh] overflow-y-auto p-1 pr-4">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Información del Responsable</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="responsable"
@@ -187,7 +191,7 @@ export function InventoryDialog({
                       <FormItem>
                         <FormLabel>Responsable</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre Apellido" {...field} />
+                          <Input placeholder="Nombre Apellido" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -200,14 +204,14 @@ export function InventoryDialog({
                       <FormItem>
                         <FormLabel>Cédula</FormLabel>
                         <FormControl>
-                          <Input placeholder="V-12345678" {...field} />
+                          <Input placeholder="V-12345678" {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="cargo"
@@ -215,7 +219,7 @@ export function InventoryDialog({
                         <FormItem>
                           <FormLabel>Cargo</FormLabel>
                           <FormControl>
-                            <Input placeholder="Analista" {...field} />
+                            <Input placeholder="Analista" {...field} value={field.value ?? ''}/>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -228,7 +232,7 @@ export function InventoryDialog({
                         <FormItem>
                           <FormLabel>Sector</FormLabel>
                           <FormControl>
-                            <Input placeholder="Oficina Central" {...field} />
+                            <Input placeholder="Oficina Central" {...field} value={field.value ?? ''}/>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -259,53 +263,27 @@ export function InventoryDialog({
                     )}
                   />
                   
-                  <Accordion type="single" collapsible className="w-full">
+                  <Separator className="my-6" />
+
+                  <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
                     <AccordionItem value="item-1">
-                      <AccordionTrigger>Laptop</AccordionTrigger>
-                      <AccordionContent>
-                        <div className="p-1">
-                         {renderEquipmentFields(form, "equipo1.laptop")}
+                      <AccordionTrigger className="text-lg">Equipos</AccordionTrigger>
+                      <AccordionContent className="pt-4 space-y-4">
+                        {renderEquipmentFields(form, "equipo1.laptop", "Laptop")}
+                        
+                        <h3 className="text-md font-medium pt-4">Equipo de Escritorio</h3>
+                        <div className="space-y-4">
+                            {renderEquipmentFields(form, "equipo2.escritorio.cpu", "CPU")}
+                            {renderEquipmentFields(form, "equipo2.escritorio.monitor", "Monitor")}
+                            {renderEquipmentFields(form, "equipo2.escritorio.teclado", "Teclado")}
+                            {renderEquipmentFields(form, "equipo2.escritorio.mouse", "Mouse")}
+                            {renderEquipmentFields(form, "equipo2.escritorio.telefono", "Teléfono")}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="item-2">
-                      <AccordionTrigger>Equipo de Escritorio</AccordionTrigger>
-                      <AccordionContent>
-                        <Accordion type="single" collapsible className="w-full px-2">
-                          <AccordionItem value="sub-item-1">
-                            <AccordionTrigger className="text-sm">CPU</AccordionTrigger>
-                            <AccordionContent className="p-1">
-                              {renderEquipmentFields(form, "equipo2.escritorio.cpu")}
-                            </AccordionContent>
-                          </AccordionItem>
-                          <AccordionItem value="sub-item-2">
-                            <AccordionTrigger className="text-sm">Monitor</AccordionTrigger>
-                            <AccordionContent className="p-1">
-                              {renderEquipmentFields(form, "equipo2.escritorio.monitor")}
-                            </AccordionContent>
-                          </AccordionItem>
-                          <AccordionItem value="sub-item-3">
-                            <AccordionTrigger className="text-sm">Teclado</AccordionTrigger>
-                            <AccordionContent className="p-1">
-                               {renderEquipmentFields(form, "equipo2.escritorio.teclado")}
-                            </AccordionContent>
-                          </AccordionItem>
-                          <AccordionItem value="sub-item-4">
-                            <AccordionTrigger className="text-sm">Mouse</AccordionTrigger>
-                            <AccordionContent className="p-1">
-                              {renderEquipmentFields(form, "equipo2.escritorio.mouse")}
-                            </AccordionContent>
-                          </AccordionItem>
-                          <AccordionItem value="sub-item-5">
-                            <AccordionTrigger className="text-sm">Teléfono</AccordionTrigger>
-                            <AccordionContent className="p-1">
-                              {renderEquipmentFields(form, "equipo2.escritorio.telefono")}
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </AccordionContent>
-                    </AccordionItem>
                   </Accordion>
+                 
+                 <Separator className="my-6" />
                  
                  <FormField
                   control={form.control}
@@ -314,15 +292,15 @@ export function InventoryDialog({
                     <FormItem>
                       <FormLabel>Observaciones Generales</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Añadir observaciones..." {...field} />
+                        <Textarea placeholder="Añadir observaciones..." {...field} value={field.value ?? ''}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </ScrollArea>
-            <DialogFooter className="pt-4 pr-4">
+            </div>
+            <DialogFooter className="pt-6 border-t mt-4">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                 Cancelar
               </Button>
@@ -336,3 +314,5 @@ export function InventoryDialog({
     </Dialog>
   );
 }
+
+    
