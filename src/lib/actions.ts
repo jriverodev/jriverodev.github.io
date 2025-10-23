@@ -75,3 +75,4 @@ export async function deleteInventoryItem(id: string) {
     console.error("Error deleting document:", error);
     return { success: false, message: "Error al eliminar el elemento." };
   }
+}
