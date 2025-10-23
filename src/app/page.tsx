@@ -5,7 +5,7 @@ import { useUser } from "@/hooks/use-user";
 import InventoryDashboard from "@/components/inventory-dashboard";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase-client";
 
 export default function Home() {
   const { user, loading } = useUser();

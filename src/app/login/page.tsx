@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase-client";
 import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,7 @@ export default function LoginPage() {
     }, [user, loading, router]);
 
     const handleGoogleSignIn = async () => {
+        if (!auth) return;
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
@@ -36,11 +37,11 @@ export default function LoginPage() {
         }
     };
 
-    if (loading || user) {
+    if (loading || (!loading && user)) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
-                    <p className="text-muted-foreground">Redirigiendo...</p>
+                    <p className="text-muted-foreground">Cargando...</p>
                 </div>
             </div>
         );
@@ -58,6 +59,7 @@ export default function LoginPage() {
                         variant="outline"
                         className="w-full"
                         onClick={handleGoogleSignIn}
+                        disabled={!auth}
                     >
                         <GoogleIcon />
                         Continuar con Google

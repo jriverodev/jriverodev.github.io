@@ -10,12 +10,12 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
-import { db } from "./firebase"; // Usamos la instancia unificada de cliente
+import { serverDB } from "./firebase-server";
 import type { InventoryItem, InventoryItemForm } from "./definitions";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, "inventario"));
+    const querySnapshot = await getDocs(collection(serverDB, "inventario"));
     const data: InventoryItem[] = [];
     querySnapshot.forEach((doc) => {
       data.push({ id: doc.id, ...doc.data() } as InventoryItem);
@@ -31,7 +31,7 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
     const cleanData = JSON.parse(JSON.stringify(itemData));
-    await addDoc(collection(db, "inventario"), cleanData);
+    await addDoc(collection(serverDB, "inventario"), cleanData);
     revalidatePath("/");
     return { success: true, message: "Elemento agregado exitosamente." };
   } catch (error) {
@@ -42,10 +42,10 @@ export async function addInventoryItem(itemData: InventoryItemForm) {
 }
 
 export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
-  const batch = writeBatch(db);
+  const batch = writeBatch(serverDB);
   try {
     items.forEach((item) => {
-      const docRef = doc(collection(db, "inventario"));
+      const docRef = doc(collection(serverDB, "inventario"));
       const cleanItem = JSON.parse(JSON.stringify(item));
       batch.set(docRef, cleanItem);
     });
@@ -63,7 +63,7 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
 export async function updateInventoryItem(id: string, itemData: InventoryItemForm) {
   try {
     const cleanData = JSON.parse(JSON.stringify(itemData));
-    await updateDoc(doc(db, "inventario", id), cleanData);
+    await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
     return { success: true, message: "Elemento actualizado exitosamente." };
   } catch (error) {
@@ -75,7 +75,7 @@ export async function updateInventoryItem(id: string, itemData: InventoryItemFor
 
 export async function deleteInventoryItem(id: string) {
   try {
-    await deleteDoc(doc(db, "inventario", id));
+    await deleteDoc(doc(serverDB, "inventario", id));
     revalidatePath("/");
     return { success: true, message: "Elemento eliminado exitosamente." };
   } catch (error) {
