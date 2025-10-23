@@ -8,17 +8,11 @@ import {
   deleteDoc,
   doc,
   writeBatch,
-  query,
-  where,
-  getCountFromServer,
 } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
-import { db } from "./firebase";
+import { db } from "./firebase"; // Usamos la instancia unificada de cliente
 import type { InventoryItem, InventoryItemForm } from "./definitions";
 
-// This function is no longer needed as we fetch data on the client
-// after authentication. We keep it as a reference or for future
-// server-side rendering needs.
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   try {
     const querySnapshot = await getDocs(collection(db, "inventario"));
@@ -87,32 +81,6 @@ export async function deleteInventoryItem(id: string) {
   } catch (error) {
     console.error("Error deleting document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al eliminar el elemento.";
-    return { success: false, message: errorMessage };
-  }
-}
-
-export async function checkAndMigrateData() {
-  try {
-    console.log("Verificando si la migración de datos es necesaria...");
-    const inventoryCollection = collection(db, "inventario");
-    
-    // Check if the collection is empty.
-    const snapshot = await getCountFromServer(inventoryCollection);
-    
-    if (snapshot.data().count > 0) {
-      console.log("La base de datos ya contiene datos. No se requiere migración.");
-      return { success: true, message: "La base de datos ya contiene datos." };
-    }
-    
-    // If empty, proceed with migration.
-    console.log("La base de datos está vacía. Iniciando la migración de datos...");
-    await migrateData();
-    revalidatePath("/");
-    return { success: true, message: "Migración de datos completada exitosamente." };
-
-  } catch (error) {
-    console.error("Error durante la verificación y migración:", error);
-    const errorMessage = error instanceof Error ? error.message : "Error durante la verificación y migración.";
     return { success: false, message: errorMessage };
   }
 }
