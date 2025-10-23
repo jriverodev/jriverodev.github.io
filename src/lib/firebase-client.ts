@@ -18,14 +18,16 @@ let auth: Auth;
 let db: Firestore;
 
 // Initialize Firebase for client-side
-if (typeof window !== 'undefined' && getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-} else if (typeof window !== 'undefined') {
-  app = getApp();
+if (typeof window !== 'undefined') {
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
   auth = getAuth(app);
   db = getFirestore(app);
 }
 
+
+// @ts-ignore
 export { app, auth, db };
