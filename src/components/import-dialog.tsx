@@ -66,15 +66,16 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      delimiter: ",", // Explicitly set the delimiter
       transformHeader: header => header.trim(),
       complete: async (results) => {
         try {
           if (results.errors.length > 0) {
+            const firstError = results.errors[0];
+            const errorMessage = `Fila ${firstError.row}: ${firstError.message}`;
             console.error("CSV Parsing errors:", results.errors);
             toast({
               title: "Error de formato CSV",
-              description: `Se encontraron errores al leer el archivo. Error: ${results.errors[0].message}`,
+              description: `Se encontraron errores al leer el archivo. ${errorMessage}`,
               variant: "destructive",
             });
             setIsProcessing(false);
@@ -85,7 +86,6 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
             .map((row: any) => parseCSVRow(row))
             .filter(
               (item): item is InventoryItemForm => {
-                // Ensure the row is not just empty fields and has a responsable
                 return item && typeof item === 'object' && !!item.responsable;
               }
             );
