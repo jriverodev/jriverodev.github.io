@@ -1,8 +1,11 @@
+
 "use server";
 
 import { collection, getDocs, writeBatch, doc } from "firebase/firestore";
 import { db } from "./firebase";
-import type { InventoryItemForm, Equipment, DesktopEquipment } from "./definitions";
+import { parseCSVRow } from "./utils";
+import type { InventoryItemForm } from "./definitions";
+
 
 const inventoryData: any[] = [
  {
@@ -209,7 +212,7 @@ const inventoryData: any[] = [
   "RESPONSABLE": "ORLANDO VELASQUEZ",
   "CEDULA": 14085245,
   "CARGO": "CAPATAZ TRANSPORTE DE PERSONAL OCC",
-  "SECTOR": "CONTRATacion",
+  "SECTOR": "CONTRATACION",
   "STATUS GENERAL": "OPERATIVO",
   "EQUIPO 1: LAPTOP (Marca/Modelo/Serial/Etiqueta/Status/Obs)": "NO APLICA",
   "EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)": "CPU: VIT/M2100-01-01/A001227968/18001214/OPERATIVO/-; Monitor: VIT/SIN INFORMACION/GLOHSHAD15804/SIN INFORMACION/OPERATIVO/-; Teclado: LENOVO/SK-8825/5199741/SIN INFORMACION/OPERATIVO/-; Mouse: AOC/MS121/SIN INFORMACION/SIN INFORMACION/OPERATIVO/-",
@@ -317,3 +320,48 @@ const inventoryData: any[] = [
   "OBSERVACIONES GENERALES": "MEMORIA RAM"
  }
 ]
+export async function migrateData() {
+  console.log("Iniciando la migración de datos a Firestore...");
+  const inventoryCollection = collection(db, "inventario");
+
+  // Verificar si la colección ya tiene datos
+  const existingDocs = await getDocs(inventoryCollection);
+  if (!existingDocs.empty) {
+    console.log("La base de datos ya contiene datos. No se requiere migración.");
+    return;
+  }
+
+  const batch = writeBatch(db);
+  const transformedData = inventoryData.map(item => {
+    const row = {
+      'Responsable': item.RESPONSABLE,
+      'Cédula': String(item.CEDULA),
+      'Cargo': item.CARGO,
+      'Sector': item.SECTOR,
+      'Status General': item['STATUS GENERAL'],
+      'Laptop': item['EQUIPO 1: LAPTOP (Marca/Modelo/Serial/Etiqueta/Status/Obs)'],
+      'Escritorio': item['EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)'],
+      'Obs Generales': item['OBSERVACIONES GENERALES']
+    };
+    return parseCSVRow(row);
+  });
+
+
+  transformedData.forEach((item) => {
+    // Asegurarse de que no haya `undefined` en los datos del lote
+    const cleanItem: InventoryItemForm = JSON.parse(JSON.stringify(item, (key, value) => {
+        return (value === undefined) ? null : value;
+    }));
+    const docRef = doc(inventoryCollection);
+    batch.set(docRef, cleanItem);
+  });
+
+  try {
+    await batch.commit();
+    console.log(`¡Migración completada! Se agregaron ${transformedData.length} documentos.`);
+  } catch (error) {
+    console.error("Error durante la migración de datos:", error);
+  }
+}
+
+    

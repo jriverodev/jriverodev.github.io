@@ -154,4 +154,5 @@ export default function InventoryDashboard({
         setIsOpen={setIsImportOpen}
       />
     </div>
-  
+  );
+}

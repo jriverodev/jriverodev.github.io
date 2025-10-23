@@ -62,6 +62,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "genkit-cli": "^1.20.0",
-    "postcss": "^8.4.40"
+    "postcss": "^8.4.40",
+    "typescript": "5.9.3"
   }
 }
