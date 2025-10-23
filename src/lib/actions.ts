@@ -84,3 +84,25 @@ export async function deleteInventoryItem(id: string) {
     return { success: false, message: errorMessage };
   }
 }
+
+export async function deleteAllInventoryItems() {
+  try {
+    const querySnapshot = await getDocs(collection(serverDB, "inventario"));
+    if (querySnapshot.empty) {
+      return { success: true, message: "La base de datos ya está vacía." };
+    }
+    
+    const batch = writeBatch(serverDB);
+    querySnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    revalidatePath("/");
+    return { success: true, message: "Todos los registros han sido eliminados." };
+  } catch (error) {
+    console.error("Error deleting all documents:", error);
+    const errorMessage = error instanceof Error ? error.message : "Error al eliminar los registros.";
+    return { success: false, message: errorMessage };
+  }
+}
