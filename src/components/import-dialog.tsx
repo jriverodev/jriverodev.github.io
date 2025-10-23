@@ -66,18 +66,33 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      delimiter: ",", // Explicitly set the delimiter
       transformHeader: header => header.trim(),
       complete: async (results) => {
         try {
+          if (results.errors.length > 0) {
+            console.error("CSV Parsing errors:", results.errors);
+            toast({
+              title: "Error de formato CSV",
+              description: `Se encontraron errores al leer el archivo. Error: ${results.errors[0].message}`,
+              variant: "destructive",
+            });
+            setIsProcessing(false);
+            return;
+          }
+
           const parsedData = results.data
             .map((row: any) => parseCSVRow(row))
             .filter(
-              (item) => item.responsable // Solo requerimos que el responsable exista
-            ) as InventoryItemForm[];
+              (item): item is InventoryItemForm => {
+                // Ensure the row is not just empty fields and has a responsable
+                return item && typeof item === 'object' && !!item.responsable;
+              }
+            );
 
           if(parsedData.length === 0) {
             toast({
-              title: "Sin datos",
+              title: "Sin datos válidos",
               description: "El archivo CSV está vacío o no contiene filas con un 'Responsable' válido.",
               variant: "destructive",
             });
@@ -94,7 +109,7 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
             onSuccess();
           } else {
             toast({
-              title: "Error",
+              title: "Error al guardar",
               description: result.message,
               variant: "destructive",
             });
@@ -110,11 +125,11 @@ export function ImportDialog({ isOpen, setIsOpen, onSuccess }: ImportDialogProps
           setIsProcessing(false);
         }
       },
-      error: (error) => {
-        console.error(error);
+      error: (error: any) => {
+        console.error("PapaParse error:", error);
         toast({
           title: "Error de archivo",
-          description: "No se pudo leer el archivo CSV.",
+          description: `No se pudo leer el archivo CSV. ${error.message}`,
           variant: "destructive",
         });
         setIsProcessing(false);
