@@ -72,7 +72,7 @@ export async function getInventoryItemById(id: string): Promise<InventoryItem | 
 
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
-    const cleanData = JSON.parse(JSON.stringify(itemData));
+    const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     const result = { success: true, message: "Elemento agregado exitosamente." };
     await addDoc(collection(serverDB, "inventario"), cleanData);
     revalidatePath("/");
@@ -106,7 +106,7 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
 
 export async function updateInventoryItem(id: string, itemData: Partial<InventoryItemForm>) {
    try {
-    const cleanData = JSON.parse(JSON.stringify(itemData));
+    const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     const result = { success: true, message: "Elemento actualizado exitosamente." };
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
