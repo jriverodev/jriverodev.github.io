@@ -15,13 +15,14 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-// Initialize a new app for the server if one doesn't already exist.
-if (getApps().find(app => app.name === 'server-app')) {
-    app = getApp('server-app');
-} else {
-    app = initializeApp(firebaseConfig, 'server-app');
-}
+const appName = "server-app";
 
+// Initialize a new app for the server if one doesn't already exist.
+if (!getApps().some(app => app.name === appName)) {
+    app = initializeApp(firebaseConfig, appName);
+} else {
+    app = getApp(appName);
+}
 
 const db: Firestore = getFirestore(app);
 
