@@ -51,7 +51,7 @@ export default function InventoryDashboard() {
   }, []);
   
   const sectors = useMemo(
-    () => ["all", ...Array.from(new Set(items.map((item) => item.sector)))],
+    () => ["all", ...Array.from(new Set(items.map((item) => item.sector).filter(Boolean)))],
     [items]
   );
   const statuses = ["all", "OPERATIVO", "INOPERATIVO", "ROBADO", "MIXTO"];
@@ -167,4 +167,3 @@ export default function InventoryDashboard() {
       />
     </div>
   );
-}
