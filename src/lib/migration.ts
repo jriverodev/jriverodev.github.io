@@ -130,7 +130,7 @@ const inventoryData = [
   "SECTOR": "TALLER MTTO PESADA",
   "STATUS GENERAL": "OPERATIVO",
   "EQUIPO 1: LAPTOP (Marca/Modelo/Serial/Etiqueta/Status/Obs)": "NO APLICA",
-  "EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)": "CPU: SIRAGON/1320AMD2650E/11011215950P0569/SIN INFORMACION/OPERATIVO/-; Monitor: HP/GG458A/CNK8260YM2/SIN INFORMACION/OPERATIVO/-; Teclado: VIT/DOK-K5313/KBC727K1019A/SIN INFORMACION/OPERATIVO/-; Mouse: VIT/DOK-M696/MSH209K10922A/SIN INFORMACION/OPERATIVO/-; Teléfono: CISCO/SPA504G/CCQ16470U18/SIN INFORMACION/OPERATIVO/-",
+  "EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)": "CPU: SIRAGON/1320AMD2650E/11011215950P0569/SIN INFORMACION/OPERATIVO/-; Monitor: HP/GG458A/CNK8260YM2/SIN INFORMACION/OPERATIVO/-; Teclado: VIT/DOK-K5313/KBH821K10868A/SIN INFORMACION/OPERATIVO/-; Mouse: VIT/DOK-M696/MSH209K10922A/SIN INFORMACION/OPERATIVO/-; Teléfono: CISCO/SPA504G/CCQ16470U18/SIN INFORMACION/OPERATIVO/-",
   "OBSERVACIONES GENERALES": "SIN USO, CONTROLADORES"
  },
  {
@@ -318,108 +318,3 @@ const inventoryData = [
   "OBSERVACIONES GENERALES": "MEMORIA RAM"
  }
 ]
-
-function parseEquipment(equipString: string): Equipment | undefined {
-    if (!equipString || equipString.toUpperCase() === 'NO APLICA' || equipString.toUpperCase() === 'SIN INFORMACION') {
-        return undefined;
-    }
-    const parts = equipString.split('/').map(s => s.trim());
-    const status = parts[4] || 'SIN INFORMACION';
-    
-    // Ensure status is one of the allowed values, otherwise default.
-    const validStatuses = ["OPERATIVO", "INOPERATIVO", "ROBADO", "MIXTO"];
-    const finalStatus = validStatuses.includes(status.toUpperCase()) ? status : 'SIN INFORMACION';
-
-    return {
-        marca: parts[0] || 'SIN INFORMACION',
-        modelo: parts[1] || 'SIN INFORMACION',
-        serial: parts[2] || 'SIN INFORMACION',
-        etiqueta: parts[3] || 'SIN INFORMACION',
-        status: finalStatus,
-        obs: parts[5] || 'SIN INFORMACION',
-    };
-}
-
-
-function parseDesktopEquipment(desktopString: string): DesktopEquipment | undefined {
-    if (!desktopString || desktopString.toUpperCase() === 'NO APLICA') {
-        return undefined;
-    }
-    const components = desktopString.split(';').map(s => s.trim());
-    const desktop: DesktopEquipment = {};
-
-    components.forEach(comp => {
-        const [type, ...rest] = comp.split(':');
-        const data = rest.join(':').trim();
-        const equipment = parseEquipment(data);
-        if (equipment) {
-            switch (type.trim().toUpperCase()) {
-                case 'CPU':
-                    desktop.cpu = equipment;
-                    break;
-                case 'MONITOR':
-                    desktop.monitor = equipment;
-                    break;
-                case 'TECLADO':
-                    desktop.teclado = equipment;
-                    break;
-                case 'MOUSE':
-                    desktop.mouse = equipment;
-                    break;
-                case 'TELÉFONO':
-                    desktop.telefono = equipment;
-                    break;
-            }
-        }
-    });
-
-    return Object.keys(desktop).length > 0 ? desktop : undefined;
-}
-
-
-export async function migrateData() {
-  console.log("Iniciando la migración de datos a Firestore...");
-  const inventoryCollection = collection(db, "inventario");
-  const snapshot = await getDocs(inventoryCollection);
-
-  if (!snapshot.empty) {
-    console.log("La colección 'inventario' ya contiene datos. No se requiere migración.");
-    return;
-  }
-
-  const batch = writeBatch(db);
-
-  inventoryData.forEach((item, index) => {
-    try {
-      const status = item["STATUS GENERAL"];
-      const validStatuses = ["OPERATIVO", "INOPERATIVO", "ROBADO", "MIXTO"];
-      const statusGeneral = validStatuses.includes(status) ? status as "OPERATIVO" | "INOPERATIVO" | "ROBADO" | "MIXTO" : "INOPERATIVO";
-      
-      const laptopString = item["EQUIPO 1: LAPTOP (Marca/Modelo/Serial/Etiqueta/Status/Obs)"] || "";
-      const desktopString = item["EQUIPO 2: ESCRITORIO (CPU/Monitor/Teclado/Mouse/Teléfono)"] || "";
-      
-      const docData: InventoryItemForm = {
-        responsable: String(item.RESPONSABLE || "SIN INFORMACION"),
-        cedula: String(item.CEDULA || "SIN INFORMACION"),
-        cargo: String(item.CARGO || "SIN INFORMACION"),
-        sector: String(item.SECTOR || "SIN INFORMACION"),
-        statusGeneral: statusGeneral,
-        equipo1: { laptop: parseEquipment(laptopString) },
-        equipo2: { escritorio: parseDesktopEquipment(desktopString) },
-        obsGenerales: String(item["OBSERVACIONES GENERALES"] || ""),
-      };
-
-      const docRef = doc(inventoryCollection);
-      batch.set(docRef, docData);
-    } catch (error) {
-      console.error(`Error procesando el item ${index}:`, item, error);
-    }
-  });
-
-  try {
-    await batch.commit();
-    console.log("Migración de datos completada exitosamente.");
-  } catch (error) {
-    console.error("Error al ejecutar el batch de escritura en Firestore:", error);
-  }
-}

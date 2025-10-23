@@ -1,3 +1,4 @@
+
 "use client";
 
 import { z } from "zod";
@@ -30,6 +31,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import type { InventoryItem } from "@/lib/definitions";
 import { addInventoryItem, updateInventoryItem } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
@@ -71,6 +78,18 @@ interface InventoryDialogProps {
   item?: InventoryItem | null;
 }
 
+const renderEquipmentFields = (form: any, basePath: string) => (
+  <div className="grid grid-cols-2 gap-4">
+    <FormField control={form.control} name={`${basePath}.marca`} render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.modelo`} render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.serial`} render={({ field }) => (<FormItem><FormLabel>Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.etiqueta`} render={({ field }) => (<FormItem><FormLabel>Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.status`} render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.obs`} render={({ field }) => (<FormItem><FormLabel>Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+  </div>
+);
+
+
 export function InventoryDialog({
   isOpen,
   setIsOpen,
@@ -88,7 +107,7 @@ export function InventoryDialog({
           sector: "",
           statusGeneral: "OPERATIVO",
           equipo1: { laptop: {} },
-          equipo2: { escritorio: {} },
+          equipo2: { escritorio: { cpu: {}, monitor: {}, teclado: {}, mouse: {}, telefono: {} } },
           obsGenerales: "",
         },
   });
@@ -206,76 +225,54 @@ export function InventoryDialog({
                     )}
                   />
                   
-                  <div className="space-y-2 p-3 border rounded-md">
-                    <h3 className="font-semibold text-sm mb-2">Laptop</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField control={form.control} name="equipo1.laptop.marca" render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                      <FormField control={form.control} name="equipo1.laptop.modelo" render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                      <FormField control={form.control} name="equipo1.laptop.serial" render={({ field }) => (<FormItem><FormLabel>Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                      <FormField control={form.control} name="equipo1.laptop.etiqueta" render={({ field }) => (<FormItem><FormLabel>Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                      <FormField control={form.control} name="equipo1.laptop.status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                      <FormField control={form.control} name="equipo1.laptop.obs" render={({ field }) => (<FormItem><FormLabel>Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4 p-3 border rounded-md">
-                     <h3 className="font-semibold text-sm">Equipo de Escritorio</h3>
-                      <div className="space-y-2 p-2 border rounded-md">
-                          <h4 className="font-medium text-xs">CPU</h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                              <FormField control={form.control} name="equipo2.escritorio.cpu.marca" render={({ field }) => (<FormItem><FormLabel className="text-xs">Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.cpu.modelo" render={({ field }) => (<FormItem><FormLabel className="text-xs">Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.cpu.serial" render={({ field }) => (<FormItem><FormLabel className="text-xs">Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.cpu.etiqueta" render={({ field }) => (<FormItem><FormLabel className="text-xs">Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.cpu.status" render={({ field }) => (<FormItem><FormLabel className="text-xs">Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.cpu.obs" render={({ field }) => (<FormItem><FormLabel className="text-xs">Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                          </div>
-                      </div>
-                       <div className="space-y-2 p-2 border rounded-md">
-                          <h4 className="font-medium text-xs">Monitor</h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                              <FormField control={form.control} name="equipo2.escritorio.monitor.marca" render={({ field }) => (<FormItem><FormLabel className="text-xs">Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.monitor.modelo" render={({ field }) => (<FormItem><FormLabel className="text-xs">Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.monitor.serial" render={({ field }) => (<FormItem><FormLabel className="text-xs">Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.monitor.etiqueta" render={({ field }) => (<FormItem><FormLabel className="text-xs">Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.monitor.status" render={({ field }) => (<FormItem><FormLabel className="text-xs">Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.monitor.obs" render={({ field }) => (<FormItem><FormLabel className="text-xs">Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                          </div>
-                      </div>
-                       <div className="space-y-2 p-2 border rounded-md">
-                          <h4 className="font-medium text-xs">Teclado</h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                              <FormField control={form.control} name="equipo2.escritorio.teclado.marca" render={({ field }) => (<FormItem><FormLabel className="text-xs">Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.teclado.modelo" render={({ field }) => (<FormItem><FormLabel className="text-xs">Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.teclado.serial" render={({ field }) => (<FormItem><FormLabel className="text-xs">Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.teclado.etiqueta" render={({ field }) => (<FormItem><FormLabel className="text-xs">Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.teclado.status" render={({ field }) => (<FormItem><FormLabel className="text-xs">Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.teclado.obs" render={({ field }) => (<FormItem><FormLabel className="text-xs">Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                          </div>
-                      </div>
-                       <div className="space-y-2 p-2 border rounded-md">
-                          <h4 className="font-medium text-xs">Mouse</h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                              <FormField control={form.control} name="equipo2.escritorio.mouse.marca" render={({ field }) => (<FormItem><FormLabel className="text-xs">Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.mouse.modelo" render={({ field }) => (<FormItem><FormLabel className="text-xs">Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.mouse.serial" render={({ field }) => (<FormItem><FormLabel className="text-xs">Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.mouse.etiqueta" render={({ field }) => (<FormItem><FormLabel className="text-xs">Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.mouse.status" render={({ field }) => (<FormItem><FormLabel className="text-xs">Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.mouse.obs" render={({ field }) => (<FormItem><FormLabel className="text-xs">Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                          </div>
-                      </div>
-                       <div className="space-y-2 p-2 border rounded-md">
-                          <h4 className="font-medium text-xs">Teléfono</h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                              <FormField control={form.control} name="equipo2.escritorio.telefono.marca" render={({ field }) => (<FormItem><FormLabel className="text-xs">Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.telefono.modelo" render={({ field }) => (<FormItem><FormLabel className="text-xs">Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.telefono.serial" render={({ field }) => (<FormItem><FormLabel className="text-xs">Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.telefono.etiqueta" render={({ field }) => (<FormItem><FormLabel className="text-xs">Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.telefono.status" render={({ field }) => (<FormItem><FormLabel className="text-xs">Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                              <FormField control={form.control} name="equipo2.escritorio.telefono.obs" render={({ field }) => (<FormItem><FormLabel className="text-xs">Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)}/>
-                          </div>
-                      </div>
-                  </div>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger>Laptop</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="p-1">
+                         {renderEquipmentFields(form, "equipo1.laptop")}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                      <AccordionTrigger>Equipo de Escritorio</AccordionTrigger>
+                      <AccordionContent>
+                        <Accordion type="single" collapsible className="w-full px-2">
+                          <AccordionItem value="sub-item-1">
+                            <AccordionTrigger className="text-sm">CPU</AccordionTrigger>
+                            <AccordionContent className="p-1">
+                              {renderEquipmentFields(form, "equipo2.escritorio.cpu")}
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="sub-item-2">
+                            <AccordionTrigger className="text-sm">Monitor</AccordionTrigger>
+                            <AccordionContent className="p-1">
+                              {renderEquipmentFields(form, "equipo2.escritorio.monitor")}
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="sub-item-3">
+                            <AccordionTrigger className="text-sm">Teclado</AccordionTrigger>
+                            <AccordionContent className="p-1">
+                               {renderEquipmentFields(form, "equipo2.escritorio.teclado")}
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="sub-item-4">
+                            <AccordionTrigger className="text-sm">Mouse</AccordionTrigger>
+                            <AccordionContent className="p-1">
+                              {renderEquipmentFields(form, "equipo2.escritorio.mouse")}
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="sub-item-5">
+                            <AccordionTrigger className="text-sm">Teléfono</AccordionTrigger>
+                            <AccordionContent className="p-1">
+                              {renderEquipmentFields(form, "equipo2.escritorio.telefono")}
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                 
                  <FormField
                   control={form.control}
                   name="obsGenerales"
@@ -305,3 +302,5 @@ export function InventoryDialog({
     </Dialog>
   );
 }
+
+    
