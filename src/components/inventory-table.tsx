@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ export default function InventoryTable({ items, loading, onRefresh }: InventoryT
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleEdit = (item: InventoryItem) => {
     setEditingItem(item);
@@ -60,6 +62,14 @@ export default function InventoryTable({ items, loading, onRefresh }: InventoryT
       toast({ title: "Error", description: result.message, variant: "destructive" });
     }
     setDeletingItem(null);
+  };
+
+  const handleRowClick = (item: InventoryItem, e: React.MouseEvent<HTMLTableRowElement>) => {
+    // Evita la navegación si se hace clic en el área del menú de acciones
+    if ((e.target as HTMLElement).closest('[data-radix-dropdown-menu-trigger]')) {
+      return;
+    }
+    router.push(`/item/${item.id}`);
   };
 
   return (
@@ -90,7 +100,7 @@ export default function InventoryTable({ items, loading, onRefresh }: InventoryT
               ))
             ) : items.length > 0 ? (
               items.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} onClick={(e) => handleRowClick(item, e)} className="cursor-pointer">
                   <TableCell className="font-medium">{item.responsable}</TableCell>
                   <TableCell>{item.cedula}</TableCell>
                   <TableCell>{item.cargo}</TableCell>
@@ -111,12 +121,12 @@ export default function InventoryTable({ items, loading, onRefresh }: InventoryT
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(item)}>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(item); }}>
                           <FilePenLine className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setDeletingItem(item)}
+                          onClick={(e) => { e.stopPropagation(); setDeletingItem(item); }}
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />

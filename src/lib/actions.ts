@@ -8,6 +8,7 @@ import {
   deleteDoc,
   doc,
   writeBatch,
+  getDoc,
 } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import { serverDB } from "./firebase-server";
@@ -49,6 +50,22 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
   }
 }
 
+export async function getInventoryItemById(id: string): Promise<InventoryItem | null> {
+  try {
+    const docRef = doc(serverDB, "inventario", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as InventoryItem;
+    } else {
+      console.log("No such document!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting document:", error);
+    return null;
+  }
+}
 
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
