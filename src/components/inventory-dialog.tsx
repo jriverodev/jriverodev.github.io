@@ -80,14 +80,53 @@ interface InventoryDialogProps {
 
 const renderEquipmentFields = (form: any, basePath: string) => (
   <div className="grid grid-cols-2 gap-4">
-    <FormField control={form.control} name={`${basePath}.marca`} render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.modelo`} render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.serial`} render={({ field }) => (<FormItem><FormLabel>Serial</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.etiqueta`} render={({ field }) => (<FormItem><FormLabel>Etiqueta</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.status`} render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-    <FormField control={form.control} name={`${basePath}.obs`} render={({ field }) => (<FormItem><FormLabel>Obs.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.marca`} render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.modelo`} render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.serial`} render={({ field }) => (<FormItem><FormLabel>Serial</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.etiqueta`} render={({ field }) => (<FormItem><FormLabel>Etiqueta</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.status`} render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+    <FormField control={form.control} name={`${basePath}.obs`} render={({ field }) => (<FormItem><FormLabel>Obs.</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
   </div>
 );
+
+const getDefaultValues = (item: InventoryItem | null | undefined): InventoryFormValues => {
+    const defaultEquipment = { marca: '', modelo: '', serial: '', etiqueta: '', status: '', obs: '' };
+    const defaultDesktop = { cpu: defaultEquipment, monitor: defaultEquipment, teclado: defaultEquipment, mouse: defaultEquipment, telefono: defaultEquipment };
+
+    if (item) {
+        return {
+            responsable: item.responsable || "",
+            cedula: item.cedula || "",
+            cargo: item.cargo || "",
+            sector: item.sector || "",
+            statusGeneral: item.statusGeneral || "OPERATIVO",
+            equipo1: {
+                laptop: { ...defaultEquipment, ...(item.equipo1?.laptop || {}) }
+            },
+            equipo2: {
+                escritorio: {
+                    cpu: { ...defaultEquipment, ...(item.equipo2?.escritorio?.cpu || {}) },
+                    monitor: { ...defaultEquipment, ...(item.equipo2?.escritorio?.monitor || {}) },
+                    teclado: { ...defaultEquipment, ...(item.equipo2?.escritorio?.teclado || {}) },
+                    mouse: { ...defaultEquipment, ...(item.equipo2?.escritorio?.mouse || {}) },
+                    telefono: { ...defaultEquipment, ...(item.equipo2?.escritorio?.telefono || {}) },
+                }
+            },
+            obsGenerales: item.obsGenerales || "",
+        };
+    }
+
+    return {
+        responsable: "",
+        cedula: "",
+        cargo: "",
+        sector: "",
+        statusGeneral: "OPERATIVO",
+        equipo1: { laptop: defaultEquipment },
+        equipo2: { escritorio: defaultDesktop },
+        obsGenerales: "",
+    };
+};
 
 
 export function InventoryDialog({
@@ -98,19 +137,13 @@ export function InventoryDialog({
   const { toast } = useToast();
   const form = useForm<InventoryFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: item
-      ? { ...item, obsGenerales: item.obsGenerales || "" }
-      : {
-          responsable: "",
-          cedula: "",
-          cargo: "",
-          sector: "",
-          statusGeneral: "OPERATIVO",
-          equipo1: { laptop: {} },
-          equipo2: { escritorio: { cpu: {}, monitor: {}, teclado: {}, mouse: {}, telefono: {} } },
-          obsGenerales: "",
-        },
+    defaultValues: getDefaultValues(item)
   });
+  
+  React.useEffect(() => {
+    form.reset(getDefaultValues(item));
+  }, [item, form]);
+
 
   async function onSubmit(values: InventoryFormValues) {
     const result = item
