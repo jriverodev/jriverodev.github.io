@@ -29,7 +29,7 @@ const removeUndefined = (obj: any): any => {
         return Object.entries(obj).reduce((acc, [key, value]) => {
             if (value !== undefined) {
                 const cleanedValue = removeUndefined(value);
-                if (cleanedValue !== null) {
+                if (cleanedValue !== null && (typeof cleanedValue !== 'object' || Object.keys(cleanedValue).length > 0) ) {
                     (acc as any)[key] = cleanedValue;
                 }
             }
@@ -70,6 +70,7 @@ export async function getInventoryItemById(id: string): Promise<InventoryItem | 
   }
 }
 
+
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
     const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
@@ -107,11 +108,10 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
 export async function updateInventoryItem(id: string, itemData: Partial<InventoryItemForm>) {
    try {
     const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
-    const result = { success: true, message: "Elemento actualizado exitosamente." };
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
     revalidatePath("/");
     revalidatePath(`/item/${id}`);
-    return result;
+    return { success: true, message: "Elemento actualizado exitosamente." };
   } catch (error) {
     console.error("Error updating document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al actualizar el elemento.";
@@ -121,10 +121,9 @@ export async function updateInventoryItem(id: string, itemData: Partial<Inventor
 
 export async function deleteInventoryItem(id: string) {
   try {
-    const result = { success: true, message: "Elemento eliminado exitosamente." };
     await deleteDoc(doc(serverDB, "inventario", id));
     revalidatePath("/");
-    return result;
+    return { success: true, message: "Elemento eliminado exitosamente." };
   } catch (error) {
     console.error("Error deleting document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al eliminar el elemento.";
@@ -144,10 +143,9 @@ export async function deleteAllInventoryItems() {
       batch.delete(doc.ref);
     });
     
-    const result = { success: true, message: "Todos los registros han sido eliminados." };
     await batch.commit();
     revalidatePath("/");
-    return result;
+    return { success: true, message: "Todos los registros han sido eliminados." };
   } catch (error) {
     console.error("Error deleting all documents:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al eliminar los registros.";

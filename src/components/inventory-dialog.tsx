@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { InventoryItem } from "@/lib/definitions";
+import type { InventoryItem, InventoryItemForm } from "@/lib/definitions";
 import { addInventoryItem, updateInventoryItem } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "./ui/separator";
@@ -152,9 +152,11 @@ export function InventoryDialog({
     const plainValues = JSON.parse(JSON.stringify(values));
 
     try {
-      const result = await (item
+      const action = item
         ? updateInventoryItem(item.id, plainValues)
-        : addInventoryItem(plainValues));
+        : addInventoryItem(plainValues);
+      
+      const result = await action;
 
       if (result && result.success) {
         toast({ title: "Éxito", description: result.message });
