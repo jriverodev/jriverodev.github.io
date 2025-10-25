@@ -148,30 +148,27 @@ export function InventoryDialog({
 
 
   async function onSubmit(values: InventoryFormValues) {
-    // Ensure we have a clean object without undefined values from the form
     const plainValues = JSON.parse(JSON.stringify(values));
-
+    const action = item
+      ? updateInventoryItem(item.id, plainValues)
+      : addInventoryItem(plainValues);
+    
     try {
-      const action = item
-        ? updateInventoryItem(item.id, plainValues)
-        : addInventoryItem(plainValues);
-      
       const result = await action;
-
-      if (result && result.success) {
+      if (result.success) {
         toast({ title: "Éxito", description: result.message });
         setIsOpen(false);
         onSuccess();
       } else {
-        toast({
+         toast({
           title: "Error al guardar",
-          description: result?.message || "Ocurrió un error desconocido.",
+          description: result.message,
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Submit error:", error);
-      toast({
+       console.error("Submit error:", error);
+       toast({
         title: "Error inesperado",
         description: "Ha ocurrido un error al procesar la solicitud.",
         variant: "destructive",

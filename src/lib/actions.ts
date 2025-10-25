@@ -74,8 +74,8 @@ export async function getInventoryItemById(id: string): Promise<InventoryItem | 
 export async function addInventoryItem(itemData: InventoryItemForm) {
   try {
     const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
-    const result = { success: true, message: "Elemento agregado exitosamente." };
     await addDoc(collection(serverDB, "inventario"), cleanData);
+    const result = { success: true, message: "Elemento agregado exitosamente." };
     revalidatePath("/");
     return result;
   } catch (error) {
@@ -93,8 +93,8 @@ export async function addMultipleInventoryItems(items: InventoryItemForm[]) {
       const cleanItem = removeUndefined(JSON.parse(JSON.stringify(item)));
       batch.set(docRef, cleanItem);
     });
-    const result = { success: true, message: `${items.length} elementos importados exitosamente.` };
     await batch.commit();
+    const result = { success: true, message: `${items.length} elementos importados exitosamente.` };
     revalidatePath("/");
     return result;
   } catch (error) {
@@ -109,9 +109,10 @@ export async function updateInventoryItem(id: string, itemData: Partial<Inventor
    try {
     const cleanData = removeUndefined(JSON.parse(JSON.stringify(itemData)));
     await updateDoc(doc(serverDB, "inventario", id), cleanData);
+    const result = { success: true, message: "Elemento actualizado exitosamente." };
     revalidatePath("/");
     revalidatePath(`/item/${id}`);
-    return { success: true, message: "Elemento actualizado exitosamente." };
+    return result;
   } catch (error) {
     console.error("Error updating document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error al actualizar el elemento.";
