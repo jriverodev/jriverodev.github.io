@@ -1,1 +1,1 @@
-./equipotrack/docs.zip
+./content/icons/AppImages.zip
