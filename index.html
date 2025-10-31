@@ -6,6 +6,7 @@
     <title>Sistema de Inventario</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        /* Estilos CSS para la interfaz del sistema */
         * {
             margin: 0;
             padding: 0;
@@ -370,8 +371,9 @@
         </div>
 
         <div class="content">
-            <!-- Dashboard -->
+            <!-- Contenido de las pestañas -->
             <div id="dashboard" class="tab-content active">
+                <!-- Dashboard con estadísticas -->
                 <div class="stats">
                     <div class="stat-card">
                         <div class="stat-number" id="totalUsuarios">0</div>
@@ -427,8 +429,8 @@
                 </div>
             </div>
 
-            <!-- Equipos -->
             <div id="equipos" class="tab-content">
+                <!-- Gestión de equipos -->
                 <button class="btn btn-add" onclick="openEquipmentModal()">➕ Agregar Equipo</button>
                 <div class="search-box">
                     <input type="text" id="searchEquipos" placeholder="🔍 Buscar equipos..." onkeyup="filterTable('equipos')">
@@ -454,8 +456,8 @@
                 </div>
             </div>
 
-            <!-- Asignaciones -->
             <div id="asignaciones" class="tab-content">
+                <!-- Gestión de asignaciones -->
                 <button class="btn btn-add" onclick="openAssignmentModal()">➕ Nueva Asignación</button>
                 <div class="search-box">
                     <input type="text" id="searchAsignaciones" placeholder="🔍 Buscar asignaciones..." onkeyup="filterTable('asignaciones')">
@@ -486,8 +488,9 @@
         </div>
     </div>
 
-    <!-- Modales -->
+    <!-- Modales para formularios -->
     <div id="userModal" class="modal">
+        <!-- Modal para usuarios -->
         <div class="modal-content">
             <h3 id="userModalTitle">Agregar Usuario</h3>
             <form id="userForm">
@@ -517,6 +520,7 @@
     </div>
 
     <div id="equipmentModal" class="modal">
+        <!-- Modal para equipos -->
         <div class="modal-content">
             <h3 id="equipmentModalTitle">Agregar Equipo</h3>
             <form id="equipmentForm">
@@ -561,6 +565,7 @@
     </div>
 
     <div id="assignmentModal" class="modal">
+        <!-- Modal para asignaciones -->
         <div class="modal-content">
             <h3 id="assignmentModalTitle">Nueva Asignación</h3>
             <form id="assignmentForm">
@@ -597,30 +602,40 @@
     </div>
 
     <script>
+        // =============================================
+        // CONFIGURACIÓN DE LA BASE DE DATOS
+        // =============================================
+
         // Base de datos IndexedDB
         let db;
         const DB_NAME = 'InventarioDB';
         const DB_VERSION = 2;
 
-        // Inicializar la base de datos
+        /**
+         * Inicializa la base de datos IndexedDB
+         * Crea las tablas (object stores) y sus índices
+         */
         function initDatabase() {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
 
+            // Maneja errores al abrir la base de datos
             request.onerror = function(event) {
                 console.error('Error abriendo la base de datos:', event.target.error);
             };
-
+            
+            // Éxito al abrir la base de datos
             request.onsuccess = function(event) {
                 db = event.target.result;
                 console.log('Base de datos abierta correctamente');
                 loadAllData();
             };
 
+            // Se ejecuta cuando se necesita crear o actualizar la base de datos
             request.onupgradeneeded = function(event) {
                 const db = event.target.result;
                 const transaction = event.target.transaction;
 
-                // Eliminar stores existentes si es necesario
+                // Eliminar stores existentes si es necesario (durante actualización)
                 if (db.objectStoreNames.contains('usuarios')) {
                     db.deleteObjectStore('usuarios');
                 }
@@ -631,7 +646,7 @@
                     db.deleteObjectStore('asignaciones');
                 }
 
-                // Crear object stores (tablas) con índices correctos
+                // Crear object stores (tablas) con índices
                 const usuarioStore = db.createObjectStore('usuarios', { keyPath: 'id_usuario', autoIncrement: true });
                 usuarioStore.createIndex('responsable', 'RESPONSABLE', { unique: false });
                 usuarioStore.createIndex('cedula', 'CEDULA', { unique: false });
@@ -650,25 +665,48 @@
             };
         }
 
-        // Funciones CRUD para Usuarios
+        // =============================================
+        // FUNCIONES CRUD PARA USUARIOS
+        // =============================================
+
+        /**
+         * Agrega un nuevo usuario a la base de datos
+         * @param {Object} user - Objeto usuario con sus propiedades
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function addUser(user) {
             const transaction = db.transaction(['usuarios'], 'readwrite');
             const store = transaction.objectStore('usuarios');
             return store.add(user);
         }
 
+        /**
+         * Actualiza un usuario existente en la base de datos
+         * @param {Object} user - Objeto usuario con id_usuario y propiedades actualizadas
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function updateUser(user) {
             const transaction = db.transaction(['usuarios'], 'readwrite');
             const store = transaction.objectStore('usuarios');
             return store.put(user);
         }
 
+        /**
+         * Elimina un usuario de la base de datos
+         * @param {number} id - ID del usuario a eliminar
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function deleteUser(id) {
             const transaction = db.transaction(['usuarios'], 'readwrite');
             const store = transaction.objectStore('usuarios');
             return store.delete(id);
         }
 
+        /**
+         * Obtiene un usuario específico por su ID
+         * @param {number} id - ID del usuario a buscar
+         * @returns {Promise} - Promesa que resuelve con el usuario encontrado
+         */
         function getUser(id) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['usuarios'], 'readonly');
@@ -685,6 +723,10 @@
             });
         }
 
+        /**
+         * Obtiene todos los usuarios de la base de datos
+         * @returns {Promise} - Promesa que resuelve con array de usuarios
+         */
         function getAllUsers() {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['usuarios'], 'readonly');
@@ -701,25 +743,48 @@
             });
         }
 
-        // Funciones CRUD para Equipos
+        // =============================================
+        // FUNCIONES CRUD PARA EQUIPOS
+        // =============================================
+
+        /**
+         * Agrega un nuevo equipo a la base de datos
+         * @param {Object} equipment - Objeto equipo con sus propiedades
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function addEquipment(equipment) {
             const transaction = db.transaction(['equipos'], 'readwrite');
             const store = transaction.objectStore('equipos');
             return store.add(equipment);
         }
 
+        /**
+         * Actualiza un equipo existente en la base de datos
+         * @param {Object} equipment - Objeto equipo con id_equipo y propiedades actualizadas
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function updateEquipment(equipment) {
             const transaction = db.transaction(['equipos'], 'readwrite');
             const store = transaction.objectStore('equipos');
             return store.put(equipment);
         }
 
+        /**
+         * Elimina un equipo de la base de datos
+         * @param {number} id - ID del equipo a eliminar
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function deleteEquipment(id) {
             const transaction = db.transaction(['equipos'], 'readwrite');
             const store = transaction.objectStore('equipos');
             return store.delete(id);
         }
 
+        /**
+         * Obtiene un equipo específico por su ID
+         * @param {number} id - ID del equipo a buscar
+         * @returns {Promise} - Promesa que resuelve con el equipo encontrado
+         */
         function getEquipment(id) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['equipos'], 'readonly');
@@ -736,6 +801,11 @@
             });
         }
 
+        /**
+         * Obtiene un equipo por su número de serial (búsqueda única)
+         * @param {string} serial - Número de serial del equipo
+         * @returns {Promise} - Promesa que resuelve con el equipo encontrado
+         */
         function getEquipmentBySerial(serial) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['equipos'], 'readonly');
@@ -753,6 +823,10 @@
             });
         }
 
+        /**
+         * Obtiene todos los equipos de la base de datos
+         * @returns {Promise} - Promesa que resuelve con array de equipos
+         */
         function getAllEquipments() {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['equipos'], 'readonly');
@@ -769,25 +843,47 @@
             });
         }
 
-        // Funciones CRUD para Asignaciones
+        // =============================================
+        // FUNCIONES CRUD PARA ASIGNACIONES
+        // =============================================
+
+        /**
+         * Agrega una nueva asignación a la base de datos
+         * @param {Object} assignment - Objeto asignación con sus propiedades
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function addAssignment(assignment) {
             const transaction = db.transaction(['asignaciones'], 'readwrite');
             const store = transaction.objectStore('asignaciones');
             return store.add(assignment);
         }
-
+.       /**
+         * Actualiza una asignación existente en la base de datos
+         * @param {Object} assignment - Objeto asignación con id_asignacion y propiedades actualizadas
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function updateAssignment(assignment) {
             const transaction = db.transaction(['asignaciones'], 'readwrite');
             const store = transaction.objectStore('asignaciones');
             return store.put(assignment);
         }
 
+        /**
+         * Elimina una asignación de la base de datos
+         * @param {number} id - ID de la asignación a eliminar
+         * @returns {IDBRequest} - Solicitud de la base de datos
+         */
         function deleteAssignment(id) {
             const transaction = db.transaction(['asignaciones'], 'readwrite');
             const store = transaction.objectStore('asignaciones');
             return store.delete(id);
         }
 
+        /**
+         * Obtiene la asignación activa de un equipo específico
+         * @param {number} equipmentId - ID del equipo a buscar
+         * @returns {Promise} - Promesa que resuelve con la asignación encontrada
+         */
         function getAssignmentByEquipment(equipmentId) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['asignaciones'], 'readonly');
@@ -805,6 +901,11 @@
             });
         }
 
+        /**
+         * Obtiene todas las asignaciones de un usuario específico
+         * @param {number} userId - ID del usuario a buscar
+         * @returns {Promise} - Promesa que resuelve con array de asignaciones
+         */
         function getAssignmentsByUser(userId) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['asignaciones'], 'readonly');
@@ -822,6 +923,10 @@
             });
         }
 
+        /**
+         * Obtiene todas las asignaciones de la base de datos
+         * @returns {Promise} - Promesa que resuelve con array de asignaciones
+         */
         function getAllAssignments() {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['asignaciones'], 'readonly');
@@ -838,7 +943,14 @@
             });
         }
 
-        // Cargar todos los datos
+        // =============================================
+        // FUNCIONES DE CARGA Y RENDERIZADO DE DATOS
+        // =============================================
+
+        /**
+         * Carga todos los datos de la base de datos y los renderiza en las tablas
+         * Si no hay datos, carga datos iniciales
+         */
         async function loadAllData() {
             try {
                 const [usuarios, equipos, asignaciones] = await Promise.all([
@@ -861,9 +973,12 @@
             }
         }
 
-        // Cargar datos iniciales
+        /**
+         * Carga datos iniciales en la base de datos (usuarios y equipos de ejemplo)
+         * Crea asignaciones iniciales entre usuarios y equipos
+         */
         async function loadInitialData() {
-         // En la función loadInitialData(), reemplaza el array initialUsers con esto:
+         // Datos iniciales de usuarios
 
 const initialUsers = [
     {RESPONSABLE: "LAGUNA EZEQUIEL", CEDULA: "6535214", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
@@ -1116,12 +1231,13 @@ const initialUsers = [
     {RESPONSABLE: "SAEZ VARGAS, IVANA FERNANDA", CEDULA: "27758876", CARGO: "SUPERVISOR DE ADMINISTRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
     {RESPONSABLE: "ANCIANIS SUAREZ JOSE MANUEL", CEDULA: "28409383", CARGO: "SUPERVISOR MAYOR PROGRAMACION DE OPER", SECTOR: "OPERACIONES"}
 ];
-/*
+            // Datos iniciales de equipos (comentados para evitar errores)
+            /*
             const initialEquipments = [
                 {DESCRIPCION: "CPU", MARCA: "VIT", MODELO: "E2350-02", SERIAL: "A001339402", ETIQUETA: "28017392", STATUS: "OPERATIVO", OBSERVACIONES: ""},
                 {DESCRIPCION: "MONITOR", MARCA: "VIT", MODELO: "ZP2200", SERIAL: "S/I-28017390", ETIQUETA: "28017390", STATUS: "OPERATIVO", OBSERVACIONES: ""}
             ];
-*/
+            */
 
             try {
     loadInitialData();
@@ -1140,11 +1256,12 @@ const initialUsers = [
                 await addEquipment(equipment);
             }
 
-            // Crear asignaciones iniciales
+            // Crear asignaciones iniciales entre usuarios y equipos
             const usuarios = await getAllUsers();
             const equipos = await getAllEquipments();
             
             if (usuarios.length > 0 && equipos.length > 0) {
+                // Asignar el primer equipo al primer usuario
                 await addAssignment({
                     id_usuario: usuarios[0].id_usuario,
                     id_equipo: equipos[0].id_equipo,
@@ -1152,6 +1269,7 @@ const initialUsers = [
                     estado_asignacion: "Asignado"
                 });
 
+                // Asignar el segundo equipo al segundo usuario
                 await addAssignment({
                     id_usuario: usuarios[1].id_usuario,
                     id_equipo: equipos[1].id_equipo,
@@ -1160,13 +1278,20 @@ const initialUsers = [
                 });
             }
 
+            // Recargar todos los datos para mostrar en la interfaz
             loadAllData();
         }
 
-        // Renderizar datos en las tablas
+        /**
+         * Renderiza la lista de usuarios en la tabla correspondiente
+         * @param {Array} usuarios - Array de objetos usuario
+         * @param {Array} equipos - Array de objetos equipo
+         * @param {Array} asignaciones - Array de objetos asignación
+         */
         function renderUsers(usuarios, equipos, asignaciones) {
             const tbody = document.getElementById('tbodyUsuarios');
             tbody.innerHTML = usuarios.map(usuario => {
+                // Encontrar asignaciones activas del usuario
                 const userAssignments = asignaciones.filter(a => a.id_usuario === usuario.id_usuario && a.estado_asignacion === "Asignado");
                 const assignedEquipments = userAssignments.map(a => {
                     const equipo = equipos.find(e => e.id_equipo === a.id_equipo);
@@ -1195,9 +1320,16 @@ const initialUsers = [
             }).join('');
         }
 
+        /**
+         * Renderiza la lista de equipos en la tabla correspondiente
+         * @param {Array} equipos - Array de objetos equipo
+         * @param {Array} usuarios - Array de objetos usuario
+         * @param {Array} asignaciones - Array de objetos asignación
+         */
         function renderEquipments(equipos, usuarios, asignaciones) {
             const tbody = document.getElementById('tbodyEquipos');
             tbody.innerHTML = equipos.map(equipo => {
+                // Encontrar asignación activa del equipo
                 const assignment = asignaciones.find(a => a.id_equipo === equipo.id_equipo && a.estado_asignacion === "Asignado");
                 const assignedUser = assignment ? usuarios.find(u => u.id_usuario === assignment.id_usuario) : null;
 
@@ -1228,6 +1360,12 @@ const initialUsers = [
             }).join('');
         }
 
+        /**
+         * Renderiza la lista de asignaciones en la tabla correspondiente
+         * @param {Array} asignaciones - Array de objetos asignación
+         * @param {Array} usuarios - Array de objetos usuario
+         * @param {Array} equipos - Array de objetos equipo
+         */
         function renderAssignments(asignaciones, usuarios, equipos) {
             const tbody = document.getElementById('tbodyAsignaciones');
             tbody.innerHTML = asignaciones.map(asignacion => {
@@ -1254,25 +1392,42 @@ const initialUsers = [
             }).join('');
         }
 
-        // Funciones para mostrar/ocultar pestañas
+        // =============================================
+        // FUNCIONES DE INTERFAZ Y NAVEGACIÓN
+        // =============================================
+
+        /**
+         * Muestra una pestaña específica y oculta las demás
+         * @param {string} tabName - Nombre de la pestaña a mostrar
+         */
         function showTab(tabName) {
+            // Ocultar todas las pestañas
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
-            
+
+            // Remover clase active de todos los botones
             document.querySelectorAll('.nav button').forEach(button => {
                 button.classList.remove('active');
             });
-            
+
+            // Mostrar pestaña seleccionada y activar botón
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
-            
+
+            // Si es el dashboard, actualizar estadísticas
             if (tabName === 'dashboard') {
                 updateStats();
             }
         }
 
-        // Funciones para los modales
+        // =============================================
+        // FUNCIONES DE MODALES
+        // =============================================
+
+        /**
+         * Abre el modal para agregar/editar usuario
+         */
         function openUserModal() {
             document.getElementById('userModalTitle').textContent = 'Agregar Usuario';
             document.getElementById('userForm').reset();
@@ -1280,10 +1435,16 @@ const initialUsers = [
             document.getElementById('userModal').style.display = 'block';
         }
 
+        /**
+         * Cierra el modal de usuario
+         */
         function closeUserModal() {
             document.getElementById('userModal').style.display = 'none';
         }
 
+        /**
+         * Abre el modal para agregar/editar equipo
+         */
         function openEquipmentModal() {
             document.getElementById('equipmentModalTitle').textContent = 'Agregar Equipo';
             document.getElementById('equipmentForm').reset();
@@ -1292,10 +1453,17 @@ const initialUsers = [
             document.getElementById('equipmentModal').style.display = 'block';
         }
 
+        /**
+         * Cierra el modal de equipo
+         */
         function closeEquipmentModal() {
             document.getElementById('equipmentModal').style.display = 'none';
         }
 
+        /**
+         * Abre el modal para crear/editar asignación
+         * @param {number} equipmentId - ID del equipo a asignar (opcional)
+         */
         async function openAssignmentModal(equipmentId = null) {
             try {
                 const [usuarios, equipos] = await Promise.all([
@@ -1306,6 +1474,7 @@ const initialUsers = [
                 const usuarioSelect = document.getElementById('assignmentUsuario');
                 const equipoSelect = document.getElementById('assignmentEquipo');
 
+                // Llenar select de usuarios
                 usuarioSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
                 equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
 
@@ -1313,7 +1482,7 @@ const initialUsers = [
                     usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.RESPONSABLE} - ${usuario.SECTOR}</option>`;
                 });
 
-                // Solo mostrar equipos no asignados
+                // Llenar select de equipos (solo equipos no asignados)
                 const asignaciones = await getAllAssignments();
                 const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
                 
@@ -1338,11 +1507,17 @@ const initialUsers = [
             }
         }
 
+        /**
+         * Cierra el modal de asignación
+         */
         function closeAssignmentModal() {
             document.getElementById('assignmentModal').style.display = 'none';
             document.getElementById('equipmentDetails').style.display = 'none';
         }
 
+        /**
+         * Actualiza la lista de equipos disponibles según el usuario seleccionado
+         */
         async function updateAvailableEquipments() {
             const usuarioId = document.getElementById('assignmentUsuario').value;
             const equipoSelect = document.getElementById('assignmentEquipo');
@@ -1358,6 +1533,7 @@ const initialUsers = [
                     getAllAssignments()
                 ]);
 
+                // Filtrar equipos no asignados
                 const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
                 
                 equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
@@ -1369,6 +1545,9 @@ const initialUsers = [
             }
         }
 
+        /**
+         * Actualiza los detalles del equipo seleccionado en el modal de asignación
+         */
         async function updateEquipmentDetails() {
             const equipoId = document.getElementById('assignmentEquipo').value;
             const equipmentDetails = document.getElementById('equipmentDetails');
@@ -2078,6 +2257,7 @@ const initialUsers = [
 </body>
 
 </html>
+
 
 
 
