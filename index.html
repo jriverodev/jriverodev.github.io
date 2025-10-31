@@ -677,20 +677,17 @@
     </div>
 
     <script>
-        // =============================================
-        // CONFIGURACIÓN PWA - SERVICE WORKER Y MANIFEST
-        // =============================================
-
-        // Manifest dinámico para PWA
-        // =============================================
+  // =============================================
+// CONFIGURACIÓN PWA PARA GITHUB PAGES
+// =============================================
 
 // Manifest dinámico para PWA
 const manifest = {
     "name": "Sistema de Inventario",
     "short_name": "InventarioPWA", 
     "description": "Sistema de gestión de inventario offline",
-    "start_url": "./",
-    "scope": "./",
+    "start_url": "https://jriverodev.github.io/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#2c3e50",
@@ -720,164 +717,65 @@ function setupPWA() {
     manifestLink.href = manifestURL;
     document.head.appendChild(manifestLink);
 
-    console.log('Manifest PWA configurado');
+    console.log('✅ Manifest PWA configurado');
 
-    // Registrar Service Worker
-    registerServiceWorker();
-    
-    // Configurar instalación de PWA
+    // En GitHub Pages usamos un enfoque simplificado sin Service Worker
     setupPWAInstall();
-    
-    // Configurar detección de conexión
     setupConnectionDetection();
+    
+    // Marcar como PWA básica (sin Service Worker)
+    updatePWAStatus('✅ PWA Básica');
 }
 
-// Service Worker CORREGIDO - Sin scope problemático
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        // Crear Service Worker en línea sin scope problemático
-        const swContent = `
-            const CACHE_NAME = 'inventario-pwa-v3';
-            const urlsToCache = [
-                './',
-                'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
-            ];
-
-            self.addEventListener('install', (event) => {
-                console.log('🔄 Service Worker instalado - Inventario PWA');
-                self.skipWaiting(); // Activar inmediatamente
-                
-                event.waitUntil(
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            console.log('📦 Cache abierto');
-                            return cache.addAll(urlsToCache);
-                        })
-                        .catch(error => {
-                            console.log('❌ Error cacheando recursos:', error);
-                        })
-                );
-            });
-
-            self.addEventListener('activate', (event) => {
-                console.log('✅ Service Worker activado');
-                event.waitUntil(
-                    caches.keys().then(cacheNames => {
-                        return Promise.all(
-                            cacheNames.map(cacheName => {
-                                if (cacheName !== CACHE_NAME) {
-                                    console.log('🗑️ Eliminando cache viejo:', cacheName);
-                                    return caches.delete(cacheName);
-                                }
-                            })
-                        );
-                    })
-                );
-                return self.clients.claim();
-            });
-
-            self.addEventListener('fetch', (event) => {
-                // Solo cachear solicitudes GET
-                if (event.request.method !== 'GET') return;
-                
-                event.respondWith(
-                    caches.match(event.request)
-                        .then((response) => {
-                            // Retornar desde cache si está disponible
-                            if (response) {
-                                console.log('💾 Sirviendo desde cache:', event.request.url);
-                                return response;
-                            }
-                            
-                            // Si no está en cache, hacer fetch a la red
-                            return fetch(event.request)
-                                .then(response => {
-                                    // Cachear nueva respuesta
-                                    if (response.status === 200) {
-                                        const responseToCache = response.clone();
-                                        caches.open(CACHE_NAME)
-                                            .then(cache => {
-                                                cache.put(event.request, responseToCache);
-                                            });
-                                    }
-                                    return response;
-                                })
-                                .catch(error => {
-                                    console.log('🌐 Error de red, modo offline');
-                                    // Podrías retornar una página offline personalizada aquí
-                                    return new Response(JSON.stringify({
-                                        error: 'Modo offline',
-                                        message: 'Los datos se guardarán localmente y se sincronizarán cuando haya conexión'
-                                    }), {
-                                        headers: { 'Content-Type': 'application/json' }
-                                    });
-                                });
-                        })
-                );
-            });
-
-            // Manejar mensajes desde la app
-            self.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'SKIP_WAITING') {
+// Service Worker ALTERNATIVO - Solo para HTTPS tradicional
+function tryRegisterServiceWorker() {
+    // Solo intentar en entornos que soporten Service Workers correctamente
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        try {
+            // Intentar registrar un Service Worker muy básico
+            const swContent = `
+                self.addEventListener('install', (event) => {
+                    console.log('📦 PWA Installado');
                     self.skipWaiting();
-                }
-            });
-        `;
-
-        // Registrar Service Worker con scope correcto
-        const swBlob = new Blob([swContent], {type: 'application/javascript'});
-        const swURL = URL.createObjectURL(swBlob);
-        
-        // Registrar con scope en la raíz del dominio
-        navigator.serviceWorker.register(swURL, { 
-            scope: './',
-            updateViaCache: 'none'
-        })
-        .then((registration) => {
-            console.log('✅ Service Worker registrado con éxito:', registration);
-            updatePWAStatus('✅ PWA Activa');
-            
-            // Verificar si hay una nueva versión
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                console.log('🔄 Nueva versión del Service Worker encontrada');
+                });
                 
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('🔄 Nueva versión lista. Recarga para actualizar.');
-                        updatePWAStatus('🔄 Nueva versión disponible');
-                    }
+                self.addEventListener('activate', (event) => {
+                    console.log('✅ PWA Activado');
+                    event.waitUntil(self.clients.claim());
                 });
-            });
-        })
-        .catch((error) => {
-            console.log('❌ Error registrando Service Worker:', error);
-            updatePWAStatus('❌ Error PWA');
+                
+                // Cache básico para recursos críticos
+                self.addEventListener('fetch', (event) => {
+                    // Estrategia de cache básica
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => response || fetch(event.request))
+                    );
+                });
+            `;
             
-            // Fallback: intentar sin scope específico
-            navigator.serviceWorker.register(swURL)
+            const swBlob = new Blob([swContent], {type: 'application/javascript'});
+            const swURL = URL.createObjectURL(swBlob);
+            
+            navigator.serviceWorker.register(swURL, { scope: './' })
                 .then(registration => {
-                    console.log('✅ Service Worker registrado (fallback):', registration);
-                    updatePWAStatus('✅ PWA Activa (Fallback)');
+                    console.log('✅ Service Worker registrado (básico)');
+                    updatePWAStatus('✅ PWA Completa');
                 })
-                .catch(fallbackError => {
-                    console.log('❌ Error también en fallback:', fallbackError);
+                .catch(error => {
+                    console.log('⚠️ Service Worker no disponible en este entorno');
+                    // No es crítico - continuar sin SW
                 });
-        });
-        
-        // Escuchar cambios en el Service Worker
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('🔄 Controller changed - posible actualización');
-            window.location.reload();
-        });
-        
+                
+        } catch (error) {
+            console.log('⚠️ Entorno no compatible con Service Worker');
+        }
     } else {
-        console.log('❌ Service Worker no soportado en este navegador');
-        updatePWAStatus('❌ SW No Soportado');
+        console.log('🌐 Modo PWA Básica (sin Service Worker)');
     }
 }
 
-        // Instalación de PWA
+// Instalación de PWA MEJORADA
 function setupPWAInstall() {
     let deferredPrompt;
     const installBtn = document.getElementById('pwaInstallBtn');
@@ -889,13 +787,13 @@ function setupPWAInstall() {
         updatePWAStatus('📱 Lista para instalar');
         console.log('📱 App lista para instalación');
         
-        // Mostrar por 20 segundos
+        // Mostrar por 30 segundos
         setTimeout(() => {
             if (installBtn.style.display !== 'none') {
                 installBtn.style.display = 'none';
-                console.log('⏰ Botón de instalación ocultado por tiempo');
+                console.log('⏰ Botón de instalación ocultado');
             }
-        }, 20000);
+        }, 30000);
     });
 
     installBtn.addEventListener('click', async () => {
@@ -919,6 +817,7 @@ function setupPWAInstall() {
                 installBtn.textContent = '📲 Instalar App';
                 installBtn.disabled = false;
                 console.log('❌ App rechazada para instalación');
+                updatePWAStatus('📱 Instalación cancelada');
                 
                 setTimeout(() => {
                     installBtn.style.display = 'none';
@@ -933,14 +832,6 @@ function setupPWAInstall() {
         deferredPrompt = null;
         updatePWAStatus('🎉 App Instalada');
         console.log('🎉 App instalada exitosamente');
-        
-        // Opcional: trackear instalación
-        if (window.gtag) {
-            gtag('event', 'install', {
-                'event_category': 'PWA',
-                'event_label': 'App instalada'
-            });
-        }
     });
     
     // Verificar si ya está instalado
@@ -948,6 +839,13 @@ function setupPWAInstall() {
         installBtn.style.display = 'none';
         updatePWAStatus('📱 Ejecutando como App');
         console.log('📱 Ejecutándose en modo standalone');
+    }
+    
+    // También verificar usando navigator.standalone (iOS)
+    if (navigator.standalone) {
+        installBtn.style.display = 'none';
+        updatePWAStatus('📱 Ejecutando como App (iOS)');
+        console.log('📱 Ejecutándose en modo standalone (iOS)');
     }
 }
 
@@ -958,18 +856,44 @@ function setupConnectionDetection() {
     function updateOnlineStatus() {
         if (navigator.onLine) {
             offlineWarning.style.display = 'none';
-            updatePWAStatus('✅ En línea');
+            updatePWAStatus(document.getElementById('pwaStatus').textContent.replace('⚠️ Offline - ', ''));
             console.log('🌐 Conexión restaurada');
-            
-            // Intentar sincronizar datos si es necesario
-            if (typeof syncOfflineData === 'function') {
-                syncOfflineData();
-            }
         } else {
             offlineWarning.style.display = 'block';
-            updatePWAStatus('⚠️ Modo Offline');
+            const currentStatus = document.getElementById('pwaStatus').textContent;
+            if (!currentStatus.includes('Offline')) {
+                updatePWAStatus('⚠️ Offline - ' + currentStatus);
+            }
             console.log('🌐 Sin conexión - Modo offline activado');
+            
+            // Mostrar notificación de offline
+            showOfflineNotification();
         }
+    }
+
+    function showOfflineNotification() {
+        // Crear notificación visual temporal
+        const offlineMsg = document.createElement('div');
+        offlineMsg.style.cssText = `
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        `;
+        offlineMsg.textContent = '⚠️ Modo offline - Los datos se guardan localmente';
+        document.body.appendChild(offlineMsg);
+        
+        setTimeout(() => {
+            if (document.body.contains(offlineMsg)) {
+                document.body.removeChild(offlineMsg);
+            }
+        }, 3000);
     }
 
     window.addEventListener('online', updateOnlineStatus);
@@ -988,7 +912,7 @@ function updatePWAStatus(message) {
         // Cambiar color según estado
         if (message.includes('✅') || message.includes('🎉')) {
             statusElement.style.background = '#27ae60';
-        } else if (message.includes('⚠️') || message.includes('🔄')) {
+        } else if (message.includes('⚠️') || message.includes('📱') || message.includes('🔄')) {
             statusElement.style.background = '#f39c12';
         } else if (message.includes('❌')) {
             statusElement.style.background = '#e74c3c';
@@ -998,22 +922,47 @@ function updatePWAStatus(message) {
     }
 }
 
-// Función para forzar actualización del Service Worker
-function updateServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.update();
-            console.log('🔄 Buscando actualizaciones del Service Worker');
-        });
+// Función para simular funcionalidad offline
+function setupOfflineFunctionality() {
+    console.log('🔧 Configurando funcionalidad offline...');
+    
+    // Tu base de datos IndexedDB ya proporciona almacenamiento offline
+    // Aquí podrías agregar lógica adicional para manejo offline
+    
+    // Ejemplo: Guardar operaciones pendientes cuando hay conexión
+    let pendingOperations = JSON.parse(localStorage.getItem('pendingOperations') || '[]');
+    
+    // Intentar procesar operaciones pendientes cuando hay conexión
+    window.addEventListener('online', () => {
+        if (pendingOperations.length > 0) {
+            console.log('🔄 Procesando operaciones pendientes:', pendingOperations.length);
+            // Aquí procesarías las operaciones pendientes
+            pendingOperations = [];
+            localStorage.setItem('pendingOperations', JSON.stringify(pendingOperations));
+        }
+    });
+}
+
+// Configurar notificaciones
+function setupNotifications() {
+    if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+            console.log('ℹ️ Permisos de notificación disponibles');
+        } else if (Notification.permission === 'granted') {
+            console.log('🔔 Notificaciones permitidas');
+        }
     }
 }
 
-// Sincronizar datos cuando vuelve la conexión (ejemplo)
-function syncOfflineData() {
-    console.log('🔄 Sincronizando datos offline...');
-    // Aquí podrías agregar lógica para sincronizar con un servidor
+// Función para mostrar notificación
+function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: body,
+            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9IjMyIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SU5WPC90ZXh0Pgo8L3N2Zz4='
+        });
+    }
 }
-
         
         // =============================================
         // CONFIGURACIÓN DE LA BASE DE DATOS
@@ -2674,10 +2623,13 @@ const initialUsers = [
     document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Iniciando Sistema de Inventario PWA...');
     
-    // Inicializar PWA primero
+    // Solucionar el "flash" de contenido sin estilo
+    document.body.style.visibility = 'visible';
+    
+    // Inicializar PWA primero (modo básico para GitHub Pages)
     try {
         setupPWA();
-        console.log('✅ PWA inicializada');
+        console.log('✅ PWA inicializada (modo básico)');
     } catch (pwaError) {
         console.error('❌ Error inicializando PWA:', pwaError);
         updatePWAStatus('❌ Error PWA');
@@ -2691,25 +2643,34 @@ const initialUsers = [
         console.error('❌ Error inicializando base de datos:', dbError);
     }
     
+    // Configurar funcionalidad offline
+    setupOfflineFunctionality();
+    
     // Configurar notificaciones
     setupNotifications();
     
     console.log('🎉 Sistema de Inventario PWA completamente inicializado');
+    
+    // Intentar Service Worker básico después de la carga inicial
+    setTimeout(tryRegisterServiceWorker, 1000);
 });
 
-// Configurar notificaciones
-function setupNotifications() {
-    if ('Notification' in window) {
-        if (Notification.permission === 'default') {
-            // No solicitar permisos automáticamente, solo cuando sea necesario
-            console.log('ℹ️ Permisos de notificación disponibles');
-        }
-    }
-}
+// Manejar el evento antes de descargar la página
+window.addEventListener('beforeunload', function() {
+    console.log('💾 Guardando estado de la aplicación...');
+    // Aquí podrías guardar el estado actual si es necesario
+});
+
+// Manejar el evento de carga completa
+window.addEventListener('load', function() {
+    console.log('📄 Página completamente cargada');
+    updatePWAStatus('✅ PWA Lista');
+});
     </script>
 </body>
 
 </html>
+
 
 
 
