@@ -1122,6 +1122,16 @@ const initialUsers = [
                 {DESCRIPCION: "MONITOR", MARCA: "VIT", MODELO: "ZP2200", SERIAL: "S/I-28017390", ETIQUETA: "28017390", STATUS: "OPERATIVO", OBSERVACIONES: ""}
             ];
 */
+
+            try {
+    loadInitialData();
+} catch (error) {
+    // Silenciar el error o manejarlo de forma elegante
+    console.log("Carga de datos omitida");
+}
+
+
+            
             for (const user of initialUsers) {
                 await addUser(user);
             }
@@ -2068,4 +2078,5 @@ const initialUsers = [
 </body>
 
 </html>
+
 
