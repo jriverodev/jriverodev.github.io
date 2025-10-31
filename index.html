@@ -682,6 +682,10 @@
 // =============================================
 
 // Manifest dinámico para PWA
+// =============================================
+// CONFIGURACIÓN PWA CON TUS ICONOS PNG
+// =============================================
+
 const manifest = {
     "name": "Sistema de Inventario",
     "short_name": "InventarioPWA", 
@@ -695,44 +699,25 @@ const manifest = {
     "categories": ["business", "productivity", "utilities"],
     "icons": [
         {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPklOVjwvdGV4dD4KPC9zdmc+",
+            "src": "https://jriverodev.github.io/content/icons/android/android-launchericon-192-192.png",
             "sizes": "192x192",
-            "type": "image/svg+xml"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iOTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JTlY8L3RleHQ+Cjwvc3ZnPg==",
-            "sizes": "512x512", 
-            "type": "image/svg+xml"
+            "src": "https://jriverodev.github.io/content/icons/android/android-launchericon-512-512.png", 
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
         }
     ],
     "screenshots": [
         {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDYwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZmZmIi8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjExMDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjhmOGY4Ii8+CjxyZWN0IHg9IjEwMCIgeT0iMTAwIiB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzJjM2U1MCIvPgo8dGV4dCB4PSI2MDAiIHk9IjE1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U0lTVEVNQSBERSBJTlZFTlRBUklPPC90ZXh0Pgo8cmVjdCB4PSIxMDAiIHk9IjIwMCIgd2lkdGg9IjEwMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ3aGl0ZSIvPgo8dGV4dCB4PSIxNTAiIHk9IjI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjMzMzIj7imqMgR2VzdGnDs24gZGUgVXN1YXJpb3M8L3RleHQ+Cjx0ZXh0IHg9IjE1MCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiMzMzMiPuKasyBHZXN0acOzbiBkZSBFcXVpcG9zPC90ZXh0Pgo8dGV4dCB4PSIxNTAiIHk9IjM1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjMzMzIj7imqMgQXNpZ25hY2lvbmVzPC90ZXh0Pgo8dGV4dCB4PSIxNTAiIHk9IjQwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjMzMzIj7imqMgRGFzaGJvYXJkIGVzdGFkw61zdGljbzwvdGV4dD4KPHJlY3QgeD0iODAwIiB5PSIyNTAiIHdpZHRoPSIyNTAiIGhlaWdodD0iMzAiIGZpbGw9IiMyN2FlNjAiLz4KPHRleHQgeD0iOTI1IiB5PSIyNzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlRvZGFsIFVzdWFyaW9zOiAyMDA8L3RleHQ+CjxyZWN0IHg9IjgwMCIgeT0iMzAwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjMzQ5OGRiIi8+Cjx0ZXh0IHg9IjkyNSIgeT0iMzIwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Ub2RhbCBFcXVpcG9zOiAxNTA8L3RleHQ+CjxyZWN0IHg9IjgwMCIgeT0iMzUwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjZjM5MDEyIi8+Cjx0ZXh0IHg9IjkyNSIgeT0iMzcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FcXVpcG9zIEFzaWduYWRvczogMTIwPC90ZXh0Pgo8L3N2Zz4=",
-            "sizes": "1200x600",
-            "type": "image/svg+xml",
+            "src": "https://jriverodev.github.io/content/icons/windows11/Wide310x150Logo.scale-400.png",
+            "sizes": "1240x600",
+            "type": "image/png",
             "form_factor": "wide",
             "label": "Dashboard del Sistema de Inventario"
-        },
-        {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjEwMDAiIHZpZXdCb3g9IjAgMCA2MDAgMTAwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwMCIgaGVpZ2h0PSIxMDAwIiBmaWxsPSIjZmZmIi8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjUwMCIgaGVpZ2h0PSI5MDAiIGZpbGw9IiNmOGY4ZjgiLz4KPHJlY3QgeD0iMTAwIiB5PSIxMDAiIHdpZHRoPSI0MDAiIGhlaWdodD0iNjAiIGZpbGw9IiMyYzNlNTAiLz4KPHRleHQgeD0iMzAwIiB5PSIxNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkRhc2hib2FyZDwvdGV4dD4KPHJlY3QgeD0iMTAwIiB5PSIyMDAiIHdpZHRoPSI0MDAiIGhlaWdodD0iNzAiIGZpbGw9IiMyN2FlNjAiLz4KPHRleHQgeD0iMzAwIiB5PSIyNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlVzdWFyaW9zOiAyMDA8L3RleHQ+CjxyZWN0IHg9IjEwMCIgeT0iMzAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjcwIiBmaWxsPSIjMzQ5OGRiIi8+Cjx0ZXh0IHg9IjMwMCIgeT0iMzQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FcXVpcG9zOiAxNTA8L3RleHQ+CjxyZWN0IHg9IjEwMCIgeT0iNDAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjcwIiBmaWxsPSIjZjM5MDEyIi8+Cjx0ZXh0IHg9IjMwMCIgeT0iNDQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Bc2lnbmFjaW9uZXM6IDEyMDwvdGV4dD4KPHJlY3QgeD0iMTAwIiB5PSI1MDAiIHdpZHRoPSI0MDAiIGhlaWdodD0iNzAiIGZpbGw9IiM5YjU5YjYiLz4KPHRleHQgeD0iMzAwIiB5PSI1NDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk9wZXJhdGl2b3M6IDE4MDwvdGV4dD4KPHJlY3QgeD0iMTAwIiB5PSI2NTAiIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiBmaWxsPSJ3aGl0ZSIvPgo8dGV4dCB4PSIzMDAiIHk9IjY5MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7imqMgR2VzdGnDs24gZGUgVXN1YXJpb3M8L3RleHQ+Cjx0ZXh0IHg9IjMwMCIgeT0iNzMwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKasyBHZXN0acOzbiBkZSBFcXVpcG9zPC90ZXh0Pgo8dGV4dCB4PSIzMDAiIHk9Ijc3MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7imqMgQXNpZ25hY2lvbmVzPC90ZXh0Pgo8L3N2Zz4=",
-            "sizes": "600x1000",
-            "type": "image/svg+xml",
-            "form_factor": "narrow",
-            "label": "Vista móvil del Dashboard"
-        },
-        {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDYwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZmZmIi8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjExMDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjhmOGY4Ii8+CjxyZWN0IHg9IjEwMCIgeT0iMTAwIiB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzJjM2U1MCIvPgo8dGV4dCB4PSI2MDAiIHk9IjE1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R0VTVEnDs04gREUgRVFVSVBPUzwvdGV4dD4KPHJlY3QgeD0iMTAwIiB5PSIyMDAiIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0id2hpdGUiLz4KPHRleHQgeD0iMTUwIiB5PSIyNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyI+Q29tcHV0YWRvcmEgLSBERUxMIC0gTGF0aXR1ZGUgNTQyMCAtIFNOTzogQUJDMTIzPC90ZXh0Pgo8dGV4dCB4PSIxNTAiIHk9IjMwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5Nb25pdG9yIC0gVklUIC0gWlAyMjAwIC0gU05POiBTL0ktMjgwMTczOTA8L3RleHQ+Cjx0ZXh0IHg9IjE1MCIgeT0iMzUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzMzMiPkltcHJlc29yYSAtIEhQIC0gTGFzZXJKZXQgUC0gU05POiBYSlpZMTIzNDwvdGV4dD4KPHRleHQgeD0iMTUwIiB5PSI0MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyI+U2Nhbm5lciAtIENhbm9uIC0gTUMtMTAwIC0gU05POiBDQU4xMjM0NTwvdGV4dD4KPHRleHQgeD0iMTUwIiB5PSI0NTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyI+UsOtZGVyIC0gVFAtTElOSyAtIEFyY2hlciBDNTAgLSBTTk86IFRQMTIzNDwvdGV4dD4KPHRleHQgeD0iODAwIiB5PSIyNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzI3YWU2MCI+4pqUIDwvdGV4dD4KPHRleHQgeD0iODIwIiB5PSIyNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzMzMyI+T1BFUkFUSVZPPC90ZXh0Pgo8dGV4dCB4PSI4MDAiIHk9IjMxMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZTc0YzNjIj7impUgPC90ZXh0Pgo8dGV4dCB4PSI4MjAiIHk9IjMxMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjMzMzIj5JTk9QRVJBVElWTzwvdGV4dD4KPHRleHQgeD0iODAwIiB5PSIzNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzI3YWU2MCI+4pqUIDwvdGV4dD4KPHRleHQgeD0iODIwIiB5PSIzNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzMzMyI+QVNJR05BRE88L3RleHQ+Cjx0ZXh0IHg9IjgwMCIgeT0iNDEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiNlNzRjM2MiPuKalSA8L3RleHQ+Cjx0ZXh0IHg9IjgyMCIgeT0iNDEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMzMzMiPk5PIFNJR05BRE88L3RleHQ+Cjwvc3ZnPg==",
-            "sizes": "1200x600",
-            "type": "image/svg+xml",
-            "form_factor": "wide",
-            "label": "Gestión de Equipos"
-        },
-        {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDYwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZmZmIi8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjExMDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjhmOGY4Ii8+CjxyZWN0IHg9IjEwMCIgeT0iMTAwIiB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzJjM2U1MCIvPgo8dGV4dCB4PSI2MDAiIHk9IjE1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QVNJR05BQ0lPTkVTPC90ZXh0Pgo8cmVjdCB4PSIxMDAiIHk9IjIwMCIgd2lkdGg9IjEwMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ3aGl0ZSIvPgo8dGV4dCB4PSIxNTAiIHk9IjI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5NYXJpYSBHb256w6FsZXogLSBDb21wdXRhZG9yYSBERUxMIExhdGl0dWRlIDU0MjA8L3RleHQ+Cjx0ZXh0IHg9IjE1MCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzMzMiPkNhcmxvcyBSb2Ryw61ndWV6IC0gTW9uaXRvciBWSVQgWlAyMjAwPC90ZXh0Pgo8dGV4dCB4PSIxNTAiIHk9IjM1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5KdWFuIFDD6XJleiAtIEltcHJlc29yYSBIUCBMYXNlckpldCBQPC90ZXh0Pgo8dGV4dCB4PSIxNTAiIHk9IjQwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIj5BbmEgTWFydMOtbmV6IC0gU2Nhbm5lciBDYW5vbiBNQy0xMDA8L3RleHQ+Cjx0ZXh0IHg9IjE1MCIgeT0iNDUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzMzMiPlBlZHJvIFNhbmNoZXogLSBSw61kZXIgVFAtTGlua0FyY2hlcjwvdGV4dD4KPHRleHQgeD0iODUwIiB5PSIyNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzI3YWU2MCI+4pqUIDwvdGV4dD4KPHRleHQgeD0iODcwIiB5PSIyNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzMzMyI+QUNUSVZPPC90ZXh0Pgo8dGV4dCB4PSI4NTAiIHk9IjMxMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZTc0YzNjIj7impUgPC90ZXh0Pgo8dGV4dCB4PSI4NzAiIHk9IjMxMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjMzMzIj5SRVRJUkFETzwvdGV4dD4KPHRleHQgeD0iODUwIiB5PSIzNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2YzOTAxMiI+4pqUIDwvdGV4dD4KPHRleHQgeD0iODcwIiB5PSIzNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzMzMyI+RU4gUkVQQVJBQ0nDuU48L3RleHQ+Cjwvc3ZnPg==",
-            "sizes": "1200x600",
-            "type": "image/svg+xml",
-            "form_factor": "wide",
-            "label": "Gestión de Asignaciones"
         }
     ]
 };
@@ -2701,6 +2686,7 @@ window.addEventListener('load', function() {
 </body>
 
 </html>
+
 
 
 
