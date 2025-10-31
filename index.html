@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Inventario</title>
+
+    <!-- === PWA META TAGS === -->
+    <meta name="theme-color" content="#2c3e50"/>
+    <meta name="description" content="Sistema de Gestión de Inventario - PWA">
+    
+    <!-- iOS support -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPklOVjwvdGV4dD4KPC9zdmc+">
+    <meta name="apple-mobile-web-app-status-bar" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* Estilos CSS para la interfaz del sistema */
@@ -346,9 +355,75 @@
             border-radius: 10px;
             font-size: 11px;
         }
+
+        /* ... (TODOS TUS ESTILOS ACTUALES SE MANTIENEN) ... */
+
+        /* === ESTILOS PWA ADICIONALES === */
+        .pwa-install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+        }
+
+        .pwa-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .offline-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #e74c3c;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            z-index: 1001;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .pwa-install-btn {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- === ELEMENTOS PWA === -->
+    <div class="offline-warning" id="offlineWarning">
+        ⚠️ Estás trabajando sin conexión
+    </div>
+    
+    <div class="pwa-status" id="pwaStatus">
+        📱 PWA Lista
+    </div>
+    
+    <button class="pwa-install-btn" id="pwaInstallBtn">
+        📲 Instalar App
+    </button>
+    
     <div class="container">
         <div class="header">
             <h1>📱 Sistema de Inventario</h1>
@@ -602,6 +677,188 @@
     </div>
 
     <script>
+        <script>
+        // =============================================
+        // CONFIGURACIÓN PWA - SERVICE WORKER Y MANIFEST
+        // =============================================
+
+        // Manifest dinámico para PWA
+        const manifest = {
+            "name": "Sistema de Inventario",
+            "short_name": "InventarioPWA",
+            "description": "Sistema de gestión de inventario offline",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#2c3e50",
+            "orientation": "any",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPklOVjwvdGV4dD4KPC9zdmc+",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                },
+                {
+                    "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iOTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JTlY8L3RleHQ+Cjwvc3ZnPg==",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
+
+        // Crear y agregar manifest dinámico
+        function setupPWA() {
+            // Crear link del manifest
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = manifestURL;
+            document.head.appendChild(manifestLink);
+
+            // Registrar Service Worker
+            registerServiceWorker();
+            
+            // Configurar instalación de PWA
+            setupPWAInstall();
+            
+            // Configurar detección de conexión
+            setupConnectionDetection();
+        }
+
+        // Service Worker para cache y funcionalidad offline
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'inventario-pwa-v2';
+                    const urlsToCache = [
+                        '/',
+                        './',
+                        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+                    ];
+
+                    self.addEventListener('install', (event) => {
+                        console.log('Service Worker instalado - Inventario PWA');
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => {
+                                    return cache.addAll(urlsToCache);
+                                })
+                        );
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => {
+                                    // Retornar desde cache si está disponible
+                                    if (response) {
+                                        return response;
+                                    }
+                                    
+                                    // Si no está en cache, hacer fetch a la red
+                                    return fetch(event.request).catch(() => {
+                                        // Si falla la red, podrías retornar una página offline personalizada
+                                        return new Response('Modo offline - Los datos se guardarán localmente', {
+                                            headers: { 'Content-Type': 'text/plain' }
+                                        });
+                                    });
+                                })
+                        );
+                    });
+
+                    self.addEventListener('activate', (event) => {
+                        console.log('Service Worker activado - Inventario PWA');
+                    });
+                `;
+
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                const swURL = URL.createObjectURL(swBlob);
+                
+                navigator.serviceWorker.register(swURL)
+                    .then((registration) => {
+                        console.log('SW registrado con éxito:', registration);
+                        updatePWAStatus('✅ PWA Activa');
+                    })
+                    .catch((error) => {
+                        console.log('Error registrando SW:', error);
+                        updatePWAStatus('❌ PWA Error');
+                    });
+            } else {
+                updatePWAStatus('❌ SW No Soportado');
+            }
+        }
+
+        // Instalación de PWA
+        function setupPWAInstall() {
+            let deferredPrompt;
+            const installBtn = document.getElementById('pwaInstallBtn');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installBtn.style.display = 'block';
+                updatePWAStatus('📱 Lista para instalar');
+                
+                // Ocultar después de 15 segundos
+                setTimeout(() => {
+                    installBtn.style.display = 'none';
+                }, 15000);
+            });
+
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    
+                    if (outcome === 'accepted') {
+                        installBtn.textContent = '✅ Instalada';
+                        installBtn.style.background = '#27ae60';
+                        setTimeout(() => {
+                            installBtn.style.display = 'none';
+                        }, 2000);
+                        updatePWAStatus('🎉 App Instalada');
+                    }
+                    deferredPrompt = null;
+                }
+            });
+
+            window.addEventListener('appinstalled', () => {
+                installBtn.style.display = 'none';
+                deferredPrompt = null;
+                updatePWAStatus('🎉 App Instalada');
+            });
+        }
+
+        // Detección de conexión
+        function setupConnectionDetection() {
+            const offlineWarning = document.getElementById('offlineWarning');
+
+            function updateOnlineStatus() {
+                if (navigator.onLine) {
+                    offlineWarning.style.display = 'none';
+                    updatePWAStatus('✅ En línea');
+                } else {
+                    offlineWarning.style.display = 'block';
+                    updatePWAStatus('⚠️ Offline');
+                }
+            }
+
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
+        }
+
+        // Actualizar estado PWA
+        function updatePWAStatus(message) {
+            const statusElement = document.getElementById('pwaStatus');
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+        }
+
+        
         // =============================================
         // CONFIGURACIÓN DE LA BASE DE DATOS
         // =============================================
@@ -2253,10 +2510,52 @@ const initialUsers = [
                 }
             }
         }
+
+        // =============================================
+        // INICIALIZACIÓN COMBINADA
+        // =============================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar PWA
+            setupPWA();
+            
+            // Inicializar base de datos (tu código actual)
+            initDatabase();
+            
+            // Mostrar versión PWA en el título
+            document.title += " - PWA";
+        });
+
+        // =============================================
+        // MEJORAS PWA ADICIONALES
+        // =============================================
+
+        // Sincronización cuando vuelve la conexión
+        function setupSync() {
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                navigator.serviceWorker.ready.then(registration => {
+                    return registration.sync.register('sync-data');
+                });
+            }
+        }
+
+        // Notificaciones (opcional)
+        function setupNotifications() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        // Guardar estado antes de cerrar
+        window.addEventListener('beforeunload', function() {
+            // Aquí podrías guardar el estado actual si es necesario
+            console.log('Guardando estado de la aplicación...');
+        });
     </script>
 </body>
 
 </html>
+
 
 
 
