@@ -690,7 +690,7 @@ const manifest = {
     "name": "Sistema de Inventario",
     "short_name": "InventarioPWA", 
     "description": "Sistema de gestión de inventario completo con usuarios, equipos y asignaciones",
-    "start_url": "https://jriverodev.github.io/",
+    "start_url": ".",
     "scope": "/",
     "display": "standalone",
     "background_color": "#ffffff",
@@ -699,13 +699,13 @@ const manifest = {
     "categories": ["business", "productivity", "utilities"],
     "icons": [
         {
-            "src": "https://jriverodev.github.io/content/icons/android/android-launchericon-192-192.png",
+            "src": "content/icons/android/android-launchericon-192-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://jriverodev.github.io/content/icons/android/android-launchericon-512-512.png", 
+            "src": "content/icons/android/android-launchericon-512-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
@@ -713,7 +713,7 @@ const manifest = {
     ],
     "screenshots": [
         {
-            "src": "https://jriverodev.github.io/content/icons/windows11/Wide310x150Logo.scale-400.png",
+            "src": "content/icons/windows11/Wide310x150Logo.scale-400.png",
             "sizes": "1240x600",
             "type": "image/png",
             "form_factor": "wide",
@@ -1610,19 +1610,8 @@ const initialUsers = [
     {RESPONSABLE: "ANCIANIS SUAREZ JOSE MANUEL", CEDULA: "28409383", CARGO: "SUPERVISOR MAYOR PROGRAMACION DE OPER", SECTOR: "OPERACIONES"}
 ];
             // Datos iniciales de equipos (comentados para evitar errores)
-            /*
-            const initialEquipments = [
-                {DESCRIPCION: "CPU", MARCA: "VIT", MODELO: "E2350-02", SERIAL: "A001339402", ETIQUETA: "28017392", STATUS: "OPERATIVO", OBSERVACIONES: ""},
-                {DESCRIPCION: "MONITOR", MARCA: "VIT", MODELO: "ZP2200", SERIAL: "S/I-28017390", ETIQUETA: "28017390", STATUS: "OPERATIVO", OBSERVACIONES: ""}
-            ];
-            */
+            const initialEquipments = [];
 
-            try {
-    loadInitialData();
-} catch (error) {
-    // Silenciar el error o manejarlo de forma elegante
-    console.log("Carga de datos omitida");
-}
 
 
             
@@ -2454,7 +2443,7 @@ const initialUsers = [
                 "ID_USUARIO": "1",
                 "ID_EQUIPO": "1",
                 "FECHA_ASIGNACION": "2024-01-15", 
-                "ESTADO_ASIGNACION": "Asignado"
+                "ESTADO_ASIGNACION": "EJEMPLO: Asignado"
             }];
             const wsAsignaciones = XLSX.utils.json_to_sheet(asignacionesData);
             XLSX.utils.book_append_sheet(wb, wsAsignaciones, "Asignaciones");
