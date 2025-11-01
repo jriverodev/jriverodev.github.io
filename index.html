@@ -1337,15 +1337,10 @@ function showNotification(title, body) {
                     getAllAssignments()
                 ]);
 
-                // Si no hay datos, cargar datos iniciales
-                if (usuarios.length === 0) {
-                    await loadInitialData();
-                } else {
-                    renderUsers(usuarios, equipos, asignaciones);
-                    renderEquipments(equipos, usuarios, asignaciones);
-                    renderAssignments(asignaciones, usuarios, equipos);
-                    updateStats(usuarios, equipos, asignaciones);
-                }
+                renderUsers(usuarios, equipos, asignaciones);
+                renderEquipments(equipos, usuarios, asignaciones);
+                renderAssignments(asignaciones, usuarios, equipos);
+                updateStats(usuarios, equipos, asignaciones);
             } catch (error) {
                 console.error('Error cargando datos:', error);
             }
