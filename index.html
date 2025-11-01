@@ -8,11 +8,13 @@
     <!-- === PWA META TAGS === -->
     <meta name="theme-color" content="#2c3e50"/>
     <meta name="description" content="Sistema de Gestión de Inventario - PWA">
-    
+
     <!-- iOS support -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPklOVjwvdGV4dD4KPC9zdmc+">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaGyPSJtaWRkbGUiPklOVjwvdGV4dD4KPC9zdmc+">
     <meta name="apple-mobile-web-app-status-bar" content="#2c3e50">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="inventario/js/supabase-config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* Estilos CSS para la interfaz del sistema */
@@ -297,20 +299,20 @@
             .nav {
                 flex-direction: column;
             }
-            
+
             .nav button {
                 padding: 12px;
             }
-            
+
             .stats {
                 grid-template-columns: 1fr;
             }
-            
+
             th, td {
                 padding: 8px;
                 font-size: 14px;
             }
-            
+
             .btn {
                 padding: 6px 10px;
                 font-size: 11px;
@@ -415,15 +417,15 @@
     <div class="offline-warning" id="offlineWarning">
         ⚠️ Estás trabajando sin conexión
     </div>
-    
+
     <div class="pwa-status" id="pwaStatus">
         📱 PWA Lista
     </div>
-    
+
     <button class="pwa-install-btn" id="pwaInstallBtn">
         📲 Instalar App
     </button>
-    
+
     <div class="container">
         <div class="header">
             <h1>📱 Sistema de Inventario</h1>
@@ -688,7 +690,7 @@
 
 const manifest = {
     "name": "Sistema de Inventario",
-    "short_name": "InventarioPWA", 
+    "short_name": "InventarioPWA",
     "description": "Sistema de gestión de inventario completo con usuarios, equipos y asignaciones",
     "start_url": ".",
     "scope": "/",
@@ -727,7 +729,7 @@ function setupPWA() {
     // Crear link del manifest
     const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
     const manifestURL = URL.createObjectURL(manifestBlob);
-    
+
     const manifestLink = document.createElement('link');
     manifestLink.rel = 'manifest';
     manifestLink.href = manifestURL;
@@ -738,7 +740,7 @@ function setupPWA() {
     // En GitHub Pages usamos un enfoque simplificado sin Service Worker
     setupPWAInstall();
     setupConnectionDetection();
-    
+
     // Marcar como PWA básica (sin Service Worker)
     updatePWAStatus('✅ PWA Básica');
 }
@@ -754,12 +756,12 @@ function tryRegisterServiceWorker() {
                     console.log('📦 PWA Installado');
                     self.skipWaiting();
                 });
-                
+
                 self.addEventListener('activate', (event) => {
                     console.log('✅ PWA Activado');
                     event.waitUntil(self.clients.claim());
                 });
-                
+
                 // Cache básico para recursos críticos
                 self.addEventListener('fetch', (event) => {
                     // Estrategia de cache básica
@@ -769,10 +771,10 @@ function tryRegisterServiceWorker() {
                     );
                 });
             `;
-            
+
             const swBlob = new Blob([swContent], {type: 'application/javascript'});
             const swURL = URL.createObjectURL(swBlob);
-            
+
             navigator.serviceWorker.register(swURL, { scope: './' })
                 .then(registration => {
                     console.log('✅ Service Worker registrado (básico)');
@@ -782,7 +784,7 @@ function tryRegisterServiceWorker() {
                     console.log('⚠️ Service Worker no disponible en este entorno');
                     // No es crítico - continuar sin SW
                 });
-                
+
         } catch (error) {
             console.log('⚠️ Entorno no compatible con Service Worker');
         }
@@ -802,7 +804,7 @@ function setupPWAInstall() {
         installBtn.style.display = 'block';
         updatePWAStatus('📱 Lista para instalar');
         console.log('📱 App lista para instalación');
-        
+
         // Mostrar por 30 segundos
         setTimeout(() => {
             if (installBtn.style.display !== 'none') {
@@ -816,16 +818,16 @@ function setupPWAInstall() {
         if (deferredPrompt) {
             installBtn.textContent = '⏳ Instalando...';
             installBtn.disabled = true;
-            
+
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            
+
             if (outcome === 'accepted') {
                 installBtn.textContent = '✅ Instalada';
                 installBtn.style.background = '#27ae60';
                 updatePWAStatus('🎉 App Instalada');
                 console.log('🎉 App aceptada para instalación');
-                
+
                 setTimeout(() => {
                     installBtn.style.display = 'none';
                 }, 3000);
@@ -834,7 +836,7 @@ function setupPWAInstall() {
                 installBtn.disabled = false;
                 console.log('❌ App rechazada para instalación');
                 updatePWAStatus('📱 Instalación cancelada');
-                
+
                 setTimeout(() => {
                     installBtn.style.display = 'none';
                 }, 5000);
@@ -849,14 +851,14 @@ function setupPWAInstall() {
         updatePWAStatus('🎉 App Instalada');
         console.log('🎉 App instalada exitosamente');
     });
-    
+
     // Verificar si ya está instalado
     if (window.matchMedia('(display-mode: standalone)').matches) {
         installBtn.style.display = 'none';
         updatePWAStatus('📱 Ejecutando como App');
         console.log('📱 Ejecutándose en modo standalone');
     }
-    
+
     // También verificar usando navigator.standalone (iOS)
     if (navigator.standalone) {
         installBtn.style.display = 'none';
@@ -881,7 +883,7 @@ function setupConnectionDetection() {
                 updatePWAStatus('⚠️ Offline - ' + currentStatus);
             }
             console.log('🌐 Sin conexión - Modo offline activado');
-            
+
             // Mostrar notificación de offline
             showOfflineNotification();
         }
@@ -904,7 +906,7 @@ function setupConnectionDetection() {
         `;
         offlineMsg.textContent = '⚠️ Modo offline - Los datos se guardan localmente';
         document.body.appendChild(offlineMsg);
-        
+
         setTimeout(() => {
             if (document.body.contains(offlineMsg)) {
                 document.body.removeChild(offlineMsg);
@@ -914,7 +916,7 @@ function setupConnectionDetection() {
 
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
-    
+
     // Estado inicial
     updateOnlineStatus();
 }
@@ -924,7 +926,7 @@ function updatePWAStatus(message) {
     const statusElement = document.getElementById('pwaStatus');
     if (statusElement) {
         statusElement.textContent = message;
-        
+
         // Cambiar color según estado
         if (message.includes('✅') || message.includes('🎉')) {
             statusElement.style.background = '#27ae60';
@@ -941,13 +943,13 @@ function updatePWAStatus(message) {
 // Función para simular funcionalidad offline
 function setupOfflineFunctionality() {
     console.log('🔧 Configurando funcionalidad offline...');
-    
+
     // Tu base de datos IndexedDB ya proporciona almacenamiento offline
     // Aquí podrías agregar lógica adicional para manejo offline
-    
+
     // Ejemplo: Guardar operaciones pendientes cuando hay conexión
     let pendingOperations = JSON.parse(localStorage.getItem('pendingOperations') || '[]');
-    
+
     // Intentar procesar operaciones pendientes cuando hay conexión
     window.addEventListener('online', () => {
         if (pendingOperations.length > 0) {
@@ -979,346 +981,143 @@ function showNotification(title, body) {
         });
     }
 }
-        
-        // =============================================
-        // CONFIGURACIÓN DE LA BASE DE DATOS
-        // =============================================
 
-        // Base de datos IndexedDB
-        let db;
-        const DB_NAME = 'InventarioDB';
-        const DB_VERSION = 2;
+        // =============================================
+        // CONFIGURACIÓN DE LA BASE DE DATOS (SUPABASE)
+        // =============================================
 
         /**
-         * Inicializa la base de datos IndexedDB
-         * Crea las tablas (object stores) y sus índices
+         * Inicializa la conexión con Supabase.
+         * La configuración del cliente Supabase ya está cargada desde supabase-config.js.
+         * Esta función principalmente inicia la carga de datos.
          */
         function initDatabase() {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-            // Maneja errores al abrir la base de datos
-            request.onerror = function(event) {
-                console.error('Error abriendo la base de datos:', event.target.error);
-            };
-            
-            // Éxito al abrir la base de datos
-            request.onsuccess = function(event) {
-                db = event.target.result;
-                console.log('Base de datos abierta correctamente');
-                loadAllData();
-            };
-
-            // Se ejecuta cuando se necesita crear o actualizar la base de datos
-            request.onupgradeneeded = function(event) {
-                const db = event.target.result;
-                const transaction = event.target.transaction;
-
-                // Eliminar stores existentes si es necesario (durante actualización)
-                if (db.objectStoreNames.contains('usuarios')) {
-                    db.deleteObjectStore('usuarios');
-                }
-                if (db.objectStoreNames.contains('equipos')) {
-                    db.deleteObjectStore('equipos');
-                }
-                if (db.objectStoreNames.contains('asignaciones')) {
-                    db.deleteObjectStore('asignaciones');
-                }
-
-                // Crear object stores (tablas) con índices
-                const usuarioStore = db.createObjectStore('usuarios', { keyPath: 'id_usuario', autoIncrement: true });
-                usuarioStore.createIndex('responsable', 'RESPONSABLE', { unique: false });
-                usuarioStore.createIndex('cedula', 'CEDULA', { unique: false });
-
-                const equipoStore = db.createObjectStore('equipos', { keyPath: 'id_equipo', autoIncrement: true });
-                equipoStore.createIndex('descripcion', 'DESCRIPCION', { unique: false });
-                equipoStore.createIndex('marca', 'MARCA', { unique: false });
-                equipoStore.createIndex('modelo', 'MODELO', { unique: false });
-                equipoStore.createIndex('serial', 'SERIAL', { unique: true });
-                equipoStore.createIndex('etiqueta', 'ETIQUETA', { unique: false });
-
-                const asignacionStore = db.createObjectStore('asignaciones', { keyPath: 'id_asignacion', autoIncrement: true });
-                asignacionStore.createIndex('id_usuario', 'id_usuario', { unique: false });
-                asignacionStore.createIndex('id_equipo', 'id_equipo', { unique: true });
-                asignacionStore.createIndex('estado', 'estado_asignacion', { unique: false });
-            };
+            console.log('Cliente Supabase listo. Cargando datos...');
+            loadAllData();
         }
 
         // =============================================
-        // FUNCIONES CRUD PARA USUARIOS
+        // FUNCIONES CRUD PARA USUARIOS (SUPABASE)
         // =============================================
 
-        /**
-         * Agrega un nuevo usuario a la base de datos
-         * @param {Object} user - Objeto usuario con sus propiedades
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function addUser(user) {
-            const transaction = db.transaction(['usuarios'], 'readwrite');
-            const store = transaction.objectStore('usuarios');
-            return store.add(user);
+        async function addUser(user) {
+            const { data, error } = await supabase.from('usuarios').insert([user]);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Actualiza un usuario existente en la base de datos
-         * @param {Object} user - Objeto usuario con id_usuario y propiedades actualizadas
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function updateUser(user) {
-            const transaction = db.transaction(['usuarios'], 'readwrite');
-            const store = transaction.objectStore('usuarios');
-            return store.put(user);
+        async function updateUser(user) {
+            const { data, error } = await supabase.from('usuarios').update(user).eq('id_usuario', user.id_usuario);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Elimina un usuario de la base de datos
-         * @param {number} id - ID del usuario a eliminar
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function deleteUser(id) {
-            const transaction = db.transaction(['usuarios'], 'readwrite');
-            const store = transaction.objectStore('usuarios');
-            return store.delete(id);
+        async function deleteUser(id) {
+            const { data, error } = await supabase.from('usuarios').delete().eq('id_usuario', id);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Obtiene un usuario específico por su ID
-         * @param {number} id - ID del usuario a buscar
-         * @returns {Promise} - Promesa que resuelve con el usuario encontrado
-         */
-        function getUser(id) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['usuarios'], 'readonly');
-                const store = transaction.objectStore('usuarios');
-                const request = store.get(id);
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getUser(id) {
+            const { data, error } = await supabase.from('usuarios').select('*').eq('id_usuario', id).single();
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Obtiene todos los usuarios de la base de datos
-         * @returns {Promise} - Promesa que resuelve con array de usuarios
-         */
-        function getAllUsers() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['usuarios'], 'readonly');
-                const store = transaction.objectStore('usuarios');
-                const request = store.getAll();
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getAllUsers() {
+            const { data, error } = await supabase.from('usuarios').select('*');
+            if (error) throw error;
+            return data;
         }
 
         // =============================================
-        // FUNCIONES CRUD PARA EQUIPOS
+        // FUNCIONES CRUD PARA EQUIPOS (SUPABASE)
         // =============================================
 
-        /**
-         * Agrega un nuevo equipo a la base de datos
-         * @param {Object} equipment - Objeto equipo con sus propiedades
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function addEquipment(equipment) {
-            const transaction = db.transaction(['equipos'], 'readwrite');
-            const store = transaction.objectStore('equipos');
-            return store.add(equipment);
+        async function addEquipment(equipment) {
+            const { data, error } = await supabase.from('equipos').insert([equipment]);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Actualiza un equipo existente en la base de datos
-         * @param {Object} equipment - Objeto equipo con id_equipo y propiedades actualizadas
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function updateEquipment(equipment) {
-            const transaction = db.transaction(['equipos'], 'readwrite');
-            const store = transaction.objectStore('equipos');
-            return store.put(equipment);
+        async function updateEquipment(equipment) {
+            const { data, error } = await supabase.from('equipos').update(equipment).eq('id_equipo', equipment.id_equipo);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Elimina un equipo de la base de datos
-         * @param {number} id - ID del equipo a eliminar
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function deleteEquipment(id) {
-            const transaction = db.transaction(['equipos'], 'readwrite');
-            const store = transaction.objectStore('equipos');
-            return store.delete(id);
+        async function deleteEquipment(id) {
+            const { data, error } = await supabase.from('equipos').delete().eq('id_equipo', id);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Obtiene un equipo específico por su ID
-         * @param {number} id - ID del equipo a buscar
-         * @returns {Promise} - Promesa que resuelve con el equipo encontrado
-         */
-        function getEquipment(id) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['equipos'], 'readonly');
-                const store = transaction.objectStore('equipos');
-                const request = store.get(id);
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getEquipment(id) {
+            const { data, error } = await supabase.from('equipos').select('*').eq('id_equipo', id).single();
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Obtiene un equipo por su número de serial (búsqueda única)
-         * @param {string} serial - Número de serial del equipo
-         * @returns {Promise} - Promesa que resuelve con el equipo encontrado
-         */
-        function getEquipmentBySerial(serial) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['equipos'], 'readonly');
-                const store = transaction.objectStore('equipos');
-                const index = store.index('serial');
-                const request = index.get(serial);
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getEquipmentBySerial(serial) {
+            const { data, error } = await supabase.from('equipos').select('*').eq('SERIAL', serial).single();
+            if (error && error.code !== 'PGRST116') { // Ignorar error si no se encuentra (single)
+                throw error;
+            }
+            return data;
         }
 
-        /**
-         * Obtiene todos los equipos de la base de datos
-         * @returns {Promise} - Promesa que resuelve con array de equipos
-         */
-        function getAllEquipments() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['equipos'], 'readonly');
-                const store = transaction.objectStore('equipos');
-                const request = store.getAll();
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getAllEquipments() {
+            const { data, error } = await supabase.from('equipos').select('*');
+            if (error) throw error;
+            return data;
         }
 
         // =============================================
-        // FUNCIONES CRUD PARA ASIGNACIONES
+        // FUNCIONES CRUD PARA ASIGNACIONES (SUPABASE)
         // =============================================
 
-        /**
-         * Agrega una nueva asignación a la base de datos
-         * @param {Object} assignment - Objeto asignación con sus propiedades
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function addAssignment(assignment) {
-            const transaction = db.transaction(['asignaciones'], 'readwrite');
-            const store = transaction.objectStore('asignaciones');
-            return store.add(assignment);
-        }
-       /**
-         * Actualiza una asignación existente en la base de datos
-         * @param {Object} assignment - Objeto asignación con id_asignacion y propiedades actualizadas
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function updateAssignment(assignment) {
-            const transaction = db.transaction(['asignaciones'], 'readwrite');
-            const store = transaction.objectStore('asignaciones');
-            return store.put(assignment);
+        async function addAssignment(assignment) {
+            const { data, error } = await supabase.from('asignaciones').insert([assignment]);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Elimina una asignación de la base de datos
-         * @param {number} id - ID de la asignación a eliminar
-         * @returns {IDBRequest} - Solicitud de la base de datos
-         */
-        function deleteAssignment(id) {
-            const transaction = db.transaction(['asignaciones'], 'readwrite');
-            const store = transaction.objectStore('asignaciones');
-            return store.delete(id);
+        async function updateAssignment(assignment) {
+            const { data, error } = await supabase.from('asignaciones').update(assignment).eq('id_asignacion', assignment.id_asignacion);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Obtiene la asignación activa de un equipo específico
-         * @param {number} equipmentId - ID del equipo a buscar
-         * @returns {Promise} - Promesa que resuelve con la asignación encontrada
-         */
-        function getAssignmentByEquipment(equipmentId) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['asignaciones'], 'readonly');
-                const store = transaction.objectStore('asignaciones');
-                const index = store.index('id_equipo');
-                const request = index.get(equipmentId);
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function deleteAssignment(id) {
+            const { data, error } = await supabase.from('asignaciones').delete().eq('id_asignacion', id);
+            if (error) throw error;
+            return data;
         }
 
-        /**
-         * Obtiene todas las asignaciones de un usuario específico
-         * @param {number} userId - ID del usuario a buscar
-         * @returns {Promise} - Promesa que resuelve con array de asignaciones
-         */
-        function getAssignmentsByUser(userId) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['asignaciones'], 'readonly');
-                const store = transaction.objectStore('asignaciones');
-                const index = store.index('id_usuario');
-                const request = index.getAll(userId);
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getAssignmentByEquipment(equipmentId) {
+            const { data, error } = await supabase
+                .from('asignaciones')
+                .select('*')
+                .eq('id_equipo', equipmentId)
+                .eq('estado_asignacion', 'Asignado')
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // Ignorar si no se encuentra
+                throw error;
+            }
+            return data;
         }
 
-        /**
-         * Obtiene todas las asignaciones de la base de datos
-         * @returns {Promise} - Promesa que resuelve con array de asignaciones
-         */
-        function getAllAssignments() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['asignaciones'], 'readonly');
-                const store = transaction.objectStore('asignaciones');
-                const request = store.getAll();
-                
-                request.onsuccess = function() {
-                    resolve(request.result);
-                };
-                
-                request.onerror = function() {
-                    reject(request.error);
-                };
-            });
+        async function getAssignmentsByUser(userId) {
+            const { data, error } = await supabase.from('asignaciones').select('*').eq('id_usuario', userId);
+            if (error) throw error;
+            return data;
+        }
+
+        async function getAllAssignments() {
+            const { data, error } = await supabase.from('asignaciones').select('*');
+            if (error) throw error;
+            return data;
         }
 
         // =============================================
@@ -1354,262 +1153,262 @@ function showNotification(title, body) {
          // Datos iniciales de usuarios
 
 const initialUsers = [
-    {RESPONSABLE: "LAGUNA EZEQUIEL", CEDULA: "6535214", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RIVERO WILIAN", CEDULA: "6690030", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GARCIA CARLOS ALEXIS", CEDULA: "7729341", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "HERNANDEZ JOSE", CEDULA: "7737772", CARGO: "SUPERVISOR DE ADMINITRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "CAMACARO ADELIS ENRIQUE", CEDULA: "7738750", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "OLLARVES DOUGLAS", CEDULA: "7740847", CARGO: "SUPERVISOR MAYOR DE TRANSPORTE DE PERS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MEDINA MERVIN ENRIQUE", CEDULA: "7743291", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PEÑA TINEO MARIO JOSE", CEDULA: "7744573", CARGO: "SUPERVISOR TRANSP PERSONAL COCC/LS/TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ALVAREZ CRUZ", CEDULA: "7744917", CARGO: "SUPERVISOR DE TRANSPORTE PERS BACH/MG/VL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CUICAS WILLIAM ENRIQUE", CEDULA: "7838256", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VILLASMIL ANGEL", CEDULA: "7862285", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SOTO JOSE ALBERTO", CEDULA: "7871639", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VIELMA MANUEL", CEDULA: "7963278", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PRIETO ELI JOSE", CEDULA: "7966031", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "ROMERO ALFREDO JOSE", CEDULA: "7967751", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "COLINA OSCAR ANTONIO", CEDULA: "8695605", CARGO: "CAPATAZ MOV MATER Y EQUIPOS COSTA OCC", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MONTAÑO RICHARD", CEDULA: "8696874", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FUENTES ALBERTO", CEDULA: "8701202", CARGO: "SUPERVISOR PROGRAMACION DE MTTO LS/SF", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "ROJAS JOSE GREGORIO", CEDULA: "8701316", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GELVEZ JOSE RODOLFO", CEDULA: "8701526", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUERRA LEONARDO", CEDULA: "8718865", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "AULAR JULIO CESAR", CEDULA: "8847879", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "HURTADO LORZA JOSE GREGORIO", CEDULA: "9359258", CARGO: "CAPATAZ MOV MATERIALES Y EQUIPOS LL/TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ROMAY PEDRO", CEDULA: "9525019", CARGO: "SUPERVISOR DE LIQUIDO Y ACHIQUES BACHAQ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CONTRERAS WINSTON RAMON", CEDULA: "9735923", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "DELGADO RICARDO", CEDULA: "9776933", CARGO: "SUPERVISOR MANTENIMIENTO TALLER PESADO AREA TIA JUANA", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "RUBIO RAFAEL ANGEL", CEDULA: "10080892", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ROJAS CARLOS ALBERTO", CEDULA: "10088982", CARGO: "INSPECTOR DE CALIDAD OCC/LS", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "FRANCO JOSE LUIS", CEDULA: "10189129", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ARCIA ERVIS DENNYS", CEDULA: "10189256", CARGO: "SUPERVISOR TRANSPORTE PERSONAL TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "EDWIN PEROZO", CEDULA: "10205552", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "HERNANDEZ ALI", CEDULA: "10209858", CARGO: "CAPATAZ MANTENIMIENTO TALLER LAGUNILLAS", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "FARIA JOSE FRANCISCO", CEDULA: "10210157", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "TORRES SANCHEZ TEODORO", CEDULA: "10211108", CARGO: "CAPATAZ MOV MATER Y EQUIPOS BACHAQUERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FERMIN RIGOBERTO", CEDULA: "10212721", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SIBADA ANTONIO", CEDULA: "10213519", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SANTOS DOUGLAS", CEDULA: "10312037", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SANCHEZ DOUGLAS RAFAEL", CEDULA: "10350936", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "LANDAETA HENRY ANTONIO", CEDULA: "10398926", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MEDINA DANIEL ANTONIO", CEDULA: "10420824", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "NAVARRO EMETERIO ANTONIO", CEDULA: "10601747", CARGO: "INSPECTOR DE CALIDAD OCC/LS", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GUTIERREZ ENDER JOSE", CEDULA: "10603081", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PRIETO REINALDO JOSE", CEDULA: "10604330", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CONTRERAS ISMAEL", CEDULA: "10744641", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MORILLO JORGE LUIS", CEDULA: "10917893", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MACHADO DICK RICHARD", CEDULA: "11068504", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MARTINEZ EDISON JOSE", CEDULA: "11245397", CARGO: "OPERADOR DE GRUA BRAZO ARTICULADO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VARGAS JESUS ANTONIO", CEDULA: "11246661", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SALAZAR GRUBER JOSE", CEDULA: "11246937", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUTIERREZ ALIRIO JOSE", CEDULA: "11247224", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SANCHEZ HERNAN", CEDULA: "11247228", CARGO: "OPERADOR DE GRUA BRAZO ARTICULADO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MIRANDA ELIESER JOSE", CEDULA: "11247859", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FRANCO WILMER", CEDULA: "11249042", CARGO: "INSPECTOR OPERACIONAL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ARIAS HELIS OMAR", CEDULA: "11249258", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "JORGE ROMERO", CEDULA: "11250398", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PARRA ARGENIS", CEDULA: "11250519", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SALERNI ROBERTO", CEDULA: "11250768", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CASTILLO ORLANDO ANTONIO", CEDULA: "11251177", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MENDOZA RUBEN DARIO", CEDULA: "11251318", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MORALES ROBERTO", CEDULA: "11251584", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUILARTE FRANCISCO", CEDULA: "11251805", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PEREZ JOSE GREGORIO", CEDULA: "11252562", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "HERNANDEZ WILMER", CEDULA: "11254020", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "NUÑEZ ANDER PAUL", CEDULA: "11254793", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VIELMA EDGAR", CEDULA: "11393766", CARGO: "SUPERVISOR MANTENIMIENTO TALLER LIVIANO", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "TORRES ENDER", CEDULA: "11450196", CARGO: "ANALISTA DE CONTROL DE COMBUSTIBLE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "MORALES EDGAR EDUARDO", CEDULA: "11453904", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CORDERO JOSE", CEDULA: "11456218", CARGO: "CAPATAZ MANTENIMIENTO TALLER LA SALINA", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GARCIA DELVIS GREGORIO", CEDULA: "11458480", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "DELGADO HARRISON ALONSO", CEDULA: "11459220", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "LOPEZ DICKSON", CEDULA: "11691408", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CARIELES JUAN CARLOS", CEDULA: "11699144", CARGO: "PROGRAMADOR OPERACIONAL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "SIVADA ENDER JOSE", CEDULA: "11799508", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PARRA NIXON ANTONIO", CEDULA: "11885513", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUTIERREZ MERVIN", CEDULA: "11886598", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CASTELLANO DANILO", CEDULA: "11887031", CARGO: "ALMACENISTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "GUTIERREZ WILMER ANTONIO", CEDULA: "11888926", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "QUERO EDECIO CECILIO", CEDULA: "11889669", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MEDINA ERWIN ENRIQUE", CEDULA: "11892228", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PEREZ EDUIN", CEDULA: "11893748", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "SALAZAR JUAN", CEDULA: "11946529", CARGO: "MECANICO DE REFRIGERACION", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MALAVE ARGENIS ANTONIO", CEDULA: "11946913", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FARIA ALEXANDER JESUS", CEDULA: "11947143", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUTIERREZ RAFAEL ANTONIO", CEDULA: "11947152", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VALLES IGNACIO EDUARDO", CEDULA: "11947777", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CARRASCO EUDIS", CEDULA: "11948188", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PAZ CARLOS", CEDULA: "11948429", CARGO: "PROGRAMADOR OPERACIONAL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VILLALOBOS FRANCISCO JOSE", CEDULA: "11948741", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "NOGUERA WILDER JOSE", CEDULA: "11949779", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "LISBOA JOSE DANIEL", CEDULA: "12004518", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ALVARADO JOSE LUIS", CEDULA: "12098317", CARGO: "SUPERVISOR PROGRAMACION COSTA TJ/LL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PEÑA JOSE GREGORIO", CEDULA: "12142029", CARGO: "BUZO INDUSTRIAL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "LARES ANGEL RAMON", CEDULA: "12144765", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SALAS MAURO JOSE", CEDULA: "12191644", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "LOPEZ ANGEL RAMON", CEDULA: "12205478", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "TERAN RENZO JOSE", CEDULA: "12308686", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "VALERO ALBERTO", CEDULA: "12327924", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUTIERREZ NELSON ENRIQUE", CEDULA: "12328709", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PEREZ ROBERTO CARLOS", CEDULA: "12329160", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BRITO MANUEL ENRIQUE", CEDULA: "12329216", CARGO: "SUPERVISOR DE PRESUPUESTO", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
-    {RESPONSABLE: "GUARUCANO PEDRO LUIS", CEDULA: "12372165", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "AMESTY DIEGO JOVANNY", CEDULA: "12379330", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RINCON RONALT RAFIEL", CEDULA: "12404099", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FERNANDEZ ALEXANDER", CEDULA: "12408249", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CASTELLANO JUAN CARLOS", CEDULA: "12412734", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CHIRINOS EDIXON JOSE", CEDULA: "12467016", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SALAZAR MEJIAS DEXCYBEL", CEDULA: "12482880", CARGO: "SUPERINTENDENTE DE ADMINISTRACION DE ACT", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "SALAZAR FELIPE ANTONIO", CEDULA: "12482881", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PEROZO JOSÉ", CEDULA: "12700520", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUTIERREZ KENNY ANTONIO", CEDULA: "12712356", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VARGAS PEDRO", CEDULA: "12712849", CARGO: "CHOFER EJECUTIVO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MARIN MARCOS ANTONIO", CEDULA: "12712992", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GUANIPA ARCENIO ALEXANDER", CEDULA: "12713096", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "LUGO WILFREDO ANTONIO", CEDULA: "12843587", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RAMIREZ JOSE ENRIQUE", CEDULA: "12844489", CARGO: "SUPERVISOR MAYOR MOV MATERIALES Y EQUIP", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BARRERA JOAN", CEDULA: "12844648", CARGO: "SUPERVISOR DE PLANIFICACION Y PROGRAM", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BRACHO ADALBERTO JOSE", CEDULA: "12844762", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RAMONES RODIS", CEDULA: "12861566", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VILLALOBOS OTTO JOSE", CEDULA: "12863563", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "NIEVES ALI", CEDULA: "12943433", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SIERRA CARLOS ENRIQUE", CEDULA: "13003717", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GONZALEZ CARIDAD DARWIN ANTONI", CEDULA: "13005792", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CARRASCO HENRY JESUS", CEDULA: "13129095", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "QUINTERO MARCO ANTONIO", CEDULA: "13129493", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MARRERO DELVIN JOSE", CEDULA: "13129964", CARGO: "ANALISTA DE ADMINISTRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "MORILLO JOSE DARIO", CEDULA: "13129985", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CARIDAD WIRDEN ENRIQUE", CEDULA: "13130508", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VELASQUEZ RICHER JOSE", CEDULA: "13208009", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PIRELA JEAN ALBERTO", CEDULA: "13209775", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "ARAUJO JOSE", CEDULA: "13262232", CARGO: "ALMACENISTA", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "QUIJADA JAVIER", CEDULA: "13361322", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "HERNANDEZ JOSE", CEDULA: "13361476", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CHIRINOS ANGEL EDIXON", CEDULA: "13363236", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ORTIZ JOSE GREGORIO", CEDULA: "13401917", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MARCANO EDICIO RAFAEL", CEDULA: "13402508", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PEREIRA JOSE GREGORIO", CEDULA: "13402645", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GONZALEZ WILMAY RAMON", CEDULA: "13641347", CARGO: "CAPATAZ MOV MATER Y EQUIPOS BACHAQUERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MATOS NARKIS JOSE", CEDULA: "13659400", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CORDERO ANDRY", CEDULA: "13659955", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GUTIERREZ AMERICO ANTONIO", CEDULA: "13840840", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VILLARROEL ADOLFO JOSE", CEDULA: "13863278", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "VALERO JAIRO JOSE", CEDULA: "13976959", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "LOAIZA JUAN VICENTE", CEDULA: "13976986", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MONTOYA YERLE JOAN", CEDULA: "14002709", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BERMUDEZ ADRIANA", CEDULA: "14021491", CARGO: "SUPERVISOR DE ALMACEN LL/FM", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "GODOY ALIRIO", CEDULA: "14085066", CARGO: "CAPATAZ MANTENIMIENTO TALLER LAGUNILLAS", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "VELASQUEZ ORLANDO JAVIER", CEDULA: "14085245", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GAMARRO FERDINANDO", CEDULA: "14085408", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GONZALEZ KENDRY JOSE", CEDULA: "14085611", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "SUAREZ SIXTO RAFAEL", CEDULA: "14134928", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SAENZ JOSE ENRIQUE", CEDULA: "14181309", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FERNANDEZ HECTOR JOSE", CEDULA: "14181314", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "NAVA JOAN RAMON", CEDULA: "14234791", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SAAVEDRA DERVIS JOSE", CEDULA: "14235043", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "POLANCO ANTONIO", CEDULA: "14235356", CARGO: "SUPERVISOR MANTENIMIENTO TALLER PESADO LA SALINA", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "REYES RICHARD ANTONIO", CEDULA: "14235360", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ESCALONA FRANCISCO JOSE", CEDULA: "14448211", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "MARIN ULISES ANTONIO", CEDULA: "14448264", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "TUDARES DEIBIS", CEDULA: "14449137", CARGO: "SUPERVISOR MAYOR TALLER LA SALINA", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "URE LUBIN ARMANDO", CEDULA: "14493329", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "URDANETA CARLOS LUIS", CEDULA: "14496254", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CORONADO JOSE JAVIER", CEDULA: "14582747", CARGO: "ANALISTA DE CONTROL DE COMBUSTIBLE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "URDANETA ALFREDO", CEDULA: "14659445", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "YSEA DONY JOSE", CEDULA: "14663230", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MUJICA GUILLERMO JOSE", CEDULA: "14714855", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PEREIRA JOELVIS RICARDO", CEDULA: "14722293", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "FIGUEROA JOAN MIGUEL", CEDULA: "14722774", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ALBARRACIN FRANKLIN", CEDULA: "14808925", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ACOSTA HERNAN ANTONIO", CEDULA: "14847367", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SUHEIN PERDOMO", CEDULA: "14901691", CARGO: "SUPERVISOR DE PLANIFICACION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
-    {RESPONSABLE: "ROZO LUILLANA", CEDULA: "14951254", CARGO: "SUPERINTENDENTE PLANIF PRESUP Y GESTION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
-    {RESPONSABLE: "CAICEDO PEDRO", CEDULA: "14974455", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "CARIDAD LUIS", CEDULA: "15009339", CARGO: "SUPERINTENDENTE DE OPERACIONES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ACOSTA GUSTAVO ADOLFO", CEDULA: "15017120", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GONZALEZ JEAN CARLOS", CEDULA: "15021652", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CONTRERAS RONALD ANTONIO", CEDULA: "15052434", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RODRIGUEZ JOSE LUIS", CEDULA: "15158417", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ESCALONA JUAN", CEDULA: "15158639", CARGO: "SUPERVISOR MAYOR DE FLOTA TERRESTRE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "RIVEROS CRISTOBAL ALEXANDER", CEDULA: "15172731", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RAMOS EDUARDO ENRIQUE", CEDULA: "15239223", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "COLINA JUAN JAVIER", CEDULA: "15320157", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "NIEVES CIRILO ELIAS", CEDULA: "15320402", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "QUINTERO JUNIOR SINAYINE", CEDULA: "15353421", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CUBILLAN INDIRA", CEDULA: "15401930", CARGO: "SUPERVISOR DE SERVICIOS TECNICOS OPERACIONAL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CHIRINO ANGEL GUILLERMO", CEDULA: "15443311", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SANTIAGO OSWALDO", CEDULA: "15443428", CARGO: "GERENTE TRANSPORTE TERRESTRE", SECTOR: "TRANSPORTE TERRESTRE"},
-    {RESPONSABLE: "ALVAREZ MARLOBIS", CEDULA: "15552982", CARGO: "SUPERVISOR DE COORDINACION DE COMITES", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "FANEITTE GEORGE RICHARD", CEDULA: "15603058", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "ALBORNOZ GERARDO JAVIER", CEDULA: "15603947", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RAMOS MIGUELANGEL", CEDULA: "15613014", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BAYUREL NOENDRYS ANTONIO", CEDULA: "15674441", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RIOS WILLIAMS ENRIQUE", CEDULA: "15749383", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "PEREZ RODRIGUEZ HECTOR ALEXANDER", CEDULA: "15779289", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GONZALEZ CARLOS JOSE", CEDULA: "15849596", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "JIMENEZ RAFAEL EDUARDO", CEDULA: "15974146", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RODRIGUEZ RICHARD", CEDULA: "15974645", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GONZALEZ EDUIN GREGORIO", CEDULA: "15974996", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GRATEROL JUAN CARLOS", CEDULA: "16027707", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "CHACIN LUIS ENRIQUE", CEDULA: "16047130", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ESIS JOHNY ANTONIO", CEDULA: "16119348", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "URDANETA ROBINSON RAMON", CEDULA: "16160576", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GALEA CARLOS ALBERTO", CEDULA: "16169074", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GARCIA ANDRY ANTONIO", CEDULA: "16302201", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CORDERO ARGENIS ALBERTO", CEDULA: "16304020", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CARDENAS JOHAN JOSE", CEDULA: "16457668", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BRACHO EDIXON JOSE", CEDULA: "16633737", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CHACIN DERVIN", CEDULA: "16832858", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "MENA JOSE GREGORIO", CEDULA: "17003665", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "AVILA AÑEZ CHASTITY", CEDULA: "17006301", CARGO: "SUPERVISOR DE MANTENIMIENTO DE TALLER LIVIANO", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GOMEZ WILMER", CEDULA: "17332543", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GARCIA FREDDY ANTONIO", CEDULA: "17333511", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GONZALEZ RUBEN ENRIQUE", CEDULA: "17635664", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PADRON LUIS ALEJANDRO", CEDULA: "17647331", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PIÑERO OSCAR ENRIQUE GERARDO", CEDULA: "17649755", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ROMERO VANESSA", CEDULA: "17669061", CARGO: "SUPERINTENDENTE DE MANTENIMIENTO", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "PRIETO WILLIAM SEGUNDO", CEDULA: "17821379", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "TINEO JEAN PAOLO", CEDULA: "17825181", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RIVERO JESUS DANIEL", CEDULA: "17825884", CARGO: "ANALISTA CALIDAD PRODUCTIVIDAD Y CONOCIM", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
-    {RESPONSABLE: "GONZALEZ DENNY", CEDULA: "17826972", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "RAMIREZ GUSTAVO ADOLFO", CEDULA: "17917289", CARGO: "SUPERVISOR MAYOR DE COMBUSTIBLE Y MATERIALES", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "CUARTE YENIFFER", CEDULA: "18198893", CARGO: "SUPERVISOR DE ADMINISTRACION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
-    {RESPONSABLE: "GARCIA FRANK", CEDULA: "18217250", CARGO: "SUPERVISOR LIQUIDO Y ACHIQUE LAGUNILLAS", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "ALMAO MARTIN", CEDULA: "18260617", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ADRIANZA FREDDY DE JESUS", CEDULA: "18341019", CARGO: "ANALISTA TALLER EXTERNO FLOTA LIVIANA", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "URRIBARRI WILLIAM EDUARDO", CEDULA: "18370278", CARGO: "ANALISTA DE PROGRAMACION OCC/LS", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "OCANDO ALVARO JOSE", CEDULA: "18371089", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "BASALO OMAR ANTONIO", CEDULA: "18484687", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "URRIBARRI CARLOS ENRIQUE", CEDULA: "18633295", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "SALAZAR JOSE", CEDULA: "18695682", CARGO: "SUPERVISOR MOV MATER Y EQUIPOS BACHAQ", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "OCANDO WILLIAMS JOSE", CEDULA: "18794884", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "AGUSTIN FERNANDO JOSE", CEDULA: "18795357", CARGO: "SUPERVISOR DE FLOTAS Y PLANES DE MTTO", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "DELMORAL EDGAR EDUARDO", CEDULA: "19016110", CARGO: "CAPATAZ MOV MATERIALES Y EQUIPOS LL/TJ", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "GARCIA JESUS SALVADOR", CEDULA: "19198140", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "AGREDA EDECIO", CEDULA: "19328131", CARGO: "ACELERADOR DE MATERIALES", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "ZARRAGA DARWIN JOSE", CEDULA: "19831303", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "FUENMAYOR DANILO JOSE", CEDULA: "19838409", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "POLANCO PEDRO JOSE", CEDULA: "20331873", CARGO: "SUPERVISOR MTTO TALLER LIVIANO", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "GRATEROL ABRAHAM JOSE", CEDULA: "20383601", CARGO: "ALMACENISTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "NAVA YURVIN ANTONIO", CEDULA: "20457294", CARGO: "SUPERVISOR DE COMBUSTIBLE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "SALAS YORJHAN HERBER", CEDULA: "22136577", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "LOPEZ YEILEX", CEDULA: "22378188", CARGO: "SUPERVISOR DE GESTION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
-    {RESPONSABLE: "MANRIQUE DANIEL EDUARDO", CEDULA: "22778662", CARGO: "ALMACENISTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "GUERRERO JAVIER JOSE", CEDULA: "23887012", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "BOLIVAR QUINTERO ADRIN E", CEDULA: "25194107", CARGO: "INSPECTOR OPERACIONAL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "CARRILLO CUBA, BRAYAN ALBERTO", CEDULA: "25555326", CARGO: "SUPERVISOR DE SERVICIOS TECNICOS OPERACIONAL", SECTOR: "MANTENIMIENTO"},
-    {RESPONSABLE: "COLMENARES CARLOS EDUARDO", CEDULA: "25764005", CARGO: "SUPERVISOR TRANSPORTE PERS LL/BACH/MG/VL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "ORTEGA SAAVEDRA LUIS SAUL", CEDULA: "26550182", CARGO: "PLANIFICADOR OPERACIONAL", SECTOR: "OPERACIONES"},
-    {RESPONSABLE: "SAEZ VARGAS, IVANA FERNANDA", CEDULA: "27758876", CARGO: "SUPERVISOR DE ADMINISTRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
-    {RESPONSABLE: "ANCIANIS SUAREZ JOSE MANUEL", CEDULA: "28409383", CARGO: "SUPERVISOR MAYOR PROGRAMACION DE OPER", SECTOR: "OPERACIONES"}
+    {responsable: "LAGUNA EZEQUIEL", cedula: "6535214", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "RIVERO WILIAN", cedula: "6690030", cargo: "OPERADOR DE GRUA TELESCOPICA", sector: "OPERACIONES"},
+    {responsable: "GARCIA CARLOS ALEXIS", cedula: "7729341", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "HERNANDEZ JOSE", cedula: "7737772", cargo: "SUPERVISOR DE ADMINITRACION DE FLOTA", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "CAMACARO ADELIS ENRIQUE", cedula: "7738750", cargo: "CAPATAZ TRANSPORTE DE PERSONAL BACH", sector: "OPERACIONES"},
+    {responsable: "OLLARVES DOUGLAS", cedula: "7740847", cargo: "SUPERVISOR MAYOR DE TRANSPORTE DE PERS", sector: "OPERACIONES"},
+    {responsable: "MEDINA MERVIN ENRIQUE", cedula: "7743291", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "PEÑA TINEO MARIO JOSE", cedula: "7744573", cargo: "SUPERVISOR TRANSP PERSONAL COCC/LS/TJ", sector: "OPERACIONES"},
+    {responsable: "ALVAREZ CRUZ", cedula: "7744917", cargo: "SUPERVISOR DE TRANSPORTE PERS BACH/MG/VL", sector: "OPERACIONES"},
+    {responsable: "CUICAS WILLIAM ENRIQUE", cedula: "7838256", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "VILLASMIL ANGEL", cedula: "7862285", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "SOTO JOSE ALBERTO", cedula: "7871639", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "VIELMA MANUEL", cedula: "7963278", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "PRIETO ELI JOSE", cedula: "7966031", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "ROMERO ALFREDO JOSE", cedula: "7967751", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "COLINA OSCAR ANTONIO", cedula: "8695605", cargo: "CAPATAZ MOV MATER Y EQUIPOS COSTA OCC", sector: "OPERACIONES"},
+    {responsable: "MONTAÑO RICHARD", cedula: "8696874", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "FUENTES ALBERTO", cedula: "8701202", cargo: "SUPERVISOR PROGRAMACION DE MTTO LS/SF", sector: "MANTENIMIENTO"},
+    {responsable: "ROJAS JOSE GREGORIO", cedula: "8701316", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GELVEZ JOSE RODOLFO", cedula: "8701526", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GUERRA LEONARDO", cedula: "8718865", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "AULAR JULIO CESAR", cedula: "8847879", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "HURTADO LORZA JOSE GREGORIO", cedula: "9359258", cargo: "CAPATAZ MOV MATERIALES Y EQUIPOS LL/TJ", sector: "OPERACIONES"},
+    {responsable: "ROMAY PEDRO", cedula: "9525019", cargo: "SUPERVISOR DE LIQUIDO Y ACHIQUES BACHAQ", sector: "OPERACIONES"},
+    {responsable: "CONTRERAS WINSTON RAMON", cedula: "9735923", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "DELGADO RICARDO", cedula: "9776933", cargo: "SUPERVISOR MANTENIMIENTO TALLER PESADO AREA TIA JUANA", sector: "MANTENIMIENTO"},
+    {responsable: "RUBIO RAFAEL ANGEL", cedula: "10080892", cargo: "CAPATAZ TRANSPORTE DE PERSONAL OCC", sector: "OPERACIONES"},
+    {responsable: "ROJAS CARLOS ALBERTO", cedula: "10088982", cargo: "INSPECTOR DE CALIDAD OCC/LS", sector: "MANTENIMIENTO"},
+    {responsable: "FRANCO JOSE LUIS", cedula: "10189129", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "ARCIA ERVIS DENNYS", cedula: "10189256", cargo: "SUPERVISOR TRANSPORTE PERSONAL TJ", sector: "OPERACIONES"},
+    {responsable: "EDWIN PEROZO", cedula: "10205552", cargo: "CAPATAZ TRANSPORTE DE PERSONAL TJ", sector: "OPERACIONES"},
+    {responsable: "HERNANDEZ ALI", cedula: "10209858", cargo: "CAPATAZ MANTENIMIENTO TALLER LAGUNILLAS", sector: "MANTENIMIENTO"},
+    {responsable: "FARIA JOSE FRANCISCO", cedula: "10210157", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "TORRES SANCHEZ TEODORO", cedula: "10211108", cargo: "CAPATAZ MOV MATER Y EQUIPOS BACHAQUERO", sector: "OPERACIONES"},
+    {responsable: "FERMIN RIGOBERTO", cedula: "10212721", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SIBADA ANTONIO", cedula: "10213519", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SANTOS DOUGLAS", cedula: "10312037", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "SANCHEZ DOUGLAS RAFAEL", cedula: "10350936", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "LANDAETA HENRY ANTONIO", cedula: "10398926", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MEDINA DANIEL ANTONIO", cedula: "10420824", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "NAVARRO EMETERIO ANTONIO", cedula: "10601747", cargo: "INSPECTOR DE CALIDAD OCC/LS", sector: "MANTENIMIENTO"},
+    {responsable: "GUTIERREZ ENDER JOSE", cedula: "10603081", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "PRIETO REINALDO JOSE", cedula: "10604330", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "CONTRERAS ISMAEL", cedula: "10744641", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MORILLO JORGE LUIS", cedula: "10917893", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MACHADO DICK RICHARD", cedula: "11068504", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MARTINEZ EDISON JOSE", cedula: "11245397", cargo: "OPERADOR DE GRUA BRAZO ARTICULADO", sector: "OPERACIONES"},
+    {responsable: "VARGAS JESUS ANTONIO", cedula: "11246661", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SALAZAR GRUBER JOSE", cedula: "11246937", cargo: "CAPATAZ TRANSPORTE DE PERSONAL LL", sector: "OPERACIONES"},
+    {responsable: "GUTIERREZ ALIRIO JOSE", cedula: "11247224", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SANCHEZ HERNAN", cedula: "11247228", cargo: "OPERADOR DE GRUA BRAZO ARTICULADO", sector: "OPERACIONES"},
+    {responsable: "MIRANDA ELIESER JOSE", cedula: "11247859", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "FRANCO WILMER", cedula: "11249042", cargo: "INSPECTOR OPERACIONAL", sector: "OPERACIONES"},
+    {responsable: "ARIAS HELIS OMAR", cedula: "11249258", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "JORGE ROMERO", cedula: "11250398", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "PARRA ARGENIS", cedula: "11250519", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SALERNI ROBERTO", cedula: "11250768", cargo: "OPERADOR DE GRUA TELESCOPICA", sector: "OPERACIONES"},
+    {responsable: "CASTILLO ORLANDO ANTONIO", cedula: "11251177", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MENDOZA RUBEN DARIO", cedula: "11251318", cargo: "CAPATAZ TRANSPORTE DE PERSONAL TJ", sector: "OPERACIONES"},
+    {responsable: "MORALES ROBERTO", cedula: "11251584", cargo: "OPERADOR DE GRUA TELESCOPICA", sector: "OPERACIONES"},
+    {responsable: "GUILARTE FRANCISCO", cedula: "11251805", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "PEREZ JOSE GREGORIO", cedula: "11252562", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "HERNANDEZ WILMER", cedula: "11254020", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "NUÑEZ ANDER PAUL", cedula: "11254793", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "VIELMA EDGAR", cedula: "11393766", cargo: "SUPERVISOR MANTENIMIENTO TALLER LIVIANO", sector: "MANTENIMIENTO"},
+    {responsable: "TORRES ENDER", cedula: "11450196", cargo: "ANALISTA DE CONTROL DE COMBUSTIBLE", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "MORALES EDGAR EDUARDO", cedula: "11453904", cargo: "CAPATAZ TRANSPORTE DE PERSONAL LL", sector: "OPERACIONES"},
+    {responsable: "CORDERO JOSE", cedula: "11456218", cargo: "CAPATAZ MANTENIMIENTO TALLER LA SALINA", sector: "MANTENIMIENTO"},
+    {responsable: "GARCIA DELVIS GREGORIO", cedula: "11458480", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "DELGADO HARRISON ALONSO", cedula: "11459220", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "LOPEZ DICKSON", cedula: "11691408", cargo: "OPERADOR DE GRUA TELESCOPICA", sector: "OPERACIONES"},
+    {responsable: "CARIELES JUAN CARLOS", cedula: "11699144", cargo: "PROGRAMADOR OPERACIONAL", sector: "MANTENIMIENTO"},
+    {responsable: "SIVADA ENDER JOSE", cedula: "11799508", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "PARRA NIXON ANTONIO", cedula: "11885513", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GUTIERREZ MERVIN", cedula: "11886598", cargo: "CAPATAZ TRANSPORTE DE PERSONAL OCC", sector: "OPERACIONES"},
+    {responsable: "CASTELLANO DANILO", cedula: "11887031", cargo: "ALMACENISTA", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "GUTIERREZ WILMER ANTONIO", cedula: "11888926", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "QUERO EDECIO CECILIO", cedula: "11889669", cargo: "CAPATAZ TRANSPORTE DE PERSONAL LL", sector: "OPERACIONES"},
+    {responsable: "MEDINA ERWIN ENRIQUE", cedula: "11892228", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "PEREZ EDUIN", cedula: "11893748", cargo: "CAPATAZ MANTENIMIENTO TALLER", sector: "MANTENIMIENTO"},
+    {responsable: "SALAZAR JUAN", cedula: "11946529", cargo: "MECANICO DE REFRIGERACION", sector: "OPERACIONES"},
+    {responsable: "MALAVE ARGENIS ANTONIO", cedula: "11946913", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "FARIA ALEXANDER JESUS", cedula: "11947143", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "GUTIERREZ RAFAEL ANTONIO", cedula: "11947152", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "VALLES IGNACIO EDUARDO", cedula: "11947777", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "CARRASCO EUDIS", cedula: "11948188", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "PAZ CARLOS", cedula: "11948429", cargo: "PROGRAMADOR OPERACIONAL", sector: "OPERACIONES"},
+    {responsable: "VILLALOBOS FRANCISCO JOSE", cedula: "11948741", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "NOGUERA WILDER JOSE", cedula: "11949779", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "LISBOA JOSE DANIEL", cedula: "12004518", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "ALVARADO JOSE LUIS", cedula: "12098317", cargo: "SUPERVISOR PROGRAMACION COSTA TJ/LL", sector: "MANTENIMIENTO"},
+    {responsable: "PEÑA JOSE GREGORIO", cedula: "12142029", cargo: "BUZO INDUSTRIAL", sector: "OPERACIONES"},
+    {responsable: "LARES ANGEL RAMON", cedula: "12144765", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SALAS MAURO JOSE", cedula: "12191644", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "LOPEZ ANGEL RAMON", cedula: "12205478", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "TERAN RENZO JOSE", cedula: "12308686", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "VALERO ALBERTO", cedula: "12327924", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "GUTIERREZ NELSON ENRIQUE", cedula: "12328709", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "PEREZ ROBERTO CARLOS", cedula: "12329160", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "BRITO MANUEL ENRIQUE", cedula: "12329216", cargo: "SUPERVISOR DE PRESUPUESTO", sector: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {responsable: "GUARUCANO PEDRO LUIS", cedula: "12372165", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "AMESTY DIEGO JOVANNY", cedula: "12379330", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "RINCON RONALT RAFIEL", cedula: "12404099", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "FERNANDEZ ALEXANDER", cedula: "12408249", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "CASTELLANO JUAN CARLOS", cedula: "12412734", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "CHIRINOS EDIXON JOSE", cedula: "12467016", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SALAZAR MEJIAS DEXCYBEL", cedula: "12482880", cargo: "SUPERINTENDENTE DE ADMINISTRACION DE ACT", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "SALAZAR FELIPE ANTONIO", cedula: "12482881", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "PEROZO JOSÉ", cedula: "12700520", cargo: "CAPATAZ TRANSPORTE DE PERSONAL BACH", sector: "OPERACIONES"},
+    {responsable: "GUTIERREZ KENNY ANTONIO", cedula: "12712356", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "VARGAS PEDRO", cedula: "12712849", cargo: "CHOFER EJECUTIVO", sector: "OPERACIONES"},
+    {responsable: "MARIN MARCOS ANTONIO", cedula: "12712992", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GUANIPA ARCENIO ALEXANDER", cedula: "12713096", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "LUGO WILFREDO ANTONIO", cedula: "12843587", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "RAMIREZ JOSE ENRIQUE", cedula: "12844489", cargo: "SUPERVISOR MAYOR MOV MATERIALES Y EQUIP", sector: "OPERACIONES"},
+    {responsable: "BARRERA JOAN", cedula: "12844648", cargo: "SUPERVISOR DE PLANIFICACION Y PROGRAM", sector: "OPERACIONES"},
+    {responsable: "BRACHO ADALBERTO JOSE", cedula: "12844762", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "RAMONES RODIS", cedula: "12861566", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "VILLALOBOS OTTO JOSE", cedula: "12863563", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "NIEVES ALI", cedula: "12943433", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "SIERRA CARLOS ENRIQUE", cedula: "13003717", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GONZALEZ CARIDAD DARWIN ANTONI", cedula: "13005792", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "CARRASCO HENRY JESUS", cedula: "13129095", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "QUINTERO MARCO ANTONIO", cedula: "13129493", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MARRERO DELVIN JOSE", cedula: "13129964", cargo: "ANALISTA DE ADMINISTRACION DE FLOTA", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "MORILLO JOSE DARIO", cedula: "13129985", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "CARIDAD WIRDEN ENRIQUE", cedula: "13130508", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "VELASQUEZ RICHER JOSE", cedula: "13208009", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "PIRELA JEAN ALBERTO", cedula: "13209775", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "ARAUJO JOSE", cedula: "13262232", cargo: "ALMACENISTA", sector: "OPERACIONES"},
+    {responsable: "QUIJADA JAVIER", cedula: "13361322", cargo: "CAPATAZ TRANSPORTE DE PERSONAL BACH", sector: "OPERACIONES"},
+    {responsable: "HERNANDEZ JOSE", cedula: "13361476", cargo: "CHOFER", sector: "OPERaciones"},
+    {responsable: "CHIRINOS ANGEL EDIXON", cedula: "13363236", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "ORTIZ JOSE GREGORIO", cedula: "13401917", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MARCANO EDICIO RAFAEL", cedula: "13402508", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "PEREIRA JOSE GREGORIO", cedula: "13402645", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "GONZALEZ WILMAY RAMON", cedula: "13641347", cargo: "CAPATAZ MOV MATER Y EQUIPOS BACHAQUERO", sector: "OPERACIONES"},
+    {responsable: "MATOS NARKIS JOSE", cedula: "13659400", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "CORDERO ANDRY", cedula: "13659955", cargo: "CAPATAZ MANTENIMIENTO TALLER", sector: "MANTENIMIENTO"},
+    {responsable: "GUTIERREZ AMERICO ANTONIO", cedula: "13840840", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "VILLARROEL ADOLFO JOSE", cedula: "13863278", cargo: "CAPATAZ TRANSPORTE DE PERSONAL OCC", sector: "OPERACIONES"},
+    {responsable: "VALERO JAIRO JOSE", cedula: "13976959", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "LOAIZA JUAN VICENTE", cedula: "13976986", cargo: "CAPATAZ TRANSPORTE DE PERSONAL TJ", sector: "OPERACIONES"},
+    {responsable: "MONTOYA YERLE JOAN", cedula: "14002709", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "BERMUDEZ ADRIANA", cedula: "14021491", cargo: "SUPERVISOR DE ALMACEN LL/FM", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "GODOY ALIRIO", cedula: "14085066", cargo: "CAPATAZ MANTENIMIENTO TALLER LAGUNILLAS", sector: "MANTENIMIENTO"},
+    {responsable: "VELASQUEZ ORLANDO JAVIER", cedula: "14085245", cargo: "CAPATAZ TRANSPORTE DE PERSONAL OCC", sector: "OPERACIONES"},
+    {responsable: "GAMARRO FERDINANDO", cedula: "14085408", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "GONZALEZ KENDRY JOSE", cedula: "14085611", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "SUAREZ SIXTO RAFAEL", cedula: "14134928", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SAENZ JOSE ENRIQUE", cedula: "14181309", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "FERNANDEZ HECTOR JOSE", cedula: "14181314", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "NAVA JOAN RAMON", cedula: "14234791", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SAAVEDRA DERVIS JOSE", cedula: "14235043", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "POLANCO ANTONIO", cedula: "14235356", cargo: "SUPERVISOR MANTENIMIENTO TALLER PESADO LA SALINA", sector: "MANTENIMIENTO"},
+    {responsable: "REYES RICHARD ANTONIO", cedula: "14235360", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "ESCALONA FRANCISCO JOSE", cedula: "14448211", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "MARIN ULISES ANTONIO", cedula: "14448264", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "TUDARES DEIBIS", cedula: "14449137", cargo: "SUPERVISOR MAYOR TALLER LA SALINA", sector: "MANTENIMIENTO"},
+    {responsable: "URE LUBIN ARMANDO", cedula: "14493329", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "URDANETA CARLOS LUIS", cedula: "14496254", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "CORONADO JOSE JAVIER", cedula: "14582747", cargo: "ANALISTA DE CONTROL DE COMBUSTIBLE", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "URDANETA ALFREDO", cedula: "14659445", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "YSEA DONY JOSE", cedula: "14663230", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "MUJICA GUILLERMO JOSE", cedula: "14714855", cargo: "CAPATAZ MANTENIMIENTO TALLER", sector: "MANTENIMIENTO"},
+    {responsable: "PEREIRA JOELVIS RICARDO", cedula: "14722293", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "FIGUEROA JOAN MIGUEL", cedula: "14722774", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "ALBARRACIN FRANKLIN", cedula: "14808925", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "ACOSTA HERNAN ANTONIO", cedula: "14847367", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "SUHEIN PERDOMO", cedula: "14901691", cargo: "SUPERVISOR DE PLANIFICACION", sector: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {responsable: "ROZO LUILLANA", cedula: "14951254", cargo: "SUPERINTENDENTE PLANIF PRESUP Y GESTION", sector: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {responsable: "CAICEDO PEDRO", cedula: "14974455", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "CARIDAD LUIS", cedula: "15009339", cargo: "SUPERINTENDENTE DE OPERACIONES", sector: "OPERACIONES"},
+    {responsable: "ACOSTA GUSTAVO ADOLFO", cedula: "15017120", cargo: "CAPATAZ TRANSPORTE DE PERSONAL LL", sector: "OPERACIONES"},
+    {responsable: "GONZALEZ JEAN CARLOS", cedula: "15021652", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "CONTRERAS RONALD ANTONIO", cedula: "15052434", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "RODRIGUEZ JOSE LUIS", cedula: "15158417", cargo: "CAPATAZ TRANSPORTE DE PERSONAL TJ", sector: "OPERACIONES"},
+    {responsable: "ESCALONA JUAN", cedula: "15158639", cargo: "SUPERVISOR MAYOR DE FLOTA TERRESTRE", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "RIVEROS CRISTOBAL ALEXANDER", cedula: "15172731", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "RAMOS EDUARDO ENRIQUE", cedula: "15239223", cargo: "CAPATAZ TRANSPORTE DE PERSONAL OCC", sector: "OPERACIONES"},
+    {responsable: "COLINA JUAN JAVIER", cedula: "15320157", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "NIEVES CIRILO ELIAS", cedula: "15320402", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "QUINTERO JUNIOR SINAYINE", cedula: "15353421", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "CUBILLAN INDIRA", cedula: "15401930", cargo: "SUPERVISOR DE SERVICIOS TECNICOS OPERACIONAL", sector: "OPERACIONES"},
+    {responsable: "CHIRINO ANGEL GUILLERMO", cedula: "15443311", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "SANTIAGO OSWALDO", cedula: "15443428", cargo: "GERENTE TRANSPORTE TERRESTRE", sector: "TRANSPORTE TERRESTRE"},
+    {responsable: "ALVAREZ MARLOBIS", cedula: "15552982", cargo: "SUPERVISOR DE COORDINACION DE COMITES", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "FANEITTE GEORGE RICHARD", cedula: "15603058", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "ALBORNOZ GERARDO JAVIER", cedula: "15603947", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "RAMOS MIGUELANGEL", cedula: "15613014", cargo: "CHOfer", sector: "OPERACIONES"},
+    {responsable: "BAYUREL NOENDRYS ANTONIO", cedula: "15674441", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "RIOS WILLIAMS ENRIQUE", cedula: "15749383", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "PEREZ RODRIGUEZ HECTOR ALEXANDER", cedula: "15779289", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "GONZALEZ CARLOS JOSE", cedula: "15849596", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "JIMENEZ RAFAEL EDUARDO", cedula: "15974146", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "RODRIGUEZ RICHARD", cedula: "15974645", cargo: "CAPATAZ MANTENIMIENTO TALLER", sector: "MANTENIMIENTO"},
+    {responsable: "GONZALEZ EDUIN GREGORIO", cedula: "15974996", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GRATEROL JUAN CARLOS", cedula: "16027707", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "CHACIN LUIS ENRIQUE", cedula: "16047130", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "ESIS JOHNY ANTONIO", cedula: "16119348", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "URDANETA ROBINSON RAMON", cedula: "16160576", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GALEA CARLOS ALBERTO", cedula: "16169074", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "GARCIA ANDRY ANTONIO", cedula: "16302201", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "CORDERO ARGENIS ALBERTO", cedula: "16304020", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "CARDENAS JOHAN JOSE", cedula: "16457668", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "BRACHO EDIXON JOSE", cedula: "16633737", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "CHACIN DERVIN", cedula: "16832858", cargo: "CAPATAZ LIQUIDOS Y ACHIQUES", sector: "OPERACIONES"},
+    {responsable: "MENA JOSE GREGORIO", cedula: "17003665", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "AVILA AÑEZ CHASTITY", cedula: "17006301", cargo: "SUPERVISOR DE MANTENIMIENTO DE TALLER LIVIANO", sector: "MANTENIMIENTO"},
+    {responsable: "GOMEZ WILMER", cedula: "17332543", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "GARCIA FREDDY ANTONIO", cedula: "17333511", cargo: "CHOFER ESPECIAL 30 TONELADAS", sector: "OPERACIONES"},
+    {responsable: "GONZALEZ RUBEN ENRIQUE", cedula: "17635664", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "PADRON LUIS ALEJANDRO", cedula: "17647331", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "PIÑERO OSCAR ENRIQUE GERARDO", cedula: "17649755", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "ROMERO VANESSA", cedula: "17669061", cargo: "SUPERINTENDENTE DE MANTENIMIENTO", sector: "MANTENIMIENTO"},
+    {responsable: "PRIETO WILLIAM SEGUNDO", cedula: "17821379", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "TINEO JEAN PAOLO", cedula: "17825181", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "RIVERO JESUS DANIEL", cedula: "17825884", cargo: "ANALISTA CALIDAD PRODUCTIVIDAD Y CONOCIM", sector: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {responsable: "GONZALEZ DENNY", cedula: "17826972", cargo: "OBRERO", sector: "OPERACIONES"},
+    {responsable: "RAMIREZ GUSTAVO ADOLFO", cedula: "17917289", cargo: "SUPERVISOR MAYOR DE COMBUSTIBLE Y MATERIALES", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "CUARTE YENIFFER", cedula: "18198893", cargo: "SUPERVISOR DE ADMINISTRACION", sector: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {responsable: "GARCIA FRANK", cedula: "18217250", cargo: "SUPERVISOR LIQUIDO Y ACHIQUE LAGUNILLAS", sector: "MANTENIMIENTO"},
+    {responsable: "ALMAO MARTIN", cedula: "18260617", cargo: "CAPATAZ TRANSPORTE DE PERSONAL BACH", sector: "OPERACIONES"},
+    {responsable: "ADRIANZA FREDDY DE JESUS", cedula: "18341019", cargo: "ANALISTA TALLER EXTERNO FLOTA LIVIANA", sector: "MANTENIMIENTO"},
+    {responsable: "URRIBARRI WILLIAM EDUARDO", cedula: "18370278", cargo: "ANALISTA DE PROGRAMACION OCC/LS", sector: "MANTENIMIENTO"},
+    {responsable: "OCANDO ALVARO JOSE", cedula: "18371089", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "BASALO OMAR ANTONIO", cedula: "18484687", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "URRIBARRI CARLOS ENRIQUE", cedula: "18633295", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "SALAZAR JOSE", cedula: "18695682", cargo: "SUPERVISOR MOV MATER Y EQUIPOS BACHAQ", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "OCANDO WILLIAMS JOSE", cedula: "18794884", cargo: "CHOFER", sector: "OPERACIONES"},
+    {responsable: "AGUSTIN FERNANDO JOSE", cedula: "18795357", cargo: "SUPERVISOR DE FLOTAS Y PLANES DE MTTO", sector: "MANTENIMIENTO"},
+    {responsable: "DELMORAL EDGAR EDUARDO", cedula: "19016110", cargo: "CAPATAZ MOV MATERIALES Y EQUIPOS LL/TJ", sector: "OPERACIONES"},
+    {responsable: "GARCIA JESUS SALVADOR", cedula: "19198140", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "AGREDA EDECIO", cedula: "19328131", cargo: "ACELERADOR DE MATERIALES", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "ZARRAGA DARWIN JOSE", cedula: "19831303", cargo: "MECANICO DIESEL", sector: "MANTENIMIENTO"},
+    {responsable: "FUENMAYOR DANILO JOSE", cedula: "19838409", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "POLANCO PEDRO JOSE", cedula: "20331873", cargo: "SUPERVISOR MTTO TALLER LIVIANO", sector: "MANTENIMIENTO"},
+    {responsable: "GRATEROL ABRAHAM JOSE", cedula: "20383601", cargo: "ALMACENISTA", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "NAVA YURVIN ANTONIO", cedula: "20457294", cargo: "SUPERVISOR DE COMBUSTIBLE", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "SALAS YORJHAN HERBER", cedula: "22136577", cargo: "CAPATAZ MANTENIMIENTO TALLER", sector: "MANTENIMIENTO"},
+    {responsable: "LOPEZ YEILEX", cedula: "22378188", cargo: "SUPERVISOR DE GESTION", sector: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {responsable: "MANRIQUE DANIEL EDUARDO", cedula: "22778662", cargo: "ALMACENISTA", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "GUERRERO JAVIER JOSE", cedula: "23887012", cargo: "MECANICO AUTOMOTRIZ", sector: "MANTENIMIENTO"},
+    {responsable: "BOLIVAR QUINTERO ADRIN E", cedula: "25194107", cargo: "INSPECTOR OPERACIONAL", sector: "OPERACIONES"},
+    {responsable: "CARRILLO CUBA, BRAYAN ALBERTO", cedula: "25555326", cargo: "SUPERVISOR DE SERVICIOS TECNICOS OPERACIONAL", sector: "MANTENIMIENTO"},
+    {responsable: "COLMENARES CARLOS EDUARDO", cedula: "25764005", cargo: "SUPERVISOR TRANSPORTE PERS LL/BACH/MG/VL", sector: "OPERACIONES"},
+    {responsable: "ORTEGA SAAVEDRA LUIS SAUL", cedula: "26550182", cargo: "PLANIFICADOR OPERACIONAL", sector: "OPERACIONES"},
+    {responsable: "SAEZ VARGAS, IVANA FERNANDA", cedula: "27758876", cargo: "SUPERVISOR DE ADMINISTRACION DE FLOTA", sector: "ADMINISTRACIÓN DE ACTIVOS"},
+    {responsable: "ANCIANIS SUAREZ JOSE MANUEL", cedula: "28409383", cargo: "SUPERVISOR MAYOR PROGRAMACION DE OPER", sector: "OPERACIONES"}
 ];
             // Datos iniciales de equipos (comentados para evitar errores)
             const initialEquipments = [];
 
 
 
-            
+
             for (const user of initialUsers) {
                 await addUser(user);
             }
@@ -1621,7 +1420,7 @@ const initialUsers = [
             // Crear asignaciones iniciales entre usuarios y equipos
             const usuarios = await getAllUsers();
             const equipos = await getAllEquipments();
-            
+
             if (usuarios.length > 0 && equipos.length > 0) {
                 // Asignar el primer equipo al primer usuario
                 await addAssignment({
@@ -1657,20 +1456,20 @@ const initialUsers = [
                 const userAssignments = asignaciones.filter(a => a.id_usuario === usuario.id_usuario && a.estado_asignacion === "Asignado");
                 const assignedEquipments = userAssignments.map(a => {
                     const equipo = equipos.find(e => e.id_equipo === a.id_equipo);
-                    return equipo ? `${equipo.DESCRIPCION} (${equipo.SERIAL})` : 'N/A';
+                    return equipo ? `${equipo.descripcion} (${equipo.serial})` : 'N/A';
                 });
 
                 return `
                     <tr>
                         <td>${usuario.id_usuario}</td>
-                        <td>${usuario.RESPONSABLE}</td>
-                        <td>${usuario.CEDULA}</td>
-                        <td>${usuario.CARGO}</td>
-                        <td>${usuario.SECTOR}</td>
+                        <td>${usuario.responsable}</td>
+                        <td>${usuario.cedula}</td>
+                        <td>${usuario.cargo}</td>
+                        <td>${usuario.sector}</td>
                         <td>
-                            ${userAssignments.length > 0 ? 
+                            ${userAssignments.length > 0 ?
                                 `<span class="assigned-badge">${userAssignments.length} equipo(s)</span><br>
-                                 <small>${assignedEquipments.join(', ')}</small>` : 
+                                 <small>${assignedEquipments.join(', ')}</small>` :
                                 '<span class="unassigned-badge">Sin equipos</span>'}
                         </td>
                         <td>
@@ -1698,23 +1497,23 @@ const initialUsers = [
                 return `
                     <tr>
                         <td>${equipo.id_equipo}</td>
-                        <td>${equipo.DESCRIPCION}</td>
-                        <td>${equipo.MARCA}</td>
-                        <td>${equipo.MODELO}</td>
-                        <td><strong>${equipo.SERIAL}</strong></td>
-                        <td class="${equipo.STATUS === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">
-                            ${equipo.STATUS}
+                        <td>${equipo.descripcion}</td>
+                        <td>${equipo.marca}</td>
+                        <td>${equipo.modelo}</td>
+                        <td><strong>${equipo.serial}</strong></td>
+                        <td class="${equipo.status === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">
+                            ${equipo.status}
                         </td>
                         <td>
-                            ${assignedUser ? 
-                                `<span class="assigned-badge">${assignedUser.RESPONSABLE}</span>` : 
+                            ${assignedUser ?
+                                `<span class="assigned-badge">${assignedUser.responsable}</span>` :
                                 '<span class="unassigned-badge">No asignado</span>'}
                         </td>
                         <td>
                             <button class="btn btn-edit" onclick="editEquipment(${equipo.id_equipo})">✏️</button>
                             <button class="btn btn-delete" onclick="deleteEquipmentConfirm(${equipo.id_equipo})">🗑️</button>
-                            ${!assignedUser ? 
-                                `<button class="btn btn-add" onclick="assignEquipment(${equipo.id_equipo})" style="padding: 4px 8px; font-size: 10px;">🔗 Asignar</button>` : 
+                            ${!assignedUser ?
+                                `<button class="btn btn-add" onclick="assignEquipment(${equipo.id_equipo})" style="padding: 4px 8px; font-size: 10px;">🔗 Asignar</button>` :
                                 ''}
                         </td>
                     </tr>
@@ -1736,9 +1535,9 @@ const initialUsers = [
                 return `
                     <tr>
                         <td>${asignacion.id_asignacion}</td>
-                        <td>${usuario ? `<strong>${usuario.RESPONSABLE}</strong><br><small>${usuario.SECTOR}</small>` : 'N/A'}</td>
-                        <td>${equipo ? `<strong>${equipo.DESCRIPCION}</strong><br>${equipo.MARCA} ${equipo.MODELO}` : 'N/A'}</td>
-                        <td><strong>${equipo ? equipo.SERIAL : 'N/A'}</strong></td>
+                        <td>${usuario ? `<strong>${usuario.responsable}</strong><br><small>${usuario.sector}</small>` : 'N/A'}</td>
+                        <td>${equipo ? `<strong>${equipo.descripcion}</strong><br>${equipo.marca} ${equipo.modelo}` : 'N/A'}</td>
+                        <td><strong>${equipo ? equipo.serial : 'N/A'}</strong></td>
                         <td>${asignacion.fecha_asignacion || 'N/A'}</td>
                         <td>
                             <span class="${asignacion.estado_asignacion === 'Asignado' ? 'assigned-badge' : 'unassigned-badge'}">
@@ -1841,15 +1640,15 @@ const initialUsers = [
                 equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
 
                 usuarios.forEach(usuario => {
-                    usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.RESPONSABLE} - ${usuario.SECTOR}</option>`;
+                    usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.responsable} - ${usuario.sector}</option>`;
                 });
 
                 // Llenar select de equipos (solo equipos no asignados)
                 const asignaciones = await getAllAssignments();
                 const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
-                
+
                 equipos.filter(equipo => !equiposAsignados.has(equipo.id_equipo)).forEach(equipo => {
-                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.DESCRIPCION} - ${equipo.MARCA} (${equipo.SERIAL})</option>`;
+                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.descripcion} - ${equipo.marca} (${equipo.serial})</option>`;
                 });
 
                 // Si se pasa un equipmentId, seleccionarlo automáticamente
@@ -1883,7 +1682,7 @@ const initialUsers = [
         async function updateAvailableEquipments() {
             const usuarioId = document.getElementById('assignmentUsuario').value;
             const equipoSelect = document.getElementById('assignmentEquipo');
-            
+
             if (!usuarioId) {
                 equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
                 return;
@@ -1897,10 +1696,10 @@ const initialUsers = [
 
                 // Filtrar equipos no asignados
                 const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
-                
+
                 equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
                 equipos.filter(equipo => !equiposAsignados.has(equipo.id_equipo)).forEach(equipo => {
-                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.DESCRIPCION} - ${equipo.MARCA} (${equipo.SERIAL})</option>`;
+                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.descripcion} - ${equipo.marca} (${equipo.serial})</option>`;
                 });
             } catch (error) {
                 console.error('Error actualizando equipos disponibles:', error);
@@ -1913,7 +1712,7 @@ const initialUsers = [
         async function updateEquipmentDetails() {
             const equipoId = document.getElementById('assignmentEquipo').value;
             const equipmentDetails = document.getElementById('equipmentDetails');
-            
+
             if (!equipoId) {
                 equipmentDetails.style.display = 'none';
                 return;
@@ -1924,10 +1723,10 @@ const initialUsers = [
                 if (equipo) {
                     equipmentDetails.innerHTML = `
                         <strong>Detalles del Equipo:</strong><br>
-                        <strong>Descripción:</strong> ${equipo.DESCRIPCION}<br>
-                        <strong>Marca/Modelo:</strong> ${equipo.MARCA} ${equipo.MODELO}<br>
-                        <strong>Serial:</strong> ${equipo.SERIAL}<br>
-                        <strong>Status:</strong> <span class="${equipo.STATUS === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">${equipo.STATUS}</span>
+                        <strong>Descripción:</strong> ${equipo.descripcion}<br>
+                        <strong>Marca/Modelo:</strong> ${equipo.marca} ${equipo.modelo}<br>
+                        <strong>Serial:</strong> ${equipo.serial}<br>
+                        <strong>Status:</strong> <span class="${equipo.status === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">${equipo.status}</span>
                     `;
                     equipmentDetails.style.display = 'block';
                 }
@@ -1944,12 +1743,12 @@ const initialUsers = [
         // Manejo del formulario de usuario
         document.getElementById('userForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const user = {
-                RESPONSABLE: document.getElementById('responsable').value,
-                CEDULA: document.getElementById('cedula').value,
-                CARGO: document.getElementById('cargo').value,
-                SECTOR: document.getElementById('sector').value
+                responsable: document.getElementById('responsable').value,
+                cedula: document.getElementById('cedula').value,
+                cargo: document.getElementById('cargo').value,
+                sector: document.getElementById('sector').value
             };
 
             const userId = document.getElementById('userId').value;
@@ -1961,7 +1760,7 @@ const initialUsers = [
                 } else {
                     await addUser(user);
                 }
-                
+
                 closeUserModal();
                 loadAllData();
             } catch (error) {
@@ -1973,15 +1772,15 @@ const initialUsers = [
         // Manejo del formulario de equipo
         document.getElementById('equipmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const equipment = {
-                DESCRIPCION: document.getElementById('descripcion').value,
-                MARCA: document.getElementById('marca').value,
-                MODELO: document.getElementById('modelo').value,
-                SERIAL: document.getElementById('serial').value,
-                ETIQUETA: document.getElementById('etiqueta').value,
-                STATUS: document.getElementById('status').value,
-                OBSERVACIONES: document.getElementById('observaciones').value
+                descripcion: document.getElementById('descripcion').value,
+                marca: document.getElementById('marca').value,
+                modelo: document.getElementById('modelo').value,
+                serial: document.getElementById('serial').value,
+                etiqueta: document.getElementById('etiqueta').value,
+                status: document.getElementById('status').value,
+                observaciones: document.getElementById('observaciones').value
             };
 
             const equipmentId = document.getElementById('equipmentId').value;
@@ -1989,7 +1788,7 @@ const initialUsers = [
             try {
                 // Verificar si el serial ya existe (excepto para edición)
                 if (!equipmentId) {
-                    const existingEquipment = await getEquipmentBySerial(equipment.SERIAL);
+                    const existingEquipment = await getEquipmentBySerial(equipment.serial);
                     if (existingEquipment) {
                         alert('Error: Ya existe un equipo con este número de serial. El serial debe ser único.');
                         return;
@@ -2002,7 +1801,7 @@ const initialUsers = [
                 } else {
                     await addEquipment(equipment);
                 }
-                
+
                 closeEquipmentModal();
                 loadAllData();
             } catch (error) {
@@ -2014,7 +1813,7 @@ const initialUsers = [
         // Manejo del formulario de asignación
         document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const assignment = {
                 id_usuario: parseInt(document.getElementById('assignmentUsuario').value),
                 id_equipo: parseInt(document.getElementById('assignmentEquipo').value),
@@ -2040,7 +1839,7 @@ const initialUsers = [
                 } else {
                     await addAssignment(assignment);
                 }
-                
+
                 closeAssignmentModal();
                 loadAllData();
             } catch (error) {
@@ -2064,10 +1863,10 @@ const initialUsers = [
                 if (usuario) {
                     document.getElementById('userModalTitle').textContent = 'Editar Usuario';
                     document.getElementById('userId').value = usuario.id_usuario;
-                    document.getElementById('responsable').value = usuario.RESPONSABLE;
-                    document.getElementById('cedula').value = usuario.CEDULA;
-                    document.getElementById('cargo').value = usuario.CARGO;
-                    document.getElementById('sector').value = usuario.SECTOR;
+                    document.getElementById('responsable').value = usuario.responsable;
+                    document.getElementById('cedula').value = usuario.cedula;
+                    document.getElementById('cargo').value = usuario.cargo;
+                    document.getElementById('sector').value = usuario.sector;
                     document.getElementById('userModal').style.display = 'block';
                 }
             } catch (error) {
@@ -2084,7 +1883,7 @@ const initialUsers = [
                     for (const assignment of userAssignments) {
                         await deleteAssignment(assignment.id_asignacion);
                     }
-                    
+
                     await deleteUser(id);
                     loadAllData();
                 } catch (error) {
@@ -2100,13 +1899,13 @@ const initialUsers = [
                 if (equipo) {
                     document.getElementById('equipmentModalTitle').textContent = 'Editar Equipo';
                     document.getElementById('equipmentId').value = equipo.id_equipo;
-                    document.getElementById('descripcion').value = equipo.DESCRIPCION;
-                    document.getElementById('marca').value = equipo.MARCA;
-                    document.getElementById('modelo').value = equipo.MODELO;
-                    document.getElementById('serial').value = equipo.SERIAL;
-                    document.getElementById('etiqueta').value = equipo.ETIQUETA;
-                    document.getElementById('status').value = equipo.STATUS;
-                    document.getElementById('observaciones').value = equipo.OBSERVACIONES;
+                    document.getElementById('descripcion').value = equipo.descripcion;
+                    document.getElementById('marca').value = equipo.marca;
+                    document.getElementById('modelo').value = equipo.modelo;
+                    document.getElementById('serial').value = equipo.serial;
+                    document.getElementById('etiqueta').value = equipo.etiqueta;
+                    document.getElementById('status').value = equipo.status;
+                    document.getElementById('observaciones').value = equipo.observaciones;
                     document.getElementById('equipmentModal').style.display = 'block';
                 }
             } catch (error) {
@@ -2123,7 +1922,7 @@ const initialUsers = [
                     if (equipmentAssignment) {
                         await deleteAssignment(equipmentAssignment.id_asignacion);
                     }
-                    
+
                     await deleteEquipment(id);
                     loadAllData();
                 } catch (error) {
@@ -2142,7 +1941,7 @@ const initialUsers = [
                 ]);
 
                 const asignacion = asignaciones.find(a => a.id_asignacion === id);
-                
+
                 if (asignacion) {
                     const usuarioSelect = document.getElementById('assignmentUsuario');
                     const equipoSelect = document.getElementById('assignmentEquipo');
@@ -2151,11 +1950,11 @@ const initialUsers = [
                     equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
 
                     usuarios.forEach(usuario => {
-                        usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.RESPONSABLE} - ${usuario.SECTOR}</option>`;
+                        usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.responsable} - ${usuario.sector}</option>`;
                     });
 
                     equipos.forEach(equipo => {
-                        equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.DESCRIPCION} - ${equipo.MARCA} (${equipo.SERIAL})</option>`;
+                        equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.descripcion} - ${equipo.marca} (${equipo.serial})</option>`;
                     });
 
                     document.getElementById('assignmentModalTitle').textContent = 'Editar Asignación';
@@ -2164,7 +1963,7 @@ const initialUsers = [
                     document.getElementById('assignmentEquipo').value = asignacion.id_equipo;
                     document.getElementById('assignmentEstado').value = asignacion.estado_asignacion;
                     document.getElementById('assignmentModal').style.display = 'block';
-                    
+
                     updateEquipmentDetails();
                 }
             } catch (error) {
@@ -2195,7 +1994,7 @@ const initialUsers = [
                 ]);
 
                 const equiposAsignados = asignaciones.filter(a => a.estado_asignacion === "Asignado").length;
-                const equiposOperativos = equipos.filter(e => e.STATUS === "OPERATIVO").length;
+                const equiposOperativos = equipos.filter(e => e.status === "OPERATIVO").length;
 
                 document.getElementById('totalUsuarios').textContent = usuarios.length;
                 document.getElementById('totalEquipos').textContent = equipos.length;
@@ -2223,9 +2022,9 @@ const initialUsers = [
                                 const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
                                 return `
                                     <tr>
-                                        <td>${usuario ? usuario.RESPONSABLE : 'N/A'}</td>
-                                        <td>${equipo ? `${equipo.DESCRIPCION} - ${equipo.MARCA}` : 'N/A'}</td>
-                                        <td>${equipo ? equipo.SERIAL : 'N/A'}</td>
+                                        <td>${usuario ? usuario.responsable : 'N/A'}</td>
+                                        <td>${equipo ? `${equipo.descripcion} - ${equipo.marca}` : 'N/A'}</td>
+                                        <td>${equipo ? equipo.serial : 'N/A'}</td>
                                         <td>${asignacion.fecha_asignacion || 'N/A'}</td>
                                         <td>
                                             <span class="${asignacion.estado_asignacion === 'Asignado' ? 'assigned-badge' : 'unassigned-badge'}">
@@ -2268,7 +2067,7 @@ const initialUsers = [
         // Búsqueda global
         async function globalSearch() {
             const filter = document.getElementById('globalSearch').value.toLowerCase();
-            
+
             if (!filter) {
                 updateStats();
                 return;
@@ -2281,14 +2080,14 @@ const initialUsers = [
                     getAllAssignments()
                 ]);
 
-                const usuariosFiltrados = usuarios.filter(usuario => 
-                    Object.values(usuario).some(val => 
+                const usuariosFiltrados = usuarios.filter(usuario =>
+                    Object.values(usuario).some(val =>
                         val.toString().toLowerCase().includes(filter)
                     )
                 );
 
-                const equiposFiltrados = equipos.filter(equipo => 
-                    Object.values(equipo).some(val => 
+                const equiposFiltrados = equipos.filter(equipo =>
+                    Object.values(equipo).some(val =>
                         val.toString().toLowerCase().includes(filter)
                     )
                 );
@@ -2296,19 +2095,19 @@ const initialUsers = [
                 const asignacionesFiltradas = asignaciones.filter(asignacion => {
                     const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
                     const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
-                    
-                    return (usuario && Object.values(usuario).some(val => 
+
+                    return (usuario && Object.values(usuario).some(val =>
                         val.toString().toLowerCase().includes(filter)
-                    )) || (equipo && Object.values(equipo).some(val => 
+                    )) || (equipo && Object.values(equipo).some(val =>
                         val.toString().toLowerCase().includes(filter)
                     ));
                 });
 
                 document.getElementById('totalUsuarios').textContent = usuariosFiltrados.length;
                 document.getElementById('totalEquipos').textContent = equiposFiltrados.length;
-                document.getElementById('equiposOperativos').textContent = 
-                    equiposFiltrados.filter(e => e.STATUS === 'OPERATIVO').length;
-                document.getElementById('equiposAsignados').textContent = 
+                document.getElementById('equiposOperativos').textContent =
+                    equiposFiltrados.filter(e => e.status === 'OPERATIVO').length;
+                document.getElementById('equiposAsignados').textContent =
                     asignacionesFiltradas.filter(a => a.estado_asignacion === 'Asignado').length;
 
                 const ultimasAsignaciones = document.getElementById('ultimasAsignaciones');
@@ -2329,9 +2128,9 @@ const initialUsers = [
                                 const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
                                 return `
                                     <tr>
-                                        <td>${usuario ? usuario.RESPONSABLE : 'N/A'}</td>
-                                        <td>${equipo ? `${equipo.DESCRIPCION} - ${equipo.MARCA}` : 'N/A'}</td>
-                                        <td>${equipo ? equipo.SERIAL : 'N/A'}</td>
+                                        <td>${usuario ? usuario.responsable : 'N/A'}</td>
+                                        <td>${equipo ? `${equipo.descripcion} - ${equipo.marca}` : 'N/A'}</td>
+                                        <td>${equipo ? equipo.serial : 'N/A'}</td>
                                         <td>${asignacion.fecha_asignacion || 'N/A'}</td>
                                         <td>${asignacion.estado_asignacion}</td>
                                     </tr>
@@ -2360,23 +2159,23 @@ const initialUsers = [
                 // Hoja de usuarios
                 const wsUsuarios = XLSX.utils.json_to_sheet(usuarios.map(u => ({
                     ID_USUARIO: u.id_usuario,
-                    RESPONSABLE: u.RESPONSABLE,
-                    CEDULA: u.CEDULA,
-                    CARGO: u.CARGO,
-                    SECTOR: u.SECTOR
+                    RESPONSABLE: u.responsable,
+                    CEDULA: u.cedula,
+                    CARGO: u.cargo,
+                    SECTOR: u.sector
                 })));
                 XLSX.utils.book_append_sheet(wb, wsUsuarios, "Usuarios");
 
                 // Hoja de equipos
                 const wsEquipos = XLSX.utils.json_to_sheet(equipos.map(e => ({
                     ID_EQUIPO: e.id_equipo,
-                    DESCRIPCION: e.DESCRIPCION,
-                    MARCA: e.MARCA,
-                    MODELO: e.MODELO,
-                    SERIAL: e.SERIAL,
-                    ETIQUETA: e.ETIQUETA,
-                    STATUS: e.STATUS,
-                    OBSERVACIONES: e.OBSERVACIONES
+                    DESCRIPCION: e.descripcion,
+                    MARCA: e.marca,
+                    MODELO: e.modelo,
+                    SERIAL: e.serial,
+                    ETIQUETA: e.etiqueta,
+                    STATUS: e.status,
+                    OBSERVACIONES: e.observaciones
                 })));
                 XLSX.utils.book_append_sheet(wb, wsEquipos, "Equipos");
 
@@ -2387,10 +2186,10 @@ const initialUsers = [
                     return {
                         ID_ASIGNACION: a.id_asignacion,
                         ID_USUARIO: a.id_usuario,
-                        USUARIO: usuario ? usuario.RESPONSABLE : 'N/A',
+                        USUARIO: usuario ? usuario.responsable : 'N/A',
                         ID_EQUIPO: a.id_equipo,
-                        EQUIPO: equipo ? `${equipo.DESCRIPCION} - ${equipo.MARCA}` : 'N/A',
-                        SERIAL_EQUIPO: equipo ? equipo.SERIAL : 'N/A',
+                        EQUIPO: equipo ? `${equipo.descripcion} - ${equipo.marca}` : 'N/A',
+                        SERIAL_EQUIPO: equipo ? equipo.serial : 'N/A',
                         FECHA_ASIGNACION: a.fecha_asignacion,
                         ESTADO_ASIGNACION: a.estado_asignacion
                     };
@@ -2412,33 +2211,33 @@ const initialUsers = [
 
             // Plantilla de usuarios CON ENCABEZADOS CORRECTOS
             const usuariosData = [{
-                "RESPONSABLE": "EJEMPLO: MARIA GONZALEZ",
-                "CEDULA": "EJEMPLO: 12345678", 
-                "CARGO": "EJEMPLO: ANALISTA",
-                "SECTOR": "EJEMPLO: SIGAL"
+                "responsable": "EJEMPLO: MARIA GONZALEZ",
+                "cedula": "EJEMPLO: 12345678",
+                "cargo": "EJEMPLO: ANALISTA",
+                "sector": "EJEMPLO: SIGAL"
             }];
             const wsUsuarios = XLSX.utils.json_to_sheet(usuariosData);
             XLSX.utils.book_append_sheet(wb, wsUsuarios, "Usuarios");
 
             // Plantilla de equipos CON ENCABEZADOS CORRECTOS
             const equiposData = [{
-                "DESCRIPCION": "EJEMPLO: LAPTOP",
-                "MARCA": "EJEMPLO: DELL",
-                "MODELO": "EJEMPLO: LATITUDE 5420", 
-                "SERIAL": "EJEMPLO: ABC123XYZ",
-                "ETIQUETA": "EJEMPLO: 28010001",
-                "STATUS": "OPERATIVO",
-                "OBSERVACIONES": "EJEMPLO: EQUIPO NUEVO"
+                "descripcion": "EJEMPLO: LAPTOP",
+                "marca": "EJEMPLO: DELL",
+                "modelo": "EJEMPLO: LATITUDE 5420",
+                "serial": "EJEMPLO: ABC123XYZ",
+                "etiqueta": "EJEMPLO: 28010001",
+                "status": "OPERATIVO",
+                "observaciones": "EJEMPLO: EQUIPO NUEVO"
             }];
             const wsEquipos = XLSX.utils.json_to_sheet(equiposData);
             XLSX.utils.book_append_sheet(wb, wsEquipos, "Equipos");
 
             // Plantilla de asignaciones CON ENCABEZADOS CORRECTOS
             const asignacionesData = [{
-                "ID_USUARIO": "1",
-                "ID_EQUIPO": "1",
-                "FECHA_ASIGNACION": "2024-01-15", 
-                "ESTADO_ASIGNACION": "EJEMPLO: Asignado"
+                "id_usuario": "1",
+                "id_equipo": "1",
+                "fecha_asignacion": "2024-01-15",
+                "estado_asignacion": "EJEMPLO: Asignado"
             }];
             const wsAsignaciones = XLSX.utils.json_to_sheet(asignacionesData);
             XLSX.utils.book_append_sheet(wb, wsAsignaciones, "Asignaciones");
@@ -2454,7 +2253,7 @@ const initialUsers = [
             try {
                 const data = await file.arrayBuffer();
                 const workbook = XLSX.read(data);
-                
+
                 let importedCount = 0;
                 const errors = [];
 
@@ -2462,24 +2261,24 @@ const initialUsers = [
                 if (workbook.Sheets["Usuarios"]) {
                     const usuariosData = XLSX.utils.sheet_to_json(workbook.Sheets["Usuarios"]);
                     console.log("Datos de usuarios leídos:", usuariosData);
-                    
+
                     for (const usuario of usuariosData) {
                         // Verificar que no sea la fila de ejemplo
-                        if (usuario.RESPONSABLE && 
-                            !usuario.RESPONSABLE.includes("EJEMPLO:") && 
-                            !usuario.RESPONSABLE.includes("MARIA GONZALEZ")) {
-                            
+                        if (usuario.responsable &&
+                            !usuario.responsable.includes("EJEMPLO:") &&
+                            !usuario.responsable.includes("MARIA GONZALEZ")) {
+
                             try {
                                 await addUser({
-                                    RESPONSABLE: usuario.RESPONSABLE || "",
-                                    CEDULA: usuario.CEDULA || "",
-                                    CARGO: usuario.CARGO || "",
-                                    SECTOR: usuario.SECTOR || ""
+                                    responsable: usuario.responsable || "",
+                                    cedula: usuario.cedula || "",
+                                    cargo: usuario.cargo || "",
+                                    sector: usuario.sector || ""
                                 });
                                 importedCount++;
-                                console.log("Usuario importado:", usuario.RESPONSABLE);
+                                console.log("Usuario importado:", usuario.responsable);
                             } catch (error) {
-                                errors.push(`Error en usuario ${usuario.RESPONSABLE}: ${error.message}`);
+                                errors.push(`Error en usuario ${usuario.responsable}: ${error.message}`);
                             }
                         }
                     }
@@ -2491,34 +2290,34 @@ const initialUsers = [
                 if (workbook.Sheets["Equipos"]) {
                     const equiposData = XLSX.utils.sheet_to_json(workbook.Sheets["Equipos"]);
                     console.log("Datos de equipos leídos:", equiposData);
-                    
+
                     for (const equipo of equiposData) {
                         // Verificar que no sea la fila de ejemplo
-                        if (equipo.DESCRIPCION && 
-                            !equipo.DESCRIPCION.includes("EJEMPLO:") && 
-                            !equipo.DESCRIPCION.includes("LAPTOP")) {
-                            
+                        if (equipo.descripcion &&
+                            !equipo.descripcion.includes("EJEMPLO:") &&
+                            !equipo.descripcion.includes("LAPTOP")) {
+
                             try {
                                 // Verificar si el serial ya existe
-                                const existingEquipment = await getEquipmentBySerial(equipo.SERIAL);
+                                const existingEquipment = await getEquipmentBySerial(equipo.serial);
                                 if (existingEquipment) {
-                                    errors.push(`Serial duplicado: ${equipo.SERIAL}`);
+                                    errors.push(`Serial duplicado: ${equipo.serial}`);
                                     continue;
                                 }
 
                                 await addEquipment({
-                                    DESCRIPCION: equipo.DESCRIPCION || "",
-                                    MARCA: equipo.MARCA || "",
-                                    MODELO: equipo.MODELO || "",
-                                    SERIAL: equipo.SERIAL || "",
-                                    ETIQUETA: equipo.ETIQUETA || "",
-                                    STATUS: equipo.STATUS || "OPERATIVO",
-                                    OBSERVACIONES: equipo.OBSERVACIONES || ""
+                                    descripcion: equipo.descripcion || "",
+                                    marca: equipo.marca || "",
+                                    modelo: equipo.modelo || "",
+                                    serial: equipo.serial || "",
+                                    etiqueta: equipo.etiqueta || "",
+                                    status: equipo.status || "OPERATIVO",
+                                    observaciones: equipo.observaciones || ""
                                 });
                                 importedCount++;
-                                console.log("Equipo importado:", equipo.DESCRIPCION);
+                                console.log("Equipo importado:", equipo.descripcion);
                             } catch (error) {
-                                errors.push(`Error en equipo ${equipo.DESCRIPCION}: ${error.message}`);
+                                errors.push(`Error en equipo ${equipo.descripcion}: ${error.message}`);
                             }
                         }
                     }
@@ -2536,15 +2335,15 @@ const initialUsers = [
 
                     const asignacionesData = XLSX.utils.sheet_to_json(workbook.Sheets["Asignaciones"]);
                     console.log("Datos de asignaciones leídos:", asignacionesData);
-                    
+
                     for (const asignacion of asignacionesData) {
                         // Verificar que no sea la fila de ejemplo
-                        if (asignacion.ID_USUARIO && asignacion.ID_EQUIPO && 
-                            asignacion.ID_USUARIO !== "1" && asignacion.ID_EQUIPO !== "1") {
-                            
+                        if (asignacion.id_usuario && asignacion.id_equipo &&
+                            asignacion.id_usuario !== "1" && asignacion.id_equipo !== "1") {
+
                             try {
-                                const idUsuario = parseInt(asignacion.ID_USUARIO);
-                                const idEquipo = parseInt(asignacion.ID_EQUIPO);
+                                const idUsuario = parseInt(asignacion.id_usuario);
+                                const idEquipo = parseInt(asignacion.id_equipo);
 
                                 // Verificar que existan el usuario y el equipo
                                 const usuarioExiste = usuarios.find(u => u.id_usuario === idUsuario);
@@ -2570,13 +2369,13 @@ const initialUsers = [
                                 await addAssignment({
                                     id_usuario: idUsuario,
                                     id_equipo: idEquipo,
-                                    fecha_asignacion: asignacion.FECHA_ASIGNACION || new Date().toISOString().split('T')[0],
-                                    estado_asignacion: asignacion.ESTADO_ASIGNACION || "Asignado"
+                                    fecha_asignacion: asignacion.fecha_asignacion || new Date().toISOString().split('T')[0],
+                                    estado_asignacion: asignacion.estado_asignacion || "Asignado"
                                 });
                                 importedCount++;
                                 console.log("Asignación importada:", idUsuario, "->", idEquipo);
                             } catch (error) {
-                                errors.push(`Error en asignación ${asignacion.ID_USUARIO}-${asignacion.ID_EQUIPO}: ${error.message}`);
+                                errors.push(`Error en asignación ${asignacion.id_usuario}-${asignacion.id_equipo}: ${error.message}`);
                             }
                         }
                     }
@@ -2622,10 +2421,10 @@ const initialUsers = [
 
     document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Iniciando Sistema de Inventario PWA...');
-    
+
     // Solucionar el "flash" de contenido sin estilo
     document.body.style.visibility = 'visible';
-    
+
     // Inicializar PWA primero (modo básico para GitHub Pages)
     try {
         setupPWA();
@@ -2634,7 +2433,7 @@ const initialUsers = [
         console.error('❌ Error inicializando PWA:', pwaError);
         updatePWAStatus('❌ Error PWA');
     }
-    
+
     // Inicializar base de datos
     try {
         initDatabase();
@@ -2642,15 +2441,15 @@ const initialUsers = [
     } catch (dbError) {
         console.error('❌ Error inicializando base de datos:', dbError);
     }
-    
+
     // Configurar funcionalidad offline
     setupOfflineFunctionality();
-    
+
     // Configurar notificaciones
     setupNotifications();
-    
+
     console.log('🎉 Sistema de Inventario PWA completamente inicializado');
-    
+
     // Intentar Service Worker básico después de la carga inicial
     setTimeout(tryRegisterServiceWorker, 1000);
 });
@@ -2670,16 +2469,3 @@ window.addEventListener('load', function() {
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
