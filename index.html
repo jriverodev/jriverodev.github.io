@@ -156,6 +156,43 @@
     </form>
   </div></div>
 
+  <div id="userModal" class="modal"><div class="modal-content">
+    <h3>Agregar / editar usuario</h3>
+    <form id="userForm">
+      <input type="hidden" id="userId">
+      <div style="margin-bottom:10px;"><label>Responsable</label><input id="responsable" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Cédula</label><input id="cedula" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Cargo</label><input id="cargo" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Sector</label><input id="sector" required style="width:100%;padding:8px"></div>
+      <div style="margin-top:10px;text-align:right;">
+        <button type="button" class="btn" id="closeUserModal">Cancelar</button>
+        <button type="submit" class="btn btn-save">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+
+  <div id="assignmentModal" class="modal"><div class="modal-content">
+    <h3>Nueva Asignación</h3>
+    <form id="assignmentForm">
+      <div style="margin-bottom:10px;">
+        <label>Usuario</label>
+        <select id="assignmentUserId" required style="width:100%;padding:8px"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label>Equipo</label>
+        <select id="assignmentEquipmentId" required style="width:100%;padding:8px"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+          <label>Fecha de Asignación</label>
+          <input type="date" id="assignmentDate" required style="width:100%;padding:8px">
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <button type="button" class="btn" id="closeAssignmentModal">Cancelar</button>
+        <button type="submit" class="btn btn-save">Guardar Asignación</button>
+      </div>
+    </form>
+  </div></div>
+
   <!-- File input already present near header -->
   <input type="hidden" id="lastExportTimestamp" value="">
 
@@ -177,17 +214,34 @@
   // -------------------------
   // Tab handling
   // -------------------------
-  function showTab(id){
-    $all('.tab-content').forEach(el => el.style.display = 'none');
-    $all('.nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).style.display = 'block';
-    document.querySelector(`.nav button[onclick="showTab('${id}')"]`)?.classList.add('active');
+  function showTab(tabId){
+    // Hide all tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.style.display = 'none';
+      content.classList.remove('active');
+    });
+    // Deactivate all nav buttons
+    document.querySelectorAll('.nav button').forEach(button => {
+      button.classList.remove('active');
+    });
+
+    // Show the selected tab content and activate the button
+    const contentToShow = document.getElementById(tabId);
+    if(contentToShow){
+        contentToShow.style.display = 'block';
+        contentToShow.classList.add('active');
+    }
+    const buttonToActivate = document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+    if(buttonToActivate){
+        buttonToActivate.classList.add('active');
+    }
   }
-  $all('.nav button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const onclick = btn.getAttribute('onclick');
-      const id = onclick?.match(/'([^']+)'/)[1];
-      if (id) showTab(id);
+
+  // Add event listeners to nav buttons
+  document.querySelectorAll('.nav button').forEach(button => {
+    button.addEventListener('click', () => {
+      const tabId = button.id.replace('tab', '').toLowerCase();
+      showTab(tabId);
     });
   });
 
@@ -222,6 +276,11 @@
     try {
       const equipos = await getAllEquipments();
       document.getElementById('totalEquipos').textContent = equipos.length;
+
+      // Update dashboard stats
+      $('#equiposOperativos').textContent = equipos.filter(e => e.status === 'OPERATIVO').length;
+      $('#equiposAsignados').textContent = equipos.filter(e => e.status === 'ASIGNADO').length;
+
       tbodyEquipos.innerHTML = '';
       equipos.forEach(eq => {
         const tr = document.createElement('tr');
@@ -279,6 +338,8 @@
     $('#equipmentModal').style.display = 'block';
   });
   $('#closeEquipmentModal').addEventListener('click', () => { $('#equipmentModal').style.display = 'none'; });
+  $('#closeUserModal').addEventListener('click', () => { $('#userModal').style.display = 'none'; });
+  $('#closeAssignmentModal').addEventListener('click', () => { $('#assignmentModal').style.display = 'none'; });
 
   $('#equipmentForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -375,6 +436,8 @@
   // -------------------------
   document.addEventListener('DOMContentLoaded', async () => {
     await refreshEquipos();
+    await refreshUsers();
+    await refreshAssignments();
     // Wire other minimal interactions (search on equipos)
     $('#searchEquipos').addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
@@ -388,7 +451,10 @@
       const q = e.target.value.toLowerCase();
       // Equipos
       Array.from(tbodyEquipos.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
-      // Usuarios, Asignaciones can be wired similarly when their data is implemented
+      // Usuarios
+      Array.from(tbodyUsuarios.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
+      // Asignaciones
+      Array.from(tbodyAsignaciones.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
     });
   });
 
@@ -402,6 +468,256 @@
   // Minimal placeholder functions for users/asignaciones (to avoid breaking UI)
   async function refreshUsuarios(){ /* implement when migrating usuarios */ }
   async function refreshAsignaciones(){ /* implement when migrating asignaciones */ }
+
+
+// -------------------------
+// CRUD usuarios: Supabase
+// -------------------------
+async function getAllUsers() {
+  const { data, error } = await supabase.from('usuarios').select('*').order('id_usuario', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function addUser(user) {
+  const { data, error } = await supabase.from('usuarios').insert([user]).select();
+  if (error) throw error;
+  return data;
+}
+
+async function updateUser(user) {
+  const { data, error } = await supabase.from('usuarios').update(user).eq('id_usuario', user.id_usuario).select();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteUser(id) {
+  const { error } = await supabase.from('usuarios').delete().eq('id_usuario', id);
+  if (error) throw error;
+}
+
+// -------------------------
+// Render usuarios table and handlers
+// -------------------------
+const tbodyUsuarios = document.getElementById('tbodyUsuarios');
+async function refreshUsers() {
+  try {
+    const users = await getAllUsers();
+    $('#totalUsuarios').textContent = users.length;
+    tbodyUsuarios.innerHTML = '';
+    users.forEach(u => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.id_usuario ?? ''}</td>
+        <td>${u.responsable ?? ''}</td>
+        <td>${u.cedula ?? ''}</td>
+        <td>${u.cargo ?? ''}</td>
+        <td>${u.sector ?? ''}</td>
+        <td>${u.equipos_asignados ?? 0}</td>
+        <td>
+          <button class="btn btn-edit" data-id="${u.id_usuario}" data-action="edit-user">Editar</button>
+          <button class="btn btn-delete" data-id="${u.id_usuario}" data-action="delete-user">Eliminar</button>
+        </td>
+      `;
+      tbodyUsuarios.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Error refreshing users', err);
+    alert('Error al cargar usuarios.');
+  }
+}
+
+$('#addUsuarioBtn').addEventListener('click', () => {
+  $('#userForm').reset();
+  $('#userId').value = '';
+  $('#userModal').style.display = 'block';
+});
+
+$('#userForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const payload = {
+    responsable: $('#responsable').value.trim(),
+    cedula: $('#cedula').value.trim(),
+    cargo: $('#cargo').value.trim(),
+    sector: $('#sector').value.trim(),
+  };
+  const id = $('#userId').value;
+  try {
+    if (id) {
+      payload.id_usuario = id;
+      await updateUser(payload);
+    } else {
+      await addUser(payload);
+    }
+    $('#userModal').style.display = 'none';
+    await refreshUsers();
+  } catch (err) {
+    console.error(err);
+    alert('Error guardando usuario');
+  }
+});
+
+tbodyUsuarios.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+
+  if (action === 'edit-user') {
+    const { data, error } = await supabase.from('usuarios').select('*').eq('id_usuario', id).single();
+    if (error) { console.error(error); alert('Error al obtener usuario'); return; }
+    $('#userId').value = data.id_usuario || '';
+    $('#responsable').value = data.responsable || '';
+    $('#cedula').value = data.cedula || '';
+    $('#cargo').value = data.cargo || '';
+    $('#sector').value = data.sector || '';
+    $('#userModal').style.display = 'block';
+  } else if (action === 'delete-user') {
+    if (!confirm('¿Eliminar usuario? Esto podría afectar a las asignaciones existentes.')) return;
+    try {
+      await deleteUser(id);
+      await refreshUsers();
+    } catch (err) {
+      console.error(err);
+      alert('Error eliminando usuario');
+    }
+  }
+});
+
+// Search functionality for users
+$('#searchUsuarios').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  Array.from(tbodyUsuarios.rows).forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+
+// -------------------------
+// CRUD asignaciones: Supabase
+// -------------------------
+async function getAllAssignments() {
+  const { data, error } = await supabase.from('asignaciones').select(`
+    id_asignacion,
+    fecha_asignacion,
+    estado,
+    usuarios ( id_usuario, responsable ),
+    equipos ( id_equipo, descripcion, serial )
+  `).order('id_asignacion', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function addAssignment(assignment) {
+  const { data, error } = await supabase.from('asignaciones').insert([assignment]).select();
+  if (error) throw error;
+  // Now, update the equipo's `asignado_a` field
+  const { data: user } = await supabase.from('usuarios').select('responsable').eq('id_usuario', assignment.id_usuario).single();
+  if (user) {
+    await supabase.from('equipos').update({ asignado_a: user.responsable, status: 'ASIGNADO' }).eq('id_equipo', assignment.id_equipo);
+  }
+  return data;
+}
+
+async function deleteAssignment(id, id_equipo) {
+    // First, set the equipo status back to 'OPERATIVO' and clear `asignado_a`
+    await supabase.from('equipos').update({ status: 'OPERATIVO', asignado_a: null }).eq('id_equipo', id_equipo);
+    // Then delete the assignment record
+    const { error } = await supabase.from('asignaciones').delete().eq('id_asignacion', id);
+    if (error) throw error;
+}
+
+
+// -------------------------
+// Render asignaciones table and handlers
+// -------------------------
+const tbodyAsignaciones = document.getElementById('tbodyAsignaciones');
+async function refreshAssignments() {
+  try {
+    const assignments = await getAllAssignments();
+    tbodyAsignaciones.innerHTML = '';
+    assignments.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.id_asignacion}</td>
+        <td>${a.usuarios?.responsable ?? 'N/A'}</td>
+        <td>${a.equipos?.descripcion ?? 'N/A'}</td>
+        <td>${a.equipos?.serial ?? 'N/A'}</td>
+        <td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td>
+        <td>${a.estado ?? 'ACTIVA'}</td>
+        <td>
+          <button class="btn btn-delete" data-id="${a.id_asignacion}" data-equipo-id="${a.equipos?.id_equipo}" data-action="delete-assignment">Eliminar</button>
+        </td>
+      `;
+      tbodyAsignaciones.appendChild(tr);
+    });
+    // Update dashboard's last assignments
+    const ultimasAsignacionesContainer = $('#ultimasAsignaciones');
+    ultimasAsignacionesContainer.innerHTML = '<table>' + tbodyAsignaciones.innerHTML + '</table>';
+
+  } catch (err) {
+    console.error('Error refreshing assignments', err);
+    alert('Error al cargar asignaciones.');
+  }
+}
+
+$('#addAsignacionBtn').addEventListener('click', async () => {
+    // Populate user and equipment dropdowns
+    try {
+        const users = await getAllUsers();
+        const equipments = await getAllEquipments();
+
+        const userSelect = $('#assignmentUserId');
+        userSelect.innerHTML = users.map(u => `<option value="${u.id_usuario}">${u.responsable}</option>`).join('');
+
+        const equipmentSelect = $('#assignmentEquipmentId');
+        // Show only available equipment
+        equipmentSelect.innerHTML = equipments.filter(e => e.status !== 'ASIGNADO' && e.status !== 'INOPERATIVO').map(e => `<option value="${e.id_equipo}">${e.descripcion} (${e.serial})</option>`).join('');
+
+        $('#assignmentDate').valueAsDate = new Date();
+        $('#assignmentModal').style.display = 'block';
+    } catch(err) {
+        console.error('Error populating assignment modal', err);
+        alert('Error al cargar datos para asignación.');
+    }
+});
+
+$('#assignmentForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const payload = {
+        id_usuario: $('#assignmentUserId').value,
+        id_equipo: $('#assignmentEquipmentId').value,
+        fecha_asignacion: $('#assignmentDate').value,
+        estado: 'ACTIVA'
+    };
+    try {
+        await addAssignment(payload);
+        $('#assignmentModal').style.display = 'none';
+        await refreshAssignments();
+        await refreshEquipos(); // Refresh equipos to show updated status
+    } catch (err) {
+        console.error(err);
+        alert('Error guardando asignación');
+    }
+});
+
+tbodyAsignaciones.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn || btn.getAttribute('data-action') !== 'delete-assignment') return;
+
+    const id = btn.getAttribute('data-id');
+    const equipoId = btn.getAttribute('data-equipo-id');
+
+    if (!confirm('¿Eliminar esta asignación? El equipo volverá a estar operativo y disponible.')) return;
+    try {
+        await deleteAssignment(id, equipoId);
+        await refreshAssignments();
+        await refreshEquipos(); // To update equipment status
+    } catch (err) {
+        console.error('Error deleting assignment', err);
+        alert('Error al eliminar asignación');
+    }
+});
 
   </script>
 </body>
