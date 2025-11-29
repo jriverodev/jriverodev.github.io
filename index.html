@@ -275,11 +275,13 @@
   async function refreshEquipos(){
     try {
       const equipos = await getAllEquipments();
-      document.getElementById('totalEquipos').textContent = equipos.length;
+      const totalEquiposEl = document.getElementById('totalEquipos');
+      const equiposOperativosEl = $('#equiposOperativos');
+      const equiposAsignadosEl = $('#equiposAsignados');
 
-      // Update dashboard stats
-      $('#equiposOperativos').textContent = equipos.filter(e => e.status === 'OPERATIVO').length;
-      $('#equiposAsignados').textContent = equipos.filter(e => e.status === 'ASIGNADO').length;
+      if (totalEquiposEl) totalEquiposEl.textContent = equipos.length;
+      if (equiposOperativosEl) equiposOperativosEl.textContent = equipos.filter(e => e.status === 'OPERATIVO').length;
+      if (equiposAsignadosEl) equiposAsignadosEl.textContent = equipos.filter(e => e.status === 'ASIGNADO').length;
 
       tbodyEquipos.innerHTML = '';
       equipos.forEach(eq => {
@@ -464,11 +466,6 @@
       if(ev.target === modal) modal.style.display = 'none';
     });
   });
-
-  // Minimal placeholder functions for users/asignaciones (to avoid breaking UI)
-  async function refreshUsuarios(){ /* implement when migrating usuarios */ }
-  async function refreshAsignaciones(){ /* implement when migrating asignaciones */ }
-
 
 // -------------------------
 // CRUD usuarios: Supabase
