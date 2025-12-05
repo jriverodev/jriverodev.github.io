@@ -1,1 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Mantenimiento de Vehículos</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        @media screen and (max-width: 600px) {
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestión de Mantenimiento de Vehículos</h1>
 
+    <div style="margin-bottom: 20px;">
+        <label for="search">Buscar por Placa o N° Unidad SAP:</label><br>
+        <input type="text" id="search" name="search" style="width: calc(100% - 110px); padding: 8px; margin-top: 5px; box-sizing: border-box; display: inline-block;">
+        <button type="button" id="searchButton" style="padding: 10px 15px; background-color: #008CBA; color: white; border: none; cursor: pointer; display: inline-block; margin-left: 10px;">Buscar</button>
+    </div>
+
+    <form id="mttoForm">
+        <label for="marcaModelo">Marca/Modelo:</label><br>
+        <input type="text" id="marcaModelo" name="marcaModelo"><br>
+
+        <label for="unidadSap">N° Unidad SAP:</label><br>
+        <input type="text" id="unidadSap" name="unidadSap"><br>
+
+        <label for="placa">N° Activo / Placa:</label><br>
+        <input type="text" id="placa" name="placa"><br>
+
+        <label for="ubicacion">Ubicación Actual:</label><br>
+        <input type="text" id="ubicacion" name="ubicacion"><br>
+
+        <label for="gerencia">Gerencia Usuaria:</label><br>
+        <input type="text" id="gerencia" name="gerencia"><br>
+
+        <label for="ordenMtto">Orden de MTTO:</label><br>
+        <input type="text" id="ordenMtto" name="ordenMtto"><br>
+
+        <label for="tipoMtto">Falla Presente o Tipo MTTO:</label><br>
+        <input type="text" id="tipoMtto" name="tipoMtto"><br>
+
+        <label for="fechaIngreso">Fecha Ingreso:</label><br>
+        <input type="date" id="fechaIngreso" name="fechaIngreso"><br>
+
+        <label for="fechaEntrega">Fecha Estimada de Entrega:</label><br>
+        <input type="date" id="fechaEntrega" name="fechaEntrega"><br>
+
+        <label for="descripcion">Descripción / Barreras:</label><br>
+        <textarea id="descripcion" name="descripcion"></textarea><br>
+
+        <label for="chofer">Chófer Asignado:</label><br>
+        <input type="text" id="chofer" name="chofer"><br>
+
+        <button type="submit">Registrar Mantenimiento</button>
+    </form>
+
+    <h2>Registros de Mantenimiento</h2>
+    <table id="mttoTable">
+        <thead>
+            <tr>
+                <th>Marca/Modelo</th>
+                <th>N° Unidad SAP</th>
+                <th>N° Activo / Placa</th>
+                <th>Ubic. Actual</th>
+                <th>Gcia. Usuaria</th>
+                <th>Orden de MTTO</th>
+                <th>Falla o Tipo MTTO</th>
+                <th>Fecha Ingreso</th>
+                <th>Fecha Entrega</th>
+                <th>Descripción</th>
+                <th>Chófer</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las filas de datos se agregarán aquí con JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecords();
+        });
+
+        document.getElementById('mttoForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const record = {
+                marcaModelo: document.getElementById('marcaModelo').value,
+                unidadSap: document.getElementById('unidadSap').value,
+                placa: document.getElementById('placa').value,
+                ubicacion: document.getElementById('ubicacion').value,
+                gerencia: document.getElementById('gerencia').value,
+                ordenMtto: document.getElementById('ordenMtto').value,
+                tipoMtto: document.getElementById('tipoMtto').value,
+                fechaIngreso: document.getElementById('fechaIngreso').value,
+                fechaEntrega: document.getElementById('fechaEntrega').value,
+                descripcion: document.getElementById('descripcion').value,
+                chofer: document.getElementById('chofer').value,
+            };
+
+            addRecordToTable(record);
+            saveRecord(record);
+
+            document.getElementById('mttoForm').reset();
+        });
+
+        function addRecordToTable(record) {
+            const tableBody = document.getElementById('mttoTable').getElementsByTagName('tbody')[0];
+            const newRow = tableBody.insertRow();
+
+            newRow.insertCell().textContent = record.marcaModelo;
+            newRow.insertCell().textContent = record.unidadSap;
+            newRow.insertCell().textContent = record.placa;
+            newRow.insertCell().textContent = record.ubicacion;
+            newRow.insertCell().textContent = record.gerencia;
+            newRow.insertCell().textContent = record.ordenMtto;
+            newRow.insertCell().textContent = record.tipoMtto;
+            newRow.insertCell().textContent = record.fechaIngreso;
+            newRow.insertCell().textContent = record.fechaEntrega;
+            newRow.insertCell().textContent = record.descripcion;
+            newRow.insertCell().textContent = record.chofer;
+        }
+
+        function saveRecord(record) {
+            const records = getRecords();
+            records.push(record);
+            localStorage.setItem('mttoRecords', JSON.stringify(records));
+        }
+
+        function getRecords() {
+            const records = localStorage.getItem('mttoRecords');
+            return records ? JSON.parse(records) : [];
+        }
+
+        function loadRecords() {
+            const records = getRecords();
+            records.forEach(addRecordToTable);
+        }
+
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            const records = getRecords();
+            const record = records.find(r => r.placa.toLowerCase() === searchTerm || r.unidadSap.toLowerCase() === searchTerm);
+
+            if (record) {
+                document.getElementById('marcaModelo').value = record.marcaModelo;
+                document.getElementById('unidadSap').value = record.unidadSap;
+                document.getElementById('placa').value = record.placa;
+                document.getElementById('ubicacion').value = record.ubicacion;
+                document.getElementById('gerencia').value = record.gerencia;
+                document.getElementById('chofer').value = record.chofer;
+            } else {
+                alert('No se encontraron registros para el término de búsqueda.');
+            }
+        });
+    </script>
+
+</body>
+</html>
