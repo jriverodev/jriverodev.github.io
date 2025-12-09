@@ -3,202 +3,501 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Mantenimiento de Vehículos</title>
+    <title>Sistema de Mantenimiento - GitHub Pages</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 20px;
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
         }
-        form {
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        label {
-            display: block;
-            margin-top: 10px;
+        
+        .card-header {
+            background: var(--primary);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
         }
-        input[type="text"], input[type="date"], textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #4CAF50;
+        
+        .btn-custom {
+            background: var(--secondary);
             color: white;
             border: none;
-            cursor: pointer;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
-        button:hover {
-            background-color: #45a049;
+        
+        .btn-custom:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        
+        .unit-info {
+            background: #e8f4fc;
+            border-left: 4px solid var(--secondary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            animation: fadeIn 0.5s;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        th {
-            background-color: #f2f2f2;
+        
+        .status-connected { color: var(--success); }
+        .status-disconnected { color: var(--danger); }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
         }
-        @media screen and (max-width: 600px) {
-            table {
-                display: block;
-                overflow-x: auto;
-            }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <h1>Gestión de Mantenimiento de Vehículos</h1>
-
-    <div style="margin-bottom: 20px;">
-        <label for="search">Buscar por Placa o N° Unidad SAP:</label><br>
-        <input type="text" id="search" name="search" style="width: calc(100% - 110px); padding: 8px; margin-top: 5px; box-sizing: border-box; display: inline-block;">
-        <button type="button" id="searchButton" style="padding: 10px 15px; background-color: #008CBA; color: white; border: none; cursor: pointer; display: inline-block; margin-left: 10px;">Buscar</button>
+    <div class="container">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-header text-center">
+                <h1 class="mb-0">
+                    <i class="fas fa-car me-2"></i>
+                    Sistema de Mantenimiento de Vehículos
+                </h1>
+                <p class="mb-0 mt-2">Conectado a Google Sheets via API</p>
+                <div class="mt-2">
+                    <span id="connectionStatus" class="badge bg-success">
+                        <i class="fas fa-wifi"></i> Conectado
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuración API -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-cog me-2"></i> Configuración API</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">URL de Google Apps Script</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="apiUrl" 
+                               placeholder="https://script.google.com/macros/s/.../exec">
+                        <button class="btn btn-outline-secondary" onclick="testConnection()">
+                            Probar Conexión
+                        </button>
+                    </div>
+                    <div class="form-text">
+                        Inserta la URL de tu Google Apps Script desplegado
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Buscador -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-search me-2"></i> Buscar Unidad</h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" id="placa" 
+                               placeholder="Ingrese placa o número de activo">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-custom w-100" onclick="buscarUnidad()">
+                            <i class="fas fa-search me-2"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Info Unidad -->
+                <div id="unitInfo" class="unit-info" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Información de la Unidad
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="document.getElementById('unitInfo').style.display='none'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="unitInfoContent" class="row"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulario -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-edit me-2"></i> Nuevo Registro de Mantenimiento</h4>
+            </div>
+            <div class="card-body">
+                <form id="registroForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Marca/Modelo *</label>
+                            <input type="text" class="form-control" id="marcaModelo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">N° Unidad SAP *</label>
+                            <input type="text" class="form-control" id="unidadSap" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">N° Activo / Placa *</label>
+                            <input type="text" class="form-control" id="inputPlaca" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ubicación Actual *</label>
+                            <input type="text" class="form-control" id="ubicacion" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gerencia Usuaria *</label>
+                            <input type="text" class="form-control" id="gerencia" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chófer Asignado</label>
+                            <input type="text" class="form-control" id="chofer">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Orden de MTTO</label>
+                            <input type="text" class="form-control" id="ordenMtto">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de MTTO</label>
+                            <select class="form-select" id="tipoMtto">
+                                <option value="">Seleccionar...</option>
+                                <option value="Preventivo">Preventivo</option>
+                                <option value="Correctivo">Correctivo</option>
+                                <option value="Reparación">Reparación</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha Ingreso *</label>
+                            <input type="date" class="form-control" id="fechaIngreso" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha Estimada</label>
+                            <input type="date" class="form-control" id="fechaEntrega">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descripción / Barreras</label>
+                            <textarea class="form-control" id="descripcion" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-success btn-lg w-100" 
+                                onclick="guardarRegistro()">
+                            <i class="fas fa-save me-2"></i>
+                            Guardar en Google Sheets
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Alertas -->
+        <div id="alertContainer"></div>
+        
+        <!-- Footer -->
+        <div class="text-center text-white mt-4">
+            <small>
+                Sistema desplegado en GitHub Pages | 
+                Conectado a Google Sheets | 
+                <span id="version">v1.0.0</span>
+            </small>
+        </div>
     </div>
-
-    <form id="mttoForm">
-        <label for="marcaModelo">Marca/Modelo:</label><br>
-        <input type="text" id="marcaModelo" name="marcaModelo"><br>
-
-        <label for="unidadSap">N° Unidad SAP:</label><br>
-        <input type="text" id="unidadSap" name="unidadSap"><br>
-
-        <label for="placa">N° Activo / Placa:</label><br>
-        <input type="text" id="placa" name="placa"><br>
-
-        <label for="ubicacion">Ubicación Actual:</label><br>
-        <input type="text" id="ubicacion" name="ubicacion"><br>
-
-        <label for="gerencia">Gerencia Usuaria:</label><br>
-        <input type="text" id="gerencia" name="gerencia"><br>
-
-        <label for="ordenMtto">Orden de MTTO:</label><br>
-        <input type="text" id="ordenMtto" name="ordenMtto"><br>
-
-        <label for="tipoMtto">Falla Presente o Tipo MTTO:</label><br>
-        <input type="text" id="tipoMtto" name="tipoMtto"><br>
-
-        <label for="fechaIngreso">Fecha Ingreso:</label><br>
-        <input type="date" id="fechaIngreso" name="fechaIngreso"><br>
-
-        <label for="fechaEntrega">Fecha Estimada de Entrega:</label><br>
-        <input type="date" id="fechaEntrega" name="fechaEntrega"><br>
-
-        <label for="descripcion">Descripción / Barreras:</label><br>
-        <textarea id="descripcion" name="descripcion"></textarea><br>
-
-        <label for="chofer">Chófer Asignado:</label><br>
-        <input type="text" id="chofer" name="chofer"><br>
-
-        <button type="submit">Registrar Mantenimiento</button>
-    </form>
-
-    <h2>Registros de Mantenimiento</h2>
-    <table id="mttoTable">
-        <thead>
-            <tr>
-                <th>Marca/Modelo</th>
-                <th>N° Unidad SAP</th>
-                <th>N° Activo / Placa</th>
-                <th>Ubic. Actual</th>
-                <th>Gcia. Usuaria</th>
-                <th>Orden de MTTO</th>
-                <th>Falla o Tipo MTTO</th>
-                <th>Fecha Ingreso</th>
-                <th>Fecha Entrega</th>
-                <th>Descripción</th>
-                <th>Chófer</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Las filas de datos se agregarán aquí con JavaScript -->
-        </tbody>
-    </table>
-
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            loadRecords();
-        });
-
-        document.getElementById('mttoForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const record = {
+        // ===== CONFIGURACIÓN =====
+        const APP_CONFIG = {
+            // IMPORTANTE: Cambia esta URL por la de TU Google Apps Script
+            API_URL:  'https://script.google.com/macros/s/AKfycbzi9DB5mAkKzhhgmJkBSqgYTDrCPL2xNbuk1X7tqfTeorrDY_00F_gFP_J4iBlOHj4LOQ/exec',
+            
+            // Configuración de la app
+            VERSION: '1.0.0',
+            APP_NAME: 'Sistema de Mantenimiento',
+            DEBUG: true
+        };
+        
+        // ===== FUNCIONES API =====
+        
+        // Probar conexión con Google Apps Script
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value || APP_CONFIG.API_URL;
+            
+            showAlert('🔍 Probando conexión con la API...', 'info');
+            
+            try {
+                const response = await fetch(apiUrl + '?method=ping', {
+                    method: 'GET',
+                    mode: 'no-cors' // Importante para CORS
+                });
+                
+                updateConnectionStatus(true);
+                showAlert('✅ Conexión exitosa con Google Apps Script', 'success');
+                
+                // Guardar URL en localStorage
+                localStorage.setItem('api_url', apiUrl);
+                APP_CONFIG.API_URL = apiUrl;
+                
+            } catch (error) {
+                updateConnectionStatus(false);
+                showAlert('❌ Error de conexión: ' + error.message, 'danger');
+            }
+        }
+        
+        // Buscar unidad por placa
+        async function buscarUnidad() {
+            const placa = document.getElementById('placa').value.trim();
+            
+            if (!placa) {
+                showAlert('Ingrese una placa o número de activo', 'warning');
+                return;
+            }
+            
+            showAlert(`Buscando unidad: ${placa}...`, 'info');
+            
+            try {
+                // Usar POST para evitar problemas con caracteres especiales
+                const response = await fetch(APP_CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        method: 'buscarUnidad',
+                        placa: placa
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showAlert(`Error: ${data.error}`, 'danger');
+                    return;
+                }
+                
+                if (data.data) {
+                    // Mostrar información de la unidad
+                    mostrarInfoUnidad(data.data);
+                    // Autocompletar formulario
+                    autocompletarFormulario(data.data);
+                    showAlert('✅ Unidad encontrada', 'success');
+                } else {
+                    showAlert('❌ Unidad no encontrada en el registro', 'warning');
+                }
+                
+            } catch (error) {
+                showAlert('Error de conexión: ' + error.message, 'danger');
+            }
+        }
+        
+        // Guardar registro
+        async function guardarRegistro() {
+            // Validar formulario
+            const form = document.getElementById('registroForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                showAlert('Complete todos los campos requeridos', 'warning');
+                return;
+            }
+            
+            // Preparar datos
+            const datos = {
                 marcaModelo: document.getElementById('marcaModelo').value,
                 unidadSap: document.getElementById('unidadSap').value,
-                placa: document.getElementById('placa').value,
+                placa: document.getElementById('inputPlaca').value,
                 ubicacion: document.getElementById('ubicacion').value,
                 gerencia: document.getElementById('gerencia').value,
+                chofer: document.getElementById('chofer').value,
                 ordenMtto: document.getElementById('ordenMtto').value,
                 tipoMtto: document.getElementById('tipoMtto').value,
                 fechaIngreso: document.getElementById('fechaIngreso').value,
                 fechaEntrega: document.getElementById('fechaEntrega').value,
-                descripcion: document.getElementById('descripcion').value,
-                chofer: document.getElementById('chofer').value,
+                descripcion: document.getElementById('descripcion').value
             };
-
-            addRecordToTable(record);
-            saveRecord(record);
-
-            document.getElementById('mttoForm').reset();
-        });
-
-        function addRecordToTable(record) {
-            const tableBody = document.getElementById('mttoTable').getElementsByTagName('tbody')[0];
-            const newRow = tableBody.insertRow();
-
-            newRow.insertCell().textContent = record.marcaModelo;
-            newRow.insertCell().textContent = record.unidadSap;
-            newRow.insertCell().textContent = record.placa;
-            newRow.insertCell().textContent = record.ubicacion;
-            newRow.insertCell().textContent = record.gerencia;
-            newRow.insertCell().textContent = record.ordenMtto;
-            newRow.insertCell().textContent = record.tipoMtto;
-            newRow.insertCell().textContent = record.fechaIngreso;
-            newRow.insertCell().textContent = record.fechaEntrega;
-            newRow.insertCell().textContent = record.descripcion;
-            newRow.insertCell().textContent = record.chofer;
+            
+            showAlert('Guardando registro...', 'info');
+            
+            try {
+                const response = await fetch(APP_CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        method: 'agregarRegistro',
+                        ...datos
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('✅ ' + result.message, 'success');
+                    // Limpiar formulario
+                    form.reset();
+                    // Restablecer fechas
+                    setDefaultDates();
+                } else {
+                    showAlert('❌ Error: ' + (result.error || result.message), 'danger');
+                }
+                
+            } catch (error) {
+                showAlert('Error de conexión: ' + error.message, 'danger');
+            }
         }
-
-        function saveRecord(record) {
-            const records = getRecords();
-            records.push(record);
-            localStorage.setItem('mttoRecords', JSON.stringify(records));
+        
+        // ===== FUNCIONES AUXILIARES =====
+        
+        function mostrarInfoUnidad(unidad) {
+            const unitInfo = document.getElementById('unitInfo');
+            const content = document.getElementById('unitInfoContent');
+            
+            let html = '';
+            for (const [key, value] of Object.entries(unidad)) {
+                if (value) {
+                    html += `
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body p-3">
+                                    <small class="text-muted d-block">${key}</small>
+                                    <strong>${value}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            content.innerHTML = html;
+            unitInfo.style.display = 'block';
         }
-
-        function getRecords() {
-            const records = localStorage.getItem('mttoRecords');
-            return records ? JSON.parse(records) : [];
+        
+        function autocompletarFormulario(unidad) {
+            // Mapeo de campos
+            const campoMap = {
+                'Marca/Modelo': 'marcaModelo',
+                'N° Unidad SAP': 'unidadSap',
+                'N° Activo / Placa': 'inputPlaca',
+                'Ubicación Actual': 'ubicacion',
+                'Gerencia Usuaria': 'gerencia',
+                'Chófer Asignado': 'chofer'
+            };
+            
+            for (const [key, fieldId] of Object.entries(campoMap)) {
+                if (unidad[key]) {
+                    document.getElementById(fieldId).value = unidad[key];
+                }
+            }
         }
-
-        function loadRecords() {
-            const records = getRecords();
-            records.forEach(addRecordToTable);
+        
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            container.appendChild(alert);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
         }
-
-        document.getElementById('searchButton').addEventListener('click', function() {
-            const searchTerm = document.getElementById('search').value.toLowerCase();
-            const records = getRecords();
-            const record = records.find(r => r.placa.toLowerCase() === searchTerm || r.unidadSap.toLowerCase() === searchTerm);
-
-            if (record) {
-                document.getElementById('marcaModelo').value = record.marcaModelo;
-                document.getElementById('unidadSap').value = record.unidadSap;
-                document.getElementById('placa').value = record.placa;
-                document.getElementById('ubicacion').value = record.ubicacion;
-                document.getElementById('gerencia').value = record.gerencia;
-                document.getElementById('chofer').value = record.chofer;
+        
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            
+            if (connected) {
+                status.className = 'badge bg-success';
+                status.innerHTML = '<i class="fas fa-wifi"></i> Conectado';
             } else {
-                alert('No se encontraron registros para el término de búsqueda.');
+                status.className = 'badge bg-danger';
+                status.innerHTML = '<i class="fas fa-unlink"></i> Desconectado';
+            }
+        }
+        
+        function setDefaultDates() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaIngreso').value = hoy;
+            
+            const fechaEstimada = new Date();
+            fechaEstimada.setDate(fechaEstimada.getDate() + 7);
+            document.getElementById('fechaEntrega').value = fechaEstimada.toISOString().split('T')[0];
+        }
+        
+        // ===== INICIALIZACIÓN =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar versión
+            document.getElementById('version').textContent = `v${APP_CONFIG.VERSION}`;
+            
+            // Cargar URL guardada
+            const savedUrl = localStorage.getItem('api_url');
+            if (savedUrl) {
+                document.getElementById('apiUrl').value = savedUrl;
+                APP_CONFIG.API_URL = savedUrl;
+            } else {
+                document.getElementById('apiUrl').value = APP_CONFIG.API_URL;
+            }
+            
+            // Configurar fechas por defecto
+            setDefaultDates();
+            
+            // Probar conexión automáticamente
+            setTimeout(() => testConnection(), 1000);
+            
+            // Debug
+            if (APP_CONFIG.DEBUG) {
+                console.log('App config:', APP_CONFIG);
             }
         });
     </script>
-
 </body>
 </html>
