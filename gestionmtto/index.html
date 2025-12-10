@@ -95,33 +95,11 @@
                     <i class="fas fa-car me-2"></i>
                     Sistema de Mantenimiento de Vehículos
                 </h1>
-                <p class="mb-0 mt-2">Conectado a Google Sheets via API</p>
+                <p class="mb-0 mt-2">Conectado a Supabase</p>
                 <div class="mt-2">
                     <span id="connectionStatus" class="badge bg-success">
                         <i class="fas fa-wifi"></i> Conectado
                     </span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Configuración API -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4><i class="fas fa-cog me-2"></i> Configuración API</h4>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">URL de Google Apps Script</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="apiUrl" 
-                               placeholder="https://script.google.com/macros/s/.../exec">
-                        <button class="btn btn-outline-secondary" onclick="testConnection()">
-                            Probar Conexión
-                        </button>
-                    </div>
-                    <div class="form-text">
-                        Inserta la URL de tu Google Apps Script desplegado
-                    </div>
                 </div>
             </div>
         </div>
@@ -224,7 +202,7 @@
                         <button type="button" class="btn btn-success btn-lg w-100" 
                                 onclick="guardarRegistro()">
                             <i class="fas fa-save me-2"></i>
-                            Guardar en Google Sheets
+                            Guardar Registro
                         </button>
                     </div>
                 </form>
@@ -238,58 +216,42 @@
         <div class="text-center text-white mt-4">
             <small>
                 Sistema desplegado en GitHub Pages | 
-                Conectado a Google Sheets | 
-                <span id="version">v1.0.0</span>
+                Conectado a Supabase |
+                <span id="version">v1.1.0</span>
             </small>
         </div>
     </div>
     
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // ===== CONFIGURACIÓN =====
-        const APP_CONFIG = {
-            // IMPORTANTE: Cambia esta URL por la de TU Google Apps Script
-            API_URL:  'https://script.google.com/macros/s/AKfycbxVY-e3QfROURqDYPnazkHn7UaW94w70Jntce08qDelUI2f3Cd1FXDGXXVfzZC0sq8trg/exec',
-            
-            // Configuración de la app
-            VERSION: '1.0.0',
-            APP_NAME: 'Sistema de Mantenimiento',
-            DEBUG: true
-        };
-        
-        // ===== FUNCIONES API =====
-        
-        // Probar conexión con Google Apps Script
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        // ===== CONFIGURACIÓN SUPABASE =====
+        const SUPABASE_URL = 'https://memavgxdebiaoanzhysx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lbWF2Z3hkZWJpYW9hbnpoeXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5Njk4ODgsImV4cCI6MjA3NzU0NTg4OH0._2dfAY4z7ZsWdbXPMIIoqNIIkMoO6kRvZBa6Mg_DWnA';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.guardarRegistro = guardarRegistro;
+        window.buscarUnidad = buscarUnidad;
+
+        // ===== FUNCIONES SUPABASE =====
+
         async function testConnection() {
-            const apiUrl = document.getElementById('apiUrl').value || APP_CONFIG.API_URL;
-            
-            showAlert('🔍 Probando conexión con la API...', 'info');
-            
             try {
-                const response = await fetch(apiUrl + '?method=ping', {
-                    method: 'GET',
-                    mode: 'no-cors' // Importante para CORS
-                });
-                
+                // Realizar una consulta simple para probar la conexión
+                const { data, error } = await supabase.from('mantenimientos').select('id').limit(1);
+                if (error) throw error;
                 updateConnectionStatus(true);
-                showAlert('✅ Conexión exitosa con Google Apps Script', 'success');
-                
-                // Guardar URL en localStorage
-                localStorage.setItem('api_url', apiUrl);
-                APP_CONFIG.API_URL = apiUrl;
-                
+                showAlert('✅ Conexión exitosa con Supabase', 'success');
             } catch (error) {
                 updateConnectionStatus(false);
-                showAlert('❌ Error de conexión: ' + error.message, 'danger');
+                showAlert(`❌ Error de conexión con Supabase: ${error.message}`, 'danger');
             }
         }
-        
-        // Buscar unidad por placa
+
         async function buscarUnidad() {
             const placa = document.getElementById('placa').value.trim();
-            
             if (!placa) {
                 showAlert('Ingrese una placa o número de activo', 'warning');
                 return;
@@ -298,104 +260,86 @@
             showAlert(`Buscando unidad: ${placa}...`, 'info');
             
             try {
-                // Usar POST para evitar problemas con caracteres especiales
-                const response = await fetch(APP_CONFIG.API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        method: 'buscarUnidad',
-                        placa: placa
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    showAlert(`Error: ${data.error}`, 'danger');
-                    return;
-                }
-                
-                if (data.data) {
-                    // Mostrar información de la unidad
-                    mostrarInfoUnidad(data.data);
-                    // Autocompletar formulario
-                    autocompletarFormulario(data.data);
-                    showAlert('✅ Unidad encontrada', 'success');
+                const { data, error } = await supabase
+                    .from('mantenimientos')
+                    .select('*')
+                    .eq('placa', placa)
+                    .order('fecha_ingreso', { ascending: false })
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    const unidad = data[0];
+                    mostrarInfoUnidad(unidad);
+                    autocompletarFormulario(unidad);
+                    showAlert('✅ Último registro de la unidad encontrado', 'success');
                 } else {
                     showAlert('❌ Unidad no encontrada en el registro', 'warning');
+                    document.getElementById('unitInfo').style.display = 'none';
+                    document.getElementById('registroForm').reset();
+                    setDefaultDates();
                 }
-                
             } catch (error) {
-                showAlert('Error de conexión: ' + error.message, 'danger');
+                showAlert(`Error de conexión: ${error.message}`, 'danger');
             }
         }
-        
-        // Guardar registro
+
         async function guardarRegistro() {
-            // Validar formulario
             const form = document.getElementById('registroForm');
             if (!form.checkValidity()) {
                 form.reportValidity();
                 showAlert('Complete todos los campos requeridos', 'warning');
                 return;
             }
-            
-            // Preparar datos
+
             const datos = {
-                marcaModelo: document.getElementById('marcaModelo').value,
-                unidadSap: document.getElementById('unidadSap').value,
+                marca_modelo: document.getElementById('marcaModelo').value,
+                unidad_sap: document.getElementById('unidadSap').value,
                 placa: document.getElementById('inputPlaca').value,
                 ubicacion: document.getElementById('ubicacion').value,
                 gerencia: document.getElementById('gerencia').value,
                 chofer: document.getElementById('chofer').value,
-                ordenMtto: document.getElementById('ordenMtto').value,
-                tipoMtto: document.getElementById('tipoMtto').value,
-                fechaIngreso: document.getElementById('fechaIngreso').value,
-                fechaEntrega: document.getElementById('fechaEntrega').value,
+                orden_mtto: document.getElementById('ordenMtto').value,
+                tipo_mtto: document.getElementById('tipoMtto').value,
+                fecha_ingreso: document.getElementById('fechaIngreso').value,
+                fecha_entrega: document.getElementById('fechaEntrega').value,
                 descripcion: document.getElementById('descripcion').value
             };
-            
-            showAlert('Guardando registro...', 'info');
-            
+
+            showAlert('Guardando registro en Supabase...', 'info');
+
             try {
-                const response = await fetch(APP_CONFIG.API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        method: 'agregarRegistro',
-                        ...datos
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showAlert('✅ ' + result.message, 'success');
-                    // Limpiar formulario
-                    form.reset();
-                    // Restablecer fechas
-                    setDefaultDates();
-                } else {
-                    showAlert('❌ Error: ' + (result.error || result.message), 'danger');
-                }
-                
+                const { data, error } = await supabase.from('mantenimientos').insert([datos]);
+
+                if (error) throw error;
+
+                showAlert('✅ Registro guardado exitosamente', 'success');
+                form.reset();
+                setDefaultDates();
             } catch (error) {
-                showAlert('Error de conexión: ' + error.message, 'danger');
+                showAlert(`❌ Error al guardar: ${error.message}`, 'danger');
             }
         }
-        
+
         // ===== FUNCIONES AUXILIARES =====
         
         function mostrarInfoUnidad(unidad) {
             const unitInfo = document.getElementById('unitInfo');
             const content = document.getElementById('unitInfoContent');
             
+            const camposMostrados = {
+                'Marca/Modelo': unidad.marca_modelo,
+                'N° Unidad SAP': unidad.unidad_sap,
+                'N° Activo / Placa': unidad.placa,
+                'Ubicación': unidad.ubicacion,
+                'Gerencia': unidad.gerencia,
+                'Chófer': unidad.chofer,
+                'Último Ingreso': new Date(unidad.fecha_ingreso).toLocaleDateString()
+            };
+
             let html = '';
-            for (const [key, value] of Object.entries(unidad)) {
+            for (const [key, value] of Object.entries(camposMostrados)) {
                 if (value) {
                     html += `
                         <div class="col-md-6 col-lg-4 mb-3">
@@ -415,21 +359,12 @@
         }
         
         function autocompletarFormulario(unidad) {
-            // Mapeo de campos
-            const campoMap = {
-                'Marca/Modelo': 'marcaModelo',
-                'N° Unidad SAP': 'unidadSap',
-                'N° Activo / Placa': 'inputPlaca',
-                'Ubicación Actual': 'ubicacion',
-                'Gerencia Usuaria': 'gerencia',
-                'Chófer Asignado': 'chofer'
-            };
-            
-            for (const [key, fieldId] of Object.entries(campoMap)) {
-                if (unidad[key]) {
-                    document.getElementById(fieldId).value = unidad[key];
-                }
-            }
+            document.getElementById('marcaModelo').value = unidad.marca_modelo || '';
+            document.getElementById('unidadSap').value = unidad.unidad_sap || '';
+            document.getElementById('inputPlaca').value = unidad.placa || '';
+            document.getElementById('ubicacion').value = unidad.ubicacion || '';
+            document.getElementById('gerencia').value = unidad.gerencia || '';
+            document.getElementById('chofer').value = unidad.chofer || '';
         }
         
         function showAlert(message, type = 'info') {
@@ -444,7 +379,6 @@
             
             container.appendChild(alert);
             
-            // Auto-remover después de 5 segundos
             setTimeout(() => {
                 if (alert.parentNode) {
                     alert.remove();
@@ -475,28 +409,9 @@
         
         // ===== INICIALIZACIÓN =====
         document.addEventListener('DOMContentLoaded', function() {
-            // Mostrar versión
-            document.getElementById('version').textContent = `v${APP_CONFIG.VERSION}`;
-            
-            // Cargar URL guardada
-            const savedUrl = localStorage.getItem('api_url');
-            if (savedUrl) {
-                document.getElementById('apiUrl').value = savedUrl;
-                APP_CONFIG.API_URL = savedUrl;
-            } else {
-                document.getElementById('apiUrl').value = APP_CONFIG.API_URL;
-            }
-            
-            // Configurar fechas por defecto
+            document.getElementById('version').textContent = 'v1.1.0';
             setDefaultDates();
-            
-            // Probar conexión automáticamente
-            setTimeout(() => testConnection(), 1000);
-            
-            // Debug
-            if (APP_CONFIG.DEBUG) {
-                console.log('App config:', APP_CONFIG);
-            }
+            setTimeout(testConnection, 500);
         });
     </script>
 </body>
