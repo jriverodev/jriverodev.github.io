@@ -1,0 +1,13 @@
+/* modal overlay y mejoras UI */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:1200}
+.modal{background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(17,24,39,0.25);width:min(720px,95%);max-height:90vh;overflow:auto;padding:16px}
+.modal header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.modal h3{margin:0;font-size:18px}
+.modal .modal-body{margin-top:8px}
+.modal .modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.btn-ghost{background:#fff;color:#667eea;border:1px solid #e6e9fb;padding:8px 12px;border-radius:6px;cursor:pointer}
+.table-wrap{overflow-x:auto}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2ff}
+.list-item .meta{color:#555;font-size:14px}
+.small{font-size:13px;color:#666}
+@media (max-width:520px){ .modal{padding:12px} button{padding:6px 10px} input,select,textarea{width:100%;margin:6px 0 0 0} }
