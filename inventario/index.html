@@ -21,6 +21,7 @@
     table{width:100%;border-collapse:collapse}
     th,td{padding:8px;border-bottom:1px solid #f0f2ff}
     .actions button{margin-right:6px}
+    input,select,textarea{padding:8px;border:1px solid #e6e9fb;border-radius:6px;margin-right:8px}
   </style>
 </head>
 <body>
@@ -51,14 +52,30 @@
     </section>
 
     <section class="card">
-      <h2>Equipos (IndexedDB)</h2>
-      <p>La gestión de equipos sigue usando IndexedDB como antes.</p>
+      <h2>Equipos (SQLite)</h2>
+      <p>Gestión de equipos migrada a SQLite.</p>
+      <form id="equipoForm">
+        <input type="hidden" id="equipoId">
+        <input id="equipoNombre" placeholder="Nombre" required>
+        <input id="equipoTipo" placeholder="Tipo">
+        <input id="equipoSerial" placeholder="Serial">
+        <input id="equipoNotas" placeholder="Notas">
+        <button type="submit">Guardar Equipo</button>
+      </form>
       <div id="equiposList"></div>
     </section>
 
     <section class="card">
-      <h2>Asignaciones (IndexedDB)</h2>
-      <p>Las asignaciones siguen en IndexedDB.</p>
+      <h2>Asignaciones (SQLite)</h2>
+      <p>Gestión de asignaciones migrada a SQLite.</p>
+      <form id="asignForm">
+        <input type="hidden" id="asignId">
+        <select id="asignEquipoId"><option value="">Equipo</option></select>
+        <select id="asignUsuarioId"><option value="">Usuario</option></select>
+        <input id="asignFecha" type="date">
+        <input id="asignObs" placeholder="Observaciones">
+        <button type="submit">Guardar Asignación</button>
+      </form>
       <div id="asignacionesList"></div>
     </section>
   </main>
@@ -148,7 +165,7 @@
       });
     }
 
-    // ------- SQL.js initialization and SQLite adapter for usuarios -------
+    // ------- SQL.js initialization and SQLite adapter for usuarios/equipos/asignaciones -------
     let SQL;
     let sqlDb; // SQL.Database instance
     async function initSqlJSAndDB(){
@@ -172,43 +189,84 @@
         await setupSqliteSchemaAndMigrate();
       }
       renderUsers();
+      renderEquiposAndAsignaciones();
+      populateSelects();
     }
 
     async function setupSqliteSchemaAndMigrate(){
-      // create usuarios table if not exists
+      // create tables if not exists
       sqlDb.run(`CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT,
         email TEXT,
         rol TEXT
       );`);
-      // migrate existing usuarios from IndexedDB (if any)
+
+      sqlDb.run(`CREATE TABLE IF NOT EXISTS equipos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT,
+        tipo TEXT,
+        serial TEXT,
+        notas TEXT
+      );`);
+
+      sqlDb.run(`CREATE TABLE IF NOT EXISTS asignaciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        equipo_id INTEGER,
+        usuario_id INTEGER,
+        fecha TEXT,
+        observaciones TEXT
+      );`);
+
+      // migrate existing data from IndexedDB
       const appDb = await openAppDB();
-      const tx = appDb.transaction('usuarios','readonly');
-      const store = tx.objectStore('usuarios');
-      const req = store.getAll();
-      req.onsuccess = async () => {
-        const rows = req.result || [];
+      const tx = appDb.transaction(['usuarios','equipos','asignaciones'],'readonly');
+      const usuariosReq = tx.objectStore('usuarios').getAll();
+      const equiposReq = tx.objectStore('equipos').getAll();
+      const asignReq = tx.objectStore('asignaciones').getAll();
+
+      const usuarios = await new Promise((res)=>{ usuariosReq.onsuccess = ()=>res(usuariosReq.result||[]); usuariosReq.onerror = ()=>res([]); });
+      const equipos = await new Promise((res)=>{ equiposReq.onsuccess = ()=>res(equiposReq.result||[]); equiposReq.onerror = ()=>res([]); });
+      const asignaciones = await new Promise((res)=>{ asignReq.onsuccess = ()=>res(asignReq.result||[]); asignReq.onerror = ()=>res([]); });
+
+      // insert migrated rows into sqlite within a transaction per table
+      if (usuarios.length){
         const insert = sqlDb.prepare('INSERT INTO usuarios (nombre,email,rol) VALUES (?,?,?)');
         sqlDb.run('BEGIN TRANSACTION');
-        for (const r of rows){
-          insert.run([r.nombre||r.name||'', r.email||'', r.rol||r.role||'']);
+        for (const r of usuarios){ insert.run([r.nombre||r.name||'', r.email||'', r.rol||r.role||'']); }
+        sqlDb.run('COMMIT');
+        try{ insert.free(); }catch(e){}
+        console.log('Migración de usuarios a SQLite completada:', usuarios.length);
+      }
+
+      if (equipos.length){
+        const insert = sqlDb.prepare('INSERT INTO equipos (nombre,tipo,serial,notas) VALUES (?,?,?,?)');
+        sqlDb.run('BEGIN TRANSACTION');
+        for (const r of equipos){ insert.run([r.nombre||r.name||'', r.tipo||r.type||'', r.serial||r.sn||'', r.notas||r.notes||'']); }
+        sqlDb.run('COMMIT');
+        try{ insert.free(); }catch(e){}
+        console.log('Migración de equipos a SQLite completada:', equipos.length);
+      }
+
+      if (asignaciones.length){
+        const insert = sqlDb.prepare('INSERT INTO asignaciones (equipo_id,usuario_id,fecha,observaciones) VALUES (?,?,?,?)');
+        sqlDb.run('BEGIN TRANSACTION');
+        for (const r of asignaciones){
+          const equipoId = r.equipoId || r.equipo || r.equipo_id || r.equipoId || null;
+          const usuarioId = r.usuarioId || r.usuario || r.usuario_id || null;
+          insert.run([equipoId, usuarioId, r.fecha||r.createdAt||'', r.observaciones||r.notes||'']);
         }
         sqlDb.run('COMMIT');
-        try{ insert.free(); } catch(e){}
-        const exported = sqlDb.export();
-        await saveSqliteBinary(exported);
-        console.log('Migración de usuarios a SQLite completada:', rows.length);
-        renderUsers();
-      };
-      req.onerror = () => {
-        console.warn('No hay usuarios para migrar o error al leer');
-        const exported = sqlDb.export();
-        await saveSqliteBinary(exported);
-      };
+        try{ insert.free(); }catch(e){}
+        console.log('Migración de asignaciones a SQLite completada:', asignaciones.length);
+      }
+
+      // save binary
+      const exported = sqlDb.export();
+      await saveSqliteBinary(exported);
     }
 
-    // CRUD usuario usando SQLite
+    // ------- CRUD usuarios usando SQLite -------
     function getAllUsersFromSQLite(){
       try{
         const res = sqlDb.exec('SELECT id,nombre,email,rol FROM usuarios ORDER BY id DESC');
@@ -225,6 +283,7 @@
       const exported = sqlDb.export();
       await saveSqliteBinary(exported);
       renderUsers();
+      populateSelects();
     }
     async function updateUserInSQLite(id,data){
       const stmt = sqlDb.prepare('UPDATE usuarios SET nombre=?,email=?,rol=? WHERE id=?');
@@ -233,6 +292,7 @@
       const exported = sqlDb.export();
       await saveSqliteBinary(exported);
       renderUsers();
+      populateSelects();
     }
     async function deleteUserInSQLite(id){
       const stmt = sqlDb.prepare('DELETE FROM usuarios WHERE id=?');
@@ -241,9 +301,77 @@
       const exported = sqlDb.export();
       await saveSqliteBinary(exported);
       renderUsers();
+      populateSelects();
     }
 
-    // ------- UI bindings for usuarios -------
+    // ------- CRUD equipos using SQLite -------
+    function getAllEquiposFromSQLite(){
+      try{
+        const res = sqlDb.exec('SELECT id,nombre,tipo,serial,notas FROM equipos ORDER BY id DESC');
+        if (!res || res.length === 0) return [];
+        return res[0].values.map(r => ({id:r[0], nombre:r[1], tipo:r[2], serial:r[3], notas:r[4]}));
+      }catch(e){console.error(e);return []}
+    }
+    async function addEquipoToSQLite(data){
+      const stmt = sqlDb.prepare('INSERT INTO equipos (nombre,tipo,serial,notas) VALUES (?,?,?,?)');
+      stmt.run([data.nombre,data.tipo,data.serial,data.notas]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+    async function updateEquipoInSQLite(id,data){
+      const stmt = sqlDb.prepare('UPDATE equipos SET nombre=?,tipo=?,serial=?,notas=? WHERE id=?');
+      stmt.run([data.nombre,data.tipo,data.serial,data.notas,id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+    async function deleteEquipoInSQLite(id){
+      const stmt = sqlDb.prepare('DELETE FROM equipos WHERE id=?');
+      stmt.run([id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+
+    // ------- CRUD asignaciones using SQLite -------
+    function getAllAsignacionesFromSQLite(){
+      try{
+        const res = sqlDb.exec(`SELECT a.id, a.equipo_id, e.nombre as equipo_nombre, a.usuario_id, u.nombre as usuario_nombre, a.fecha, a.observaciones
+          FROM asignaciones a
+          LEFT JOIN equipos e ON e.id = a.equipo_id
+          LEFT JOIN usuarios u ON u.id = a.usuario_id
+          ORDER BY a.id DESC`);
+        if (!res || res.length === 0) return [];
+        return res[0].values.map(r => ({id:r[0], equipo_id:r[1], equipo_nombre:r[2], usuario_id:r[3], usuario_nombre:r[4], fecha:r[5], observaciones:r[6]}));
+      }catch(e){console.error(e);return []}
+    }
+    async function addAsignacionToSQLite(data){
+      const stmt = sqlDb.prepare('INSERT INTO asignaciones (equipo_id,usuario_id,fecha,observaciones) VALUES (?,?,?,?)');
+      stmt.run([data.equipo_id,data.usuario_id,data.fecha,data.observaciones]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+    }
+    async function updateAsignacionInSQLite(id,data){
+      const stmt = sqlDb.prepare('UPDATE asignaciones SET equipo_id=?,usuario_id=?,fecha=?,observaciones=? WHERE id=?');
+      stmt.run([data.equipo_id,data.usuario_id,data.fecha,data.observaciones,id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+    }
+    async function deleteAsignacionInSQLite(id){
+      const stmt = sqlDb.prepare('DELETE FROM asignaciones WHERE id=?');
+      stmt.run([id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+    }
+
+    // ------- UI bindings for usuarios/equipos/asignaciones -------
     const userForm = document.getElementById('userForm');
     userForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
@@ -252,16 +380,41 @@
       const email = document.getElementById('userEmail').value.trim();
       const rol = document.getElementById('userRole').value.trim();
       if (!nombre || !email) return alert('Nombre y email son obligatorios');
-      if (id) {
-        await updateUserInSQLite(parseInt(id,10), {nombre,email,rol});
-      } else {
-        await addUserToSQLite({nombre,email,rol});
-      }
+      if (id) { await updateUserInSQLite(parseInt(id,10), {nombre,email,rol}); } else { await addUserToSQLite({nombre,email,rol}); }
       userForm.reset();
       document.getElementById('userId').value = '';
     });
 
+    const equipoForm = document.getElementById('equipoForm');
+    equipoForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('equipoId').value;
+      const nombre = document.getElementById('equipoNombre').value.trim();
+      const tipo = document.getElementById('equipoTipo').value.trim();
+      const serial = document.getElementById('equipoSerial').value.trim();
+      const notas = document.getElementById('equipoNotas').value.trim();
+      if (!nombre) return alert('Nombre es obligatorio');
+      if (id) { await updateEquipoInSQLite(parseInt(id,10), {nombre,tipo,serial,notas}); } else { await addEquipoToSQLite({nombre,tipo,serial,notas}); }
+      equipoForm.reset();
+      document.getElementById('equipoId').value = '';
+    });
+
+    const asignForm = document.getElementById('asignForm');
+    asignForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('asignId').value;
+      const equipo_id = document.getElementById('asignEquipoId').value || null;
+      const usuario_id = document.getElementById('asignUsuarioId').value || null;
+      const fecha = document.getElementById('asignFecha').value || '';
+      const observaciones = document.getElementById('asignObs').value || '';
+      if (!equipo_id || !usuario_id) return alert('Equipo y Usuario son obligatorios');
+      if (id) { await updateAsignacionInSQLite(parseInt(id,10), {equipo_id,usuario_id,fecha,observaciones}); } else { await addAsignacionToSQLite({equipo_id,usuario_id,fecha,observaciones}); }
+      asignForm.reset();
+      document.getElementById('asignId').value = '';
+    });
+
     function renderUsers(){
+      if (!sqlDb) return;
       const users = getAllUsersFromSQLite();
       const container = document.getElementById('usersList');
       if (!container) return;
@@ -284,18 +437,15 @@
       document.getElementById('userEmail').value = u.email;
       document.getElementById('userRole').value = u.rol;
     };
-    window.delUser = function(id){
-      if (!confirm('¿Borrar usuario?')) return;
-      deleteUserInSQLite(id);
-    };
+    window.delUser = function(id){ if (!confirm('¿Borrar usuario?')) return; deleteUserInSQLite(id); };
 
-    function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+    function escapeHtml(s){ return (s||'').toString().replace(/[&<>\"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 
     // ------- Backup & Restore -------
     document.getElementById('backupBtn').addEventListener('click', async ()=>{
       // export sqlite binary
       const sqliteBinary = await loadSqliteBinary();
-      // get equipos and asignaciones from app DB
+      // get equipos and asignaciones from app DB (for legacy or external stores)
       const appDb = await openAppDB();
       const tx = appDb.transaction(['equipos','asignaciones'],'readonly');
       const equiposReq = tx.objectStore('equipos').getAll();
@@ -323,7 +473,7 @@
       const text = await f.text();
       let data;
       try{ data = JSON.parse(text); }catch(err){ return alert('Archivo inválido'); }
-      // restore equipos and asignaciones
+      // restore equipos and asignaciones (legacy IndexedDB stores)
       const appDb = await openAppDB();
       const tx = appDb.transaction(['equipos','asignaciones'],'readwrite');
       const equiposStore = tx.objectStore('equipos');
@@ -331,20 +481,17 @@
       // clear stores and put new
       const clearEquip = equiposStore.clear();
       const clearAsign = asignStore.clear();
-      clearEquip.onsuccess = () => {
-        (data.equipos||[]).forEach(item => equiposStore.put(item));
-      };
-      clearAsign.onsuccess = () => {
-        (data.asignaciones||[]).forEach(item => asignStore.put(item));
-      };
+      clearEquip.onsuccess = () => { (data.equipos||[]).forEach(item => equiposStore.put(item)); };
+      clearAsign.onsuccess = () => { (data.asignaciones||[]).forEach(item => asignStore.put(item)); };
       tx.oncomplete = async ()=>{
         // restore sqlite
         if (data.sqlite){
           const u8 = base64ToUint8Array(data.sqlite);
           await saveSqliteBinary(u8);
-          // reload sqlDb from saved binary
-          sqlDb = SQL.Database(new Uint8Array(u8));
+          sqlDb = new SQL.Database(new Uint8Array(u8));
           renderUsers();
+          renderEquiposAndAsignaciones();
+          populateSelects();
         }
         alert('Restauración completada');
       };
@@ -365,8 +512,23 @@
       return bytes;
     }
 
-    // ------- Equipos / Asignaciones simple renderers (IndexedDB) -------
+    // ------- Equipos / Asignaciones renderers (prefer SQLite) -------
     async function renderEquiposAndAsignaciones(){
+      const equiposOut = document.getElementById('equiposList');
+      const asignOut = document.getElementById('asignacionesList');
+
+      if (sqlDb){
+        const equipos = getAllEquiposFromSQLite();
+        if (!equipos || equipos.length === 0) equiposOut.innerHTML = '<p>No hay equipos.</p>';
+        else equiposOut.innerHTML = '<ul>' + equipos.map(i=>`<li>${escapeHtml(i.nombre||'Equipo')} ${escapeHtml(i.serial||'')}</li>`).join('') + '</ul>';
+
+        const asigns = getAllAsignacionesFromSQLite();
+        if (!asigns || asigns.length === 0) asignOut.innerHTML = '<p>No hay asignaciones.</p>';
+        else asignOut.innerHTML = '<ul>' + asigns.map(a=>`<li>${escapeHtml(a.equipo_nombre||String(a.equipo_id||''))} -> ${escapeHtml(a.usuario_nombre||String(a.usuario_id||''))} ${escapeHtml(a.fecha||'')} <button onclick="editAsign(${a.id})">Editar</button><button onclick="delAsign(${a.id})">Borrar</button></li>`).join('') + '</ul>';
+        return;
+      }
+
+      // fallback to IndexedDB
       const db = await openAppDB();
       const tx = db.transaction(['equipos','asignaciones'],'readonly');
       const equiposReq = tx.objectStore('equipos').getAll();
@@ -383,10 +545,46 @@
       };
     }
 
-    // init everything
+    // expose edit/delete for equipos/asignaciones
+    window.editEquipo = function(id){
+      const equipos = getAllEquiposFromSQLite();
+      const e = equipos.find(x=>x.id===id);
+      if (!e) return alert('Equipo no encontrado');
+      document.getElementById('equipoId').value = e.id;
+      document.getElementById('equipoNombre').value = e.nombre;
+      document.getElementById('equipoTipo').value = e.tipo || '';
+      document.getElementById('equipoSerial').value = e.serial || '';
+      document.getElementById('equipoNotas').value = e.notas || '';
+    };
+    window.delEquipo = function(id){ if (!confirm('¿Borrar equipo?')) return; deleteEquipoInSQLite(id); };
+
+    window.editAsign = function(id){
+      const asigns = getAllAsignacionesFromSQLite();
+      const a = asigns.find(x=>x.id===id);
+      if (!a) return alert('Asignación no encontrada');
+      document.getElementById('asignId').value = a.id;
+      document.getElementById('asignEquipoId').value = a.equipo_id || '';
+      document.getElementById('asignUsuarioId').value = a.usuario_id || '';
+      document.getElementById('asignFecha').value = a.fecha || '';
+      document.getElementById('asignObs').value = a.observaciones || '';
+    };
+    window.delAsign = function(id){ if (!confirm('¿Borrar asignación?')) return; deleteAsignacionInSQLite(id); };
+
+    // populate selects for asignaciones
+    function populateSelects(){
+      if (!sqlDb) return;
+      const equipos = getAllEquiposFromSQLite();
+      const usuarios = getAllUsersFromSQLite();
+      const selE = document.getElementById('asignEquipoId');
+      const selU = document.getElementById('asignUsuarioId');
+      if (!selE || !selU) return;
+      selE.innerHTML = '<option value="">Equipo</option>' + equipos.map(e=>`<option value="${e.id}">${escapeHtml(e.nombre)}</option>`).join('');
+      selU.innerHTML = '<option value="">Usuario</option>' + usuarios.map(u=>`<option value="${u.id}">${escapeHtml(u.nombre)}</option>`).join('');
+    }
+
+    // ------- Init -------
     window.addEventListener('load', async ()=>{
       await initSqlJSAndDB();
-      renderEquiposAndAsignaciones();
     });
 
   </script>
