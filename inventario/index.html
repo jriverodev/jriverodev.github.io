@@ -22,6 +22,20 @@
     th,td{padding:8px;border-bottom:1px solid #f0f2ff}
     .actions button{margin-right:6px}
     input,select,textarea{padding:8px;border:1px solid #e6e9fb;border-radius:6px;margin-right:8px}
+
+    /* modal overlay y mejoras UI */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:1200}
+    .modal{background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(17,24,39,0.25);width:min(720px,95%);max-height:90vh;overflow:auto;padding:16px}
+    .modal header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .modal h3{margin:0;font-size:18px}
+    .modal .modal-body{margin-top:8px}
+    .modal .modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .btn-ghost{background:#fff;color:#667eea;border:1px solid #e6e9fb;padding:8px 12px;border-radius:6px;cursor:pointer}
+    .table-wrap{overflow-x:auto}
+    .list-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2ff}
+    .list-item .meta{color:#555;font-size:14px}
+    .small{font-size:13px;color:#666}
+    @media (max-width:520px){ .modal{padding:12px} button{padding:6px 10px} input,select,textarea{width:100%;margin:6px 0 0 0} }
   </style>
 </head>
 <body>
@@ -78,6 +92,22 @@
       </form>
       <div id="asignacionesList"></div>
     </section>
+
+    <!-- Modal overlay (insertado en el mismo archivo) -->
+    <div id="genericModal" class="modal-backdrop" style="display:none" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header>
+          <h3 id="modalTitle">Título</h3>
+          <button id="modalClose" class="btn-ghost" aria-label="Cerrar">✕</button>
+        </header>
+        <div id="modalBody" class="modal-body"></div>
+        <div class="modal-foot">
+          <button id="modalCancel" class="btn-ghost">Cancelar</button>
+          <button id="modalConfirm" class="btn" style="background:#667eea">Guardar</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
@@ -252,7 +282,7 @@
         const insert = sqlDb.prepare('INSERT INTO asignaciones (equipo_id,usuario_id,fecha,observaciones) VALUES (?,?,?,?)');
         sqlDb.run('BEGIN TRANSACTION');
         for (const r of asignaciones){
-          const equipoId = r.equipoId || r.equipo || r.equipo_id || r.equipoId || null;
+          const equipoId = r.equipoId || r.equipo || r.equipo_id || null;
           const usuarioId = r.usuarioId || r.usuario || r.usuario_id || null;
           insert.run([equipoId, usuarioId, r.fecha||r.createdAt||'', r.observaciones||r.notes||'']);
         }
@@ -419,27 +449,31 @@
       const container = document.getElementById('usersList');
       if (!container) return;
       if (users.length === 0){ container.innerHTML = '<p>No hay usuarios.</p>'; return; }
-      let html = '<table><thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>';
+      let html = '<table class="table-wrap"><thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>';
       users.forEach(u => {
-        html += `<tr><td>${u.id}</td><td>${escapeHtml(u.nombre)}</td><td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.rol||'')}</td><td class="actions"><button onclick="editUser(${u.id})">Editar</button><button onclick="delUser(${u.id})">Borrar</button></td></tr>`;
+        html += `<tr><td>${u.id}</td><td>${escapeHtml(u.nombre)}</td><td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.rol||'')}</td><td class="actions">` +
+                `<button class="btn-ghost btn-edit-user" data-id="${u.id}">Editar</button>` +
+                `<button class="btn-ghost btn-del-user" data-id="${u.id}">Borrar</button>` +
+                `</td></tr>`;
       });
       html += '</tbody></table>';
       container.innerHTML = html;
+
+      // attach listeners
+      container.querySelectorAll('.btn-edit-user').forEach(btn=>btn.addEventListener('click', (ev)=>{
+        const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+        const u = users.find(x=>x.id===id);
+        if (u) showEditUserModal(u);
+      }));
+      container.querySelectorAll('.btn-del-user').forEach(btn=>btn.addEventListener('click', async (ev)=>{
+        const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+        const ok = await showConfirm('¿Borrar usuario?');
+        if (!ok) return;
+        deleteUserInSQLite(id);
+      }));
     }
 
-    // expose edit/delete for inline handlers
-    window.editUser = function(id){
-      const users = getAllUsersFromSQLite();
-      const u = users.find(x=>x.id===id);
-      if (!u) return alert('Usuario no encontrado');
-      document.getElementById('userId').value = u.id;
-      document.getElementById('userName').value = u.nombre;
-      document.getElementById('userEmail').value = u.email;
-      document.getElementById('userRole').value = u.rol;
-    };
-    window.delUser = function(id){ if (!confirm('¿Borrar usuario?')) return; deleteUserInSQLite(id); };
-
-    function escapeHtml(s){ return (s||'').toString().replace(/[&<>\"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+    function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[c])); }
 
     // ------- Backup & Restore -------
     document.getElementById('backupBtn').addEventListener('click', async ()=>{
@@ -512,6 +546,126 @@
       return bytes;
     }
 
+    // ------- Modal reusable (overlay) -------
+    const modalEl = document.getElementById('genericModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalConfirm = document.getElementById('modalConfirm');
+    let modalResolve = null;
+
+    function openModal({title='', bodyHtml='', confirmText='Guardar', cancelText='Cancelar'}){
+      modalTitle.textContent = title;
+      modalBody.innerHTML = bodyHtml;
+      modalConfirm.textContent = confirmText;
+      modalCancel.textContent = cancelText;
+      modalEl.style.display = 'flex';
+      modalEl.setAttribute('aria-hidden','false');
+      setTimeout(()=>{ const f = modalBody.querySelector('input,select,textarea,button'); if (f) f.focus(); },50);
+      return new Promise((res)=>{ modalResolve = res; });
+    }
+    function closeModal(result){
+      modalEl.style.display = 'none';
+      modalEl.setAttribute('aria-hidden','true');
+      if (modalResolve) modalResolve(result);
+      modalResolve = null;
+    }
+    modalClose.addEventListener('click', ()=>closeModal(null));
+    modalCancel.addEventListener('click', ()=>closeModal(null));
+    modalConfirm.addEventListener('click', ()=>closeModal({ok:true}));
+    window.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && modalEl.style.display!=='none') closeModal(null); });
+
+    async function showConfirm(message){
+      const body = `<p>${escapeHtml(message)}</p>`;
+      const promise = openModal({title:'Confirmar', bodyHtml:body, confirmText:'Sí', cancelText:'No'});
+      const r = await promise;
+      return !!(r && r.ok);
+    }
+
+    async function showEditUserModal(user){
+      const id = user ? user.id : '';
+      const nombre = user ? user.nombre : '';
+      const email = user ? user.email : '';
+      const rol = user ? user.rol : '';
+      const body = `
+        <form id="modalUserForm">
+          <input type="hidden" id="modalUserId" value="${id}">
+          <div><label>Nombre</label><input id="modalUserName" value="${escapeHtml(nombre)}" required></div>
+          <div><label>Email</label><input id="modalUserEmail" value="${escapeHtml(email)}" required></div>
+          <div><label>Rol</label><input id="modalUserRole" value="${escapeHtml(rol)}"></div>
+        </form>`;
+      const p = openModal({title: id ? 'Editar Usuario' : 'Nuevo Usuario', bodyHtml: body, confirmText: 'Guardar', cancelText: 'Cancelar'});
+      const res = await p;
+      if (res && res.ok){
+        const nid = document.getElementById('modalUserId').value;
+        const nNombre = document.getElementById('modalUserName').value.trim();
+        const nEmail = document.getElementById('modalUserEmail').value.trim();
+        const nRol = document.getElementById('modalUserRole').value.trim();
+        if (!nNombre || !nEmail){ alert('Nombre y email obligatorios'); return; }
+        if (nid){ await updateUserInSQLite(parseInt(nid,10), {nombre:nNombre,email:nEmail,rol:nRol}); }
+        else { await addUserToSQLite({nombre:nNombre,email:nEmail,rol:nRol}); }
+      }
+    }
+
+    async function showEditEquipoModal(e){
+      const id = e ? e.id : '';
+      const nombre = e ? e.nombre : '';
+      const tipo = e ? e.tipo : '';
+      const serial = e ? e.serial : '';
+      const notas = e ? e.notas : '';
+      const body = `
+        <form id="modalEquipoForm">
+          <input type="hidden" id="modalEquipoId" value="${id}">
+          <div><label>Nombre</label><input id="modalEquipoNombre" value="${escapeHtml(nombre)}" required></div>
+          <div><label>Tipo</label><input id="modalEquipoTipo" value="${escapeHtml(tipo)}"></div>
+          <div><label>Serial</label><input id="modalEquipoSerial" value="${escapeHtml(serial)}"></div>
+          <div><label>Notas</label><textarea id="modalEquipoNotas">${escapeHtml(notas)}</textarea></div>
+        </form>`;
+      const res = await openModal({title: id ? 'Editar Equipo' : 'Nuevo Equipo', bodyHtml: body, confirmText:'Guardar'});
+      if (res && res.ok){
+        const nid = document.getElementById('modalEquipoId').value;
+        const nombreN = document.getElementById('modalEquipoNombre').value.trim();
+        const tipoN = document.getElementById('modalEquipoTipo').value.trim();
+        const serialN = document.getElementById('modalEquipoSerial').value.trim();
+        const notasN = document.getElementById('modalEquipoNotas').value.trim();
+        if (!nombreN) { alert('Nombre es obligatorio'); return; }
+        if (nid) await updateEquipoInSQLite(parseInt(nid,10), {nombre:nombreN,tipo:tipoN,serial:serialN,notas:notasN});
+        else await addEquipoToSQLite({nombre:nombreN,tipo:tipoN,serial:serialN,notas:notasN});
+      }
+    }
+
+    async function showEditAsignModal(a){
+      const id = a ? a.id : '';
+      // ensure selects are populated
+      populateSelects();
+      const equipos = getAllEquiposFromSQLite();
+      const usuarios = getAllUsersFromSQLite();
+      const body = `
+        <form id="modalAsignForm">
+          <input type="hidden" id="modalAsignId" value="${id}">
+          <div><label>Equipo</label>
+            <select id="modalAsignEquipo">${equipos.map(e=>`<option value="${e.id}" ${a && a.equipo_id==e.id? 'selected': ''}>${escapeHtml(e.nombre)}</option>`).join('')}</select>
+          </div>
+          <div><label>Usuario</label>
+            <select id="modalAsignUsuario">${usuarios.map(u=>`<option value="${u.id}" ${a && a.usuario_id==u.id? 'selected': ''}>${escapeHtml(u.nombre)}</option>`).join('')}</select>
+          </div>
+          <div><label>Fecha</label><input type="date" id="modalAsignFecha" value="${a && a.fecha? a.fecha : ''}"></div>
+          <div><label>Observaciones</label><input id="modalAsignObs" value="${escapeHtml(a && a.observaciones? a.observaciones : '')}"></div>
+        </form>`;
+      const res = await openModal({title: id ? 'Editar Asignación' : 'Nueva Asignación', bodyHtml: body, confirmText:'Guardar'});
+      if (res && res.ok){
+        const nid = document.getElementById('modalAsignId').value;
+        const equipo_id = document.getElementById('modalAsignEquipo').value || null;
+        const usuario_id = document.getElementById('modalAsignUsuario').value || null;
+        const fecha = document.getElementById('modalAsignFecha').value || '';
+        const observaciones = document.getElementById('modalAsignObs').value || '';
+        if (!equipo_id || !usuario_id) { alert('Equipo y Usuario son obligatorios'); return; }
+        if (nid) await updateAsignacionInSQLite(parseInt(nid,10), {equipo_id,usuario_id,fecha,observaciones});
+        else await addAsignacionToSQLite({equipo_id,usuario_id,fecha,observaciones});
+      }
+    }
+
     // ------- Equipos / Asignaciones renderers (prefer SQLite) -------
     async function renderEquiposAndAsignaciones(){
       const equiposOut = document.getElementById('equiposList');
@@ -520,11 +674,42 @@
       if (sqlDb){
         const equipos = getAllEquiposFromSQLite();
         if (!equipos || equipos.length === 0) equiposOut.innerHTML = '<p>No hay equipos.</p>';
-        else equiposOut.innerHTML = '<ul>' + equipos.map(i=>`<li>${escapeHtml(i.nombre||'Equipo')} ${escapeHtml(i.serial||'')}</li>`).join('') + '</ul>';
+        else {
+          equiposOut.innerHTML = '<div>' + equipos.map(i=>`<div class=\"list-item\"><div><strong>${escapeHtml(i.nombre||'Equipo')}</strong><div class=\"small\">${escapeHtml(i.serial||'')}</div></div><div><button class=\"btn-ghost btn-edit-equipo\" data-id=\"${i.id}\">Editar</button> <button class=\"btn-ghost btn-del-equipo\" data-id=\"${i.id}\">Borrar</button></div></div>`).join('') + '</div>';
+        }
 
         const asigns = getAllAsignacionesFromSQLite();
         if (!asigns || asigns.length === 0) asignOut.innerHTML = '<p>No hay asignaciones.</p>';
-        else asignOut.innerHTML = '<ul>' + asigns.map(a=>`<li>${escapeHtml(a.equipo_nombre||String(a.equipo_id||''))} -> ${escapeHtml(a.usuario_nombre||String(a.usuario_id||''))} ${escapeHtml(a.fecha||'')} <button onclick="editAsign(${a.id})">Editar</button><button onclick="delAsign(${a.id})">Borrar</button></li>`).join('') + '</ul>';
+        else {
+          asignOut.innerHTML = '<div>' + asigns.map(a=>`<div class=\"list-item\"><div><strong>${escapeHtml(a.equipo_nombre||String(a.equipo_id||''))} -> ${escapeHtml(a.usuario_nombre||String(a.usuario_id||''))}</strong><div class=\"small\">${escapeHtml(a.fecha||'')} ${escapeHtml(a.observaciones||'')}</div></div><div><button class=\"btn-ghost btn-edit-asign\" data-id=\"${a.id}\">Editar</button> <button class=\"btn-ghost btn-del-asign\" data-id=\"${a.id}\">Borrar</button></div></div>`).join('') + '</div>';
+        }
+
+        // attach listeners for equipos
+        equiposOut.querySelectorAll('.btn-edit-equipo').forEach(b=>b.addEventListener('click', (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const e = equipos.find(x=>x.id===id);
+          if (e) showEditEquipoModal(e);
+        }));
+        equiposOut.querySelectorAll('.btn-del-equipo').forEach(b=>b.addEventListener('click', async (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const ok = await showConfirm('¿Borrar equipo?');
+          if (!ok) return;
+          deleteEquipoInSQLite(id);
+        }));
+
+        // attach listeners for asignaciones
+        asignOut.querySelectorAll('.btn-edit-asign').forEach(b=>b.addEventListener('click', (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const a = asigns.find(x=>x.id===id);
+          if (a) showEditAsignModal(a);
+        }));
+        asignOut.querySelectorAll('.btn-del-asign').forEach(b=>b.addEventListener('click', async (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const ok = await showConfirm('¿Borrar asignación?');
+          if (!ok) return;
+          deleteAsignacionInSQLite(id);
+        }));
+
         return;
       }
 
@@ -536,39 +721,20 @@
       equiposReq.onsuccess = () => {
         const out = document.getElementById('equiposList');
         const list = equiposReq.result || [];
-        if (list.length===0) out.innerHTML='<p>No hay equipos.</p>'; else out.innerHTML = '<ul>'+list.map(i=>`<li>${escapeHtml(i.name||i.nombre||'Equipo')}</li>`).join('')+'</ul>';
+        if (list.length===0) out.innerHTML='<p>No hay equipos.</p>'; else out.innerHTML = '<div>'+list.map(i=>`<div class=\"list-item\"><div><strong>${escapeHtml(i.name||i.nombre||'Equipo')}</strong></div><div><button class=\"btn-ghost btn-edit-equipo\" data-id=\"${i.id}\">Editar</button></div></div>`).join('')+'</div>';
+        // attach handlers for legacy items
+        out.querySelectorAll('.btn-edit-equipo').forEach(b=>b.addEventListener('click', (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const item = list.find(x=>x.id===id);
+          if (item) showEditEquipoModal(item);
+        }));
       };
       asignReq.onsuccess = () => {
         const out = document.getElementById('asignacionesList');
         const list = asignReq.result || [];
-        if (list.length===0) out.innerHTML='<p>No hay asignaciones.</p>'; else out.innerHTML = '<ul>'+list.map(i=>`<li>${escapeHtml(i.equipo||i.equipoId||'')} -> ${escapeHtml(i.usuario||i.usuarioId||'')}</li>`).join('')+'</ul>';
+        if (list.length===0) out.innerHTML='<p>No hay asignaciones.</p>'; else out.innerHTML = '<div>'+list.map(i=>`<div class=\"list-item\"><div><strong>${escapeHtml(i.equipo||i.equipoId||'')} -> ${escapeHtml(i.usuario||i.usuarioId||'')}</strong></div></div>`).join('')+'</div>';
       };
     }
-
-    // expose edit/delete for equipos/asignaciones
-    window.editEquipo = function(id){
-      const equipos = getAllEquiposFromSQLite();
-      const e = equipos.find(x=>x.id===id);
-      if (!e) return alert('Equipo no encontrado');
-      document.getElementById('equipoId').value = e.id;
-      document.getElementById('equipoNombre').value = e.nombre;
-      document.getElementById('equipoTipo').value = e.tipo || '';
-      document.getElementById('equipoSerial').value = e.serial || '';
-      document.getElementById('equipoNotas').value = e.notas || '';
-    };
-    window.delEquipo = function(id){ if (!confirm('¿Borrar equipo?')) return; deleteEquipoInSQLite(id); };
-
-    window.editAsign = function(id){
-      const asigns = getAllAsignacionesFromSQLite();
-      const a = asigns.find(x=>x.id===id);
-      if (!a) return alert('Asignación no encontrada');
-      document.getElementById('asignId').value = a.id;
-      document.getElementById('asignEquipoId').value = a.equipo_id || '';
-      document.getElementById('asignUsuarioId').value = a.usuario_id || '';
-      document.getElementById('asignFecha').value = a.fecha || '';
-      document.getElementById('asignObs').value = a.observaciones || '';
-    };
-    window.delAsign = function(id){ if (!confirm('¿Borrar asignación?')) return; deleteAsignacionInSQLite(id); };
 
     // populate selects for asignaciones
     function populateSelects(){
@@ -581,6 +747,14 @@
       selE.innerHTML = '<option value="">Equipo</option>' + equipos.map(e=>`<option value="${e.id}">${escapeHtml(e.nombre)}</option>`).join('');
       selU.innerHTML = '<option value="">Usuario</option>' + usuarios.map(u=>`<option value="${u.id}">${escapeHtml(u.nombre)}</option>`).join('');
     }
+
+    // expose legacy globals for compatibility (they now open modals)
+    window.editUser = function(id){ const users = getAllUsersFromSQLite(); const u = users.find(x=>x.id===id); if (!u) return alert('Usuario no encontrado'); showEditUserModal(u); };
+    window.delUser = async function(id){ const ok = await showConfirm('¿Borrar usuario?'); if (!ok) return; deleteUserInSQLite(id); };
+    window.editEquipo = function(id){ const equipos = getAllEquiposFromSQLite(); const e = equipos.find(x=>x.id===id); if (!e) return alert('Equipo no encontrado'); showEditEquipoModal(e); };
+    window.delEquipo = async function(id){ const ok = await showConfirm('¿Borrar equipo?'); if (!ok) return; deleteEquipoInSQLite(id); };
+    window.editAsign = function(id){ const asigns = getAllAsignacionesFromSQLite(); const a = asigns.find(x=>x.id===id); if (!a) return alert('Asignación no encontrada'); showEditAsignModal(a); };
+    window.delAsign = async function(id){ const ok = await showConfirm('¿Borrar asignación?'); if (!ok) return; deleteAsignacionInSQLite(id); };
 
     // ------- Init -------
     window.addEventListener('load', async ()=>{
