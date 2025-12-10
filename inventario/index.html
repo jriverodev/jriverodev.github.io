@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario CRUD Offline</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav {
+            display: flex;
+            background: #34495e;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .nav button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: #34495e;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .nav button:hover {
+            background: #2c3e50;
+        }
+
+        .nav button.active {
+            background: #3498db;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-add {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            margin-bottom: 15px;
+        }
+
+        .btn-export {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .btn-import {
+            background: #e67e22;
+            color: white;
+        }
+
+        .btn-download-template {
+            background: #34495e;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .form-actions {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-save {
+            background: #3498db;
+            color: white;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #e67e22;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .import-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .equipment-info {
+            background: #e8f4fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+            }
+            
+            .nav button {
+                padding: 12px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .status-operativo {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-inoperativo {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .assigned-badge {
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .unassigned-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Sistema de Inventario CRUD</h1>
+            <p>Gestión completa de inventario - Funciona sin conexión</p>
+            <div class="header-actions">
+                <button class="btn btn-export" onclick="exportToExcel()">📊 Exportar a Excel</button>
+                <button class="btn btn-download-template" onclick="downloadTemplate()">📥 Descargar Plantilla</button>
+                <label class="file-label">
+                    📤 Importar Excel
+                    <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls" onchange="importFromExcel(event)">
+                </label>
+            </div>
+        </div>
+
+        <div class="nav">
+            <button onclick="showTab('dashboard')" class="active">📊 Dashboard</button>
+            <button onclick="showTab('usuarios')">👥 Usuarios</button>
+            <button onclick="showTab('equipos')">💻 Equipos</button>
+            <button onclick="showTab('asignaciones')">🔗 Asignaciones</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard -->
+            <div id="dashboard" class="tab-content active">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalUsuarios">0</div>
+                        <div class="stat-label">Total Usuarios</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEquipos">0</div>
+                        <div class="stat-label">Total Equipos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="equiposOperativos">0</div>
+                        <div class="stat-label">Equipos Operativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="equiposAsignados">0</div>
+                        <div class="stat-label">Equipos Asignados</div>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="globalSearch" placeholder="🔍 Buscar en todo el inventario..." onkeyup="globalSearch()">
+                </div>
+
+                <h3>Últimas Asignaciones</h3>
+                <div id="ultimasAsignaciones" class="table-container">
+                    <!-- Las últimas asignaciones se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- Usuarios -->
+            <div id="usuarios" class="tab-content">
+                <button class="btn btn-add" onclick="openUserModal()">➕ Agregar Usuario</button>
+                <div class="search-box">
+                    <input type="text" id="searchUsuarios" placeholder="🔍 Buscar usuarios..." onkeyup="filterTable('usuarios')">
+                </div>
+                <div class="table-container">
+                    <table id="tablaUsuarios">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Responsable</th>
+                                <th>Cédula</th>
+                                <th>Cargo</th>
+                                <th>Sector</th>
+                                <th>Equipos Asignados</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsuarios">
+                            <!-- Los usuarios se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Equipos -->
+            <div id="equipos" class="tab-content">
+                <button class="btn btn-add" onclick="openEquipmentModal()">➕ Agregar Equipo</button>
+                <div class="search-box">
+                    <input type="text" id="searchEquipos" placeholder="🔍 Buscar equipos..." onkeyup="filterTable('equipos')">
+                </div>
+                <div class="table-container">
+                    <table id="tablaEquipos">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Descripción</th>
+                                <th>Marca</th>
+                                <th>Modelo</th>
+                                <th>Serial</th>
+                                <th>Status</th>
+                                <th>Asignado a</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyEquipos">
+                            <!-- Los equipos se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Asignaciones -->
+            <div id="asignaciones" class="tab-content">
+                <button class="btn btn-add" onclick="openAssignmentModal()">➕ Nueva Asignación</button>
+                <div class="search-box">
+                    <input type="text" id="searchAsignaciones" placeholder="🔍 Buscar asignaciones..." onkeyup="filterTable('asignaciones')">
+                </div>
+                <div class="table-container">
+                    <table id="tablaAsignaciones">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Equipo</th>
+                                <th>Serial Equipo</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAsignaciones">
+                            <!-- Las asignaciones se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Sistema de Inventario CRUD Offline - Todos los datos se almacenan localmente</p>
+        </div>
+    </div>
+
+    <!-- Modales -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h3 id="userModalTitle">Agregar Usuario</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label>Responsable:</label>
+                    <input type="text" id="responsable" required>
+                </div>
+                <div class="form-group">
+                    <label>Cédula:</label>
+                    <input type="text" id="cedula">
+                </div>
+                <div class="form-group">
+                    <label>Cargo:</label>
+                    <input type="text" id="cargo">
+                </div>
+                <div class="form-group">
+                    <label>Sector:</label>
+                    <input type="text" id="sector" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeUserModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="equipmentModal" class="modal">
+        <div class="modal-content">
+            <h3 id="equipmentModalTitle">Agregar Equipo</h3>
+            <form id="equipmentForm">
+                <input type="hidden" id="equipmentId">
+                <div class="form-group">
+                    <label>Descripción:</label>
+                    <input type="text" id="descripcion" required>
+                </div>
+                <div class="form-group">
+                    <label>Marca:</label>
+                    <input type="text" id="marca" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo:</label>
+                    <input type="text" id="modelo" required>
+                </div>
+                <div class="form-group">
+                    <label>Serial: <small>(Único, identifica el equipo)</small></label>
+                    <input type="text" id="serial" required>
+                </div>
+                <div class="form-group">
+                    <label>Etiqueta:</label>
+                    <input type="text" id="etiqueta">
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select id="status" required>
+                        <option value="OPERATIVO">OPERATIVO</option>
+                        <option value="INOPERATIVO">INOPERATIVO</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="observaciones" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeEquipmentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="assignmentModal" class="modal">
+        <div class="modal-content">
+            <h3 id="assignmentModalTitle">Nueva Asignación</h3>
+            <form id="assignmentForm">
+                <input type="hidden" id="assignmentId">
+                <div class="form-group">
+                    <label>Usuario:</label>
+                    <select id="assignmentUsuario" required onchange="updateAvailableEquipments()">
+                        <option value="">Seleccionar usuario</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Equipo:</label>
+                    <select id="assignmentEquipo" required onchange="updateEquipmentDetails()">
+                        <option value="">Seleccionar equipo</option>
+                    </select>
+                    <div id="equipmentDetails" class="equipment-info" style="display: none;">
+                        <!-- Detalles del equipo se mostrarán aquí -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Estado:</label>
+                    <select id="assignmentEstado" required>
+                        <option value="Asignado">Asignado</option>
+                        <option value="Retirado">Retirado</option>
+                        <option value="En Reparación">En Reparación</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeAssignmentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Base de datos IndexedDB
+        let db;
+        const DB_NAME = 'InventarioDB';
+        const DB_VERSION = 2;
+
+        // Inicializar la base de datos
+        function initDatabase() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onerror = function(event) {
+                console.error('Error abriendo la base de datos:', event.target.error);
+            };
+
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                console.log('Base de datos abierta correctamente');
+                loadAllData();
+            };
+
+            request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                const transaction = event.target.transaction;
+
+                // Eliminar stores existentes si es necesario
+                if (db.objectStoreNames.contains('usuarios')) {
+                    db.deleteObjectStore('usuarios');
+                }
+                if (db.objectStoreNames.contains('equipos')) {
+                    db.deleteObjectStore('equipos');
+                }
+                if (db.objectStoreNames.contains('asignaciones')) {
+                    db.deleteObjectStore('asignaciones');
+                }
+
+                // Crear object stores (tablas) con índices correctos
+                const usuarioStore = db.createObjectStore('usuarios', { keyPath: 'id_usuario', autoIncrement: true });
+                usuarioStore.createIndex('responsable', 'RESPONSABLE', { unique: false });
+                usuarioStore.createIndex('cedula', 'CEDULA', { unique: false });
+
+                const equipoStore = db.createObjectStore('equipos', { keyPath: 'id_equipo', autoIncrement: true });
+                equipoStore.createIndex('descripcion', 'DESCRIPCION', { unique: false });
+                equipoStore.createIndex('marca', 'MARCA', { unique: false });
+                equipoStore.createIndex('modelo', 'MODELO', { unique: false });
+                equipoStore.createIndex('serial', 'SERIAL', { unique: true });
+                equipoStore.createIndex('etiqueta', 'ETIQUETA', { unique: false });
+
+                const asignacionStore = db.createObjectStore('asignaciones', { keyPath: 'id_asignacion', autoIncrement: true });
+                asignacionStore.createIndex('id_usuario', 'id_usuario', { unique: false });
+                asignacionStore.createIndex('id_equipo', 'id_equipo', { unique: true });
+                asignacionStore.createIndex('estado', 'estado_asignacion', { unique: false });
+            };
+        }
+
+        // Funciones CRUD para Usuarios
+        function addUser(user) {
+            const transaction = db.transaction(['usuarios'], 'readwrite');
+            const store = transaction.objectStore('usuarios');
+            return store.add(user);
+        }
+
+        function updateUser(user) {
+            const transaction = db.transaction(['usuarios'], 'readwrite');
+            const store = transaction.objectStore('usuarios');
+            return store.put(user);
+        }
+
+        function deleteUser(id) {
+            const transaction = db.transaction(['usuarios'], 'readwrite');
+            const store = transaction.objectStore('usuarios');
+            return store.delete(id);
+        }
+
+        function getUser(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['usuarios'], 'readonly');
+                const store = transaction.objectStore('usuarios');
+                const request = store.get(id);
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        function getAllUsers() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['usuarios'], 'readonly');
+                const store = transaction.objectStore('usuarios');
+                const request = store.getAll();
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        // Funciones CRUD para Equipos
+        function addEquipment(equipment) {
+            const transaction = db.transaction(['equipos'], 'readwrite');
+            const store = transaction.objectStore('equipos');
+            return store.add(equipment);
+        }
+
+        function updateEquipment(equipment) {
+            const transaction = db.transaction(['equipos'], 'readwrite');
+            const store = transaction.objectStore('equipos');
+            return store.put(equipment);
+        }
+
+        function deleteEquipment(id) {
+            const transaction = db.transaction(['equipos'], 'readwrite');
+            const store = transaction.objectStore('equipos');
+            return store.delete(id);
+        }
+
+        function getEquipment(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['equipos'], 'readonly');
+                const store = transaction.objectStore('equipos');
+                const request = store.get(id);
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        function getEquipmentBySerial(serial) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['equipos'], 'readonly');
+                const store = transaction.objectStore('equipos');
+                const index = store.index('serial');
+                const request = index.get(serial);
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        function getAllEquipments() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['equipos'], 'readonly');
+                const store = transaction.objectStore('equipos');
+                const request = store.getAll();
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        // Funciones CRUD para Asignaciones
+        function addAssignment(assignment) {
+            const transaction = db.transaction(['asignaciones'], 'readwrite');
+            const store = transaction.objectStore('asignaciones');
+            return store.add(assignment);
+        }
+
+        function updateAssignment(assignment) {
+            const transaction = db.transaction(['asignaciones'], 'readwrite');
+            const store = transaction.objectStore('asignaciones');
+            return store.put(assignment);
+        }
+
+        function deleteAssignment(id) {
+            const transaction = db.transaction(['asignaciones'], 'readwrite');
+            const store = transaction.objectStore('asignaciones');
+            return store.delete(id);
+        }
+
+        function getAssignmentByEquipment(equipmentId) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['asignaciones'], 'readonly');
+                const store = transaction.objectStore('asignaciones');
+                const index = store.index('id_equipo');
+                const request = index.get(equipmentId);
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        function getAssignmentsByUser(userId) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['asignaciones'], 'readonly');
+                const store = transaction.objectStore('asignaciones');
+                const index = store.index('id_usuario');
+                const request = index.getAll(userId);
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        function getAllAssignments() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['asignaciones'], 'readonly');
+                const store = transaction.objectStore('asignaciones');
+                const request = store.getAll();
+                
+                request.onsuccess = function() {
+                    resolve(request.result);
+                };
+                
+                request.onerror = function() {
+                    reject(request.error);
+                };
+            });
+        }
+
+        // Cargar todos los datos
+        async function loadAllData() {
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                // Si no hay datos, cargar datos iniciales
+                if (usuarios.length === 0) {
+                    await loadInitialData();
+                } else {
+                    renderUsers(usuarios, equipos, asignaciones);
+                    renderEquipments(equipos, usuarios, asignaciones);
+                    renderAssignments(asignaciones, usuarios, equipos);
+                    updateStats(usuarios, equipos, asignaciones);
+                }
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        // Cargar datos iniciales
+        async function loadInitialData() {
+         // En la función loadInitialData(), reemplaza el array initialUsers con esto:
+
+const initialUsers = [
+    {RESPONSABLE: "LAGUNA EZEQUIEL", CEDULA: "6535214", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RIVERO WILIAN", CEDULA: "6690030", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GARCIA CARLOS ALEXIS", CEDULA: "7729341", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "HERNANDEZ JOSE", CEDULA: "7737772", CARGO: "SUPERVISOR DE ADMINITRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "CAMACARO ADELIS ENRIQUE", CEDULA: "7738750", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "OLLARVES DOUGLAS", CEDULA: "7740847", CARGO: "SUPERVISOR MAYOR DE TRANSPORTE DE PERS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MEDINA MERVIN ENRIQUE", CEDULA: "7743291", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PEÑA TINEO MARIO JOSE", CEDULA: "7744573", CARGO: "SUPERVISOR TRANSP PERSONAL COCC/LS/TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ALVAREZ CRUZ", CEDULA: "7744917", CARGO: "SUPERVISOR DE TRANSPORTE PERS BACH/MG/VL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CUICAS WILLIAM ENRIQUE", CEDULA: "7838256", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VILLASMIL ANGEL", CEDULA: "7862285", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SOTO JOSE ALBERTO", CEDULA: "7871639", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VIELMA MANUEL", CEDULA: "7963278", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PRIETO ELI JOSE", CEDULA: "7966031", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "ROMERO ALFREDO JOSE", CEDULA: "7967751", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "COLINA OSCAR ANTONIO", CEDULA: "8695605", CARGO: "CAPATAZ MOV MATER Y EQUIPOS COSTA OCC", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MONTAÑO RICHARD", CEDULA: "8696874", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FUENTES ALBERTO", CEDULA: "8701202", CARGO: "SUPERVISOR PROGRAMACION DE MTTO LS/SF", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "ROJAS JOSE GREGORIO", CEDULA: "8701316", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GELVEZ JOSE RODOLFO", CEDULA: "8701526", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUERRA LEONARDO", CEDULA: "8718865", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "AULAR JULIO CESAR", CEDULA: "8847879", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "HURTADO LORZA JOSE GREGORIO", CEDULA: "9359258", CARGO: "CAPATAZ MOV MATERIALES Y EQUIPOS LL/TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ROMAY PEDRO", CEDULA: "9525019", CARGO: "SUPERVISOR DE LIQUIDO Y ACHIQUES BACHAQ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CONTRERAS WINSTON RAMON", CEDULA: "9735923", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "DELGADO RICARDO", CEDULA: "9776933", CARGO: "SUPERVISOR MANTENIMIENTO TALLER PESADO AREA TIA JUANA", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "RUBIO RAFAEL ANGEL", CEDULA: "10080892", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ROJAS CARLOS ALBERTO", CEDULA: "10088982", CARGO: "INSPECTOR DE CALIDAD OCC/LS", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "FRANCO JOSE LUIS", CEDULA: "10189129", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ARCIA ERVIS DENNYS", CEDULA: "10189256", CARGO: "SUPERVISOR TRANSPORTE PERSONAL TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "EDWIN PEROZO", CEDULA: "10205552", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "HERNANDEZ ALI", CEDULA: "10209858", CARGO: "CAPATAZ MANTENIMIENTO TALLER LAGUNILLAS", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "FARIA JOSE FRANCISCO", CEDULA: "10210157", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "TORRES SANCHEZ TEODORO", CEDULA: "10211108", CARGO: "CAPATAZ MOV MATER Y EQUIPOS BACHAQUERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FERMIN RIGOBERTO", CEDULA: "10212721", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SIBADA ANTONIO", CEDULA: "10213519", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SANTOS DOUGLAS", CEDULA: "10312037", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SANCHEZ DOUGLAS RAFAEL", CEDULA: "10350936", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "LANDAETA HENRY ANTONIO", CEDULA: "10398926", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MEDINA DANIEL ANTONIO", CEDULA: "10420824", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "NAVARRO EMETERIO ANTONIO", CEDULA: "10601747", CARGO: "INSPECTOR DE CALIDAD OCC/LS", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GUTIERREZ ENDER JOSE", CEDULA: "10603081", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PRIETO REINALDO JOSE", CEDULA: "10604330", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CONTRERAS ISMAEL", CEDULA: "10744641", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MORILLO JORGE LUIS", CEDULA: "10917893", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MACHADO DICK RICHARD", CEDULA: "11068504", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MARTINEZ EDISON JOSE", CEDULA: "11245397", CARGO: "OPERADOR DE GRUA BRAZO ARTICULADO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VARGAS JESUS ANTONIO", CEDULA: "11246661", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SALAZAR GRUBER JOSE", CEDULA: "11246937", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUTIERREZ ALIRIO JOSE", CEDULA: "11247224", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SANCHEZ HERNAN", CEDULA: "11247228", CARGO: "OPERADOR DE GRUA BRAZO ARTICULADO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MIRANDA ELIESER JOSE", CEDULA: "11247859", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FRANCO WILMER", CEDULA: "11249042", CARGO: "INSPECTOR OPERACIONAL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ARIAS HELIS OMAR", CEDULA: "11249258", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "JORGE ROMERO", CEDULA: "11250398", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PARRA ARGENIS", CEDULA: "11250519", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SALERNI ROBERTO", CEDULA: "11250768", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CASTILLO ORLANDO ANTONIO", CEDULA: "11251177", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MENDOZA RUBEN DARIO", CEDULA: "11251318", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MORALES ROBERTO", CEDULA: "11251584", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUILARTE FRANCISCO", CEDULA: "11251805", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PEREZ JOSE GREGORIO", CEDULA: "11252562", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "HERNANDEZ WILMER", CEDULA: "11254020", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "NUÑEZ ANDER PAUL", CEDULA: "11254793", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VIELMA EDGAR", CEDULA: "11393766", CARGO: "SUPERVISOR MANTENIMIENTO TALLER LIVIANO", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "TORRES ENDER", CEDULA: "11450196", CARGO: "ANALISTA DE CONTROL DE COMBUSTIBLE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "MORALES EDGAR EDUARDO", CEDULA: "11453904", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CORDERO JOSE", CEDULA: "11456218", CARGO: "CAPATAZ MANTENIMIENTO TALLER LA SALINA", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GARCIA DELVIS GREGORIO", CEDULA: "11458480", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "DELGADO HARRISON ALONSO", CEDULA: "11459220", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "LOPEZ DICKSON", CEDULA: "11691408", CARGO: "OPERADOR DE GRUA TELESCOPICA", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CARIELES JUAN CARLOS", CEDULA: "11699144", CARGO: "PROGRAMADOR OPERACIONAL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "SIVADA ENDER JOSE", CEDULA: "11799508", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PARRA NIXON ANTONIO", CEDULA: "11885513", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUTIERREZ MERVIN", CEDULA: "11886598", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CASTELLANO DANILO", CEDULA: "11887031", CARGO: "ALMACENISTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "GUTIERREZ WILMER ANTONIO", CEDULA: "11888926", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "QUERO EDECIO CECILIO", CEDULA: "11889669", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MEDINA ERWIN ENRIQUE", CEDULA: "11892228", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PEREZ EDUIN", CEDULA: "11893748", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "SALAZAR JUAN", CEDULA: "11946529", CARGO: "MECANICO DE REFRIGERACION", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MALAVE ARGENIS ANTONIO", CEDULA: "11946913", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FARIA ALEXANDER JESUS", CEDULA: "11947143", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUTIERREZ RAFAEL ANTONIO", CEDULA: "11947152", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VALLES IGNACIO EDUARDO", CEDULA: "11947777", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CARRASCO EUDIS", CEDULA: "11948188", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PAZ CARLOS", CEDULA: "11948429", CARGO: "PROGRAMADOR OPERACIONAL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VILLALOBOS FRANCISCO JOSE", CEDULA: "11948741", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "NOGUERA WILDER JOSE", CEDULA: "11949779", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "LISBOA JOSE DANIEL", CEDULA: "12004518", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ALVARADO JOSE LUIS", CEDULA: "12098317", CARGO: "SUPERVISOR PROGRAMACION COSTA TJ/LL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PEÑA JOSE GREGORIO", CEDULA: "12142029", CARGO: "BUZO INDUSTRIAL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "LARES ANGEL RAMON", CEDULA: "12144765", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SALAS MAURO JOSE", CEDULA: "12191644", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "LOPEZ ANGEL RAMON", CEDULA: "12205478", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "TERAN RENZO JOSE", CEDULA: "12308686", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "VALERO ALBERTO", CEDULA: "12327924", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUTIERREZ NELSON ENRIQUE", CEDULA: "12328709", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PEREZ ROBERTO CARLOS", CEDULA: "12329160", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BRITO MANUEL ENRIQUE", CEDULA: "12329216", CARGO: "SUPERVISOR DE PRESUPUESTO", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {RESPONSABLE: "GUARUCANO PEDRO LUIS", CEDULA: "12372165", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "AMESTY DIEGO JOVANNY", CEDULA: "12379330", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RINCON RONALT RAFIEL", CEDULA: "12404099", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FERNANDEZ ALEXANDER", CEDULA: "12408249", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CASTELLANO JUAN CARLOS", CEDULA: "12412734", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CHIRINOS EDIXON JOSE", CEDULA: "12467016", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SALAZAR MEJIAS DEXCYBEL", CEDULA: "12482880", CARGO: "SUPERINTENDENTE DE ADMINISTRACION DE ACT", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "SALAZAR FELIPE ANTONIO", CEDULA: "12482881", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PEROZO JOSÉ", CEDULA: "12700520", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUTIERREZ KENNY ANTONIO", CEDULA: "12712356", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VARGAS PEDRO", CEDULA: "12712849", CARGO: "CHOFER EJECUTIVO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MARIN MARCOS ANTONIO", CEDULA: "12712992", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GUANIPA ARCENIO ALEXANDER", CEDULA: "12713096", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "LUGO WILFREDO ANTONIO", CEDULA: "12843587", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RAMIREZ JOSE ENRIQUE", CEDULA: "12844489", CARGO: "SUPERVISOR MAYOR MOV MATERIALES Y EQUIP", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BARRERA JOAN", CEDULA: "12844648", CARGO: "SUPERVISOR DE PLANIFICACION Y PROGRAM", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BRACHO ADALBERTO JOSE", CEDULA: "12844762", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RAMONES RODIS", CEDULA: "12861566", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VILLALOBOS OTTO JOSE", CEDULA: "12863563", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "NIEVES ALI", CEDULA: "12943433", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SIERRA CARLOS ENRIQUE", CEDULA: "13003717", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GONZALEZ CARIDAD DARWIN ANTONI", CEDULA: "13005792", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CARRASCO HENRY JESUS", CEDULA: "13129095", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "QUINTERO MARCO ANTONIO", CEDULA: "13129493", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MARRERO DELVIN JOSE", CEDULA: "13129964", CARGO: "ANALISTA DE ADMINISTRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "MORILLO JOSE DARIO", CEDULA: "13129985", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CARIDAD WIRDEN ENRIQUE", CEDULA: "13130508", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VELASQUEZ RICHER JOSE", CEDULA: "13208009", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PIRELA JEAN ALBERTO", CEDULA: "13209775", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "ARAUJO JOSE", CEDULA: "13262232", CARGO: "ALMACENISTA", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "QUIJADA JAVIER", CEDULA: "13361322", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "HERNANDEZ JOSE", CEDULA: "13361476", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CHIRINOS ANGEL EDIXON", CEDULA: "13363236", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ORTIZ JOSE GREGORIO", CEDULA: "13401917", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MARCANO EDICIO RAFAEL", CEDULA: "13402508", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PEREIRA JOSE GREGORIO", CEDULA: "13402645", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GONZALEZ WILMAY RAMON", CEDULA: "13641347", CARGO: "CAPATAZ MOV MATER Y EQUIPOS BACHAQUERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MATOS NARKIS JOSE", CEDULA: "13659400", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CORDERO ANDRY", CEDULA: "13659955", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GUTIERREZ AMERICO ANTONIO", CEDULA: "13840840", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VILLARROEL ADOLFO JOSE", CEDULA: "13863278", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "VALERO JAIRO JOSE", CEDULA: "13976959", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "LOAIZA JUAN VICENTE", CEDULA: "13976986", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MONTOYA YERLE JOAN", CEDULA: "14002709", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BERMUDEZ ADRIANA", CEDULA: "14021491", CARGO: "SUPERVISOR DE ALMACEN LL/FM", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "GODOY ALIRIO", CEDULA: "14085066", CARGO: "CAPATAZ MANTENIMIENTO TALLER LAGUNILLAS", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "VELASQUEZ ORLANDO JAVIER", CEDULA: "14085245", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GAMARRO FERDINANDO", CEDULA: "14085408", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GONZALEZ KENDRY JOSE", CEDULA: "14085611", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "SUAREZ SIXTO RAFAEL", CEDULA: "14134928", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SAENZ JOSE ENRIQUE", CEDULA: "14181309", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FERNANDEZ HECTOR JOSE", CEDULA: "14181314", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "NAVA JOAN RAMON", CEDULA: "14234791", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SAAVEDRA DERVIS JOSE", CEDULA: "14235043", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "POLANCO ANTONIO", CEDULA: "14235356", CARGO: "SUPERVISOR MANTENIMIENTO TALLER PESADO LA SALINA", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "REYES RICHARD ANTONIO", CEDULA: "14235360", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ESCALONA FRANCISCO JOSE", CEDULA: "14448211", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "MARIN ULISES ANTONIO", CEDULA: "14448264", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "TUDARES DEIBIS", CEDULA: "14449137", CARGO: "SUPERVISOR MAYOR TALLER LA SALINA", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "URE LUBIN ARMANDO", CEDULA: "14493329", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "URDANETA CARLOS LUIS", CEDULA: "14496254", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CORONADO JOSE JAVIER", CEDULA: "14582747", CARGO: "ANALISTA DE CONTROL DE COMBUSTIBLE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "URDANETA ALFREDO", CEDULA: "14659445", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "YSEA DONY JOSE", CEDULA: "14663230", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MUJICA GUILLERMO JOSE", CEDULA: "14714855", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PEREIRA JOELVIS RICARDO", CEDULA: "14722293", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "FIGUEROA JOAN MIGUEL", CEDULA: "14722774", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ALBARRACIN FRANKLIN", CEDULA: "14808925", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ACOSTA HERNAN ANTONIO", CEDULA: "14847367", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SUHEIN PERDOMO", CEDULA: "14901691", CARGO: "SUPERVISOR DE PLANIFICACION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {RESPONSABLE: "ROZO LUILLANA", CEDULA: "14951254", CARGO: "SUPERINTENDENTE PLANIF PRESUP Y GESTION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {RESPONSABLE: "CAICEDO PEDRO", CEDULA: "14974455", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "CARIDAD LUIS", CEDULA: "15009339", CARGO: "SUPERINTENDENTE DE OPERACIONES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ACOSTA GUSTAVO ADOLFO", CEDULA: "15017120", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL LL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GONZALEZ JEAN CARLOS", CEDULA: "15021652", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CONTRERAS RONALD ANTONIO", CEDULA: "15052434", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RODRIGUEZ JOSE LUIS", CEDULA: "15158417", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ESCALONA JUAN", CEDULA: "15158639", CARGO: "SUPERVISOR MAYOR DE FLOTA TERRESTRE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "RIVEROS CRISTOBAL ALEXANDER", CEDULA: "15172731", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RAMOS EDUARDO ENRIQUE", CEDULA: "15239223", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL OCC", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "COLINA JUAN JAVIER", CEDULA: "15320157", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "NIEVES CIRILO ELIAS", CEDULA: "15320402", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "QUINTERO JUNIOR SINAYINE", CEDULA: "15353421", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CUBILLAN INDIRA", CEDULA: "15401930", CARGO: "SUPERVISOR DE SERVICIOS TECNICOS OPERACIONAL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CHIRINO ANGEL GUILLERMO", CEDULA: "15443311", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SANTIAGO OSWALDO", CEDULA: "15443428", CARGO: "GERENTE TRANSPORTE TERRESTRE", SECTOR: "TRANSPORTE TERRESTRE"},
+    {RESPONSABLE: "ALVAREZ MARLOBIS", CEDULA: "15552982", CARGO: "SUPERVISOR DE COORDINACION DE COMITES", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "FANEITTE GEORGE RICHARD", CEDULA: "15603058", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "ALBORNOZ GERARDO JAVIER", CEDULA: "15603947", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RAMOS MIGUELANGEL", CEDULA: "15613014", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BAYUREL NOENDRYS ANTONIO", CEDULA: "15674441", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RIOS WILLIAMS ENRIQUE", CEDULA: "15749383", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "PEREZ RODRIGUEZ HECTOR ALEXANDER", CEDULA: "15779289", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GONZALEZ CARLOS JOSE", CEDULA: "15849596", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "JIMENEZ RAFAEL EDUARDO", CEDULA: "15974146", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RODRIGUEZ RICHARD", CEDULA: "15974645", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GONZALEZ EDUIN GREGORIO", CEDULA: "15974996", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GRATEROL JUAN CARLOS", CEDULA: "16027707", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "CHACIN LUIS ENRIQUE", CEDULA: "16047130", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ESIS JOHNY ANTONIO", CEDULA: "16119348", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "URDANETA ROBINSON RAMON", CEDULA: "16160576", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GALEA CARLOS ALBERTO", CEDULA: "16169074", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GARCIA ANDRY ANTONIO", CEDULA: "16302201", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CORDERO ARGENIS ALBERTO", CEDULA: "16304020", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CARDENAS JOHAN JOSE", CEDULA: "16457668", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BRACHO EDIXON JOSE", CEDULA: "16633737", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CHACIN DERVIN", CEDULA: "16832858", CARGO: "CAPATAZ LIQUIDOS Y ACHIQUES", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "MENA JOSE GREGORIO", CEDULA: "17003665", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "AVILA AÑEZ CHASTITY", CEDULA: "17006301", CARGO: "SUPERVISOR DE MANTENIMIENTO DE TALLER LIVIANO", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GOMEZ WILMER", CEDULA: "17332543", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GARCIA FREDDY ANTONIO", CEDULA: "17333511", CARGO: "CHOFER ESPECIAL 30 TONELADAS", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GONZALEZ RUBEN ENRIQUE", CEDULA: "17635664", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PADRON LUIS ALEJANDRO", CEDULA: "17647331", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PIÑERO OSCAR ENRIQUE GERARDO", CEDULA: "17649755", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ROMERO VANESSA", CEDULA: "17669061", CARGO: "SUPERINTENDENTE DE MANTENIMIENTO", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "PRIETO WILLIAM SEGUNDO", CEDULA: "17821379", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "TINEO JEAN PAOLO", CEDULA: "17825181", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RIVERO JESUS DANIEL", CEDULA: "17825884", CARGO: "ANALISTA CALIDAD PRODUCTIVIDAD Y CONOCIM", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {RESPONSABLE: "GONZALEZ DENNY", CEDULA: "17826972", CARGO: "OBRERO", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "RAMIREZ GUSTAVO ADOLFO", CEDULA: "17917289", CARGO: "SUPERVISOR MAYOR DE COMBUSTIBLE Y MATERIALES", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "CUARTE YENIFFER", CEDULA: "18198893", CARGO: "SUPERVISOR DE ADMINISTRACION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {RESPONSABLE: "GARCIA FRANK", CEDULA: "18217250", CARGO: "SUPERVISOR LIQUIDO Y ACHIQUE LAGUNILLAS", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "ALMAO MARTIN", CEDULA: "18260617", CARGO: "CAPATAZ TRANSPORTE DE PERSONAL BACH", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ADRIANZA FREDDY DE JESUS", CEDULA: "18341019", CARGO: "ANALISTA TALLER EXTERNO FLOTA LIVIANA", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "URRIBARRI WILLIAM EDUARDO", CEDULA: "18370278", CARGO: "ANALISTA DE PROGRAMACION OCC/LS", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "OCANDO ALVARO JOSE", CEDULA: "18371089", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "BASALO OMAR ANTONIO", CEDULA: "18484687", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "URRIBARRI CARLOS ENRIQUE", CEDULA: "18633295", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "SALAZAR JOSE", CEDULA: "18695682", CARGO: "SUPERVISOR MOV MATER Y EQUIPOS BACHAQ", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "OCANDO WILLIAMS JOSE", CEDULA: "18794884", CARGO: "CHOFER", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "AGUSTIN FERNANDO JOSE", CEDULA: "18795357", CARGO: "SUPERVISOR DE FLOTAS Y PLANES DE MTTO", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "DELMORAL EDGAR EDUARDO", CEDULA: "19016110", CARGO: "CAPATAZ MOV MATERIALES Y EQUIPOS LL/TJ", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "GARCIA JESUS SALVADOR", CEDULA: "19198140", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "AGREDA EDECIO", CEDULA: "19328131", CARGO: "ACELERADOR DE MATERIALES", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "ZARRAGA DARWIN JOSE", CEDULA: "19831303", CARGO: "MECANICO DIESEL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "FUENMAYOR DANILO JOSE", CEDULA: "19838409", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "POLANCO PEDRO JOSE", CEDULA: "20331873", CARGO: "SUPERVISOR MTTO TALLER LIVIANO", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "GRATEROL ABRAHAM JOSE", CEDULA: "20383601", CARGO: "ALMACENISTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "NAVA YURVIN ANTONIO", CEDULA: "20457294", CARGO: "SUPERVISOR DE COMBUSTIBLE", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "SALAS YORJHAN HERBER", CEDULA: "22136577", CARGO: "CAPATAZ MANTENIMIENTO TALLER", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "LOPEZ YEILEX", CEDULA: "22378188", CARGO: "SUPERVISOR DE GESTION", SECTOR: "PLANIFICACIÓN PRESUPUESTO Y GESTIÓN"},
+    {RESPONSABLE: "MANRIQUE DANIEL EDUARDO", CEDULA: "22778662", CARGO: "ALMACENISTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "GUERRERO JAVIER JOSE", CEDULA: "23887012", CARGO: "MECANICO AUTOMOTRIZ", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "BOLIVAR QUINTERO ADRIN E", CEDULA: "25194107", CARGO: "INSPECTOR OPERACIONAL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "CARRILLO CUBA, BRAYAN ALBERTO", CEDULA: "25555326", CARGO: "SUPERVISOR DE SERVICIOS TECNICOS OPERACIONAL", SECTOR: "MANTENIMIENTO"},
+    {RESPONSABLE: "COLMENARES CARLOS EDUARDO", CEDULA: "25764005", CARGO: "SUPERVISOR TRANSPORTE PERS LL/BACH/MG/VL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "ORTEGA SAAVEDRA LUIS SAUL", CEDULA: "26550182", CARGO: "PLANIFICADOR OPERACIONAL", SECTOR: "OPERACIONES"},
+    {RESPONSABLE: "SAEZ VARGAS, IVANA FERNANDA", CEDULA: "27758876", CARGO: "SUPERVISOR DE ADMINISTRACION DE FLOTA", SECTOR: "ADMINISTRACIÓN DE ACTIVOS"},
+    {RESPONSABLE: "ANCIANIS SUAREZ JOSE MANUEL", CEDULA: "28409383", CARGO: "SUPERVISOR MAYOR PROGRAMACION DE OPER", SECTOR: "OPERACIONES"}
+];
+
+            const initialEquipments = [
+                {DESCRIPCION: "CPU", MARCA: "VIT", MODELO: "E2350-02", SERIAL: "A001339402", ETIQUETA: "28017392", STATUS: "OPERATIVO", OBSERVACIONES: ""},
+                {DESCRIPCION: "MONITOR", MARCA: "VIT", MODELO: "ZP2200", SERIAL: "S/I-28017390", ETIQUETA: "28017390", STATUS: "OPERATIVO", OBSERVACIONES: ""}
+            ];
+
+            for (const user of initialUsers) {
+                await addUser(user);
+            }
+
+            for (const equipment of initialEquipments) {
+                await addEquipment(equipment);
+            }
+
+            // Crear asignaciones iniciales
+            const usuarios = await getAllUsers();
+            const equipos = await getAllEquipments();
+            
+            if (usuarios.length > 0 && equipos.length > 0) {
+                await addAssignment({
+                    id_usuario: usuarios[0].id_usuario,
+                    id_equipo: equipos[0].id_equipo,
+                    fecha_asignacion: new Date().toISOString().split('T')[0],
+                    estado_asignacion: "Asignado"
+                });
+
+                await addAssignment({
+                    id_usuario: usuarios[1].id_usuario,
+                    id_equipo: equipos[1].id_equipo,
+                    fecha_asignacion: new Date().toISOString().split('T')[0],
+                    estado_asignacion: "Asignado"
+                });
+            }
+
+            loadAllData();
+        }
+
+        // Renderizar datos en las tablas
+        function renderUsers(usuarios, equipos, asignaciones) {
+            const tbody = document.getElementById('tbodyUsuarios');
+            tbody.innerHTML = usuarios.map(usuario => {
+                const userAssignments = asignaciones.filter(a => a.id_usuario === usuario.id_usuario && a.estado_asignacion === "Asignado");
+                const assignedEquipments = userAssignments.map(a => {
+                    const equipo = equipos.find(e => e.id_equipo === a.id_equipo);
+                    return equipo ? `${equipo.DESCRIPCION} (${equipo.SERIAL})` : 'N/A';
+                });
+
+                return `
+                    <tr>
+                        <td>${usuario.id_usuario}</td>
+                        <td>${usuario.RESPONSABLE}</td>
+                        <td>${usuario.CEDULA}</td>
+                        <td>${usuario.CARGO}</td>
+                        <td>${usuario.SECTOR}</td>
+                        <td>
+                            ${userAssignments.length > 0 ? 
+                                `<span class="assigned-badge">${userAssignments.length} equipo(s)</span><br>
+                                 <small>${assignedEquipments.join(', ')}</small>` : 
+                                '<span class="unassigned-badge">Sin equipos</span>'}
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editUser(${usuario.id_usuario})">✏️</button>
+                            <button class="btn btn-delete" onclick="deleteUserConfirm(${usuario.id_usuario})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderEquipments(equipos, usuarios, asignaciones) {
+            const tbody = document.getElementById('tbodyEquipos');
+            tbody.innerHTML = equipos.map(equipo => {
+                const assignment = asignaciones.find(a => a.id_equipo === equipo.id_equipo && a.estado_asignacion === "Asignado");
+                const assignedUser = assignment ? usuarios.find(u => u.id_usuario === assignment.id_usuario) : null;
+
+                return `
+                    <tr>
+                        <td>${equipo.id_equipo}</td>
+                        <td>${equipo.DESCRIPCION}</td>
+                        <td>${equipo.MARCA}</td>
+                        <td>${equipo.MODELO}</td>
+                        <td><strong>${equipo.SERIAL}</strong></td>
+                        <td class="${equipo.STATUS === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">
+                            ${equipo.STATUS}
+                        </td>
+                        <td>
+                            ${assignedUser ? 
+                                `<span class="assigned-badge">${assignedUser.RESPONSABLE}</span>` : 
+                                '<span class="unassigned-badge">No asignado</span>'}
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editEquipment(${equipo.id_equipo})">✏️</button>
+                            <button class="btn btn-delete" onclick="deleteEquipmentConfirm(${equipo.id_equipo})">🗑️</button>
+                            ${!assignedUser ? 
+                                `<button class="btn btn-add" onclick="assignEquipment(${equipo.id_equipo})" style="padding: 4px 8px; font-size: 10px;">🔗 Asignar</button>` : 
+                                ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderAssignments(asignaciones, usuarios, equipos) {
+            const tbody = document.getElementById('tbodyAsignaciones');
+            tbody.innerHTML = asignaciones.map(asignacion => {
+                const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                return `
+                    <tr>
+                        <td>${asignacion.id_asignacion}</td>
+                        <td>${usuario ? `<strong>${usuario.RESPONSABLE}</strong><br><small>${usuario.SECTOR}</small>` : 'N/A'}</td>
+                        <td>${equipo ? `<strong>${equipo.DESCRIPCION}</strong><br>${equipo.MARCA} ${equipo.MODELO}` : 'N/A'}</td>
+                        <td><strong>${equipo ? equipo.SERIAL : 'N/A'}</strong></td>
+                        <td>${asignacion.fecha_asignacion || 'N/A'}</td>
+                        <td>
+                            <span class="${asignacion.estado_asignacion === 'Asignado' ? 'assigned-badge' : 'unassigned-badge'}">
+                                ${asignacion.estado_asignacion}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editAssignment(${asignacion.id_asignacion})">✏️</button>
+                            <button class="btn btn-delete" onclick="deleteAssignmentConfirm(${asignacion.id_asignacion})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Funciones para mostrar/ocultar pestañas
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'dashboard') {
+                updateStats();
+            }
+        }
+
+        // Funciones para los modales
+        function openUserModal() {
+            document.getElementById('userModalTitle').textContent = 'Agregar Usuario';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        function openEquipmentModal() {
+            document.getElementById('equipmentModalTitle').textContent = 'Agregar Equipo';
+            document.getElementById('equipmentForm').reset();
+            document.getElementById('equipmentId').value = '';
+            document.getElementById('status').value = 'OPERATIVO';
+            document.getElementById('equipmentModal').style.display = 'block';
+        }
+
+        function closeEquipmentModal() {
+            document.getElementById('equipmentModal').style.display = 'none';
+        }
+
+        async function openAssignmentModal(equipmentId = null) {
+            try {
+                const [usuarios, equipos] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments()
+                ]);
+
+                const usuarioSelect = document.getElementById('assignmentUsuario');
+                const equipoSelect = document.getElementById('assignmentEquipo');
+
+                usuarioSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+                equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+
+                usuarios.forEach(usuario => {
+                    usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.RESPONSABLE} - ${usuario.SECTOR}</option>`;
+                });
+
+                // Solo mostrar equipos no asignados
+                const asignaciones = await getAllAssignments();
+                const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
+                
+                equipos.filter(equipo => !equiposAsignados.has(equipo.id_equipo)).forEach(equipo => {
+                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.DESCRIPCION} - ${equipo.MARCA} (${equipo.SERIAL})</option>`;
+                });
+
+                // Si se pasa un equipmentId, seleccionarlo automáticamente
+                if (equipmentId) {
+                    equipoSelect.value = equipmentId;
+                    updateEquipmentDetails();
+                }
+
+                document.getElementById('assignmentModalTitle').textContent = 'Nueva Asignación';
+                document.getElementById('assignmentForm').reset();
+                document.getElementById('assignmentId').value = '';
+                document.getElementById('assignmentEstado').value = 'Asignado';
+                document.getElementById('assignmentModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error abriendo modal de asignación:', error);
+                alert('Error al cargar datos para la asignación');
+            }
+        }
+
+        function closeAssignmentModal() {
+            document.getElementById('assignmentModal').style.display = 'none';
+            document.getElementById('equipmentDetails').style.display = 'none';
+        }
+
+        async function updateAvailableEquipments() {
+            const usuarioId = document.getElementById('assignmentUsuario').value;
+            const equipoSelect = document.getElementById('assignmentEquipo');
+            
+            if (!usuarioId) {
+                equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+                return;
+            }
+
+            try {
+                const [equipos, asignaciones] = await Promise.all([
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
+                
+                equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+                equipos.filter(equipo => !equiposAsignados.has(equipo.id_equipo)).forEach(equipo => {
+                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.DESCRIPCION} - ${equipo.MARCA} (${equipo.SERIAL})</option>`;
+                });
+            } catch (error) {
+                console.error('Error actualizando equipos disponibles:', error);
+            }
+        }
+
+        async function updateEquipmentDetails() {
+            const equipoId = document.getElementById('assignmentEquipo').value;
+            const equipmentDetails = document.getElementById('equipmentDetails');
+            
+            if (!equipoId) {
+                equipmentDetails.style.display = 'none';
+                return;
+            }
+
+            try {
+                const equipo = await getEquipment(parseInt(equipoId));
+                if (equipo) {
+                    equipmentDetails.innerHTML = `
+                        <strong>Detalles del Equipo:</strong><br>
+                        <strong>Descripción:</strong> ${equipo.DESCRIPCION}<br>
+                        <strong>Marca/Modelo:</strong> ${equipo.MARCA} ${equipo.MODELO}<br>
+                        <strong>Serial:</strong> ${equipo.SERIAL}<br>
+                        <strong>Status:</strong> <span class="${equipo.STATUS === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">${equipo.STATUS}</span>
+                    `;
+                    equipmentDetails.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error cargando detalles del equipo:', error);
+            }
+        }
+
+        // Asignar equipo específico
+        async function assignEquipment(equipmentId) {
+            await openAssignmentModal(equipmentId);
+        }
+
+        // Manejo del formulario de usuario
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const user = {
+                RESPONSABLE: document.getElementById('responsable').value,
+                CEDULA: document.getElementById('cedula').value,
+                CARGO: document.getElementById('cargo').value,
+                SECTOR: document.getElementById('sector').value
+            };
+
+            const userId = document.getElementById('userId').value;
+
+            try {
+                if (userId) {
+                    user.id_usuario = parseInt(userId);
+                    await updateUser(user);
+                } else {
+                    await addUser(user);
+                }
+                
+                closeUserModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error guardando usuario:', error);
+                alert('Error al guardar el usuario');
+            }
+        });
+
+        // Manejo del formulario de equipo
+        document.getElementById('equipmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const equipment = {
+                DESCRIPCION: document.getElementById('descripcion').value,
+                MARCA: document.getElementById('marca').value,
+                MODELO: document.getElementById('modelo').value,
+                SERIAL: document.getElementById('serial').value,
+                ETIQUETA: document.getElementById('etiqueta').value,
+                STATUS: document.getElementById('status').value,
+                OBSERVACIONES: document.getElementById('observaciones').value
+            };
+
+            const equipmentId = document.getElementById('equipmentId').value;
+
+            try {
+                // Verificar si el serial ya existe (excepto para edición)
+                if (!equipmentId) {
+                    const existingEquipment = await getEquipmentBySerial(equipment.SERIAL);
+                    if (existingEquipment) {
+                        alert('Error: Ya existe un equipo con este número de serial. El serial debe ser único.');
+                        return;
+                    }
+                }
+
+                if (equipmentId) {
+                    equipment.id_equipo = parseInt(equipmentId);
+                    await updateEquipment(equipment);
+                } else {
+                    await addEquipment(equipment);
+                }
+                
+                closeEquipmentModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error guardando equipo:', error);
+                alert('Error al guardar el equipo');
+            }
+        });
+
+        // Manejo del formulario de asignación
+        document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const assignment = {
+                id_usuario: parseInt(document.getElementById('assignmentUsuario').value),
+                id_equipo: parseInt(document.getElementById('assignmentEquipo').value),
+                fecha_asignacion: new Date().toISOString().split('T')[0],
+                estado_asignacion: document.getElementById('assignmentEstado').value
+            };
+
+            const assignmentId = document.getElementById('assignmentId').value;
+
+            try {
+                // Verificar si el equipo ya está asignado
+                if (!assignmentId) {
+                    const existingAssignment = await getAssignmentByEquipment(assignment.id_equipo);
+                    if (existingAssignment && existingAssignment.estado_asignacion === "Asignado") {
+                        alert('Error: Este equipo ya está asignado a otro usuario.');
+                        return;
+                    }
+                }
+
+                if (assignmentId) {
+                    assignment.id_asignacion = parseInt(assignmentId);
+                    await updateAssignment(assignment);
+                } else {
+                    await addAssignment(assignment);
+                }
+                
+                closeAssignmentModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error guardando asignación:', error);
+                alert('Error al guardar la asignación');
+            }
+        });
+
+        // Event listener para mostrar detalles del equipo
+        document.getElementById('assignmentEquipo').addEventListener('change', updateEquipmentDetails);
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            initDatabase();
+        });
+
+        // FUNCIONES CRUD COMPLETAS
+        async function editUser(id) {
+            try {
+                const usuario = await getUser(id);
+                if (usuario) {
+                    document.getElementById('userModalTitle').textContent = 'Editar Usuario';
+                    document.getElementById('userId').value = usuario.id_usuario;
+                    document.getElementById('responsable').value = usuario.RESPONSABLE;
+                    document.getElementById('cedula').value = usuario.CEDULA;
+                    document.getElementById('cargo').value = usuario.CARGO;
+                    document.getElementById('sector').value = usuario.SECTOR;
+                    document.getElementById('userModal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error editando usuario:', error);
+                alert('Error al cargar datos del usuario');
+            }
+        }
+
+        async function deleteUserConfirm(id) {
+            if (confirm('¿Está seguro de que desea eliminar este usuario? También se eliminarán sus asignaciones.')) {
+                try {
+                    // Eliminar asignaciones del usuario primero
+                    const userAssignments = await getAssignmentsByUser(id);
+                    for (const assignment of userAssignments) {
+                        await deleteAssignment(assignment.id_asignacion);
+                    }
+                    
+                    await deleteUser(id);
+                    loadAllData();
+                } catch (error) {
+                    console.error('Error eliminando usuario:', error);
+                    alert('Error al eliminar el usuario');
+                }
+            }
+        }
+
+        async function editEquipment(id) {
+            try {
+                const equipo = await getEquipment(id);
+                if (equipo) {
+                    document.getElementById('equipmentModalTitle').textContent = 'Editar Equipo';
+                    document.getElementById('equipmentId').value = equipo.id_equipo;
+                    document.getElementById('descripcion').value = equipo.DESCRIPCION;
+                    document.getElementById('marca').value = equipo.MARCA;
+                    document.getElementById('modelo').value = equipo.MODELO;
+                    document.getElementById('serial').value = equipo.SERIAL;
+                    document.getElementById('etiqueta').value = equipo.ETIQUETA;
+                    document.getElementById('status').value = equipo.STATUS;
+                    document.getElementById('observaciones').value = equipo.OBSERVACIONES;
+                    document.getElementById('equipmentModal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error editando equipo:', error);
+                alert('Error al cargar datos del equipo');
+            }
+        }
+
+        async function deleteEquipmentConfirm(id) {
+            if (confirm('¿Está seguro de que desea eliminar este equipo? También se eliminarán sus asignaciones.')) {
+                try {
+                    // Eliminar asignaciones del equipo primero
+                    const equipmentAssignment = await getAssignmentByEquipment(id);
+                    if (equipmentAssignment) {
+                        await deleteAssignment(equipmentAssignment.id_asignacion);
+                    }
+                    
+                    await deleteEquipment(id);
+                    loadAllData();
+                } catch (error) {
+                    console.error('Error eliminando equipo:', error);
+                    alert('Error al eliminar el equipo');
+                }
+            }
+        }
+
+        async function editAssignment(id) {
+            try {
+                const [asignaciones, usuarios, equipos] = await Promise.all([
+                    getAllAssignments(),
+                    getAllUsers(),
+                    getAllEquipments()
+                ]);
+
+                const asignacion = asignaciones.find(a => a.id_asignacion === id);
+                
+                if (asignacion) {
+                    const usuarioSelect = document.getElementById('assignmentUsuario');
+                    const equipoSelect = document.getElementById('assignmentEquipo');
+
+                    usuarioSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+                    equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+
+                    usuarios.forEach(usuario => {
+                        usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.RESPONSABLE} - ${usuario.SECTOR}</option>`;
+                    });
+
+                    equipos.forEach(equipo => {
+                        equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.DESCRIPCION} - ${equipo.MARCA} (${equipo.SERIAL})</option>`;
+                    });
+
+                    document.getElementById('assignmentModalTitle').textContent = 'Editar Asignación';
+                    document.getElementById('assignmentId').value = asignacion.id_asignacion;
+                    document.getElementById('assignmentUsuario').value = asignacion.id_usuario;
+                    document.getElementById('assignmentEquipo').value = asignacion.id_equipo;
+                    document.getElementById('assignmentEstado').value = asignacion.estado_asignacion;
+                    document.getElementById('assignmentModal').style.display = 'block';
+                    
+                    updateEquipmentDetails();
+                }
+            } catch (error) {
+                console.error('Error editando asignación:', error);
+                alert('Error al cargar datos de la asignación');
+            }
+        }
+
+        async function deleteAssignmentConfirm(id) {
+            if (confirm('¿Está seguro de que desea eliminar esta asignación?')) {
+                try {
+                    await deleteAssignment(id);
+                    loadAllData();
+                } catch (error) {
+                    console.error('Error eliminando asignación:', error);
+                    alert('Error al eliminar la asignación');
+                }
+            }
+        }
+
+        // Actualizar estadísticas
+        async function updateStats() {
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                const equiposAsignados = asignaciones.filter(a => a.estado_asignacion === "Asignado").length;
+                const equiposOperativos = equipos.filter(e => e.STATUS === "OPERATIVO").length;
+
+                document.getElementById('totalUsuarios').textContent = usuarios.length;
+                document.getElementById('totalEquipos').textContent = equipos.length;
+                document.getElementById('equiposOperativos').textContent = equiposOperativos;
+                document.getElementById('equiposAsignados').textContent = equiposAsignados;
+
+                // Mostrar últimas asignaciones
+                const ultimasAsignaciones = document.getElementById('ultimasAsignaciones');
+                const ultimas = asignaciones.slice(-5).reverse();
+
+                ultimasAsignaciones.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Equipo</th>
+                                <th>Serial</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ultimas.map(asignacion => {
+                                const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                                const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                                return `
+                                    <tr>
+                                        <td>${usuario ? usuario.RESPONSABLE : 'N/A'}</td>
+                                        <td>${equipo ? `${equipo.DESCRIPCION} - ${equipo.MARCA}` : 'N/A'}</td>
+                                        <td>${equipo ? equipo.SERIAL : 'N/A'}</td>
+                                        <td>${asignacion.fecha_asignacion || 'N/A'}</td>
+                                        <td>
+                                            <span class="${asignacion.estado_asignacion === 'Asignado' ? 'assigned-badge' : 'unassigned-badge'}">
+                                                ${asignacion.estado_asignacion}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error actualizando estadísticas:', error);
+            }
+        }
+
+        // Filtrar tablas
+        function filterTable(tableType) {
+            const input = document.getElementById(`search${tableType.charAt(0).toUpperCase() + tableType.slice(1)}`);
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById(`tabla${tableType.charAt(0).toUpperCase() + tableType.slice(1)}`);
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName('td');
+                let found = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        if (td[j].textContent.toLowerCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = found ? '' : 'none';
+            }
+        }
+
+        // Búsqueda global
+        async function globalSearch() {
+            const filter = document.getElementById('globalSearch').value.toLowerCase();
+            
+            if (!filter) {
+                updateStats();
+                return;
+            }
+
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                const usuariosFiltrados = usuarios.filter(usuario => 
+                    Object.values(usuario).some(val => 
+                        val.toString().toLowerCase().includes(filter)
+                    )
+                );
+
+                const equiposFiltrados = equipos.filter(equipo => 
+                    Object.values(equipo).some(val => 
+                        val.toString().toLowerCase().includes(filter)
+                    )
+                );
+
+                const asignacionesFiltradas = asignaciones.filter(asignacion => {
+                    const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                    const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                    
+                    return (usuario && Object.values(usuario).some(val => 
+                        val.toString().toLowerCase().includes(filter)
+                    )) || (equipo && Object.values(equipo).some(val => 
+                        val.toString().toLowerCase().includes(filter)
+                    ));
+                });
+
+                document.getElementById('totalUsuarios').textContent = usuariosFiltrados.length;
+                document.getElementById('totalEquipos').textContent = equiposFiltrados.length;
+                document.getElementById('equiposOperativos').textContent = 
+                    equiposFiltrados.filter(e => e.STATUS === 'OPERATIVO').length;
+                document.getElementById('equiposAsignados').textContent = 
+                    asignacionesFiltradas.filter(a => a.estado_asignacion === 'Asignado').length;
+
+                const ultimasAsignaciones = document.getElementById('ultimasAsignaciones');
+                ultimasAsignaciones.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Equipo</th>
+                                <th>Serial</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${asignacionesFiltradas.slice(0, 5).map(asignacion => {
+                                const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                                const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                                return `
+                                    <tr>
+                                        <td>${usuario ? usuario.RESPONSABLE : 'N/A'}</td>
+                                        <td>${equipo ? `${equipo.DESCRIPCION} - ${equipo.MARCA}` : 'N/A'}</td>
+                                        <td>${equipo ? equipo.SERIAL : 'N/A'}</td>
+                                        <td>${asignacion.fecha_asignacion || 'N/A'}</td>
+                                        <td>${asignacion.estado_asignacion}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error en búsqueda global:', error);
+            }
+        }
+
+        // Exportar a Excel
+        async function exportToExcel() {
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                // Crear workbook
+                const wb = XLSX.utils.book_new();
+
+                // Hoja de usuarios
+                const wsUsuarios = XLSX.utils.json_to_sheet(usuarios.map(u => ({
+                    ID_USUARIO: u.id_usuario,
+                    RESPONSABLE: u.RESPONSABLE,
+                    CEDULA: u.CEDULA,
+                    CARGO: u.CARGO,
+                    SECTOR: u.SECTOR
+                })));
+                XLSX.utils.book_append_sheet(wb, wsUsuarios, "Usuarios");
+
+                // Hoja de equipos
+                const wsEquipos = XLSX.utils.json_to_sheet(equipos.map(e => ({
+                    ID_EQUIPO: e.id_equipo,
+                    DESCRIPCION: e.DESCRIPCION,
+                    MARCA: e.MARCA,
+                    MODELO: e.MODELO,
+                    SERIAL: e.SERIAL,
+                    ETIQUETA: e.ETIQUETA,
+                    STATUS: e.STATUS,
+                    OBSERVACIONES: e.OBSERVACIONES
+                })));
+                XLSX.utils.book_append_sheet(wb, wsEquipos, "Equipos");
+
+                // Hoja de asignaciones
+                const wsAsignaciones = XLSX.utils.json_to_sheet(asignaciones.map(a => {
+                    const usuario = usuarios.find(u => u.id_usuario === a.id_usuario);
+                    const equipo = equipos.find(e => e.id_equipo === a.id_equipo);
+                    return {
+                        ID_ASIGNACION: a.id_asignacion,
+                        ID_USUARIO: a.id_usuario,
+                        USUARIO: usuario ? usuario.RESPONSABLE : 'N/A',
+                        ID_EQUIPO: a.id_equipo,
+                        EQUIPO: equipo ? `${equipo.DESCRIPCION} - ${equipo.MARCA}` : 'N/A',
+                        SERIAL_EQUIPO: equipo ? equipo.SERIAL : 'N/A',
+                        FECHA_ASIGNACION: a.fecha_asignacion,
+                        ESTADO_ASIGNACION: a.estado_asignacion
+                    };
+                }));
+                XLSX.utils.book_append_sheet(wb, wsAsignaciones, "Asignaciones");
+
+                // Descargar archivo
+                XLSX.writeFile(wb, `inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+            } catch (error) {
+                console.error('Error exportando a Excel:', error);
+                alert('Error al exportar los datos a Excel');
+            }
+        }
+
+        // Descargar plantilla
+        // Descargar plantilla MEJORADA
+        function downloadTemplate() {
+            const wb = XLSX.utils.book_new();
+
+            // Plantilla de usuarios CON ENCABEZADOS CORRECTOS
+            const usuariosData = [{
+                "RESPONSABLE": "EJEMPLO: MARIA GONZALEZ",
+                "CEDULA": "EJEMPLO: 12345678", 
+                "CARGO": "EJEMPLO: ANALISTA",
+                "SECTOR": "EJEMPLO: SIGAL"
+            }];
+            const wsUsuarios = XLSX.utils.json_to_sheet(usuariosData);
+            XLSX.utils.book_append_sheet(wb, wsUsuarios, "Usuarios");
+
+            // Plantilla de equipos CON ENCABEZADOS CORRECTOS
+            const equiposData = [{
+                "DESCRIPCION": "EJEMPLO: LAPTOP",
+                "MARCA": "EJEMPLO: DELL",
+                "MODELO": "EJEMPLO: LATITUDE 5420", 
+                "SERIAL": "EJEMPLO: ABC123XYZ",
+                "ETIQUETA": "EJEMPLO: 28010001",
+                "STATUS": "OPERATIVO",
+                "OBSERVACIONES": "EJEMPLO: EQUIPO NUEVO"
+            }];
+            const wsEquipos = XLSX.utils.json_to_sheet(equiposData);
+            XLSX.utils.book_append_sheet(wb, wsEquipos, "Equipos");
+
+            // Plantilla de asignaciones CON ENCABEZADOS CORRECTOS
+            const asignacionesData = [{
+                "ID_USUARIO": "1",
+                "ID_EQUIPO": "1",
+                "FECHA_ASIGNACION": "2024-01-15", 
+                "ESTADO_ASIGNACION": "Asignado"
+            }];
+            const wsAsignaciones = XLSX.utils.json_to_sheet(asignacionesData);
+            XLSX.utils.book_append_sheet(wb, wsAsignaciones, "Asignaciones");
+
+            XLSX.writeFile(wb, "plantilla_inventario.xlsx");
+        }
+
+        // Importar desde Excel CORREGIDO
+        async function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                
+                let importedCount = 0;
+                const errors = [];
+
+                // IMPORTAR USUARIOS - CORREGIDO
+                if (workbook.Sheets["Usuarios"]) {
+                    const usuariosData = XLSX.utils.sheet_to_json(workbook.Sheets["Usuarios"]);
+                    console.log("Datos de usuarios leídos:", usuariosData);
+                    
+                    for (const usuario of usuariosData) {
+                        // Verificar que no sea la fila de ejemplo
+                        if (usuario.RESPONSABLE && 
+                            !usuario.RESPONSABLE.includes("EJEMPLO:") && 
+                            !usuario.RESPONSABLE.includes("MARIA GONZALEZ")) {
+                            
+                            try {
+                                await addUser({
+                                    RESPONSABLE: usuario.RESPONSABLE || "",
+                                    CEDULA: usuario.CEDULA || "",
+                                    CARGO: usuario.CARGO || "",
+                                    SECTOR: usuario.SECTOR || ""
+                                });
+                                importedCount++;
+                                console.log("Usuario importado:", usuario.RESPONSABLE);
+                            } catch (error) {
+                                errors.push(`Error en usuario ${usuario.RESPONSABLE}: ${error.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    errors.push("No se encontró la hoja 'Usuarios'");
+                }
+
+                // IMPORTAR EQUIPOS - CORREGIDO
+                if (workbook.Sheets["Equipos"]) {
+                    const equiposData = XLSX.utils.sheet_to_json(workbook.Sheets["Equipos"]);
+                    console.log("Datos de equipos leídos:", equiposData);
+                    
+                    for (const equipo of equiposData) {
+                        // Verificar que no sea la fila de ejemplo
+                        if (equipo.DESCRIPCION && 
+                            !equipo.DESCRIPCION.includes("EJEMPLO:") && 
+                            !equipo.DESCRIPCION.includes("LAPTOP")) {
+                            
+                            try {
+                                // Verificar si el serial ya existe
+                                const existingEquipment = await getEquipmentBySerial(equipo.SERIAL);
+                                if (existingEquipment) {
+                                    errors.push(`Serial duplicado: ${equipo.SERIAL}`);
+                                    continue;
+                                }
+
+                                await addEquipment({
+                                    DESCRIPCION: equipo.DESCRIPCION || "",
+                                    MARCA: equipo.MARCA || "",
+                                    MODELO: equipo.MODELO || "",
+                                    SERIAL: equipo.SERIAL || "",
+                                    ETIQUETA: equipo.ETIQUETA || "",
+                                    STATUS: equipo.STATUS || "OPERATIVO",
+                                    OBSERVACIONES: equipo.OBSERVACIONES || ""
+                                });
+                                importedCount++;
+                                console.log("Equipo importado:", equipo.DESCRIPCION);
+                            } catch (error) {
+                                errors.push(`Error en equipo ${equipo.DESCRIPCION}: ${error.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    errors.push("No se encontró la hoja 'Equipos'");
+                }
+
+                // IMPORTAR ASIGNACIONES - CORREGIDO (después de usuarios y equipos)
+                if (workbook.Sheets["Asignaciones"]) {
+                    // Esperar a que se importen usuarios y equipos primero
+                    const [usuarios, equipos] = await Promise.all([
+                        getAllUsers(),
+                        getAllEquipments()
+                    ]);
+
+                    const asignacionesData = XLSX.utils.sheet_to_json(workbook.Sheets["Asignaciones"]);
+                    console.log("Datos de asignaciones leídos:", asignacionesData);
+                    
+                    for (const asignacion of asignacionesData) {
+                        // Verificar que no sea la fila de ejemplo
+                        if (asignacion.ID_USUARIO && asignacion.ID_EQUIPO && 
+                            asignacion.ID_USUARIO !== "1" && asignacion.ID_EQUIPO !== "1") {
+                            
+                            try {
+                                const idUsuario = parseInt(asignacion.ID_USUARIO);
+                                const idEquipo = parseInt(asignacion.ID_EQUIPO);
+
+                                // Verificar que existan el usuario y el equipo
+                                const usuarioExiste = usuarios.find(u => u.id_usuario === idUsuario);
+                                const equipoExiste = equipos.find(e => e.id_equipo === idEquipo);
+
+                                if (!usuarioExiste) {
+                                    errors.push(`Usuario ID ${idUsuario} no existe para asignación`);
+                                    continue;
+                                }
+
+                                if (!equipoExiste) {
+                                    errors.push(`Equipo ID ${idEquipo} no existe para asignación`);
+                                    continue;
+                                }
+
+                                // Verificar si el equipo ya está asignado
+                                const existingAssignment = await getAssignmentByEquipment(idEquipo);
+                                if (existingAssignment && existingAssignment.estado_asignacion === "Asignado") {
+                                    errors.push(`Equipo ID ${idEquipo} ya está asignado`);
+                                    continue;
+                                }
+
+                                await addAssignment({
+                                    id_usuario: idUsuario,
+                                    id_equipo: idEquipo,
+                                    fecha_asignacion: asignacion.FECHA_ASIGNACION || new Date().toISOString().split('T')[0],
+                                    estado_asignacion: asignacion.ESTADO_ASIGNACION || "Asignado"
+                                });
+                                importedCount++;
+                                console.log("Asignación importada:", idUsuario, "->", idEquipo);
+                            } catch (error) {
+                                errors.push(`Error en asignación ${asignacion.ID_USUARIO}-${asignacion.ID_EQUIPO}: ${error.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    errors.push("No se encontró la hoja 'Asignaciones'");
+                }
+
+                // Limpiar input file
+                event.target.value = '';
+
+                // Mostrar resultados
+                let message = `Importación completada. Se importaron ${importedCount} registros.`;
+                if (errors.length > 0) {
+                    message += `\n\nErrores encontrados:\n${errors.slice(0, 5).join('\n')}`;
+                    if (errors.length > 5) {
+                        message += `\n... y ${errors.length - 5} errores más.`;
+                    }
+                }
+
+                alert(message);
+                loadAllData();
+
+            } catch (error) {
+                console.error('Error importando desde Excel:', error);
+                alert('Error al importar los datos desde Excel: ' + error.message);
+            }
+        }
+
+
+        // Cerrar modales al hacer clic fuera
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
