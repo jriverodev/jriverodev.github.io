@@ -1,0 +1,16 @@
+{
+    "name": "Gestión de Mantenimiento",
+    "short_name": "GestiónMTTO",
+    "description": "Aplicación para gestionar el mantenimiento de vehículos.",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4CAF50",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}

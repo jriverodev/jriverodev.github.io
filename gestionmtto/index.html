@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <title>Gestión de Mantenimiento de Vehículos</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        @media screen and (max-width: 600px) {
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+</head>
+<body>
+    <h1>Gestión de Mantenimiento de Vehículos</h1>
+
+    <div style="margin-bottom: 20px;">
+        <label for="importFile">Importar desde Excel (.xlsx):</label><br>
+        <input type="file" id="importFile" accept=".xlsx" style="margin-top: 5px;">
+        <button type="button" id="importButton" style="padding: 10px 15px; background-color: #2196F3; color: white; border: none; cursor: pointer;">Importar</button>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label for="search">Buscar por Placa o N° Unidad SAP:</label><br>
+        <input type="text" id="search" name="search" style="width: calc(100% - 110px); padding: 8px; margin-top: 5px; box-sizing: border-box; display: inline-block;">
+        <button type="button" id="searchButton" style="padding: 10px 15px; background-color: #008CBA; color: white; border: none; cursor: pointer; display: inline-block; margin-left: 10px;">Buscar</button>
+    </div>
+
+    <form id="mttoForm">
+        <label for="marcaModelo">Marca/Modelo:</label><br>
+        <input type="text" id="marcaModelo" name="marcaModelo"><br>
+
+        <label for="unidadSap">N° Unidad SAP:</label><br>
+        <input type="text" id="unidadSap" name="unidadSap"><br>
+
+        <label for="placa">N° Activo / Placa:</label><br>
+        <input type="text" id="placa" name="placa"><br>
+
+        <label for="ubicacion">Ubicación Actual:</label><br>
+        <input type="text" id="ubicacion" name="ubicacion"><br>
+
+        <label for="gerencia">Gerencia Usuaria:</label><br>
+        <input type="text" id="gerencia" name="gerencia"><br>
+
+        <label for="ordenMtto">Orden de MTTO:</label><br>
+        <input type="text" id="ordenMtto" name="ordenMtto"><br>
+
+        <label for="tipoMtto">Falla Presente o Tipo MTTO:</label><br>
+        <input type="text" id="tipoMtto" name="tipoMtto"><br>
+
+        <label for="fechaIngreso">Fecha Ingreso:</label><br>
+        <input type="date" id="fechaIngreso" name="fechaIngreso"><br>
+
+        <label for="fechaEntrega">Fecha Estimada de Entrega:</label><br>
+        <input type="date" id="fechaEntrega" name="fechaEntrega"><br>
+
+        <label for="descripcion">Descripción / Barreras:</label><br>
+        <textarea id="descripcion" name="descripcion"></textarea><br>
+
+        <label for="chofer">Chófer Asignado:</label><br>
+        <input type="text" id="chofer" name="chofer"><br>
+
+        <button type="submit">Registrar Mantenimiento</button>
+    </form>
+
+    <h2>Registros de Mantenimiento</h2>
+    <table id="mttoTable">
+        <thead>
+            <tr>
+                <th>Marca/Modelo</th>
+                <th>N° Unidad SAP</th>
+                <th>N° Activo / Placa</th>
+                <th>Ubic. Actual</th>
+                <th>Gcia. Usuaria</th>
+                <th>Orden de MTTO</th>
+                <th>Falla o Tipo MTTO</th>
+                <th>Fecha Ingreso</th>
+                <th>Fecha Entrega</th>
+                <th>Descripción</th>
+                <th>Chófer</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las filas de datos se agregarán aquí con JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        // Helper para IndexedDB
+        const idbHelper = {
+            open: () => new Promise((resolve, reject) => {
+                const request = indexedDB.open('sqliteDb', 1);
+                request.onupgradeneeded = () => request.result.createObjectStore('dbFile');
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            }),
+            get: (db, key) => new Promise((resolve, reject) => {
+                const transaction = db.transaction('dbFile', 'readonly');
+                const request = transaction.objectStore('dbFile').get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            }),
+            set: (db, key, value) => new Promise((resolve, reject) => {
+                const transaction = db.transaction('dbFile', 'readwrite');
+                const store = transaction.objectStore('dbFile');
+                store.put(value, key);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error);
+            })
+        };
+
+        let db;
+
+        async function initDB() {
+            try {
+                const SQL = await initSqlJs({ locateFile: () => `sql-wasm.wasm` });
+                const idb = await idbHelper.open();
+                const dbData = await idbHelper.get(idb, 'db');
+
+                if (dbData) {
+                    db = new SQL.Database(dbData);
+                } else {
+                    db = new SQL.Database();
+                    const createTableSQL = `
+                        CREATE TABLE mantenimientos (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            marca_modelo TEXT, unidad_sap TEXT, placa TEXT, ubicacion TEXT,
+                            gerencia TEXT, orden_mtto TEXT, tipo_mtto TEXT, fecha_ingreso DATE,
+                            fecha_entrega DATE, descripcion TEXT, chofer TEXT,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );`;
+                    db.run(createTableSQL);
+                    await saveDB();
+                }
+                loadRecords();
+            } catch (err) {
+                console.error("Error al inicializar la base de datos:", err);
+            }
+        }
+
+        async function saveDB() {
+            const idb = await idbHelper.open();
+            await idbHelper.set(idb, 'db', db.export());
+        }
+
+        function loadRecords() {
+            const stmt = db.prepare("SELECT * FROM mantenimientos ORDER BY created_at DESC");
+            const tableBody = document.getElementById('mttoTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+            while (stmt.step()) {
+                addRecordToTable(stmt.getAsObject());
+            }
+            stmt.free();
+        }
+
+        document.getElementById('mttoForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const stmt = db.prepare("INSERT INTO mantenimientos (marca_modelo, unidad_sap, placa, ubicacion, gerencia, orden_mtto, tipo_mtto, fecha_ingreso, fecha_entrega, descripcion, chofer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            stmt.run([
+                document.getElementById('marcaModelo').value, document.getElementById('unidadSap').value,
+                document.getElementById('placa').value, document.getElementById('ubicacion').value,
+                document.getElementById('gerencia').value, document.getElementById('ordenMtto').value,
+                document.getElementById('tipoMtto').value, document.getElementById('fechaIngreso').value || null,
+                document.getElementById('fechaEntrega').value || null, document.getElementById('descripcion').value,
+                document.getElementById('chofer').value
+            ]);
+            stmt.free();
+            saveDB();
+            loadRecords();
+            document.getElementById('mttoForm').reset();
+        });
+
+        function addRecordToTable(record) {
+            const tableBody = document.getElementById('mttoTable').getElementsByTagName('tbody')[0];
+            const newRow = tableBody.insertRow(0); // Insertar siempre al principio
+            newRow.insertCell().textContent = record.marca_modelo;
+            newRow.insertCell().textContent = record.unidad_sap;
+            newRow.insertCell().textContent = record.placa;
+            newRow.insertCell().textContent = record.ubicacion;
+            newRow.insertCell().textContent = record.gerencia;
+            newRow.insertCell().textContent = record.orden_mtto;
+            newRow.insertCell().textContent = record.tipo_mtto;
+            newRow.insertCell().textContent = record.fecha_ingreso;
+            newRow.insertCell().textContent = record.fecha_entrega;
+            newRow.insertCell().textContent = record.descripcion;
+            newRow.insertCell().textContent = record.chofer;
+        }
+
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const searchTerm = document.getElementById('search').value;
+            const stmt = db.prepare("SELECT * FROM mantenimientos WHERE placa = ? OR unidad_sap = ? ORDER BY created_at DESC LIMIT 1");
+            stmt.bind([searchTerm, searchTerm]);
+
+            if (stmt.step()) {
+                const result = stmt.getAsObject();
+                document.getElementById('marcaModelo').value = result.marca_modelo;
+                document.getElementById('unidadSap').value = result.unidad_sap;
+                document.getElementById('placa').value = result.placa;
+                document.getElementById('ubicacion').value = result.ubicacion;
+                document.getElementById('gerencia').value = result.gerencia;
+                document.getElementById('chofer').value = result.chofer;
+            } else {
+                alert('No se encontraron registros.');
+            }
+            stmt.free();
+        });
+
+        document.getElementById('importButton').addEventListener('click', function() {
+            const fileInput = document.getElementById('importFile');
+            if (!fileInput.files[0]) {
+                alert('Por favor, selecciona un archivo.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const stmt = db.prepare("INSERT INTO mantenimientos (marca_modelo, unidad_sap, placa, ubicacion, gerencia, orden_mtto, tipo_mtto, fecha_ingreso, fecha_entrega, descripcion, chofer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                json.forEach(row => {
+                    stmt.run([
+                        row['MARCA/MODELO UNIDAD'], row['N° UNIDAD SAP'], row['N° ACTIVO / PLACA'],
+                        row['UBIC. ACTUAL'], row['GCIA. USUARIA'], row['ORDEN DE MTTO'],
+                        row['FALLA PRESENTE O TIPO MTTO'], excelDateToJSDate(row['FECHA INGRESO']),
+                        excelDateToJSDate(row['FECHA EST DE ENTREGA']), row['DESCRIPCIÓN / BARRERAS'], row['CHOFER']
+                    ]);
+                });
+                stmt.free();
+                saveDB();
+                loadRecords();
+                alert('¡Registros importados con éxito!');
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        });
+
+        function excelDateToJSDate(serial) {
+            if (typeof serial !== 'number') return null;
+            const date = new Date(1899, 11, 30 + serial);
+            return date.toISOString().split('T')[0];
+        }
+
+        initDB();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').then(registration => {
+                    console.log('ServiceWorker registrado con éxito:', registration);
+                }).catch(error => {
+                    console.log('Fallo en el registro de ServiceWorker:', error);
+                });
+            });
+        }
+    </script>
+
+</body>
+</html>
