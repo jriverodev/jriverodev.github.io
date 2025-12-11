@@ -52,6 +52,41 @@
                 overflow-x: auto;
             }
         }
+        /* Estilos para los modales */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
@@ -60,9 +95,8 @@
     <h1>Gestión de Mantenimiento de Vehículos</h1>
 
     <div style="margin-bottom: 20px;">
-        <label for="importFile">Importar desde Excel (.xlsx):</label><br>
-        <input type="file" id="importFile" accept=".xlsx" style="margin-top: 5px;">
-        <button type="button" id="importButton" style="padding: 10px 15px; background-color: #2196F3; color: white; border: none; cursor: pointer;">Importar</button>
+        <button id="open-register-modal">Nuevo Registro</button>
+        <button id="open-data-modal">Gestión de Datos</button>
     </div>
 
     <div style="margin-bottom: 20px;">
@@ -71,42 +105,56 @@
         <button type="button" id="searchButton" style="padding: 10px 15px; background-color: #008CBA; color: white; border: none; cursor: pointer; display: inline-block; margin-left: 10px;">Buscar</button>
     </div>
 
-    <form id="mttoForm">
-        <label for="marcaModelo">Marca/Modelo:</label><br>
-        <input type="text" id="marcaModelo" name="marcaModelo"><br>
+    <!-- Modal de Registro -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Nuevo Registro de Mantenimiento</h2>
+            <form id="mttoForm">
+                <label for="marcaModelo">Marca/Modelo:</label><br>
+                <input type="text" id="marcaModelo" name="marcaModelo"><br>
+                <label for="unidadSap">N° Unidad SAP:</label><br>
+                <input type="text" id="unidadSap" name="unidadSap"><br>
+                <label for="placa">N° Activo / Placa:</label><br>
+                <input type="text" id="placa" name="placa"><br>
+                <label for="ubicacion">Ubicación Actual:</label><br>
+                <input type="text" id="ubicacion" name="ubicacion"><br>
+                <label for="gerencia">Gerencia Usuaria:</label><br>
+                <input type="text" id="gerencia" name="gerencia"><br>
+                <label for="ordenMtto">Orden de MTTO:</label><br>
+                <input type="text" id="ordenMtto" name="ordenMtto"><br>
+                <label for="tipoMtto">Falla Presente o Tipo MTTO:</label><br>
+                <input type="text" id="tipoMtto" name="tipoMtto"><br>
+                <label for="fechaIngreso">Fecha Ingreso:</label><br>
+                <input type="date" id="fechaIngreso" name="fechaIngreso"><br>
+                <label for="fechaEntrega">Fecha Estimada de Entrega:</label><br>
+                <input type="date" id="fechaEntrega" name="fechaEntrega"><br>
+                <label for="descripcion">Descripción / Barreras:</label><br>
+                <textarea id="descripcion" name="descripcion"></textarea><br>
+                <label for="chofer">Chófer Asignado:</label><br>
+                <input type="text" id="chofer" name="chofer"><br>
+                <button type="submit">Registrar Mantenimiento</button>
+            </form>
+        </div>
+    </div>
 
-        <label for="unidadSap">N° Unidad SAP:</label><br>
-        <input type="text" id="unidadSap" name="unidadSap"><br>
-
-        <label for="placa">N° Activo / Placa:</label><br>
-        <input type="text" id="placa" name="placa"><br>
-
-        <label for="ubicacion">Ubicación Actual:</label><br>
-        <input type="text" id="ubicacion" name="ubicacion"><br>
-
-        <label for="gerencia">Gerencia Usuaria:</label><br>
-        <input type="text" id="gerencia" name="gerencia"><br>
-
-        <label for="ordenMtto">Orden de MTTO:</label><br>
-        <input type="text" id="ordenMtto" name="ordenMtto"><br>
-
-        <label for="tipoMtto">Falla Presente o Tipo MTTO:</label><br>
-        <input type="text" id="tipoMtto" name="tipoMtto"><br>
-
-        <label for="fechaIngreso">Fecha Ingreso:</label><br>
-        <input type="date" id="fechaIngreso" name="fechaIngreso"><br>
-
-        <label for="fechaEntrega">Fecha Estimada de Entrega:</label><br>
-        <input type="date" id="fechaEntrega" name="fechaEntrega"><br>
-
-        <label for="descripcion">Descripción / Barreras:</label><br>
-        <textarea id="descripcion" name="descripcion"></textarea><br>
-
-        <label for="chofer">Chófer Asignado:</label><br>
-        <input type="text" id="chofer" name="chofer"><br>
-
-        <button type="submit">Registrar Mantenimiento</button>
-    </form>
+    <!-- Modal de Gestión de Datos -->
+    <div id="data-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Gestión de Datos</h2>
+            <div style="margin-bottom: 20px;">
+                <label for="importFile">Importar desde Excel (.xlsx):</label><br>
+                <input type="file" id="importFile" accept=".xlsx" style="margin-top: 5px;">
+                <button type="button" id="importButton" style="padding: 10px 15px; background-color: #2196F3; color: white; border: none; cursor: pointer;">Importar</button>
+                <button type="button" id="templateButton" style="padding: 10px 15px; background-color: #777; color: white; border: none; cursor: pointer; margin-left: 10px;">Descargar Plantilla</button>
+            </div>
+            <hr>
+            <div style="margin-top: 20px;">
+                <button type="button" id="exportButton" style="padding: 10px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Exportar Todo a Excel</button>
+            </div>
+        </div>
+    </div>
 
     <h2>Registros de Mantenimiento</h2>
     <table id="mttoTable">
@@ -123,6 +171,7 @@
                 <th>Fecha Entrega</th>
                 <th>Descripción</th>
                 <th>Chófer</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -229,6 +278,21 @@
             newRow.insertCell().textContent = record.fecha_entrega;
             newRow.insertCell().textContent = record.descripcion;
             newRow.insertCell().textContent = record.chofer;
+
+            const deleteCell = newRow.insertCell();
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.style.backgroundColor = '#f44336';
+            deleteButton.onclick = function() {
+                if (confirm('¿Estás seguro de que quieres eliminar este registro?')) {
+                    const stmt = db.prepare("DELETE FROM mantenimientos WHERE id = ?");
+                    stmt.run([record.id]);
+                    stmt.free();
+                    saveDB();
+                    loadRecords();
+                }
+            };
+            deleteCell.appendChild(deleteButton);
         }
 
         document.getElementById('searchButton').addEventListener('click', function() {
@@ -248,6 +312,32 @@
                 alert('No se encontraron registros.');
             }
             stmt.free();
+        });
+
+        document.getElementById('exportButton').addEventListener('click', function() {
+            const stmt = db.prepare("SELECT * FROM mantenimientos");
+            const data = [];
+            while (stmt.step()) {
+                data.push(stmt.getAsObject());
+            }
+            stmt.free();
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Mantenimientos");
+            XLSX.writeFile(workbook, "Mantenimientos.xlsx");
+        });
+
+        document.getElementById('templateButton').addEventListener('click', function() {
+            const headers = [
+                "MARCA/MODELO UNIDAD", "N° UNIDAD SAP", "N° ACTIVO / PLACA", "UBIC. ACTUAL",
+                "GCIA. USUARIA", "ORDEN DE MTTO", "FALLA PRESENTE O TIPO MTTO",
+                "FECHA INGRESO", "FECHA EST DE ENTREGA", "DESCRIPCIÓN / BARRERAS", "CHOFER"
+            ];
+            const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Plantilla");
+            XLSX.writeFile(workbook, "Plantilla_Importacion.xlsx");
         });
 
         document.getElementById('importButton').addEventListener('click', function() {
@@ -284,6 +374,32 @@
         }
 
         initDB();
+
+        // Lógica para controlar los modales
+        const registerModal = document.getElementById('register-modal');
+        const dataModal = document.getElementById('data-modal');
+
+        const openRegisterModalBtn = document.getElementById('open-register-modal');
+        const openDataModalBtn = document.getElementById('open-data-modal');
+
+        const closeBtns = document.getElementsByClassName('close');
+
+        openRegisterModalBtn.onclick = () => registerModal.style.display = 'block';
+        openDataModalBtn.onclick = () => dataModal.style.display = 'block';
+
+        for (let btn of closeBtns) {
+            btn.onclick = () => {
+                registerModal.style.display = 'none';
+                dataModal.style.display = 'none';
+            };
+        }
+
+        window.onclick = event => {
+            if (event.target == registerModal || event.target == dataModal) {
+                registerModal.style.display = 'none';
+                dataModal.style.display = 'none';
+            }
+        };
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
