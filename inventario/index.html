@@ -1,73 +1,638 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistema de Inventario - Equipos Tecnológicos</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="styles/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="./manifest.json">
+  <title>Sistema de Inventario CRUD</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:0;background:#f5f7ff;color:#222}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid #e6e9fb}
+    .title{display:flex;gap:12px;align-items:center}
+    .connectionStatus{font-size:14px;color:#666}
+    .header-actions{display:flex;gap:8px;align-items:center}
+    button{background:#667eea;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+    input[type=file]{display:none}
+    main{padding:16px}
+    .card{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04);margin-bottom:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #f0f2ff}
+    .actions button{margin-right:6px}
+    input,select,textarea{padding:8px;border:1px solid #e6e9fb;border-radius:6px;margin-right:8px}
+
+    /* moved modal styles to inventario/styles.css */
+  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>📊 Inventario de Equipos Tecnológicos</h1>
-      <div class="controls">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar por trabajador, serial, departamento..." />
-        <button id="addNewBtn">➕ Agregar Equipo</button>
-        <button id="exportBtn">📥 Exportar Excel</button>
-        <button id="clearLocalBtn">🧹 Limpiar Locales</button>
-        <button id="refreshBtn">🔄 Actualizar</button>
+  <header>
+    <div class="title">
+      <h1>Sistema de Inventario</h1>
+      <div id="connectionStatus" class="connectionStatus">Comprobando conexión...</div>
+    </div>
+    <div class="header-actions">
+      <button id="installBtn" style="display:none">Instalar PWA</button>
+      <button id="backupBtn">Backup</button>
+      <label for="restoreInput" style="background:#fff;color:#667eea;padding:6px 10px;border-radius:6px;border:1px solid #667eea;cursor:pointer">Restaurar</label>
+      <input id="restoreInput" type="file" accept="application/json">
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Usuarios (SQLite)</h2>
+      <form id="userForm">
+        <input type="hidden" id="userId">
+        <input id="userName" placeholder="Nombre" required>
+        <input id="userEmail" placeholder="Email" required>
+        <input id="userRole" placeholder="Rol">
+        <button type="submit">Guardar</button>
+      </form>
+      <div id="usersList"></div>
+    </section>
+
+    <section class="card">
+      <h2>Equipos (SQLite)</h2>
+      <p>Gestión de equipos migrada a SQLite.</p>
+      <form id="equipoForm">
+        <input type="hidden" id="equipoId">
+        <input id="equipoNombre" placeholder="Nombre" required>
+        <input id="equipoTipo" placeholder="Tipo">
+        <input id="equipoSerial" placeholder="Serial">
+        <input id="equipoNotas" placeholder="Notas">
+        <button type="submit">Guardar Equipo</button>
+      </form>
+      <div id="equiposList"></div>
+    </section>
+
+    <section class="card">
+      <h2>Asignaciones (SQLite)</h2>
+      <p>Gestión de asignaciones migrada a SQLite.</p>
+      <form id="asignForm">
+        <input type="hidden" id="asignId">
+        <select id="asignEquipoId"><option value="">Equipo</option></select>
+        <select id="asignUsuarioId"><option value="">Usuario</option></select>
+        <input id="asignFecha" type="date">
+        <input id="asignObs" placeholder="Observaciones">
+        <button type="submit">Guardar Asignación</button>
+      </form>
+      <div id="asignacionesList"></div>
+    </section>
+
+    <!-- Modal overlay (insertado en el mismo archivo) -->
+    <div id="genericModal" class="modal-backdrop" style="display:none" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header>
+          <h3 id="modalTitle">Título</h3>
+          <button id="modalClose" class="btn-ghost" aria-label="Cerrar">✕</button>
+        </header>
+        <div id="modalBody" class="modal-body"></div>
+        <div class="modal-foot">
+          <button id="modalCancel" class="btn-ghost">Cancelar</button>
+          <button id="modalConfirm" class="btn" style="background:#667eea">Guardar</button>
+        </div>
       </div>
-    </header>
-
-    <div class="filters">
-      <select id="deptoFilter"><option value="">Todos los departamentos</option></select>
-      <select id="statusFilter"><option value="">Todos los estados</option></select>
     </div>
 
-    <div class="stats">
-      <div class="stat-card"><h3>Total Equipos</h3><span id="totalCount">0</span></div>
-      <div class="stat-card"><h3>Operativos</h3><span id="operativoCount">0</span></div>
-      <div class="stat-card"><h3>Inoperativos</h3><span id="inoperativoCount">0</span></div>
-    </div>
+  </main>
 
-    <div class="table-container">
-      <table id="inventoryTable" aria-describedby="inventoryCaption">
-        <caption id="inventoryCaption" class="visually-hidden">Tabla de inventario</caption>
-        <thead id="tableHead"></thead>
-        <tbody id="inventoryTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- Modal -->
-    <div id="entryModal" class="modal" aria-hidden="true">
-      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <button class="modal-close" aria-label="Cerrar">&times;</button>
-        <h2 id="modalTitle"></h2>
-        <form id="entryForm">
-          <div id="formFields" class="form-grid"></div>
-          <div class="modal-buttons">
-            <button type="button" class="btn-cancel">❌ Cancelar</button>
-            <button type="submit" class="btn-save" id="saveButton">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <footer><p>Sistema de Inventario - Desarrollado para gestión de equipos tecnológicos</p></footer>
-  </div>
-
+  <script src="./modal.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
   <script>
-    // CONFIGURA: coloca aquí la URL del Web App (Apps Script deploy) y la API_KEY sólo temporalmente para pruebas.
-    // En producción NO dejes apiKey en el frontend público.
-    window.INVENTORY_CONFIG = {
-      WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbznoxXMaauGkBAEh-Cy1gTFscwE8gGW7z6eTr9dUr_wpUn7v2xWLGjyPKkhUotd5JBd/exec',
-      API_KEY: 'Raida2025' // <<-- no dejes en repositorio público. Mejor: servidor intermedio o auth.
-    };
-  </script>
+    // ------- Connection status -------
+    const connEl = document.getElementById('connectionStatus');
+    function updateOnlineStatus(){
+      connEl.textContent = navigator.onLine ? 'Conectado' : 'Offline';
+      connEl.style.color = navigator.onLine ? '#0a8a0a' : '#b33';
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
 
-  <script src="js/app.js" defer></script>
-  <script src="js/export.js" defer></script>
+    // ------- Service worker registration -------
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/inventario/service-worker.js')
+        .then(reg => console.log('Service Worker registrado', reg))
+        .catch(err => console.warn('Error SW', err));
+    }
+
+    // ------- PWA install prompt handling -------
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-block';
+    });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('User choice', outcome);
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+
+    // ------- IndexedDB helpers for equipos/asignaciones and old usuarios store -------
+    function openAppDB(){
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('InventarioDB', 1);
+        req.onupgradeneeded = (ev) => {
+          const db = ev.target.result;
+          if (!db.objectStoreNames.contains('usuarios')) db.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
+          if (!db.objectStoreNames.contains('equipos')) db.createObjectStore('equipos', { keyPath: 'id', autoIncrement: true });
+          if (!db.objectStoreNames.contains('asignaciones')) db.createObjectStore('asignaciones', { keyPath: 'id', autoIncrement: true });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // separate DB for sqlite binary storage as requested
+    function openSqliteStore(){
+      return new Promise((resolve, reject) => {
+        const r = indexedDB.open('InventarioSQLite', 1);
+        r.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('sqlite')) db.createObjectStore('sqlite');
+        };
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+      });
+    }
+
+    async function saveSqliteBinary(uint8arr){
+      const db = await openSqliteStore();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('sqlite', 'readwrite');
+        const store = tx.objectStore('sqlite');
+        const req = store.put(uint8arr, 'db');
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function loadSqliteBinary(){
+      const db = await openSqliteStore();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('sqlite', 'readonly');
+        const store = tx.objectStore('sqlite');
+        const req = store.get('db');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // ------- SQL.js initialization and SQLite adapter for usuarios/equipos/asignaciones -------
+    let SQL;
+    let sqlDb; // SQL.Database instance
+    async function initSqlJSAndDB(){
+      if (!window.initSqlJs) {
+        console.warn('sql.js script not loaded');
+        return;
+      }
+      SQL = await window.initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${filename}` });
+      const binary = await loadSqliteBinary();
+      if (binary) {
+        try {
+          sqlDb = new SQL.Database(new Uint8Array(binary));
+          console.log('SQLite DB cargada desde IndexedDB');
+        } catch (err) {
+          console.error('Error al abrir la DB desde IndexedDB', err);
+          sqlDb = new SQL.Database();
+          await setupSqliteSchemaAndMigrate();
+        }
+      } else {
+        sqlDb = new SQL.Database();
+        await setupSqliteSchemaAndMigrate();
+      }
+      renderUsers();
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+
+    async function setupSqliteSchemaAndMigrate(){
+      // create tables if not exists
+      sqlDb.run(`CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT,
+        email TEXT,
+        rol TEXT
+      );`);
+
+      sqlDb.run(`CREATE TABLE IF NOT EXISTS equipos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT,
+        tipo TEXT,
+        serial TEXT,
+        notas TEXT
+      );`);
+
+      sqlDb.run(`CREATE TABLE IF NOT EXISTS asignaciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        equipo_id INTEGER,
+        usuario_id INTEGER,
+        fecha TEXT,
+        observaciones TEXT
+      );`);
+
+      // migrate existing data from IndexedDB
+      const appDb = await openAppDB();
+      const tx = appDb.transaction(['usuarios','equipos','asignaciones'],'readonly');
+      const usuariosReq = tx.objectStore('usuarios').getAll();
+      const equiposReq = tx.objectStore('equipos').getAll();
+      const asignReq = tx.objectStore('asignaciones').getAll();
+
+      const usuarios = await new Promise((res)=>{ usuariosReq.onsuccess = ()=>res(usuariosReq.result||[]); usuariosReq.onerror = ()=>res([]); });
+      const equipos = await new Promise((res)=>{ equiposReq.onsuccess = ()=>res(equiposReq.result||[]); equiposReq.onerror = ()=>res([]); });
+      const asignaciones = await new Promise((res)=>{ asignReq.onsuccess = ()=>res(asignReq.result||[]); asignReq.onerror = ()=>res([]); });
+
+      // insert migrated rows into sqlite within a transaction per table
+      if (usuarios.length){
+        const insert = sqlDb.prepare('INSERT INTO usuarios (nombre,email,rol) VALUES (?,?,?)');
+        sqlDb.run('BEGIN TRANSACTION');
+        for (const r of usuarios){ insert.run([r.nombre||r.name||'', r.email||'', r.rol||r.role||'']); }
+        sqlDb.run('COMMIT');
+        try{ insert.free(); }catch(e){}
+        console.log('Migración de usuarios a SQLite completada:', usuarios.length);
+      }
+
+      if (equipos.length){
+        const insert = sqlDb.prepare('INSERT INTO equipos (nombre,tipo,serial,notas) VALUES (?,?,?,?)');
+        sqlDb.run('BEGIN TRANSACTION');
+        for (const r of equipos){ insert.run([r.nombre||r.name||'', r.tipo||r.type||'', r.serial||r.sn||'', r.notas||r.notes||'']); }
+        sqlDb.run('COMMIT');
+        try{ insert.free(); }catch(e){}
+        console.log('Migración de equipos a SQLite completada:', equipos.length);
+      }
+
+      if (asignaciones.length){
+        const insert = sqlDb.prepare('INSERT INTO asignaciones (equipo_id,usuario_id,fecha,observaciones) VALUES (?,?,?,?)');
+        sqlDb.run('BEGIN TRANSACTION');
+        for (const r of asignaciones){
+          const equipoId = r.equipoId || r.equipo || r.equipo_id || null;
+          const usuarioId = r.usuarioId || r.usuario || r.usuario_id || null;
+          insert.run([equipoId, usuarioId, r.fecha||r.createdAt||'', r.observaciones||r.notes||'']);
+        }
+        sqlDb.run('COMMIT');
+        try{ insert.free(); }catch(e){}
+        console.log('Migración de asignaciones a SQLite completada:', asignaciones.length);
+      }
+
+      // save binary
+      const exported = sqlDb.export();
+      await saveSqliteBinary(exported);
+    }
+
+    // ------- CRUD usuarios usando SQLite -------
+    function getAllUsersFromSQLite(){
+      try{
+        const res = sqlDb.exec('SELECT id,nombre,email,rol FROM usuarios ORDER BY id DESC');
+        if (!res || res.length === 0) return [];
+        const values = res[0].values;
+        return values.map(r => ({id:r[0], nombre:r[1], email:r[2], rol:r[3]}));
+      }catch(e){console.error(e);return []}
+    }
+
+    async function addUserToSQLite(data){
+      const stmt = sqlDb.prepare('INSERT INTO usuarios (nombre,email,rol) VALUES (?,?,?)');
+      stmt.run([data.nombre,data.email,data.rol]);
+      try{ stmt.free(); }catch(e){}
+      const exported = sqlDb.export();
+      await saveSqliteBinary(exported);
+      renderUsers();
+      populateSelects();
+    }
+    async function updateUserInSQLite(id,data){
+      const stmt = sqlDb.prepare('UPDATE usuarios SET nombre=?,email=?,rol=? WHERE id=?');
+      stmt.run([data.nombre,data.email,data.rol,id]);
+      try{ stmt.free(); }catch(e){}
+      const exported = sqlDb.export();
+      await saveSqliteBinary(exported);
+      renderUsers();
+      populateSelects();
+    }
+    async function deleteUserInSQLite(id){
+      const stmt = sqlDb.prepare('DELETE FROM usuarios WHERE id=?');
+      stmt.run([id]);
+      try{ stmt.free(); }catch(e){}
+      const exported = sqlDb.export();
+      await saveSqliteBinary(exported);
+      renderUsers();
+      populateSelects();
+    }
+
+    // ------- CRUD equipos using SQLite -------
+    function getAllEquiposFromSQLite(){
+      try{
+        const res = sqlDb.exec('SELECT id,nombre,tipo,serial,notas FROM equipos ORDER BY id DESC');
+        if (!res || res.length === 0) return [];
+        return res[0].values.map(r => ({id:r[0], nombre:r[1], tipo:r[2], serial:r[3], notas:r[4]}));
+      }catch(e){console.error(e);return []}
+    }
+    async function addEquipoToSQLite(data){
+      const stmt = sqlDb.prepare('INSERT INTO equipos (nombre,tipo,serial,notas) VALUES (?,?,?,?)');
+      stmt.run([data.nombre,data.tipo,data.serial,data.notas]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+    async function updateEquipoInSQLite(id,data){
+      const stmt = sqlDb.prepare('UPDATE equipos SET nombre=?,tipo=?,serial=?,notas=? WHERE id=?');
+      stmt.run([data.nombre,data.tipo,data.serial,data.notas,id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+    async function deleteEquipoInSQLite(id){
+      const stmt = sqlDb.prepare('DELETE FROM equipos WHERE id=?');
+      stmt.run([id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+      populateSelects();
+    }
+
+    // ------- CRUD asignaciones using SQLite -------
+    function getAllAsignacionesFromSQLite(){
+      try{
+        const res = sqlDb.exec(`SELECT a.id, a.equipo_id, e.nombre as equipo_nombre, a.usuario_id, u.nombre as usuario_nombre, a.fecha, a.observaciones
+          FROM asignaciones a
+          LEFT JOIN equipos e ON e.id = a.equipo_id
+          LEFT JOIN usuarios u ON u.id = a.usuario_id
+          ORDER BY a.id DESC`);
+        if (!res || res.length === 0) return [];
+        return res[0].values.map(r => ({id:r[0], equipo_id:r[1], equipo_nombre:r[2], usuario_id:r[3], usuario_nombre:r[4], fecha:r[5], observaciones:r[6]}));
+      }catch(e){console.error(e);return []}
+    }
+    async function addAsignacionToSQLite(data){
+      const stmt = sqlDb.prepare('INSERT INTO asignaciones (equipo_id,usuario_id,fecha,observaciones) VALUES (?,?,?,?)');
+      stmt.run([data.equipo_id,data.usuario_id,data.fecha,data.observaciones]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+    }
+    async function updateAsignacionInSQLite(id,data){
+      const stmt = sqlDb.prepare('UPDATE asignaciones SET equipo_id=?,usuario_id=?,fecha=?,observaciones=? WHERE id=?');
+      stmt.run([data.equipo_id,data.usuario_id,data.fecha,data.observaciones,id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+    }
+    async function deleteAsignacionInSQLite(id){
+      const stmt = sqlDb.prepare('DELETE FROM asignaciones WHERE id=?');
+      stmt.run([id]);
+      try{ stmt.free(); }catch(e){}
+      await saveSqliteBinary(sqlDb.export());
+      renderEquiposAndAsignaciones();
+    }
+
+    // ------- UI bindings for usuarios/equipos/asignaciones -------
+    const userForm = document.getElementById('userForm');
+    userForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('userId').value;
+      const nombre = document.getElementById('userName').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const rol = document.getElementById('userRole').value.trim();
+      if (!nombre || !email) return alert('Nombre y email son obligatorios');
+      if (id) { await updateUserInSQLite(parseInt(id,10), {nombre,email,rol}); } else { await addUserToSQLite({nombre,email,rol}); }
+      userForm.reset();
+      document.getElementById('userId').value = '';
+    });
+
+    const equipoForm = document.getElementById('equipoForm');
+    equipoForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('equipoId').value;
+      const nombre = document.getElementById('equipoNombre').value.trim();
+      const tipo = document.getElementById('equipoTipo').value.trim();
+      const serial = document.getElementById('equipoSerial').value.trim();
+      const notas = document.getElementById('equipoNotas').value.trim();
+      if (!nombre) return alert('Nombre es obligatorio');
+      if (id) { await updateEquipoInSQLite(parseInt(id,10), {nombre,tipo,serial,notas}); } else { await addEquipoToSQLite({nombre,tipo,serial,notas}); }
+      equipoForm.reset();
+      document.getElementById('equipoId').value = '';
+    });
+
+    const asignForm = document.getElementById('asignForm');
+    asignForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('asignId').value;
+      const equipo_id = document.getElementById('asignEquipoId').value || null;
+      const usuario_id = document.getElementById('asignUsuarioId').value || null;
+      const fecha = document.getElementById('asignFecha').value || '';
+      const observaciones = document.getElementById('asignObs').value || '';
+      if (!equipo_id || !usuario_id) return alert('Equipo y Usuario son obligatorios');
+      if (id) { await updateAsignacionInSQLite(parseInt(id,10), {equipo_id,usuario_id,fecha,observaciones}); } else { await addAsignacionToSQLite({equipo_id,usuario_id,fecha,observaciones}); }
+      asignForm.reset();
+      document.getElementById('asignId').value = '';
+    });
+
+    function renderUsers(){
+      if (!sqlDb) return;
+      const users = getAllUsersFromSQLite();
+      const container = document.getElementById('usersList');
+      if (!container) return;
+      if (users.length === 0){ container.innerHTML = '<p>No hay usuarios.</p>'; return; }
+      let html = '<table class="table-wrap"><thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>';
+      users.forEach(u => {
+        html += `<tr><td>${u.id}</td><td>${escapeHtml(u.nombre)}</td><td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.rol||'')}</td><td class="actions">` +
+                `<button class="btn-ghost btn-edit-user" data-id="${u.id}">Editar</button>` +
+                `<button class="btn-ghost btn-del-user" data-id="${u.id}">Borrar</button>` +
+                `</td></tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+      // attach listeners
+      container.querySelectorAll('.btn-edit-user').forEach(btn=>btn.addEventListener('click', (ev)=>{
+        const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+        const u = users.find(x=>x.id===id);
+        if (u) showEditUserModal(u);
+      }));
+      container.querySelectorAll('.btn-del-user').forEach(btn=>btn.addEventListener('click', async (ev)=>{
+        const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+        const ok = await showConfirm('¿Borrar usuario?');
+        if (!ok) return;
+        deleteUserInSQLite(id);
+      }));
+    }
+
+    function escapeHtml(s){
+      return (s||'').toString().replace(/[&<>"]'/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    }
+
+    // ------- Backup & Restore -------
+    document.getElementById('backupBtn').addEventListener('click', async ()=>{
+      // export sqlite binary
+      const sqliteBinary = await loadSqliteBinary();
+      // get equipos and asignaciones from app DB (for legacy or external stores)
+      const appDb = await openAppDB();
+      const tx = appDb.transaction(['equipos','asignaciones'],'readonly');
+      const equiposReq = tx.objectStore('equipos').getAll();
+      const asignReq = tx.objectStore('asignaciones').getAll();
+      equiposReq.onsuccess = () => {
+        asignReq.onsuccess = async () => {
+          const payload = {
+            sqlite: sqliteBinary ? arrayBufferToBase64(sqliteBinary) : null,
+            equipos: equiposReq.result || [],
+            asignaciones: asignReq.result || []
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'inventario-backup-'+new Date().toISOString()+'.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+      };
+    });
+
+    document.getElementById('restoreInput').addEventListener('change', async (e)=>{
+      const f = e.target.files[0];
+      if (!f) return;
+      const text = await f.text();
+      let data;
+      try{ data = JSON.parse(text); }catch(err){ return alert('Archivo inválido'); }
+      // restore equipos and asignaciones (legacy IndexedDB stores)
+      const appDb = await openAppDB();
+      const tx = appDb.transaction(['equipos','asignaciones'],'readwrite');
+      const equiposStore = tx.objectStore('equipos');
+      const asignStore = tx.objectStore('asignaciones');
+      // clear stores and put new
+      const clearEquip = equiposStore.clear();
+      const clearAsign = asignStore.clear();
+      clearEquip.onsuccess = () => { (data.equipos||[]).forEach(item => equiposStore.put(item)); };
+      clearAsign.onsuccess = () => { (data.asignaciones||[]).forEach(item => asignStore.put(item)); };
+      tx.oncomplete = async ()=>{
+        // restore sqlite
+        if (data.sqlite){
+          const u8 = base64ToUint8Array(data.sqlite);
+          await saveSqliteBinary(u8);
+          sqlDb = new SQL.Database(new Uint8Array(u8));
+          renderUsers();
+          renderEquiposAndAsignaciones();
+          populateSelects();
+        }
+        alert('Restauración completada');
+      };
+    });
+
+    function arrayBufferToBase64(buf){
+      let binary = '';
+      const bytes = new Uint8Array(buf);
+      const len = bytes.byteLength;
+      for (let i=0;i<len;i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+    function base64ToUint8Array(base64){
+      const binary = atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i=0;i<len;i++) bytes[i]=binary.charCodeAt(i);
+      return bytes;
+    }
+
+    // ------- Equipos / Asignaciones renderers (prefer SQLite) -------
+    async function renderEquiposAndAsignaciones(){
+      const equiposOut = document.getElementById('equiposList');
+      const asignOut = document.getElementById('asignacionesList');
+
+      if (sqlDb){
+        const equipos = getAllEquiposFromSQLite();
+        if (!equipos || equipos.length === 0) equiposOut.innerHTML = '<p>No hay equipos.</p>';
+        else {
+          equiposOut.innerHTML = '<div>' + equipos.map(i=>`<div class=\"list-item\"><div><strong>${escapeHtml(i.nombre||'Equipo')}</strong><div class=\"small\">${escapeHtml(i.serial||'')}</div></div><div><button class=\"btn-ghost btn-edit-equipo\" data-id=\"${i.id}\">Editar</button> <button class=\"btn-ghost btn-del-equipo\" data-id=\"${i.id}\">Borrar</button></div></div>`).join('') + '</div>';
+        }
+
+        const asigns = getAllAsignacionesFromSQLite();
+        if (!asigns || asigns.length === 0) asignOut.innerHTML = '<p>No hay asignaciones.</p>';
+        else {
+          asignOut.innerHTML = '<div>' + asigns.map(a=>`<div class=\"list-item\"><div><strong>${escapeHtml(a.equipo_nombre||String(a.equipo_id||''))} -> ${escapeHtml(a.usuario_nombre||String(a.usuario_id||''))}</strong><div class=\"small\">${escapeHtml(a.fecha||'')} ${escapeHtml(a.observaciones||'')}</div></div><div><button class=\"btn-ghost btn-edit-asign\" data-id=\"${a.id}\">Editar</button> <button class=\"btn-ghost btn-del-asign\" data-id=\"${a.id}\">Borrar</button></div></div>`).join('') + '</div>';
+        }
+
+        // attach listeners for equipos
+        equiposOut.querySelectorAll('.btn-edit-equipo').forEach(b=>b.addEventListener('click', (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const e = equipos.find(x=>x.id===id);
+          if (e) showEditEquipoModal(e);
+        }));
+        equiposOut.querySelectorAll('.btn-del-equipo').forEach(b=>b.addEventListener('click', async (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const ok = await showConfirm('¿Borrar equipo?');
+          if (!ok) return;
+          deleteEquipoInSQLite(id);
+        }));
+
+        // attach listeners for asignaciones
+        asignOut.querySelectorAll('.btn-edit-asign').forEach(b=>b.addEventListener('click', (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const a = asigns.find(x=>x.id===id);
+          if (a) showEditAsignModal(a);
+        }));
+        asignOut.querySelectorAll('.btn-del-asign').forEach(b=>b.addEventListener('click', async (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const ok = await showConfirm('¿Borrar asignación?');
+          if (!ok) return;
+          deleteAsignacionInSQLite(id);
+        }));
+
+        return;
+      }
+
+      // fallback to IndexedDB
+      const db = await openAppDB();
+      const tx = db.transaction(['equipos','asignaciones'],'readonly');
+      const equiposReq = tx.objectStore('equipos').getAll();
+      const asignReq = tx.objectStore('asignaciones').getAll();
+      equiposReq.onsuccess = () => {
+        const out = document.getElementById('equiposList');
+        const list = equiposReq.result || [];
+        if (list.length===0) out.innerHTML='<p>No hay equipos.</p>'; else out.innerHTML = '<div>'+list.map(i=>`<div class=\"list-item\"><div><strong>${escapeHtml(i.name||i.nombre||'Equipo')}</str[...]
+        // attach handlers for legacy items
+        out.querySelectorAll('.btn-edit-equipo').forEach(b=>b.addEventListener('click', (ev)=>{
+          const id = parseInt(ev.currentTarget.getAttribute('data-id'),10);
+          const item = list.find(x=>x.id===id);
+          if (item) showEditEquipoModal(item);
+        }));
+      };
+      asignReq.onsuccess = () => {
+        const out = document.getElementById('asignacionesList');
+        const list = asignReq.result || [];
+        if (list.length===0) out.innerHTML='<p>No hay asignaciones.</p>'; else out.innerHTML = '<div>'+list.map(i=>`<div class=\"list-item\"><div><strong>${escapeHtml(i.equipo||i.equipoId||'')} -[...]
+      };
+    }
+
+    // populate selects for asignaciones
+    function populateSelects(){
+      if (!sqlDb) return;
+      const equipos = getAllEquiposFromSQLite();
+      const usuarios = getAllUsersFromSQLite();
+      const selE = document.getElementById('asignEquipoId');
+      const selU = document.getElementById('asignUsuarioId');
+      if (!selE || !selU) return;
+      selE.innerHTML = '<option value="">Equipo</option>' + equipos.map(e=>`<option value="${e.id}">${escapeHtml(e.nombre)}</option>`).join('');
+      selU.innerHTML = '<option value="">Usuario</option>' + usuarios.map(u=>`<option value="${u.id}">${escapeHtml(u.nombre)}</option>`).join('');
+    }
+
+    // expose legacy globals for compatibility (they now open modals)
+    window.editUser = function(id){ const users = getAllUsersFromSQLite(); const u = users.find(x=>x.id===id); if (!u) return alert('Usuario no encontrado'); showEditUserModal(u); };
+    window.delUser = async function(id){ const ok = await showConfirm('¿Borrar usuario?'); if (!ok) return; deleteUserInSQLite(id); };
+    window.editEquipo = function(id){ const equipos = getAllEquiposFromSQLite(); const e = equipos.find(x=>x.id===id); if (!e) return alert('Equipo no encontrado'); showEditEquipoModal(e); };
+    window.delEquipo = async function(id){ const ok = await showConfirm('¿Borrar equipo?'); if (!ok) return; deleteEquipoInSQLite(id); };
+    window.editAsign = function(id){ const asigns = getAllAsignacionesFromSQLite(); const a = asigns.find(x=>x.id===id); if (!a) return alert('Asignación no encontrada'); showEditAsignModal(a); };
+    window.delAsign = async function(id){ const ok = await showConfirm('¿Borrar asignación?'); if (!ok) return; deleteAsignacionInSQLite(id); };
+
+    // ------- Init -------
+    window.addEventListener('load', async ()=>{
+      await initSqlJSAndDB();
+    });
+
+  </script>
 </body>
 </html>

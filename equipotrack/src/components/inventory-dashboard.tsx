@@ -25,7 +25,7 @@ import { InventoryDialog } from "./inventory-dialog";
 import { ImportDialog } from "./import-dialog";
 import { exportToCSV } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { deleteAllInventoryItems, getInventoryItems } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -63,7 +63,7 @@ export default function InventoryDashboard() {
   useEffect(() => {
     fetchItems();
   }, []);
-  
+
   const sectors = useMemo(
     () => ["all", ...Array.from(new Set(items.map((item) => item.sector).filter(Boolean)))],
     [items]
@@ -89,7 +89,7 @@ export default function InventoryDashboard() {
       return matchesSearch && matchesSector && matchesStatus;
     });
   }, [items, searchTerm, sectorFilter, statusFilter]);
-  
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     startTransition(() => {
@@ -112,22 +112,48 @@ export default function InventoryDashboard() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Gestión de Inventario</h2>
+            <p className="text-muted-foreground">
+              Aquí puedes ver, agregar, y gestionar todos los equipos.
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Agregar
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Registros</CardTitle>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{items.length}</div>
+              <p className="text-xs text-muted-foreground">Total de equipos registrados</p>
+            </CardContent>
+          </Card>
+          {/* Add more stat cards if needed */}
+        </div>
+
         <Card>
-          <CardContent className="p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-2 justify-between">
               <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => setIsDialogOpen(true)}>
-                      <PlusCircle className="mr-2 h-4 w-4" /> Agregar Fila
-                  </Button>
                   <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-                    <Upload className="mr-2 h-4 w-4" /> Importar CSV
+                    <Upload className="mr-2 h-4 w-4" /> Importar
                   </Button>
                   <Button variant="outline" onClick={() => exportToCSV(filteredItems, 'inventario.csv')}>
-                      <Download className="mr-2 h-4 w-4" /> Exportar CSV
+                      <Download className="mr-2 h-4 w-4" /> Exportar
                   </Button>
                   <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
                       <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                      Cargar Datos
+                      Actualizar
                   </Button>
                   <Button variant="destructive" onClick={() => setIsDeleteAllOpen(true)} disabled={items.length === 0}>
                     <Trash2 className="mr-2 h-4 w-4" /> Eliminar Todo
@@ -168,18 +194,19 @@ export default function InventoryDashboard() {
                       </SelectContent>
                   </Select>
               </div>
+            </div>
           </CardContent>
         </Card>
         
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2">
+        <div className="grid gap-6 md:grid-cols-5">
+          <div className="md:col-span-3">
             <Card>
-              <CardContent className="p-0">
+              <CardContent>
                 <InventoryTable items={filteredItems} loading={isLoading} onRefresh={fetchItems} />
               </CardContent>
             </Card>
           </div>
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
             <StatusChart items={items} />
           </div>
         </div>
