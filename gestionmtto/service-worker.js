@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestion-mtto-cache-v2'; // Incrementamos la versión del caché
+const CACHE_NAME = 'gestion-mtto-cache-v3'; // Incrementamos la versión del caché
 const urlsToCache = [
     // Archivos locales
     'index.html',
@@ -7,7 +7,10 @@ const urlsToCache = [
     'icon.png',
     // Archivos externos (CDN)
     'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js'
+    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js',
+    'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
 
 self.addEventListener('install', event => {
@@ -24,11 +27,9 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                // Si el recurso está en la caché, lo devolvemos desde allí
                 if (response) {
                     return response;
                 }
-                // Si no, lo buscamos en la red
                 return fetch(event.request);
             })
     );
