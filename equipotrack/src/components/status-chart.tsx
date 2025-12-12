@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Pie, PieChart, Cell, Tooltip } from "recharts";
+import { Pie, PieChart, Cell, Tooltip, Legend } from "recharts";
 import {
   Card,
   CardContent,
@@ -46,31 +46,31 @@ export default function StatusChart({ items }: { items: InventoryItem[] }) {
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
-          <ChartContainer config={{}} className="mx-auto aspect-square max-h-[300px]">
-            <PieChart>
-              <Tooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={60}
-                strokeWidth={5}
-              >
-                  {chartData.map((entry) => (
-                      <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                  ))}
-              </Pie>
-               <ChartLegend
-                content={<ChartLegendContent nameKey="name" />}
-                className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-              />
-            </PieChart>
-          </ChartContainer>
-        ) : (
-          <div className="flex justify-center items-center h-[300px] text-muted-foreground">
+        <ChartContainer config={{}} className="mx-auto aspect-square max-h-[250px]">
+          <PieChart>
+            <Tooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
+            />
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={60}
+              strokeWidth={5}
+            >
+                {chartData.map((entry) => (
+                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                ))}
+            </Pie>
+             <ChartLegend
+              content={<ChartLegendContent nameKey="name" />}
+              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+            />
+          </PieChart>
+        </ChartContainer>
+         ) : (
+          <div className="flex justify-center items-center h-[250px] text-muted-foreground">
             No hay datos para mostrar.
           </div>
         )}

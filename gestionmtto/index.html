@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Google Fonts Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <title>Gestión de Mantenimiento de Vehículos</title>
     <style>
@@ -47,7 +51,7 @@
             background-color: #f2f2f2;
         }
         @media screen and (max-width: 600px) {
-            table {
+            table.responsive-table {
                 display: block;
                 overflow-x: auto;
             }
@@ -57,59 +61,118 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 </head>
 <body>
-    <h1>Gestión de Mantenimiento de Vehículos</h1>
+<div class="container">
+    <h4 class="center-align">Gestión de Mantenimiento</h4>
 
-    <div style="margin-bottom: 20px;">
-        <label for="importFile">Importar desde Excel (.xlsx):</label><br>
-        <input type="file" id="importFile" accept=".xlsx" style="margin-top: 5px;">
-        <button type="button" id="importButton" style="padding: 10px 15px; background-color: #2196F3; color: white; border: none; cursor: pointer;">Importar</button>
+    <div class="row">
+        <div class="input-field col s9">
+            <i class="material-icons prefix">search</i>
+            <input type="text" id="search">
+            <label for="search">Buscar por Placa o N° Unidad SAP</label>
+        </div>
+        <div class="input-field col s3">
+            <button id="searchButton" class="btn waves-effect waves-light">Buscar</button>
+        </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <label for="search">Buscar por Placa o N° Unidad SAP:</label><br>
-        <input type="text" id="search" name="search" style="width: calc(100% - 110px); padding: 8px; margin-top: 5px; box-sizing: border-box; display: inline-block;">
-        <button type="button" id="searchButton" style="padding: 10px 15px; background-color: #008CBA; color: white; border: none; cursor: pointer; display: inline-block; margin-left: 10px;">Buscar</button>
+    <!-- Floating Action Button -->
+    <div class="fixed-action-btn">
+        <a class="btn-floating btn-large red">
+            <i class="large material-icons">add</i>
+        </a>
+        <ul>
+            <li><a id="open-data-modal" class="btn-floating blue modal-trigger" href="#data-modal"><i class="material-icons">folder</i></a></li>
+            <li><a id="open-register-modal" class="btn-floating green modal-trigger" href="#register-modal"><i class="material-icons">add_box</i></a></li>
+        </ul>
     </div>
 
-    <form id="mttoForm">
-        <label for="marcaModelo">Marca/Modelo:</label><br>
-        <input type="text" id="marcaModelo" name="marcaModelo"><br>
+    <!-- Modal de Registro -->
+    <div id="register-modal" class="modal modal-fixed-footer">
+        <div class="modal-content">
+            <h4>Nuevo Registro de Mantenimiento</h4>
+            <form id="mttoForm" class="col s12">
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input id="marcaModelo" type="text"><label for="marcaModelo">Marca/Modelo</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input id="unidadSap" type="text"><label for="unidadSap">N° Unidad SAP</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input id="placa" type="text"><label for="placa">N° Activo / Placa</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input id="ubicacion" type="text"><label for="ubicacion">Ubicación Actual</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input id="gerencia" type="text"><label for="gerencia">Gerencia Usuaria</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input id="ordenMtto" type="text"><label for="ordenMtto">Orden de MTTO</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input id="tipoMtto" type="text"><label for="tipoMtto">Falla Presente o Tipo MTTO</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input id="fechaIngreso" type="text" class="datepicker"><label for="fechaIngreso">Fecha Ingreso</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input id="fechaEntrega" type="text" class="datepicker"><label for="fechaEntrega">Fecha Estimada de Entrega</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <textarea id="descripcion" class="materialize-textarea"></textarea><label for="descripcion">Descripción / Barreras</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input id="chofer" type="text"><label for="chofer">Chófer Asignado</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cancelar</a>
+            <button type="button" id="saveRecordButton" class="btn waves-effect waves-light">Registrar</button>
+        </div>
+    </div>
 
-        <label for="unidadSap">N° Unidad SAP:</label><br>
-        <input type="text" id="unidadSap" name="unidadSap"><br>
+    <!-- Modal de Gestión de Datos -->
+    <div id="data-modal" class="modal">
+        <div class="modal-content">
+            <h4>Gestión de Datos</h4>
+            <p>Importar registros desde un archivo Excel (.xlsx).</p>
+            <div class="file-field input-field">
+                <div class="btn">
+                    <span>Archivo</span>
+                    <input type="file" id="importFile" accept=".xlsx">
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text">
+                </div>
+            </div>
+            <button id="importButton" class="btn waves-effect waves-light blue">Importar</button>
+            <button id="templateButton" class="btn waves-effect waves-light grey" style="margin-left: 10px;">Descargar Plantilla</button>
+            <hr style="margin: 20px 0;">
+            <p>Exportar todos los registros a un archivo Excel.</p>
+            <button id="exportButton" class="btn waves-effect waves-light green">Exportar Todo a Excel</button>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+        </div>
+    </div>
 
-        <label for="placa">N° Activo / Placa:</label><br>
-        <input type="text" id="placa" name="placa"><br>
-
-        <label for="ubicacion">Ubicación Actual:</label><br>
-        <input type="text" id="ubicacion" name="ubicacion"><br>
-
-        <label for="gerencia">Gerencia Usuaria:</label><br>
-        <input type="text" id="gerencia" name="gerencia"><br>
-
-        <label for="ordenMtto">Orden de MTTO:</label><br>
-        <input type="text" id="ordenMtto" name="ordenMtto"><br>
-
-        <label for="tipoMtto">Falla Presente o Tipo MTTO:</label><br>
-        <input type="text" id="tipoMtto" name="tipoMtto"><br>
-
-        <label for="fechaIngreso">Fecha Ingreso:</label><br>
-        <input type="date" id="fechaIngreso" name="fechaIngreso"><br>
-
-        <label for="fechaEntrega">Fecha Estimada de Entrega:</label><br>
-        <input type="date" id="fechaEntrega" name="fechaEntrega"><br>
-
-        <label for="descripcion">Descripción / Barreras:</label><br>
-        <textarea id="descripcion" name="descripcion"></textarea><br>
-
-        <label for="chofer">Chófer Asignado:</label><br>
-        <input type="text" id="chofer" name="chofer"><br>
-
-        <button type="submit">Registrar Mantenimiento</button>
-    </form>
-
-    <h2>Registros de Mantenimiento</h2>
-    <table id="mttoTable">
+    <h5>Registros de Mantenimiento</h5>
+    <table id="mttoTable" class="striped responsive-table">
         <thead>
             <tr>
                 <th>Marca/Modelo</th>
@@ -123,6 +186,7 @@
                 <th>Fecha Entrega</th>
                 <th>Descripción</th>
                 <th>Chófer</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -198,21 +262,36 @@
             stmt.free();
         }
 
-        document.getElementById('mttoForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const stmt = db.prepare("INSERT INTO mantenimientos (marca_modelo, unidad_sap, placa, ubicacion, gerencia, orden_mtto, tipo_mtto, fecha_ingreso, fecha_entrega, descripcion, chofer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            stmt.run([
-                document.getElementById('marcaModelo').value, document.getElementById('unidadSap').value,
-                document.getElementById('placa').value, document.getElementById('ubicacion').value,
-                document.getElementById('gerencia').value, document.getElementById('ordenMtto').value,
-                document.getElementById('tipoMtto').value, document.getElementById('fechaIngreso').value || null,
-                document.getElementById('fechaEntrega').value || null, document.getElementById('descripcion').value,
+        document.getElementById('saveRecordButton').addEventListener('click', async function() {
+            // Recopilar los datos del formulario
+            const data = [
+                document.getElementById('marcaModelo').value,
+                document.getElementById('unidadSap').value,
+                document.getElementById('placa').value,
+                document.getElementById('ubicacion').value,
+                document.getElementById('gerencia').value,
+                document.getElementById('ordenMtto').value,
+                document.getElementById('tipoMtto').value,
+                document.getElementById('fechaIngreso').value || null,
+                document.getElementById('fechaEntrega').value || null,
+                document.getElementById('descripcion').value,
                 document.getElementById('chofer').value
-            ]);
+            ];
+
+            // Insertar en la base de datos
+            const stmt = db.prepare("INSERT INTO mantenimientos (marca_modelo, unidad_sap, placa, ubicacion, gerencia, orden_mtto, tipo_mtto, fecha_ingreso, fecha_entrega, descripcion, chofer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            stmt.run(data);
             stmt.free();
-            saveDB();
+
+            // Guardar cambios, recargar registros y limpiar el formulario
+            await saveDB();
             loadRecords();
             document.getElementById('mttoForm').reset();
+
+            // Cerrar el modal explícitamente
+            const instance = M.Modal.getInstance(document.getElementById('register-modal'));
+            instance.close();
+            M.toast({ html: 'Registro guardado con éxito' });
         });
 
         function addRecordToTable(record) {
@@ -229,6 +308,21 @@
             newRow.insertCell().textContent = record.fecha_entrega;
             newRow.insertCell().textContent = record.descripcion;
             newRow.insertCell().textContent = record.chofer;
+
+            const deleteCell = newRow.insertCell();
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.style.backgroundColor = '#f44336';
+            deleteButton.onclick = function() {
+                if (confirm('¿Estás seguro de que quieres eliminar este registro?')) {
+                    const stmt = db.prepare("DELETE FROM mantenimientos WHERE id = ?");
+                    stmt.run([record.id]);
+                    stmt.free();
+                    saveDB();
+                    loadRecords();
+                }
+            };
+            deleteCell.appendChild(deleteButton);
         }
 
         document.getElementById('searchButton').addEventListener('click', function() {
@@ -244,10 +338,39 @@
                 document.getElementById('ubicacion').value = result.ubicacion;
                 document.getElementById('gerencia').value = result.gerencia;
                 document.getElementById('chofer').value = result.chofer;
+                M.updateTextFields(); // Actualizar etiquetas de Materialize
+                const instance = M.Modal.getInstance(document.getElementById('register-modal'));
+                instance.open();
             } else {
                 alert('No se encontraron registros.');
             }
             stmt.free();
+        });
+
+        document.getElementById('exportButton').addEventListener('click', function() {
+            const stmt = db.prepare("SELECT * FROM mantenimientos");
+            const data = [];
+            while (stmt.step()) {
+                data.push(stmt.getAsObject());
+            }
+            stmt.free();
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Mantenimientos");
+            XLSX.writeFile(workbook, "Mantenimientos.xlsx");
+        });
+
+        document.getElementById('templateButton').addEventListener('click', function() {
+            const headers = [
+                "MARCA/MODELO UNIDAD", "N° UNIDAD SAP", "N° ACTIVO / PLACA", "UBIC. ACTUAL",
+                "GCIA. USUARIA", "ORDEN DE MTTO", "FALLA PRESENTE O TIPO MTTO",
+                "FECHA INGRESO", "FECHA EST DE ENTREGA", "DESCRIPCIÓN / BARRERAS", "CHOFER"
+            ];
+            const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Plantilla");
+            XLSX.writeFile(workbook, "Plantilla_Importacion.xlsx");
         });
 
         document.getElementById('importButton').addEventListener('click', function() {
@@ -285,6 +408,13 @@
 
         initDB();
 
+        // Inicializar componentes de Materialize
+        document.addEventListener('DOMContentLoaded', function() {
+            M.Modal.init(document.querySelectorAll('.modal'));
+            M.FloatingActionButton.init(document.querySelectorAll('.fixed-action-btn'));
+            M.Datepicker.init(document.querySelectorAll('.datepicker'));
+        });
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(registration => {
@@ -295,6 +425,7 @@
             });
         }
     </script>
-
+    <!-- Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
