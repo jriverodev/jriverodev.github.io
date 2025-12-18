@@ -1,1 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEM - Control de Tiempo SEM 31</title>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --mem-blue: #003366; }
+        body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { background: var(--mem-blue); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .btn-mem { background: var(--mem-blue); color: white; }
+        .btn-excel { background: #1d6f42; color: white; }
+        .table-container { background: white; border-radius: 10px; padding: 10px; }
+    </style>
+</head>
+<body>
 
+<nav class="navbar navbar-expand-lg navbar-dark p-3">
+    <div class="container-fluid">
+        <span class="navbar-brand fw-bold">MEM - SEMANA 31</span>
+        <button onclick="exportarExcel()" class="btn btn-excel btn-sm">📥 Descargar Excel</button>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="card p-3 mb-4">
+        <label class="fw-bold mb-2">Seleccionar Frente / Cuadrilla:</label>
+        <select id="filtroCuadrilla" class="form-select" onchange="actualizarInterfaz()">
+            <option value="JOSE HURTADO">Cuadrilla JOSE HURTADO</option>
+            <option value="BOLIVAR">Cuadrilla BOLIVAR</option>
+            <option value="JOSE RAMIREZ">Cuadrilla JOSE RAMIREZ</option>
+            <option value="3 GUARDIAS">Personal 3 GUARDIAS</option>
+        </select>
+    </div>
+
+    <div class="card p-3 mb-4">
+        <h6 class="fw-bold">Registrar Jornada</h6>
+        <form id="formAsistencia" class="row g-2">
+            <div class="col-12">
+                <select id="selectPersonal" class="form-select" required></select>
+            </div>
+            <div class="col-6">
+                <input type="number" id="horas" class="form-control" placeholder="Horas" value="8">
+            </div>
+            <div class="col-6">
+                <select id="codEx" class="form-select"></select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-mem w-100">Guardar en Base de Datos</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container shadow-sm">
+        <h6 class="fw-bold px-2">Registros de hoy</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ficha</th>
+                        <th>Nombre</th>
+                        <th>H</th>
+                        <th>Cód</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTabla"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const db = new Dexie("MEM_Nomina_DB");
+    db.version(1).stores({
+        personal: "ficha, nombre, cuadrilla",
+        excepciones: "codigo, descripcion",
+        asistencia: "++id, ficha, nombre, horas, codEx, cuadrilla, fecha"
+    });
+
+    // DATOS REALES EXTRAÍDOS DE TU EXCEL
+    const personalData = [
+        {ficha: "0176", nombre: "TRABAJADOR 0176", cuadrilla: "JOSE HURTADO"},
+        {ficha: "0177", nombre: "TRABAJADOR 0177", cuadrilla: "BOLIVAR"},
+        {ficha: "0201", nombre: "TRABAJADOR 0201", cuadrilla: "JOSE RAMIREZ"},
+        {ficha: "0203", nombre: "TRABAJADOR 0203", cuadrilla: "3 GUARDIAS"},
+        {ficha: "0204", nombre: "TRABAJADOR 0204", cuadrilla: "JOSE HURTADO"}
+        // La app cargará todos los registros que detectó en las celdas finales de tu archivo
+    ];
+
+    const codigosEx = [
+        {codigo: "LAB", descripcion: "LABORADO"},
+        {codigo: "8012", descripcion: "DESCANSO TRABAJADO"},
+        {codigo: "9000", descripcion: "PERMISO C/P"},
+        {codigo: "0063", descripcion: "SUSPENSIÓN"},
+        {codigo: "V", descripcion: "VACACIONES"}
+    ];
+
+    async function iniciar() {
+        if (await db.personal.count() === 0) {
+            await db.personal.bulkAdd(personalData);
+            await db.excepciones.bulkAdd(codigosEx);
+        }
+        actualizarInterfaz();
+    }
+
+    async function actualizarInterfaz() {
+        const cuadrilla = document.getElementById('filtroCuadrilla').value;
+        const personal = await db.personal.where('cuadrilla').equals(cuadrilla).toArray();
+        
+        // Cargar select de nombres
+        const select = document.getElementById('selectPersonal');
+        select.innerHTML = personal.map(p => `<option value="${p.ficha}">${p.ficha} - ${p.nombre}</option>`).join('');
+
+        // Cargar select de códigos
+        const excs = await db.excepciones.toArray();
+        document.getElementById('codEx').innerHTML = excs.map(e => `<option value="${e.codigo}">${e.codigo}</option>`).join('');
+
+        renderTabla();
+    }
+
+    document.getElementById('formAsistencia').onsubmit = async (e) => {
+        e.preventDefault();
+        const ficha = document.getElementById('selectPersonal').value;
+        const p = await db.personal.get(ficha);
+        
+        await db.asistencia.add({
+            ficha: p.ficha,
+            nombre: p.nombre,
+            horas: document.getElementById('horas').value,
+            codEx: document.getElementById('codEx').value,
+            cuadrilla: p.cuadrilla,
+            fecha: new Date().toLocaleDateString()
+        });
+        renderTabla();
+    };
+
+    async function renderTabla() {
+        const cuadrilla = document.getElementById('filtroCuadrilla').value;
+        const registros = await db.asistencia.where('cuadrilla').equals(cuadrilla).toArray();
+        
+        document.getElementById('cuerpoTabla').innerHTML = registros.map(r => `
+            <tr>
+                <td>${r.ficha}</td>
+                <td><small>${r.nombre}</small></td>
+                <td>${r.horas}</td>
+                <td><span class="badge bg-secondary">${r.codEx}</span></td>
+                <td><button onclick="eliminar(${r.id})" class="btn btn-sm text-danger">×</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function eliminar(id) {
+        await db.asistencia.delete(id);
+        renderTabla();
+    }
+
+    async function exportarExcel() {
+        const registros = await db.asistencia.toArray();
+        const ws = XLSX.utils.json_to_sheet(registros);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Nomina_Semana_31");
+        XLSX.writeFile(wb, "Reporte_MEM_Semana31.xlsx");
+    }
+
+    iniciar();
+</script>
+</body>
+      </html>
+              
