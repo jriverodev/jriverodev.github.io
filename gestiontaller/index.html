@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Taller Pro</title>
+    <title>Reporte Taller Pro - RIVEROJDU</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
-<body class="bg-slate-100 min-h-screen pb-10">
+<body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
 
     <nav class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50">
-        <h1 class="text-center font-bold">REPORTE DIARIO DE MANTENIMIENTO</h1>
+        <h1 class="text-center font-bold tracking-tight uppercase text-sm">Gestión de Talleres Terrestres</h1>
     </nav>
 
-    <main class="max-w-2xl mx-auto p-4 space-y-6">
+    <main class="max-w-2xl mx-auto p-4 space-y-5">
         
-        <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-blue-600">
-            <h2 class="font-bold text-blue-900 mb-4"><i class="bi bi-geo-alt-fill"></i> Configuración del Reporte</h2>
-            <div class="grid grid-cols-1 gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                <i class="bi bi-gear-wide-connected text-blue-600"></i> Configuración General
+            </h2>
+            <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">Seleccionar Taller</label>
-                    <select id="taller_sel" class="w-full p-2 bg-gray-50 border rounded-lg font-semibold">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Taller Seleccionado</label>
+                    <select id="taller_sel" onchange="renderLista()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
                         <option>Taller de Mantenimiento Lagunillas Flota Pesada</option>
                         <option>Taller de Mantenimiento Lagunillas Flota Liviana</option>
                         <option>Taller de Mantenimiento La Salina Flota Pesada</option>
@@ -30,149 +32,166 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">Fecha del Reporte</label>
-                    <input type="date" id="fecha_rep" class="w-full p-2 bg-gray-50 border rounded-lg">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-blue-600">Fecha del Reporte</label>
+                    <input type="date" id="fecha_rep" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
                 </div>
             </div>
         </div>
 
-        <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-orange-500">
-            <h2 class="font-bold text-orange-900 mb-4"><i class="bi bi-truck"></i> Registrar Unidad Atendida</h2>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="font-bold text-orange-600 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                <i class="bi bi-plus-square-fill"></i> Registrar Nueva Unidad
+            </h2>
             <div class="space-y-3">
-                <input type="text" id="u_nombre" placeholder="Ej: Unidad Camión Cava 1700" class="w-full p-2 border rounded-lg">
-                <textarea id="u_accion" placeholder="Acciones tomadas..." class="w-full p-2 border rounded-lg text-sm" rows="3"></textarea>
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="u_estatus" class="p-2 border rounded-lg font-bold text-sm">
-                        <option value="OPERATIVO" class="text-green-600">✅ OPERATIVO</option>
-                        <option value="INOPERATIVO" class="text-red-600">❎ INOPERATIVO</option>
-                        <option value="RECUPERACION" class="text-orange-600">🛠️ EN RECUPERACIÓN</option>
+                <input type="text" id="u_nombre" placeholder="Nombre de Unidad (Ej: Camión 1700)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 font-semibold">
+                <textarea id="u_accion" placeholder="Escriba las acciones tomadas..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400" rows="3"></textarea>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="u_estatus" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                        <option value="OPERATIVO">✅ OPERATIVO</option>
+                        <option value="INOPERATIVO">❎ INOPERATIVO</option>
+                        <option value="RECUPERACION">🛠️ EN RECUPERACIÓN</option>
                     </select>
-                    <button onclick="agregarUnidad()" class="bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition">
-                        + AGREGAR
+                    <button onclick="agregarUnidad()" class="bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition shadow-lg shadow-orange-100 uppercase text-xs">
+                        Guardar Registro
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white p-5 rounded-xl shadow-md">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="font-bold text-gray-700">Unidades en este reporte: <span id="cont_total" class="text-blue-600">0</span></h2>
-                <button onclick="limpiarTodo()" class="text-xs text-red-500 underline">Borrar todo</button>
+                <h2 class="font-black text-slate-400 text-[10px] uppercase tracking-widest italic">Registros de este Taller</h2>
+                <span id="cont_total" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-tighter">0 UNIDADES</span>
             </div>
-            <div id="lista_unidades" class="space-y-3 max-h-80 overflow-y-auto">
-                <p class="text-gray-400 text-center text-sm">No hay unidades registradas hoy.</p>
-            </div>
+            <div id="lista_unidades" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                </div>
         </div>
 
-        <button onclick="exportarWhatsApp()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-700 flex justify-center items-center gap-3 transition-all transform active:scale-95">
-            <i class="bi bi-whatsapp text-2xl"></i> GENERAR Y ENVIAR REPORTE
-        </button>
+        <footer class="text-center py-6 border-t border-slate-200">
+            <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Desarrollado por RIVEROJDU</p>
+        </footer>
+
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 gap-3 z-50">
+            <button onclick="exportar('whatsapp')" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform">
+                <i class="bi bi-whatsapp"></i> WHATSAPP
+            </button>
+            <button onclick="exportar('telegram')" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-sky-200 active:scale-95 transition-transform">
+                <i class="bi bi-telegram"></i> TELEGRAM
+            </button>
+        </div>
 
     </main>
 
     <script>
-        let unidadesLog = [];
+        // Memoria del sistema
+        let baseDatos = JSON.parse(localStorage.getItem('db_reportes_v4') || '[]');
 
         window.onload = () => {
             document.getElementById('fecha_rep').valueAsDate = new Date();
+            renderLista();
         };
 
         function agregarUnidad() {
+            const taller = document.getElementById('taller_sel').value;
             const nombre = document.getElementById('u_nombre').value;
             const accion = document.getElementById('u_accion').value;
             const estatus = document.getElementById('u_estatus').value;
 
-            if(!nombre || !accion) return alert("Por favor rellena los datos de la unidad");
+            if(!nombre || !accion) return alert("Por favor complete los datos de la unidad.");
 
-            unidadesLog.push({ nombre, accion, estatus });
+            baseDatos.push({ taller, nombre, accion, estatus, id: Date.now() });
+            localStorage.setItem('db_reportes_v4', JSON.stringify(baseDatos));
             
-            // Limpiar campos
             document.getElementById('u_nombre').value = "";
             document.getElementById('u_accion').value = "";
-            
             renderLista();
         }
 
         function renderLista() {
+            const tallerActual = document.getElementById('taller_sel').value;
             const cont = document.getElementById('lista_unidades');
-            const total = document.getElementById('cont_total');
-            total.innerText = unidadesLog.length;
+            const filtrados = baseDatos.filter(u => u.taller === tallerActual);
+            document.getElementById('cont_total').innerText = filtrados.length + " UNIDADES";
 
-            if(unidadesLog.length === 0) {
-                cont.innerHTML = `<p class="text-gray-400 text-center text-sm">No hay unidades registradas hoy.</p>`;
+            if(filtrados.length === 0) {
+                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros para este taller el día de hoy.</p>`;
                 return;
             }
 
-            cont.innerHTML = unidadesLog.map((u, index) => `
-                <div class="p-3 bg-slate-50 border rounded-lg relative">
-                    <button onclick="eliminar(${index})" class="absolute top-2 right-2 text-red-400"><i class="bi bi-trash"></i></button>
-                    <p class="font-bold text-sm text-blue-800">${u.nombre}</p>
-                    <p class="text-xs text-gray-600">${u.accion}</p>
-                    <span class="text-[10px] font-bold ${u.estatus === 'OPERATIVO' ? 'text-green-600' : 'text-red-600'}">${u.estatus}</span>
+            cont.innerHTML = filtrados.map(u => `
+                <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
+                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors"><i class="bi bi-trash-fill text-sm"></i></button>
+                    <p class="font-bold text-xs text-blue-900 uppercase mb-1">${u.nombre}</p>
+                    <p class="text-[11px] text-slate-600 mb-2 leading-relaxed">${u.accion}</p>
+                    <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${u.estatus === 'OPERATIVO' ? 'bg-emerald-100 text-emerald-700' : (u.estatus === 'RECUPERACION' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700')}">
+                        ${u.estatus}
+                    </span>
                 </div>
-            `).join('');
+            `).reverse().join('');
         }
 
-        function eliminar(idx) {
-            unidadesLog.splice(idx, 1);
-            renderLista();
-        }
-
-        function limpiarTodo() {
-            if(confirm("¿Seguro que quieres borrar la lista actual?")) {
-                unidadesLog = [];
+        function eliminar(id) {
+            if(confirm("¿Eliminar este registro?")) {
+                baseDatos = baseDatos.filter(u => u.id !== id);
+                localStorage.setItem('db_reportes_v4', JSON.stringify(baseDatos));
                 renderLista();
             }
         }
 
-        function exportarWhatsApp() {
-            if(unidadesLog.length === 0) return alert("Agrega al menos una unidad");
+        function construirMensaje() {
+            const tallerActual = document.getElementById('taller_sel').value;
+            const filtrados = baseDatos.filter(u => u.taller === tallerActual);
+            
+            if(filtrados.length === 0) return null;
 
-            const taller = document.getElementById('taller_sel').value;
             const fecha = document.getElementById('fecha_rep').value.split('-').reverse().join('/');
-            
-            // Cálculos automáticos
-            const operativos = unidadesLog.filter(u => u.estatus === 'OPERATIVO').length;
-            const inoperativos = unidadesLog.filter(u => u.estatus === 'INOPERATIVO' || u.estatus === 'RECUPERACION').length;
-            const recuperacion = unidadesLog.filter(u => u.estatus === 'RECUPERACION');
+            const operativos = filtrados.filter(u => u.estatus === 'OPERATIVO').length;
+            const inoperativos = filtrados.filter(u => u.estatus === 'INOPERATIVO' || u.estatus === 'RECUPERACION').length;
+            const recuperacion = filtrados.filter(u => u.estatus === 'RECUPERACION');
 
-            let texto = `*REPORTE INFORMATIVO*\n`;
-            texto += `*Región/Negocio/Filial:* Cuenca Occidente\n`;
-            texto += `*Gerencia:* Transporte Terrestre\n`;
-            texto += `*Estado:* Zulia\n`;
-            texto += `*Lugar:* ${taller}\n`;
-            texto += `*Fecha:* ${fecha}\n`;
-            texto += `*Hora:* 7:00AM - 04:00PM\n`;
-            texto += `*Asunto:* Reporte Diario ${taller}.\n\n`;
-            
-            texto += `*Resumen:*\n\n`;
-            texto += `🚨 *Total de unidades atendidas con ODM:* ${unidadesLog.length}\n`;
-            texto += `🏛️ ${taller}: ${unidadesLog.length}\n\n`;
-            
-            texto += `🚨 *Detalle de Mantenimientos:*\n\n`;
-            texto += `📌 Correctivos: ${unidadesLog.length}\n`; // Se asume correctivo por defecto en este flujo
-            texto += `📌 Preventivos: 00\n\n`;
-            
-            texto += `🚨 *Condiciones:*\n`;
-            texto += `✅ Operativos: ${operativos}\n`;
-            texto += `❎ Fuera de Servicio: ${inoperativos}\n\n`;
+            let m = `*REPORTE INFORMATIVO*\n`;
+            m += `*Región/Negocio/Filial:* Cuenca Occidente\n`;
+            m += `*Gerencia:* Transporte Terrestre\n`;
+            m += `*Estado:* Zulia\n`;
+            m += `*Lugar:* ${tallerActual}\n`;
+            m += `*Fecha:* ${fecha}\n`;
+            m += `*Hora:* 7:00AM - 04:00PM\n`;
+            m += `*Asunto:* Reporte Diario ${tallerActual}.\n\n`;
+            m += `*Resumen:*\n\n`;
+            m += `🚨 *Total de unidades atendidas con ODM:* ${filtrados.length}\n`;
+            m += `🏛️ ${tallerActual}: ${filtrados.length}\n\n`;
+            m += `🚨 *Detalle de Mantenimientos:*\n\n`;
+            m += `📌 Correctivos: ${filtrados.length}\n`;
+            m += `📌 Preventivos: 00\n\n`;
+            m += `🚨 *Condiciones:*\n`;
+            m += `✅ Operativos: ${operativos}\n`;
+            m += `❎ Fuera de Servicio: ${inoperativos}\n\n`;
+            m += `*Acciones Tomadas:*\n\n`;
 
-            texto += `*Acciones Tomadas:*\n\n`;
-
-            unidadesLog.filter(u => u.estatus !== 'RECUPERACION').forEach(u => {
-                texto += `*Unidad ${u.nombre}:*\n${u.accion}\n${u.estatus}.\n\n`;
+            filtrados.filter(u => u.estatus !== 'RECUPERACION').forEach(u => {
+                m += `*Unidad ${u.nombre}:*\n${u.accion}\n${u.estatus}.\n\n`;
             });
 
             if(recuperacion.length > 0) {
-                texto += `*UNIDADES EN PROCESO DE RECUPERACIÓN:*\n\n`;
+                m += `*UNIDADES EN PROCESO DE RECUPERACIÓN:*\n\n`;
                 recuperacion.forEach(u => {
-                    texto += `*Unidad ${u.nombre}*\n${u.accion}\nINOPERATIVO.\n\n`;
+                    m += `*Unidad ${u.nombre}*\n${u.accion}\nINOPERATIVO.\n\n`;
                 });
             }
 
-            texto += `*Fuente:* Taller de Mantenimiento Transporte Terrestre Lagunillas Flota Pesada.`;
+            m += `*Fuente:* ${tallerActual}.`;
+            return m;
+        }
 
-            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+        function exportar(canal) {
+            const mensaje = construirMensaje();
+            if(!mensaje) return alert("No hay registros en el taller seleccionado para exportar.");
+
+            if(canal === 'whatsapp') {
+                window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+            } else {
+                window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(mensaje)}`, '_blank');
+            }
         }
     </script>
 </body>
