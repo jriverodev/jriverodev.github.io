@@ -1,1 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Taller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-gray-100 min-h-screen pb-20">
+
+    <nav class="bg-blue-800 text-white p-4 shadow-md mb-6">
+        <h1 class="text-xl font-bold text-center">Gestión de Reportes Diario</h1>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-4">
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Nuevo Registro</h2>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Fecha</label>
+                    <input type="date" id="fecha" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Taller / Lugar</label>
+                    <select id="lugar" class="w-full p-2 border rounded-lg">
+                        <option>Taller de Mantenimiento Lagunillas Flota Pesada</option>
+                        <option>Taller de Mantenimiento Lagunillas Flota Liviana</option>
+                        <option>Taller de Mantenimiento La Salina Flota Pesada</option>
+                        <option>Taller de Mantenimiento La Salina Flota Liviana</option>
+                        <option>Taller de Mantenimiento Lago Medio Flota Pesada</option>
+                        <option>Taller de Mantenimiento Lago Medio Flota Liviana</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg">
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 uppercase">Correctivos</label>
+                        <input type="number" id="corr" value="0" class="w-full p-1 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-800 uppercase">Preventivos</label>
+                        <input type="number" id="prev" value="0" class="w-full p-1 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-green-700 uppercase">Operativos</label>
+                        <input type="number" id="oper" value="0" class="w-full p-1 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-red-700 uppercase">Fuera Serv.</label>
+                        <input type="number" id="fuera" value="0" class="w-full p-1 border rounded">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Acciones Tomadas / Unidades</label>
+                    <textarea id="acciones" rows="6" class="w-full p-2 border rounded-lg text-sm" placeholder="Unidad 1700: Reemplazo de cauchos..."></textarea>
+                </div>
+
+                <button onclick="guardarYEnviar()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 shadow-lg transition">
+                    <i class="bi bi-whatsapp text-xl"></i> GUARDAR Y ENVIAR
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-lg font-bold mb-4 text-gray-700">Historial Reciente</h2>
+            <div id="historial" class="space-y-3">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuración de constantes
+        const CONSTANTES = {
+            region: "Cuenca Occidente",
+            gerencia: "Transporte Terrestre",
+            estado: "Zulia",
+            horario: "7:00AM a 04:00PM"
+        };
+
+        // Al cargar la página
+        window.onload = () => {
+            document.getElementById('fecha').valueAsDate = new Date();
+            mostrarHistorial();
+        };
+
+        function guardarYEnviar() {
+            const reporte = {
+                fecha: document.getElementById('fecha').value,
+                lugar: document.getElementById('lugar').value,
+                corr: document.getElementById('corr').value,
+                prev: document.getElementById('prev').value,
+                oper: document.getElementById('oper').value,
+                fuera: document.getElementById('fuera').value,
+                acciones: document.getElementById('acciones').value,
+                id: Date.now()
+            };
+
+            // Guardar en LocalStorage
+            let historial = JSON.parse(localStorage.getItem('reportes_taller') || '[]');
+            historial.unshift(reporte);
+            localStorage.setItem('reportes_taller', JSON.stringify(historial.slice(0, 10))); // Guardar últimos 10
+
+            generarMensaje(reporte);
+            mostrarHistorial();
+        }
+
+        function generarMensaje(r) {
+            const total = parseInt(r.corr) + parseInt(r.prev);
+            
+            let texto = `*REPORTE INFORMATIVO*\n`;
+            texto += `*Región/Negocio/Filial:* ${CONSTANTES.region}\n`;
+            texto += `*Gerencia:* ${CONSTANTES.gerencia}\n`;
+            texto += `*Estado:* ${CONSTANTES.estado}\n`;
+            texto += `*Lugar:* ${r.lugar}\n`;
+            texto += `*Fecha:* ${r.fecha.split('-').reverse().join('/')}\n`;
+            texto += `*Hora:* ${CONSTANTES.horario}\n`;
+            texto += `*Asunto:* Reporte Diario ${r.lugar}\n\n`;
+            texto += `*Resumen:*\n\n`;
+            texto += `🚨 *Total de unidades atendidas:* ${total}\n`;
+            texto += `🏛️ Taller Interno: ${total}\n\n`;
+            texto += `🚨 *Detalle de Mantenimientos:*\n\n`;
+            texto += `📌 Correctivos: ${r.corr}\n`;
+            texto += `📌 Preventivos: ${r.prev}\n\n`;
+            texto += `🚨 *Condiciones:*\n`;
+            texto += `✅ Operativos: ${r.oper}\n`;
+            texto += `❎ Fuera de Servicio: ${r.fuera}\n\n`;
+            texto += `*Acciones Tomadas:*\n\n${r.acciones}\n\n`;
+            texto += `*Fuente:* Taller de Mantenimiento ${r.lugar}`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
+        }
+
+        function mostrarHistorial() {
+            const lista = JSON.parse(localStorage.getItem('reportes_taller') || '[]');
+            const contenedor = document.getElementById('historial');
+            contenedor.innerHTML = lista.map(r => `
+                <div class="border-l-4 border-blue-500 bg-gray-50 p-3 text-xs flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">${r.fecha}</p>
+                        <p>${r.lugar}</p>
+                    </div>
+                    <button onclick='reEnviar(${JSON.stringify(r)})' class="text-green-600 font-bold">Re-enviar</button>
+                </div>
+            `).join('');
+        }
+
+        function reEnviar(r) {
+            generarMensaje(r);
+        }
+    </script>
+</body>
+</html>
 
