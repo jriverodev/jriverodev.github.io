@@ -3,14 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Taller Pro - RIVEROJDU</title>
+    <title>Reporte Taller - RIVEROJDU</title>
+    
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Reporte%20Taller%22,%22short_name%22:%22Talleres%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%231e3a8a%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/2333/2333031.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]} text/plain">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
 
-    <nav class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50">
-        <h1 class="text-center font-bold tracking-tight uppercase text-sm">Gestión de Talleres Terrestres</h1>
+    <nav class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50 flex justify-between items-center">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-200">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <h1 class="font-bold tracking-tight uppercase text-xs">Gestión de Talleres</h1>
+        <div class="w-8"></div>
     </nav>
 
     <main class="max-w-2xl mx-auto p-4 space-y-5">
@@ -61,21 +71,24 @@
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="font-black text-slate-400 text-[10px] uppercase tracking-widest italic">Registros de este Taller</h2>
-                <span id="cont_total" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-tighter">0 UNIDADES</span>
+                <span id="cont_total" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-tighter uppercase">0 Unidades</span>
             </div>
-            <div id="lista_unidades" class="space-y-3 max-h-64 overflow-y-auto pr-2">
-                </div>
+            <div id="lista_unidades" class="space-y-3 max-h-64 overflow-y-auto pr-2"></div>
+        </div>
+
+        <div class="text-center px-10">
+            <button onclick="limpiarBD()" class="text-[9px] text-red-400 uppercase tracking-widest font-bold opacity-50 hover:opacity-100">Limpiar toda la base de datos</button>
         </div>
 
         <footer class="text-center py-6 border-t border-slate-200">
             <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Desarrollado por RIVEROJDU</p>
         </footer>
 
-        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 gap-3 z-50">
-            <button onclick="exportar('whatsapp')" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform">
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="exportar('whatsapp')" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform">
                 <i class="bi bi-whatsapp"></i> WHATSAPP
             </button>
-            <button onclick="exportar('telegram')" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-sky-200 active:scale-95 transition-transform">
+            <button onclick="exportar('telegram')" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-sky-200 active:scale-95 transition-transform">
                 <i class="bi bi-telegram"></i> TELEGRAM
             </button>
         </div>
@@ -83,12 +96,16 @@
     </main>
 
     <script>
-        // Memoria del sistema
-        let baseDatos = JSON.parse(localStorage.getItem('db_reportes_v4') || '[]');
+        // Lógica de Datos
+        let baseDatos = JSON.parse(localStorage.getItem('db_reportes_v5') || '[]');
 
         window.onload = () => {
             document.getElementById('fecha_rep').valueAsDate = new Date();
             renderLista();
+            // Registrar Service Worker para Offline
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ID0+IGV2KTs=');
+            }
         };
 
         function agregarUnidad() {
@@ -96,12 +113,9 @@
             const nombre = document.getElementById('u_nombre').value;
             const accion = document.getElementById('u_accion').value;
             const estatus = document.getElementById('u_estatus').value;
-
-            if(!nombre || !accion) return alert("Por favor complete los datos de la unidad.");
-
+            if(!nombre || !accion) return alert("Completa los datos.");
             baseDatos.push({ taller, nombre, accion, estatus, id: Date.now() });
-            localStorage.setItem('db_reportes_v4', JSON.stringify(baseDatos));
-            
+            localStorage.setItem('db_reportes_v5', JSON.stringify(baseDatos));
             document.getElementById('u_nombre').value = "";
             document.getElementById('u_accion').value = "";
             renderLista();
@@ -112,28 +126,30 @@
             const cont = document.getElementById('lista_unidades');
             const filtrados = baseDatos.filter(u => u.taller === tallerActual);
             document.getElementById('cont_total').innerText = filtrados.length + " UNIDADES";
-
             if(filtrados.length === 0) {
-                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros para este taller el día de hoy.</p>`;
+                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros hoy.</p>`;
                 return;
             }
-
             cont.innerHTML = filtrados.map(u => `
                 <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
-                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors"><i class="bi bi-trash-fill text-sm"></i></button>
-                    <p class="font-bold text-xs text-blue-900 uppercase mb-1">${u.nombre}</p>
-                    <p class="text-[11px] text-slate-600 mb-2 leading-relaxed">${u.accion}</p>
-                    <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${u.estatus === 'OPERATIVO' ? 'bg-emerald-100 text-emerald-700' : (u.estatus === 'RECUPERACION' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700')}">
-                        ${u.estatus}
-                    </span>
+                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-300"><i class="bi bi-trash-fill"></i></button>
+                    <p class="font-bold text-xs text-blue-900 uppercase">${u.nombre}</p>
+                    <p class="text-[11px] text-slate-600 mb-2">${u.accion}</p>
+                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded-full ${u.estatus === 'OPERATIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${u.estatus}</span>
                 </div>
             `).reverse().join('');
         }
 
         function eliminar(id) {
-            if(confirm("¿Eliminar este registro?")) {
-                baseDatos = baseDatos.filter(u => u.id !== id);
-                localStorage.setItem('db_reportes_v4', JSON.stringify(baseDatos));
+            baseDatos = baseDatos.filter(u => u.id !== id);
+            localStorage.setItem('db_reportes_v5', JSON.stringify(baseDatos));
+            renderLista();
+        }
+
+        function limpiarBD() {
+            if(confirm("¿Borrar todos los talleres?")) {
+                baseDatos = [];
+                localStorage.removeItem('db_reportes_v5');
                 renderLista();
             }
         }
@@ -141,57 +157,25 @@
         function construirMensaje() {
             const tallerActual = document.getElementById('taller_sel').value;
             const filtrados = baseDatos.filter(u => u.taller === tallerActual);
-            
             if(filtrados.length === 0) return null;
-
             const fecha = document.getElementById('fecha_rep').value.split('-').reverse().join('/');
             const operativos = filtrados.filter(u => u.estatus === 'OPERATIVO').length;
-            const inoperativos = filtrados.filter(u => u.estatus === 'INOPERATIVO' || u.estatus === 'RECUPERACION').length;
-            const recuperacion = filtrados.filter(u => u.estatus === 'RECUPERACION');
+            const inoperativos = filtrados.filter(u => u.estatus !== 'OPERATIVO').length;
 
-            let m = `*REPORTE INFORMATIVO*\n`;
-            m += `*Región/Negocio/Filial:* Cuenca Occidente\n`;
-            m += `*Gerencia:* Transporte Terrestre\n`;
-            m += `*Estado:* Zulia\n`;
-            m += `*Lugar:* ${tallerActual}\n`;
-            m += `*Fecha:* ${fecha}\n`;
-            m += `*Hora:* 7:00AM - 04:00PM\n`;
-            m += `*Asunto:* Reporte Diario ${tallerActual}.\n\n`;
-            m += `*Resumen:*\n\n`;
-            m += `🚨 *Total de unidades atendidas con ODM:* ${filtrados.length}\n`;
-            m += `🏛️ ${tallerActual}: ${filtrados.length}\n\n`;
-            m += `🚨 *Detalle de Mantenimientos:*\n\n`;
-            m += `📌 Correctivos: ${filtrados.length}\n`;
-            m += `📌 Preventivos: 00\n\n`;
-            m += `🚨 *Condiciones:*\n`;
-            m += `✅ Operativos: ${operativos}\n`;
-            m += `❎ Fuera de Servicio: ${inoperativos}\n\n`;
-            m += `*Acciones Tomadas:*\n\n`;
-
-            filtrados.filter(u => u.estatus !== 'RECUPERACION').forEach(u => {
-                m += `*Unidad ${u.nombre}:*\n${u.accion}\n${u.estatus}.\n\n`;
-            });
-
-            if(recuperacion.length > 0) {
-                m += `*UNIDADES EN PROCESO DE RECUPERACIÓN:*\n\n`;
-                recuperacion.forEach(u => {
-                    m += `*Unidad ${u.nombre}*\n${u.accion}\nINOPERATIVO.\n\n`;
-                });
-            }
-
+            let m = `*REPORTE INFORMATIVO*\n*Región/Negocio/Filial:* Cuenca Occidente\n*Gerencia:* Transporte Terrestre\n*Estado:* Zulia\n*Lugar:* ${tallerActual}\n*Fecha:* ${fecha}\n*Hora:* 7:00AM - 04:00PM\n*Asunto:* Reporte Diario ${tallerActual}.\n\n`;
+            m += `🚨 *Total atendidas:* ${filtrados.length}\n🏛️ ${tallerActual}: ${filtrados.length}\n\n`;
+            m += `📌 Correctivos: ${filtrados.length}\n📌 Preventivos: 00\n\n`;
+            m += `✅ Operativos: ${operativos}\n❎ Fuera de Servicio: ${inoperativos}\n\n*Acciones Tomadas:*\n\n`;
+            filtrados.forEach(u => m += `*Unidad ${u.nombre}:*\n${u.accion}\n${u.estatus}.\n\n`);
             m += `*Fuente:* ${tallerActual}.`;
             return m;
         }
 
         function exportar(canal) {
             const mensaje = construirMensaje();
-            if(!mensaje) return alert("No hay registros en el taller seleccionado para exportar.");
-
-            if(canal === 'whatsapp') {
-                window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
-            } else {
-                window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(mensaje)}`, '_blank');
-            }
+            if(!mensaje) return alert("Sin datos.");
+            const url = canal === 'whatsapp' ? `https://wa.me/?text=${encodeURIComponent(mensaje)}` : `https://t.me/share/url?url=&text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
         }
     </script>
 </body>
