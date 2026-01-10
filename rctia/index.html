@@ -3,224 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RCT Animated Peeps</title>
+    <title>RCT Tycoon: Satisfaction System</title>
     <style>
         body { 
             display: flex; flex-direction: column; align-items: center; 
-            background: #2c3e50; color: white; font-family: sans-serif; 
+            background: #1a1a1a; color: white; font-family: 'Courier New', Courier, monospace; 
             margin: 0; padding: 10px; touch-action: none; 
         }
-        canvas { 
-            border: 2px solid #34495e; background: #27ae60; 
-            width: 90vw; height: 90vw; max-width: 400px; max-height: 400px;
-            touch-action: none; image-rendering: pixelated; /* ¡IMPORTANTE para sprites! */
+        #header {
+            width: 95vw; max-width: 450px; background: #222; padding: 10px; 
+            border-radius: 8px; margin-bottom: 5px; border-bottom: 3px solid #f1c40f;
         }
-        .controls { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
-            width: 90vw; max-width: 400px; margin-bottom: 10px; 
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .bar-container { width: 100%; background: #444; height: 10px; border-radius: 5px; overflow: hidden; }
+        #happyBar { width: 100%; height: 100%; background: #2ecc71; transition: 0.3s; }
+        
+        canvas { 
+            border: 4px solid #3d3d3d; background: #2d7d32; 
+            width: 95vw; height: 95vw; max-width: 450px; max-height: 450px;
+            image-rendering: pixelated; 
+        }
+        .ui { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
+            width: 95vw; max-width: 450px; margin-top: 10px; 
         }
         button { 
-            padding: 15px 5px; font-size: 14px; border: none; 
-            border-radius: 8px; color: white; font-weight: bold; cursor: pointer;
+            padding: 10px 2px; font-size: 10px; border: none; cursor: pointer;
+            border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase;
         }
-        .btn-mode { background: #7f8c8d; border: 3px solid transparent; }
-        .btn-mode.active { border-color: #f1c40f; background: #34495e; }
-        .btn-spawn { background: #2ecc71; grid-column: span 2; }
-        #count { margin-top: 5px; font-weight: bold; }
+        .btn-mode { background: #444; border-bottom: 3px solid #222; }
+        .active { background: #f1c40f !important; color: #000; border-bottom: 4px solid #b7950b; }
+        .btn-blue { background: #3498db; grid-column: span 1; }
+        .btn-green { background: #2ecc71; grid-column: span 1; }
+        .money { color: #2ecc71; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <button id="btnCamino" class="btn-mode active" onclick="setMode('camino')">🚧 CAMINO</button>
-        <button id="btnAtraccion" class="btn-mode" onclick="setMode('atraccion')">🎡 ATRACCIÓN</button>
-        <button class="btn-spawn" onclick="spawnPeeps(10)">+10 VISITANTES</button>
+    <div id="header">
+        <div class="stats-row">
+            <div>💰 <span class="money" id="moneyTxt">$500</span></div>
+            <div>😊 <span id="happyTxt">100%</span></div>
+        </div>
+        <div class="bar-container"><div id="happyBar"></div></div>
     </div>
 
     <canvas id="gameCanvas" width="400" height="400"></canvas>
-    
-    <div id="count">Visitantes: 0</div>
+
+    <div class="ui">
+        <button id="btnCamino" class="active" onclick="setMode('camino')">Vía (-$10)</button>
+        <button id="btnAtraccion" class="" onclick="setMode('atraccion')">🎡 Feria (-$150)</button>
+        <button id="btnComida" class="" onclick="setMode('comida')">🍔 Comida (-$80)</button>
+        <button id="btnBanco" class="" onclick="setMode('banco')">🏧 Banco (-$200)</button>
+        <button class="btn-blue" onclick="hireStaff()">Limpiador 🧹 (-$50)</button>
+        <button class="btn-green" onclick="spawnPeeps(1)">Nuevo Peep 👤</button>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const TILE_SIZE = 40;
-        const COLS = 10;
-        const ROWS = 10;
+        const COLS = 10, ROWS = 10;
 
         let grid = Array(COLS).fill().map(() => Array(ROWS).fill(0));
-        let attraction = null;
-        let peeps = [];
-        let currentMode = 'camino';
-
-        // Cargar el spritesheet del Peep
-        const peepSpriteSheet = new Image();
-        peepSpriteSheet.src = 'peep_walk.png'; // Asegúrate de que esta ruta sea correcta
-        const PEEP_SPRITE_WIDTH = 32; // Ancho de un solo frame en la imagen
-        const PEEP_SPRITE_HEIGHT = 32; // Alto de un solo frame en la imagen
-        const PEEP_ANIM_FRAMES = 4; // Número total de frames en el spritesheet
+        let trash = [], buildings = [], peeps = [], staff = [], floatingTexts = [];
+        let wallet = 500, felicidad = 100, currentMode = 'camino';
 
         function setMode(mode) {
             currentMode = mode;
-            document.getElementById('btnCamino').classList.toggle('active', mode === 'camino');
-            document.getElementById('btnAtraccion').classList.toggle('active', mode === 'atraccion');
+            ['btnCamino', 'btnAtraccion', 'btnComida', 'btnBanco'].forEach(id => {
+                document.getElementById(id).className = id.toLowerCase().includes(mode) ? 'active' : 'btn-mode';
+            });
         }
 
-        class Peep {
-            constructor(x, y) {
+        class Agent {
+            constructor(x, y, isStaff = false) {
                 this.gridX = x; this.gridY = y;
                 this.pixelX = x * TILE_SIZE + TILE_SIZE/2;
                 this.pixelY = y * TILE_SIZE + TILE_SIZE/2;
                 this.targetGridX = x; this.targetGridY = y;
                 this.isMoving = false;
-                this.timerAtraccion = 0;
-                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`; // El color ya no se usará para el cuerpo, pero se mantiene por si acaso
-                
-                // Variables de animación
-                this.currentFrame = 0;
-                this.animTimer = 0;
-                this.animSpeed = 10; // Cambiar de frame cada 10 updates (más bajo = más rápido)
+                this.timer = 0;
+                this.isStaff = isStaff;
+                this.color = isStaff ? "#ffffff" : `hsl(${Math.random() * 360}, 70%, 50%)`;
+                if(!isStaff) { this.money = 40; this.hambre = 0; }
             }
 
             update() {
-                if (this.timerAtraccion > 0) {
-                    this.timerAtraccion--;
-                } else if (!this.isMoving) {
-                    this.decidirSiguientePaso();
-                    // Reiniciar animación cuando se detiene o cambia de dirección
-                    this.currentFrame = 0; 
-                    this.animTimer = 0;
-                } else {
-                    this.moverSuave();
-                    this.updateAnimation(); // Actualizar frame de animación
-                }
+                if (this.timer > 0) this.timer--;
+                else if (!this.isMoving) this.decidirSiguientePaso();
+                else this.mover();
                 this.dibujar();
             }
 
-            updateAnimation() {
-                this.animTimer++;
-                if (this.animTimer >= this.animSpeed) {
-                    this.currentFrame = (this.currentFrame + 1) % PEEP_ANIM_FRAMES;
-                    this.animTimer = 0;
-                }
-            }
-
             decidirSiguientePaso() {
-                if (attraction && Math.abs(this.gridX - attraction.x) <= 1 && Math.abs(this.gridY - attraction.y) <= 1) {
-                    if (Math.random() > 0.98) {
-                        this.timerAtraccion = 100;
-                        return;
-                    }
+                if (this.isStaff) {
+                    trash = trash.filter(t => {
+                        if (t.x === this.gridX && t.y === this.gridY) {
+                            addText(this.pixelX, this.pixelY, "✨", "#fff");
+                            felicidad = Math.min(100, felicidad + 2); // Limpiar sube felicidad
+                            this.timer = 25; return false;
+                        }
+                        return true;
+                    });
+                } else {
+                    buildings.forEach(b => {
+                        if (Math.abs(this.gridX - b.x) <= 1 && Math.abs(this.gridY - b.y) <= 1) {
+                            if (b.type === '🎡' && this.money >= 10 && Math.random() > 0.95) {
+                                this.timer = 80; this.money -= 10; wallet += 10; felicidad = Math.min(100, felicidad + 5);
+                                if(Math.random() > 0.6) trash.push({x: this.gridX, y: this.gridY, type: '🤮'});
+                            } else if (b.type === '🍔' && this.money >= 5 && Math.random() > 0.9) {
+                                this.timer = 40; this.money -= 5; wallet += 5;
+                                if(Math.random() > 0.4) trash.push({x: this.gridX, y: this.gridY, type: '🥤'});
+                            }
+                        }
+                    });
                 }
                 const dirs = [{x:0,y:1},{x:0,y:-1},{x:1,y:0},{x:-1,y:0}].sort(()=>Math.random()-0.5);
                 for (let d of dirs) {
                     let nX = this.gridX + d.x, nY = this.gridY + d.y;
                     if (nX >= 0 && nX < COLS && nY >= 0 && nY < ROWS && grid[nX][nY] === 1) {
                         this.targetGridX = nX; this.targetGridY = nY;
-                        this.isMoving = true;
-                        break;
+                        this.isMoving = true; break;
                     }
                 }
             }
 
-            moverSuave() {
+            mover() {
                 const destX = this.targetGridX * TILE_SIZE + TILE_SIZE/2;
                 const destY = this.targetGridY * TILE_SIZE + TILE_SIZE/2;
-                this.pixelX += (destX - this.pixelX) * 0.15;
-                this.pixelY += (destY - this.pixelY) * 0.15;
-                if (Math.abs(destX - this.pixelX) < 1 && Math.abs(destY - this.pixelY) < 1) { // Ajustado a 1 para mejor precisión
-                    this.pixelX = destX; this.pixelY = destY;
+                this.pixelX += (destX - this.pixelX) * 0.1;
+                this.pixelY += (destY - this.pixelY) * 0.1;
+                if (Math.abs(destX - this.pixelX) < 1) {
                     this.gridX = this.targetGridX; this.gridY = this.targetGridY;
                     this.isMoving = false;
                 }
             }
 
             dibujar() {
-                if (this.timerAtraccion > 0) return; // Si está en la atracción, no se dibuja
-
-                // Calcular la posición del frame en el spritesheet
-                const sx = this.currentFrame * PEEP_SPRITE_WIDTH;
-                const sy = 0; // Si hubiera varias filas de animaciones, cambiaríamos esto
-
-                // Dibujar el trozo del spritesheet en la posición del peep
-                ctx.drawImage(
-                    peepSpriteSheet,
-                    sx, sy, PEEP_SPRITE_WIDTH, PEEP_SPRITE_HEIGHT, // Fuente (recorte del spritesheet)
-                    this.pixelX - PEEP_SPRITE_WIDTH / 2, // Posición X del dibujo (centrado)
-                    this.pixelY - PEEP_SPRITE_HEIGHT / 2, // Posición Y del dibujo (centrado)
-                    PEEP_SPRITE_WIDTH, PEEP_SPRITE_HEIGHT // Tamaño del dibujo en el canvas
-                );
+                ctx.save(); ctx.translate(this.pixelX, this.pixelY);
+                if(this.isStaff) {
+                    ctx.fillStyle = "#3498db"; ctx.fillRect(-7,-7,14,14);
+                    ctx.fillStyle = "white"; ctx.font = "10px Arial"; ctx.fillText("🧹", -6, 4);
+                } else {
+                    ctx.fillStyle = this.color; ctx.fillRect(-6,-4,12,10);
+                    ctx.fillStyle = "#ffdbac"; ctx.fillRect(-5,-12,10,8);
+                }
+                ctx.restore();
             }
         }
 
+        function hireStaff() {
+            if(wallet >= 50) {
+                let paths = getPaths();
+                if(paths.length > 0) { wallet -= 50; staff.push(new Agent(paths[0].x, paths[0].y, true)); updateUI(); }
+            }
+        }
+
+        function spawnPeeps(amount) {
+            let paths = getPaths();
+            if(paths.length > 0) {
+                for(let i=0; i<amount; i++) peeps.push(new Agent(paths[0].x, paths[0].y, false));
+                updateUI();
+            }
+        }
+
+        function getPaths() {
+            let p = [];
+            for(let x=0; x<COLS; x++) for(let y=0; y<ROWS; y++) if(grid[x][y] === 1) p.push({x,y});
+            return p;
+        }
+
+        function addText(x, y, val, color) { floatingTexts.push({x, y, val, color, life: 60}); }
+
         function handleInput(e) {
-            e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            const x = Math.floor(((clientX - rect.left) * scaleX) / TILE_SIZE);
-            const y = Math.floor(((clientY - rect.top) * scaleY) / TILE_SIZE);
-
+            const x = Math.floor(((clientX - rect.left) * (400/rect.width)) / TILE_SIZE);
+            const y = Math.floor(((clientY - rect.top) * (400/rect.height)) / TILE_SIZE);
             if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
-                if (currentMode === 'camino') grid[x][y] = 1;
-                else attraction = {x, y};
-            }
-        }
-
-        canvas.addEventListener('touchstart', handleInput);
-        canvas.addEventListener('mousedown', handleInput);
-
-        function spawnPeeps(amount) {
-            let paths = [];
-            for(let x=0; x<COLS; x++) for(let y=0; y<ROWS; y++) if(grid[x][y] === 1) paths.push({x,y});
-            if(paths.length === 0) return alert("¡Dibuja un camino primero!");
-            for(let i=0; i<amount; i++) {
-                let p = paths[Math.floor(Math.random()*paths.length)];
-                peeps.push(new Peep(p.x, p.y));
-            }
-            document.getElementById('count').innerText = `Visitantes: ${peeps.length}`;
-        }
-
-        function drawWorld() {
-            for (let x = 0; x < COLS; x++) {
-                for (let y = 0; y < ROWS; y++) {
-                    if (grid[x][y] === 1) {
-                        ctx.fillStyle = "#bdc3c7";
-                        ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                    }
-                    ctx.strokeStyle = "rgba(0,0,0,0.1)";
-                    ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                if (currentMode === 'camino' && wallet >= 10) { grid[x][y] = 1; wallet -= 10; }
+                else {
+                    let cost = currentMode === 'atraccion' ? 150 : (currentMode === 'comida' ? 80 : 200);
+                    let type = currentMode === 'atraccion' ? '🎡' : (currentMode === 'comida' ? '🍔' : '🏧');
+                    if (wallet >= cost) { buildings.push({x, y, type}); wallet -= cost; }
                 }
+                updateUI();
             }
-            if (attraction) {
-                ctx.font = "30px Arial";
-                ctx.fillText("🎡", attraction.x * TILE_SIZE + 5, attraction.y * TILE_SIZE + 32);
-            }
+        }
+
+        canvas.addEventListener('mousedown', handleInput);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); });
+
+        function updateUI() {
+            document.getElementById('moneyTxt').innerText = `$${Math.floor(wallet)}`;
+            document.getElementById('happyTxt').innerText = `${Math.floor(felicidad)}%`;
+            document.getElementById('happyBar').style.width = `${felicidad}%`;
+            document.getElementById('happyBar').style.background = felicidad < 30 ? '#e74c3c' : '#2ecc71';
         }
 
         function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawWorld();
+            // Lógica de felicidad
+            if (trash.length > 0) felicidad -= 0.02 * trash.length; // La basura baja felicidad
+            else if (peeps.length > 0) felicidad = Math.min(100, felicidad + 0.01); // Estar limpio sube felicidad
+
+            if (felicidad < 10 && wallet > 0) { wallet -= 0.1; updateUI(); } // Multa por suciedad
+
+            ctx.clearRect(0, 0, 400, 400);
+            ctx.fillStyle = "#2d7d32"; ctx.fillRect(0,0,400,400);
+            for (let x = 0; x < COLS; x++) {
+                for (let y = 0; y < ROWS; y++) {
+                    if (grid[x][y] === 1) { ctx.fillStyle = "#7a7a7a"; ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE); }
+                }
+            }
+            trash.forEach(t => { ctx.font = "16px Arial"; ctx.fillText(t.type, t.x * TILE_SIZE + 10, t.y * TILE_SIZE + 25); });
+            buildings.forEach(b => { ctx.font = "24px Arial"; ctx.fillText(b.type, b.x * TILE_SIZE + 8, b.y * TILE_SIZE + 30); });
             peeps.forEach(p => p.update());
+            staff.forEach(s => s.update());
+            floatingTexts.forEach((t, i) => {
+                ctx.fillStyle = t.color; ctx.globalAlpha = t.life/60;
+                ctx.fillText(t.val, t.x, t.y - (60-t.life));
+                t.life--; if(t.life <= 0) floatingTexts.splice(i, 1);
+            });
+            ctx.globalAlpha = 1;
+            updateUI();
             requestAnimationFrame(loop);
         }
-
-        // Asegurarse de que el spritesheet se cargue antes de empezar el loop del juego
-        peepSpriteSheet.onload = () => {
-            loop();
-        };
-        // En caso de error al cargar la imagen
-        peepSpriteSheet.onerror = () => {
-            console.error("Error al cargar la imagen 'peep_walk.png'. Asegúrate de que esté en la misma carpeta.");
-            // Si la imagen no carga, podemos iniciar el loop sin sprites (dibujar círculos como antes)
-            // o mostrar un mensaje de error al usuario.
-            // Por ahora, iniciamos el loop para que al menos se vea algo.
-            loop(); 
-        };
+        loop();
     </script>
 </body>
 </html>
