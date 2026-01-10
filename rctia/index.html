@@ -1,1 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RCT IA: Atracciones y Filas</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; background: #2c3e50; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
+        canvas { border: 4px solid #34495e; background: #27ae60; cursor: crosshair; }
+        .hud { margin: 10px; padding: 15px; background: #34495e; border-radius: 8px; display: flex; gap: 20px; }
+        .btn-blue { background: #3498db; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Simulador de Atracción</h1>
+    <div class="hud">
+        <div>Clic Izquierdo: <b>Dibujar Camino</b></div>
+        <div>Clic Derecho: <b>Poner Atracción (🎡)</b></div>
+        <button class="btn-blue" onclick="location.reload()">Reiniciar</button>
+    </div>
+    <canvas id="gameCanvas" width="480" height="480"></canvas>
+    <div id="status" style="margin-top:10px; font-size: 1.2em;">Estado: Caminando</div>
 
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const TILE_SIZE = 40;
+        const COLS = canvas.width / TILE_SIZE;
+        const ROWS = canvas.height / TILE_SIZE;
+
+        let grid = Array(COLS).fill().map(() => Array(ROWS).fill(0));
+        let attraction = null;
+
+        class Peep {
+            constructor(x, y) {
+                this.gridX = x; this.gridY = y;
+                this.pixelX = x * TILE_SIZE + TILE_SIZE/2;
+                this.pixelY = y * TILE_SIZE + TILE_SIZE/2;
+                this.targetGridX = x; this.targetGridY = y;
+                this.isMoving = false;
+                this.estado = "Caminando";
+                this.timerAtraccion = 0;
+            }
+
+            update() {
+                if (this.estado === "En Atracción") {
+                    this.timerAtraccion--;
+                    if (this.timerAtraccion <= 0) {
+                        this.estado = "Caminando";
+                        this.pixelX += TILE_SIZE; // Lo expulsa a un lado
+                    }
+                } else if (!this.isMoving) {
+                    this.decidirSiguientePaso();
+                } else {
+                    this.moverSuave();
+                }
+                this.dibujar();
+            }
+
+            decidirSiguientePaso() {
+                // Si hay una atracción cerca, hay probabilidad de entrar
+                if (attraction && Math.abs(this.gridX - attraction.x) <= 1 && Math.abs(this.gridY - attraction.y) <= 1) {
+                    if (Math.random() > 0.7) {
+                        this.estado = "En Atracción";
+                        this.timerAtraccion = 120; // 2 segundos a 60fps
+                        return;
+                    }
+                }
+
+                const dirs = [{x:0,y:1},{x:0,y:-1},{x:1,y:0},{x:-1,y:0}].sort(()=>Math.random()-0.5);
+                for (let d of dirs) {
+                    let nX = this.gridX + d.x, nY = this.gridY + d.y;
+                    if (nX >= 0 && nX < COLS && nY >= 0 && nY < ROWS && grid[nX][nY] === 1) {
+                        this.targetGridX = nX; this.targetGridY = nY;
+                        this.isMoving = true;
+                        break;
+                    }
+                }
+            }
+
+            moverSuave() {
+                const destX = this.targetGridX * TILE_SIZE + TILE_SIZE/2;
+                const destY = this.targetGridY * TILE_SIZE + TILE_SIZE/2;
+                this.pixelX += (destX - this.pixelX) * 0.15;
+                this.pixelY += (destY - this.pixelY) * 0.15;
+
+                if (Math.abs(destX - this.pixelX) < 1 && Math.abs(destY - this.pixelY) < 1) {
+                    this.pixelX = destX; this.pixelY = destY;
+                    this.gridX = this.targetGridX; this.gridY = this.targetGridY;
+                    this.isMoving = false;
+                }
+            }
+
+            dibujar() {
+                if (this.estado === "En Atracción") return; // Desaparece dentro de la máquina
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.arc(this.pixelX, this.pixelY, 12, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        const visitor = new Peep(2, 2);
+        grid[2][2] = 1; // Camino inicial
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+            const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+            
+            if (e.button === 0) grid[x][y] = 1; // Click izquierdo: Camino
+            if (e.button === 2) attraction = {x, y}; // Click derecho: Atracción
+        });
+        canvas.oncontextmenu = (e) => e.preventDefault();
+
+        function drawWorld() {
+            for (let x = 0; x < COLS; x++) {
+                for (let y = 0; y < ROWS; y++) {
+                    if (grid[x][y] === 1) {
+                        ctx.fillStyle = "#95a5a6";
+                        ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
+                    ctx.strokeStyle = "rgba(0,0,0,0.1)";
+                    ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+            if (attraction) {
+                ctx.font = "30px Arial";
+                ctx.fillText("🎡", attraction.x * TILE_SIZE + 5, attraction.y * TILE_SIZE + 32);
+            }
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawWorld();
+            visitor.update();
+            document.getElementById('status').innerText = `Estado: ${visitor.estado}`;
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
