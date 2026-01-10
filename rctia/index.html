@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RCT Mobile IA</title>
+    <title>RCT Animated Peeps</title>
     <style>
         body { 
             display: flex; flex-direction: column; align-items: center; 
@@ -13,7 +13,7 @@
         canvas { 
             border: 2px solid #34495e; background: #27ae60; 
             width: 90vw; height: 90vw; max-width: 400px; max-height: 400px;
-            touch-action: none;
+            touch-action: none; image-rendering: pixelated; /* ¡IMPORTANTE para sprites! */
         }
         .controls { 
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
@@ -51,7 +51,14 @@
         let grid = Array(COLS).fill().map(() => Array(ROWS).fill(0));
         let attraction = null;
         let peeps = [];
-        let currentMode = 'camino'; // 'camino' o 'atraccion'
+        let currentMode = 'camino';
+
+        // Cargar el spritesheet del Peep
+        const peepSpriteSheet = new Image();
+        peepSpriteSheet.src = 'peep_walk.png'; // Asegúrate de que esta ruta sea correcta
+        const PEEP_SPRITE_WIDTH = 32; // Ancho de un solo frame en la imagen
+        const PEEP_SPRITE_HEIGHT = 32; // Alto de un solo frame en la imagen
+        const PEEP_ANIM_FRAMES = 4; // Número total de frames en el spritesheet
 
         function setMode(mode) {
             currentMode = mode;
@@ -67,7 +74,12 @@
                 this.targetGridX = x; this.targetGridY = y;
                 this.isMoving = false;
                 this.timerAtraccion = 0;
-                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`; // El color ya no se usará para el cuerpo, pero se mantiene por si acaso
+                
+                // Variables de animación
+                this.currentFrame = 0;
+                this.animTimer = 0;
+                this.animSpeed = 10; // Cambiar de frame cada 10 updates (más bajo = más rápido)
             }
 
             update() {
@@ -75,10 +87,22 @@
                     this.timerAtraccion--;
                 } else if (!this.isMoving) {
                     this.decidirSiguientePaso();
+                    // Reiniciar animación cuando se detiene o cambia de dirección
+                    this.currentFrame = 0; 
+                    this.animTimer = 0;
                 } else {
                     this.moverSuave();
+                    this.updateAnimation(); // Actualizar frame de animación
                 }
                 this.dibujar();
+            }
+
+            updateAnimation() {
+                this.animTimer++;
+                if (this.animTimer >= this.animSpeed) {
+                    this.currentFrame = (this.currentFrame + 1) % PEEP_ANIM_FRAMES;
+                    this.animTimer = 0;
+                }
             }
 
             decidirSiguientePaso() {
@@ -104,16 +128,28 @@
                 const destY = this.targetGridY * TILE_SIZE + TILE_SIZE/2;
                 this.pixelX += (destX - this.pixelX) * 0.15;
                 this.pixelY += (destY - this.pixelY) * 0.15;
-                if (Math.abs(destX - this.pixelX) < 1) {
+                if (Math.abs(destX - this.pixelX) < 1 && Math.abs(destY - this.pixelY) < 1) { // Ajustado a 1 para mejor precisión
+                    this.pixelX = destX; this.pixelY = destY;
                     this.gridX = this.targetGridX; this.gridY = this.targetGridY;
                     this.isMoving = false;
                 }
             }
 
             dibujar() {
-                if (this.timerAtraccion > 0) return;
-                ctx.fillStyle = this.color;
-                ctx.beginPath(); ctx.arc(this.pixelX, this.pixelY, 8, 0, Math.PI*2); ctx.fill();
+                if (this.timerAtraccion > 0) return; // Si está en la atracción, no se dibuja
+
+                // Calcular la posición del frame en el spritesheet
+                const sx = this.currentFrame * PEEP_SPRITE_WIDTH;
+                const sy = 0; // Si hubiera varias filas de animaciones, cambiaríamos esto
+
+                // Dibujar el trozo del spritesheet en la posición del peep
+                ctx.drawImage(
+                    peepSpriteSheet,
+                    sx, sy, PEEP_SPRITE_WIDTH, PEEP_SPRITE_HEIGHT, // Fuente (recorte del spritesheet)
+                    this.pixelX - PEEP_SPRITE_WIDTH / 2, // Posición X del dibujo (centrado)
+                    this.pixelY - PEEP_SPRITE_HEIGHT / 2, // Posición Y del dibujo (centrado)
+                    PEEP_SPRITE_WIDTH, PEEP_SPRITE_HEIGHT // Tamaño del dibujo en el canvas
+                );
             }
         }
 
@@ -149,8 +185,7 @@
             document.getElementById('count').innerText = `Visitantes: ${peeps.length}`;
         }
 
-        function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function drawWorld() {
             for (let x = 0; x < COLS; x++) {
                 for (let y = 0; y < ROWS; y++) {
                     if (grid[x][y] === 1) {
@@ -165,10 +200,27 @@
                 ctx.font = "30px Arial";
                 ctx.fillText("🎡", attraction.x * TILE_SIZE + 5, attraction.y * TILE_SIZE + 32);
             }
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawWorld();
             peeps.forEach(p => p.update());
             requestAnimationFrame(loop);
         }
-        loop();
+
+        // Asegurarse de que el spritesheet se cargue antes de empezar el loop del juego
+        peepSpriteSheet.onload = () => {
+            loop();
+        };
+        // En caso de error al cargar la imagen
+        peepSpriteSheet.onerror = () => {
+            console.error("Error al cargar la imagen 'peep_walk.png'. Asegúrate de que esté en la misma carpeta.");
+            // Si la imagen no carga, podemos iniciar el loop sin sprites (dibujar círculos como antes)
+            // o mostrar un mensaje de error al usuario.
+            // Por ahora, iniciamos el loop para que al menos se vea algo.
+            loop(); 
+        };
     </script>
 </body>
 </html>
