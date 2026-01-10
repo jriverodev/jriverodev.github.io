@@ -2,33 +2,62 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>RCT IA: Atracciones y Filas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RCT Mobile IA</title>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; background: #2c3e50; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
-        canvas { border: 4px solid #34495e; background: #27ae60; cursor: crosshair; }
-        .hud { margin: 10px; padding: 15px; background: #34495e; border-radius: 8px; display: flex; gap: 20px; }
-        .btn-blue { background: #3498db; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        body { 
+            display: flex; flex-direction: column; align-items: center; 
+            background: #2c3e50; color: white; font-family: sans-serif; 
+            margin: 0; padding: 10px; touch-action: none; 
+        }
+        canvas { 
+            border: 2px solid #34495e; background: #27ae60; 
+            width: 90vw; height: 90vw; max-width: 400px; max-height: 400px;
+            touch-action: none;
+        }
+        .controls { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            width: 90vw; max-width: 400px; margin-bottom: 10px; 
+        }
+        button { 
+            padding: 15px 5px; font-size: 14px; border: none; 
+            border-radius: 8px; color: white; font-weight: bold; cursor: pointer;
+        }
+        .btn-mode { background: #7f8c8d; border: 3px solid transparent; }
+        .btn-mode.active { border-color: #f1c40f; background: #34495e; }
+        .btn-spawn { background: #2ecc71; grid-column: span 2; }
+        #count { margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>Simulador de Atracción</h1>
-    <div class="hud">
-        <div>Clic Izquierdo: <b>Dibujar Camino</b></div>
-        <div>Clic Derecho: <b>Poner Atracción (🎡)</b></div>
-        <button class="btn-blue" onclick="location.reload()">Reiniciar</button>
+
+    <div class="controls">
+        <button id="btnCamino" class="btn-mode active" onclick="setMode('camino')">🚧 CAMINO</button>
+        <button id="btnAtraccion" class="btn-mode" onclick="setMode('atraccion')">🎡 ATRACCIÓN</button>
+        <button class="btn-spawn" onclick="spawnPeeps(10)">+10 VISITANTES</button>
     </div>
-    <canvas id="gameCanvas" width="480" height="480"></canvas>
-    <div id="status" style="margin-top:10px; font-size: 1.2em;">Estado: Caminando</div>
+
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    
+    <div id="count">Visitantes: 0</div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const TILE_SIZE = 40;
-        const COLS = canvas.width / TILE_SIZE;
-        const ROWS = canvas.height / TILE_SIZE;
+        const COLS = 10;
+        const ROWS = 10;
 
         let grid = Array(COLS).fill().map(() => Array(ROWS).fill(0));
         let attraction = null;
+        let peeps = [];
+        let currentMode = 'camino'; // 'camino' o 'atraccion'
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnCamino').classList.toggle('active', mode === 'camino');
+            document.getElementById('btnAtraccion').classList.toggle('active', mode === 'atraccion');
+        }
 
         class Peep {
             constructor(x, y) {
@@ -37,17 +66,13 @@
                 this.pixelY = y * TILE_SIZE + TILE_SIZE/2;
                 this.targetGridX = x; this.targetGridY = y;
                 this.isMoving = false;
-                this.estado = "Caminando";
                 this.timerAtraccion = 0;
+                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
             }
 
             update() {
-                if (this.estado === "En Atracción") {
+                if (this.timerAtraccion > 0) {
                     this.timerAtraccion--;
-                    if (this.timerAtraccion <= 0) {
-                        this.estado = "Caminando";
-                        this.pixelX += TILE_SIZE; // Lo expulsa a un lado
-                    }
                 } else if (!this.isMoving) {
                     this.decidirSiguientePaso();
                 } else {
@@ -57,15 +82,12 @@
             }
 
             decidirSiguientePaso() {
-                // Si hay una atracción cerca, hay probabilidad de entrar
                 if (attraction && Math.abs(this.gridX - attraction.x) <= 1 && Math.abs(this.gridY - attraction.y) <= 1) {
-                    if (Math.random() > 0.7) {
-                        this.estado = "En Atracción";
-                        this.timerAtraccion = 120; // 2 segundos a 60fps
+                    if (Math.random() > 0.98) {
+                        this.timerAtraccion = 100;
                         return;
                     }
                 }
-
                 const dirs = [{x:0,y:1},{x:0,y:-1},{x:1,y:0},{x:-1,y:0}].sort(()=>Math.random()-0.5);
                 for (let d of dirs) {
                     let nX = this.gridX + d.x, nY = this.gridY + d.y;
@@ -82,39 +104,57 @@
                 const destY = this.targetGridY * TILE_SIZE + TILE_SIZE/2;
                 this.pixelX += (destX - this.pixelX) * 0.15;
                 this.pixelY += (destY - this.pixelY) * 0.15;
-
-                if (Math.abs(destX - this.pixelX) < 1 && Math.abs(destY - this.pixelY) < 1) {
-                    this.pixelX = destX; this.pixelY = destY;
+                if (Math.abs(destX - this.pixelX) < 1) {
                     this.gridX = this.targetGridX; this.gridY = this.targetGridY;
                     this.isMoving = false;
                 }
             }
 
             dibujar() {
-                if (this.estado === "En Atracción") return; // Desaparece dentro de la máquina
-                ctx.fillStyle = "#f1c40f";
-                ctx.beginPath(); ctx.arc(this.pixelX, this.pixelY, 12, 0, Math.PI*2); ctx.fill();
+                if (this.timerAtraccion > 0) return;
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.pixelX, this.pixelY, 8, 0, Math.PI*2); ctx.fill();
             }
         }
 
-        const visitor = new Peep(2, 2);
-        grid[2][2] = 1; // Camino inicial
-
-        canvas.addEventListener('mousedown', (e) => {
+        function handleInput(e) {
+            e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-            const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             
-            if (e.button === 0) grid[x][y] = 1; // Click izquierdo: Camino
-            if (e.button === 2) attraction = {x, y}; // Click derecho: Atracción
-        });
-        canvas.oncontextmenu = (e) => e.preventDefault();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const x = Math.floor(((clientX - rect.left) * scaleX) / TILE_SIZE);
+            const y = Math.floor(((clientY - rect.top) * scaleY) / TILE_SIZE);
 
-        function drawWorld() {
+            if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+                if (currentMode === 'camino') grid[x][y] = 1;
+                else attraction = {x, y};
+            }
+        }
+
+        canvas.addEventListener('touchstart', handleInput);
+        canvas.addEventListener('mousedown', handleInput);
+
+        function spawnPeeps(amount) {
+            let paths = [];
+            for(let x=0; x<COLS; x++) for(let y=0; y<ROWS; y++) if(grid[x][y] === 1) paths.push({x,y});
+            if(paths.length === 0) return alert("¡Dibuja un camino primero!");
+            for(let i=0; i<amount; i++) {
+                let p = paths[Math.floor(Math.random()*paths.length)];
+                peeps.push(new Peep(p.x, p.y));
+            }
+            document.getElementById('count').innerText = `Visitantes: ${peeps.length}`;
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let x = 0; x < COLS; x++) {
                 for (let y = 0; y < ROWS; y++) {
                     if (grid[x][y] === 1) {
-                        ctx.fillStyle = "#95a5a6";
+                        ctx.fillStyle = "#bdc3c7";
                         ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     }
                     ctx.strokeStyle = "rgba(0,0,0,0.1)";
@@ -125,13 +165,7 @@
                 ctx.font = "30px Arial";
                 ctx.fillText("🎡", attraction.x * TILE_SIZE + 5, attraction.y * TILE_SIZE + 32);
             }
-        }
-
-        function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawWorld();
-            visitor.update();
-            document.getElementById('status').innerText = `Estado: ${visitor.estado}`;
+            peeps.forEach(p => p.update());
             requestAnimationFrame(loop);
         }
         loop();
