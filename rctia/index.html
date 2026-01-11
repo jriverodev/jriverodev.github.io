@@ -3,323 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RCT: IA Agent Talk Edition</title>
+    <title>RCT Ultra-Isometric Pixel Art</title>
     <style>
         body { 
             display: flex; flex-direction: column; align-items: center; 
-            background: #1a1a1a; color: white; font-family: 'Courier New', Courier, monospace; 
-            margin: 0; padding: 10px; touch-action: none; overflow: hidden;
+            background: #2c3e50; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; overflow: hidden; touch-action: none;
         }
-        #header {
-            width: 95vw; max-width: 450px; background: #222; padding: 10px; 
-            border-radius: 8px; margin-bottom: 5px; border-bottom: 3px solid #f1c40f;
+        #ui-layer {
+            position: absolute; top: 10px; width: 90%; max-width: 400px;
+            z-index: 10; pointer-events: none;
         }
-        .stats-row { display: flex; justify-content: space-between; font-size: 14px; }
-        #aiStatus { background: #333; padding: 5px; font-size: 10px; color: #0f0; margin-top: 5px; border-radius: 3px; }
+        .stat-card {
+            background: rgba(0,0,0,0.7); padding: 10px; border-radius: 12px;
+            border-bottom: 4px solid #f1c40f; display: flex; justify-content: space-between;
+        }
         canvas { 
-            border: 4px solid #3d3d3d; background: #2d7d32; 
-            width: 95vw; height: 95vw; max-width: 450px; max-height: 450px;
-            image-rendering: pixelated; 
+            image-rendering: pixelated; width: 100vw; height: 100vh;
         }
-        .ui { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; 
-            width: 95vw; max-width: 450px; margin-top: 10px; 
+        .controls {
+            position: absolute; bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; width: 90%; max-width: 400px; z-index: 10;
         }
-        button { 
-            padding: 8px 2px; font-size: 9px; border: none; cursor: pointer;
-            border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase;
+        button {
+            background: #34495e; color: white; border: none; padding: 12px 5px;
+            border-radius: 8px; font-weight: bold; font-size: 10px; border-bottom: 4px solid #2c3e50;
         }
-        .active { background: #f1c40f !important; color: #000; }
-        .btn-mode { background: #444; }
-        .btn-blue { background: #3498db; }
-        .btn-green { background: #2ecc71; grid-column: span 3; padding: 12px; margin-top: 5px; }
+        button.active { background: #f1c40f; color: #000; border-color: #f39c12; }
     </style>
 </head>
 <body>
 
-    <div id="header">
-        <div class="stats-row">
-            <div>💰 <span id="moneyTxt">$500</span></div>
-            <div>😊 <span id="happyTxt">100%</span></div>
+    <div id="ui-layer">
+        <div class="stat-card">
+            <span>💰 $<span id="moneyTxt">500</span></span>
+            <span>😊 <span id="happyTxt">100</span>%</span>
         </div>
-        <div id="aiStatus">AGENTES IA: HABLANDO</div>
     </div>
 
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
-    <div class="ui">
-        <button id="btnCamino" class="active" onclick="setMode('camino')">Vía (-$10)</button>
-        <button id="btnFeria" onclick="setMode('feria')">🎡 Feria (-$150)</button>
-        <button id="btnComida" onclick="setMode('comida')">🍔 Comida (-$80)</button>
-        <button id="btnPapelera" onclick="setMode('papelera')">🗑️ Papelera (-$30)</button>
-        <button id="btnBanco" onclick="setMode('banco')">💺 Banco (-$40)</button>
-        <button class="btn-blue" onclick="hireStaff()">Limpiador 🧹 (-$50)</button>
-        <button class="btn-green" onclick="spawnPeeps(1)">NUEVO AGENTE IA 👤</button>
+    <div class="controls">
+        <button id="btnCamino" class="active" onclick="setMode('camino')">CAMINO</button>
+        <button id="btnFeria" onclick="setMode('feria')">🎡 FERIA</button>
+        <button id="btnComida" onclick="setMode('comida')">🍔 COMIDA</button>
+        <button id="btnBanco" onclick="setMode('banco')">💺 BANCO</button>
+        <button style="background:#2ecc71" onclick="spawnPeeps(1)">+ VISITANTE</button>
+        <button style="background:#3498db" onclick="hireStaff()">+ LIMPIADOR</button>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const TILE_SIZE = 40;
-        const COLS = 10, ROWS = 10;
+        
+        let width, height;
+        const TILE_W = 60; // Ancho del rombo
+        const TILE_H = 30; // Alto del rombo
+        const GRID_SIZE = 10;
 
-        let grid = Array(COLS).fill().map(() => Array(ROWS).fill(0));
-        let trash = [], buildings = [], peeps = [], staff = [], footprints = [];
-        let wallet = 500, felicidad = 100, currentMode = 'camino';
+        let wallet = 500, currentMode = 'camino';
+        let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+        let buildings = [], peeps = [];
 
-        const convoPhrases = [
-            "¡Qué divertido!", "¿Has visto la feria?", "¡Tengo hambre!", "Este parque está genial",
-            "¿Hace calor, no?", "¡Qué atracciones!", "Necesito descansar", "¡A tope!", "¡Genial!",
-            "¿Dónde está la salida?", "¡Mira qué vistas!"
-        ];
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-        function setMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.ui button').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById('btn' + mode.charAt(0).toUpperCase() + mode.slice(1));
-            if(btn) btn.classList.add('active');
+        // Convertir coordenadas de rejilla a pantalla (Isométrica)
+        function isoToScreen(mapX, mapY) {
+            return {
+                x: width / 2 + (mapX - mapY) * (TILE_W / 2),
+                y: height / 4 + (mapX + mapY) * (TILE_H / 2)
+            };
         }
 
-        function drawBuilding(type, x, y) {
-            ctx.save();
-            ctx.translate(x * TILE_SIZE, y * TILE_SIZE);
-            ctx.fillStyle = "#000"; // Borde base
-            
-            if(type === 'feria') {
-                ctx.fillRect(5, 5, 30, 30); // Estructura
-                ctx.fillStyle = "#e74c3c"; ctx.fillRect(6, 6, 28, 28); // Rojo
-                ctx.fillStyle = "#f1c40f"; ctx.fillRect(15, 15, 10, 10); // Centro
-                ctx.fillStyle = "#fff"; ctx.fillRect(18, 10, 4, 20); ctx.fillRect(10, 18, 20, 4); // Aspas
-            } else if(type === 'comida') {
-                ctx.fillRect(5, 15, 30, 20); // Puesto
-                ctx.fillStyle = "#d35400"; ctx.fillRect(6, 16, 28, 18); // Madera
-                ctx.fillStyle = "#f39c12"; ctx.fillRect(10, 10, 20, 6); // Techo
-                ctx.fillStyle = "#fff"; ctx.fillRect(12, 20, 5, 5); // Ventana
-            } else if(type === 'papelera') {
-                ctx.fillRect(12, 10, 16, 25);
-                ctx.fillStyle = "#7f8c8d"; ctx.fillRect(13, 11, 14, 23); // Metal
-                ctx.fillStyle = "#2c3e50"; ctx.fillRect(15, 15, 10, 3); // Boca
-            } else if(type === 'banco') {
-                ctx.fillRect(5, 20, 30, 15);
-                ctx.fillStyle = "#27ae60"; ctx.fillRect(6, 21, 28, 13); // Asiento
-                ctx.fillStyle = "#000"; ctx.fillRect(8, 25, 24, 2); // Detalle
-            }
-            ctx.restore();
+        function setMode(m) {
+            currentMode = m;
+            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            if(document.getElementById('btn'+m.charAt(0).toUpperCase()+m.slice(1)))
+                document.getElementById('btn'+m.charAt(0).toUpperCase()+m.slice(1)).classList.add('active');
         }
 
-        class Agent {
-            constructor(x, y, isStaff = false) {
-                this.gridX = x; this.gridY = y;
-                this.pixelX = x * TILE_SIZE + TILE_SIZE/2;
-                this.pixelY = y * TILE_SIZE + TILE_SIZE/2;
-                this.targetGridX = x; this.targetGridY = y;
+        class Peep {
+            constructor(isStaff = false) {
+                this.x = 0; this.y = 0;
+                this.targetX = 0; this.targetY = 0;
                 this.isMoving = false;
+                this.color = isStaff ? "#3498db" : `hsl(${Math.random()*360}, 70%, 50%)`;
+                this.anim = 0;
                 this.isStaff = isStaff;
-                this.shirtColor = isStaff ? "#2980b9" : `hsl(${Math.random()*360}, 60%, 50%)`;
-                this.anim = 0; this.dir = 1;
-                this.hambre = 0; this.energia = 100;
-                this.pensamiento = "Paseando";
-                this.speaking = false;
-                this.speechBubble = "";
-                this.speechTimer = 0;
             }
 
             update() {
-                if (this.speechTimer > 0) {
-                    this.speechTimer--;
-                    this.speaking = true;
-                    this.isMoving = false; // Se detiene para hablar
-                } else {
-                    this.speaking = false;
-                    this.speechBubble = "";
-                    if (!this.isMoving) this.brain(); else this.move();
-                }
-                this.draw();
-            }
-
-            brain() {
-                if (this.isStaff) {
-                    this.patrullar();
-                    return;
-                }
-
-                // Desgaste de necesidades
-                this.hambre += 0.2; this.energia -= 0.1;
-
-                // Detección de conversación
-                for (let otherPeep of peeps) {
-                    if (otherPeep !== this && Math.abs(this.gridX - otherPeep.gridX) <= 1 && Math.abs(this.gridY - otherPeep.gridY) <= 1) {
-                        if (!this.speaking && !otherPeep.speaking) {
-                            this.speechBubble = convoPhrases[Math.floor(Math.random() * convoPhrases.length)];
-                            this.speechTimer = 100; // Habla por 100 frames
-                            this.speaking = true;
-                            break;
-                        }
+                if(!this.isMoving) {
+                    const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+                    const d = dirs[Math.floor(Math.random()*4)];
+                    const nx = this.x + d.x, ny = this.y + d.y;
+                    if(nx>=0 && nx<GRID_SIZE && ny>=0 && ny<GRID_SIZE && grid[nx][ny] === 1) {
+                        this.targetX = nx; this.targetY = ny;
+                        this.isMoving = true;
                     }
-                }
-                if (this.speaking) return; // Si está hablando, no toma otras decisiones de movimiento
-
-                // IA: Toma de decisiones por prioridad (si no está hablando)
-                if (this.energia < 30) {
-                    this.pensamiento = "Buscando Banco";
-                    if (!this.irAEdificio('banco')) this.patrullar();
-                } else if (this.hambre > 70) {
-                    this.pensamiento = "Tengo Hambre";
-                    if (!this.irAEdificio('comida')) this.patrullar();
-                } else if (Math.random() > 0.7) {
-                    this.pensamiento = "¡A la Feria!";
-                    if (!this.irAEdificio('feria')) this.patrullar();
                 } else {
-                    this.pensamiento = "Paseando";
-                    this.patrullar();
-                }
-            }
-
-            irAEdificio(tipo) {
-                // Lógica de búsqueda simplificada por ahora
-                // Solo comprueba si hay un edificio del tipo cerca
-                const buildingFound = buildings.some(b => b.type === tipo && Math.abs(this.gridX - b.x) <= 1 && Math.abs(this.gridY - b.y) <= 1);
-                if (buildingFound) {
-                    if (tipo === 'comida') { this.hambre = 0; wallet += 5; trash.push({x:this.gridX, y:this.gridY, type:'🥤'}); }
-                    if (tipo === 'banco') { this.energia = 100; }
-                    if (tipo === 'feria') { wallet += 10; }
-                    return true; // Ha interactuado con el edificio
-                }
-                return false; // No encontró un edificio o no interactuó
-            }
-
-            patrullar() {
-                const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(()=>Math.random()-0.5);
-                for(let d of dirs) {
-                    let nX = this.gridX + d.x, nY = this.gridY + d.y;
-                    if(nX>=0 && nX<COLS && nY>=0 && nY<ROWS && grid[nX][nY] === 1) {
-                        this.targetGridX = nX; this.targetGridY = nY;
-                        this.isMoving = true; this.dir = d.x !== 0 ? d.x : this.dir;
-                        return;
-                    }
-                }
-            }
-
-            move() {
-                const tx = this.targetGridX * TILE_SIZE + TILE_SIZE/2;
-                const ty = this.targetGridY * TILE_SIZE + TILE_SIZE/2;
-                this.pixelX += (tx - this.pixelX) * 0.12;
-                this.pixelY += (ty - this.pixelY) * 0.12;
-                this.anim += 0.25;
-                
-                if (!this.isStaff && trash.some(t => t.x === this.gridX && t.y === this.gridY)) {
-                    if (Math.random() > 0.8) footprints.push({x: this.pixelX, y: this.pixelY + 5, life: 150});
-                }
-
-                if(Math.abs(tx - this.pixelX) < 1 && Math.abs(ty - this.pixelY) < 1) {
-                    this.gridX = this.targetGridX; this.gridY = this.targetGridY;
-                    this.isMoving = false;
-                    if(this.isStaff) {
-                        trash = trash.filter(t => !(t.x === this.gridX && t.y === this.gridY));
-                        footprints = footprints.filter(f => Math.hypot(f.x - this.pixelX, f.y - this.pixelY) > 15);
+                    this.x += (this.targetX - this.x) * 0.1;
+                    this.y += (this.targetY - this.y) * 0.1;
+                    this.anim += 0.2;
+                    if(Math.abs(this.x - this.targetX) < 0.05) {
+                        this.x = this.targetX; this.y = this.targetY;
+                        this.isMoving = false;
                     }
                 }
             }
 
             draw() {
+                const pos = isoToScreen(this.x, this.y);
+                const bounce = Math.abs(Math.sin(this.anim)) * 4;
+                
                 ctx.save();
-                ctx.translate(this.pixelX, this.pixelY);
-                ctx.scale(this.dir, 1);
-                const step = Math.sin(this.anim) * 3;
-
-                // CABEZA
-                ctx.fillStyle = "#000"; ctx.fillRect(-7, -22, 14, 14);
-                ctx.fillStyle = "#ffdbac"; ctx.fillRect(-6, -21, 12, 12);
-                ctx.fillStyle = "#000"; ctx.fillRect(2, -17, 2, 2);
-
-                // CUERPO
-                ctx.fillStyle = "#000"; ctx.fillRect(-8, -9, 16, 12);
-                ctx.fillStyle = this.shirtColor; ctx.fillRect(-7, -8, 14, 10);
-
-                // PIERNAS
-                ctx.fillStyle = "#000";
-                ctx.fillRect(-6, 2 - step, 5, 7); 
-                ctx.fillRect(1, 2 - (3-step), 5, 7);
+                ctx.translate(pos.x, pos.y - 5);
+                
+                // Personaje estilo imagen: Cabeza grande, cuerpo pequeño, contorno negro
+                // Cuerpo
+                ctx.fillStyle = "#000"; ctx.fillRect(-6, -12 - bounce, 12, 10);
+                ctx.fillStyle = this.color; ctx.fillRect(-5, -11 - bounce, 10, 8);
+                // Cabeza
+                ctx.fillStyle = "#000"; ctx.fillRect(-8, -26 - bounce, 16, 15);
+                ctx.fillStyle = "#ffdbac"; ctx.fillRect(-7, -25 - bounce, 14, 13);
+                // Ojos
+                ctx.fillStyle = "#000"; ctx.fillRect(2, -20 - bounce, 2, 3);
+                
                 ctx.restore();
+            }
+        }
 
-                // Globo de diálogo
-                if (this.speechBubble) {
-                    ctx.save();
-                    ctx.translate(this.pixelX, this.pixelY - 40); // Posición del globo
-                    ctx.fillStyle = "#000"; ctx.fillRect(-35, -15, 70, 20); // Fondo negro
-                    ctx.fillStyle = "#fff"; ctx.fillRect(-34, -14, 68, 18); // Fondo blanco
-                    ctx.fillStyle = "#000"; ctx.font = "8px Arial";
-                    ctx.fillText(this.speechBubble, -30, -5);
-                    ctx.restore();
+        function drawMap() {
+            ctx.clearRect(0, 0, width, height);
+
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    const pos = isoToScreen(x, y);
+                    
+                    // Dibujar el suelo (Rombo)
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y);
+                    ctx.lineTo(pos.x + TILE_W / 2, pos.y + TILE_H / 2);
+                    ctx.lineTo(pos.x, pos.y + TILE_H);
+                    ctx.lineTo(pos.x - TILE_W / 2, pos.y + TILE_H / 2);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = grid[x][y] === 1 ? "#95a5a6" : "#2ecc71";
+                    ctx.fill();
+                    ctx.strokeStyle = "rgba(0,0,0,0.1)";
+                    ctx.stroke();
+
+                    // Dibujar edificios
+                    const b = buildings.find(b => b.x === x && b.y === y);
+                    if(b) {
+                        ctx.fillStyle = "#000"; ctx.fillRect(pos.x - 10, pos.y - 20, 20, 25);
+                        if(b.type === 'feria') ctx.fillStyle = "#e74c3c";
+                        else if(b.type === 'comida') ctx.fillStyle = "#f39c12";
+                        else ctx.fillStyle = "#7f8c8d";
+                        ctx.fillRect(pos.x - 8, pos.y - 18, 16, 20);
+                    }
                 }
             }
         }
 
-        function handleInput(e) {
+        canvas.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            // Simplificación: Clic directo en grid para móviles
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const x = Math.floor(((clientX - rect.left) * (400/rect.width)) / TILE_SIZE);
-            const y = Math.floor(((clientY - rect.top) * (400/rect.height)) / TILE_SIZE);
-
-            if(x<0 || x>=COLS || y<0 || y>=ROWS) return;
-
-            let cost = 0;
-            if(currentMode === 'camino') { cost = 10; if(grid[x][y] === 1) return; grid[x][y] = 1; }
-            else if(currentMode === 'feria') { cost = 150; }
-            else if(currentMode === 'comida') { cost = 80; }
-            else if(currentMode === 'papelera') { cost = 30; }
-            else if(currentMode === 'banco') { cost = 40; }
-
-            if(wallet >= cost) { 
-                if(currentMode !== 'camino') buildings.push({x, y, type: currentMode});
-                wallet -= cost; 
-            }
-            updateUI();
-        }
-
-        canvas.addEventListener('mousedown', handleInput);
-        canvas.addEventListener('touchstart', (e)=>{e.preventDefault(); handleInput(e);});
-
-        function spawnPeeps(n) { for(let i=0; i<n; i++) peeps.push(new Agent(0,0)); }
-        function hireStaff() { if(wallet>=50){ wallet-=50; staff.push(new Agent(0,0,true)); } }
-
-        function updateUI() {
-            document.getElementById('moneyTxt').innerText = `$${Math.floor(wallet)}`;
-            felicidad = Math.max(0, 100 - (trash.length * 5) - (footprints.length * 0.3));
-            document.getElementById('happyTxt').innerText = `${Math.floor(felicidad)}%`;
-            document.getElementById('aiStatus').innerText = `AGENTES IA: ${peeps.filter(p => p.speaking).length > 0 ? 'Conversando' : 'Activos'}`;
-        }
-
-        function loop() {
-            ctx.clearRect(0,0,400,400);
-            ctx.fillStyle = "#2d7d32"; ctx.fillRect(0,0,400,400);
-
-            for(let x=0;x<COLS;x++) for(let y=0;y<ROWS;y++) {
-                if(grid[x][y]===1) { ctx.fillStyle="#888"; ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE); }
-            }
-
-            footprints.forEach((f, i) => {
-                ctx.fillStyle = `rgba(0,0,0,${f.life/150})`; ctx.fillRect(f.x-2, f.y, 4, 2);
-                f.life--; if(f.life<=0) footprints.splice(i,1);
-            });
-
-            buildings.forEach(b => drawBuilding(b.type, b.x, b.y));
-            trash.forEach(t => { ctx.fillText(t.type, t.x*TILE_SIZE+10, t.y*TILE_SIZE+25); });
-            peeps.forEach(p => p.update());
-            staff.forEach(s => s.update());
+            const mouseX = touch.clientX - width/2;
+            const mouseY = touch.clientY - height/4;
             
-            updateUI();
-            requestAnimationFrame(loop);
-        }
-        loop();
+            const gx = Math.floor((mouseY / (TILE_H/2) + mouseX / (TILE_W/2)) / 2);
+            const gy = Math.floor((mouseY / (TILE_H/2) - mouseX / (TILE_W/2)) / 2);
 
-        setInterval(() => {
-            if(peeps.length > 0 && Math.random() > 0.6) {
-                let p = peeps[Math.floor(Math.random()*peeps.length)];
-                trash.push({x: p.gridX, y: p.gridY, type: Math.random()>0.8?'🤮':'🥤'});
+            if(gx >= 0 && gx < GRID_SIZE && gy >= 0 && gy < GRID_SIZE) {
+                if(currentMode === 'camino') { grid[gx][gy] = 1; wallet -= 10; }
+                else { buildings.push({x: gx, y: gy, type: currentMode}); wallet -= 50; }
+                document.getElementById('moneyTxt').innerText = wallet;
             }
-        }, 5000);
+        });
+
+        function spawnPeeps(n) { for(let i=0; i<n; i++) peeps.push(new Peep()); }
+        function hireStaff() { peeps.push(new Peep(true)); }
+
+        function gameLoop() {
+            drawMap();
+            // Ordenar peeps por posición Y para que los de atrás no tapen a los de adelante
+            peeps.sort((a,b) => (a.x + a.y) - (b.x + b.y));
+            peeps.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Inicializar parque
+        grid[0][0] = 1; grid[1][0] = 1; grid[2][0] = 1;
+        gameLoop();
     </script>
 </body>
     </html>
