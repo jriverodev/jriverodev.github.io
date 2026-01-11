@@ -3,206 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RCT Ultra-Isometric Pixel Art</title>
+    <title>RCT Ultra-Isometric Pro</title>
     <style>
         body { 
             display: flex; flex-direction: column; align-items: center; 
-            background: #2c3e50; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #111; color: white; font-family: 'Arial Black', sans-serif; 
             margin: 0; padding: 0; overflow: hidden; touch-action: none;
         }
-        #ui-layer {
-            position: absolute; top: 10px; width: 90%; max-width: 400px;
-            z-index: 10; pointer-events: none;
+        #ui-top {
+            position: absolute; top: 0; width: 100%; height: 50px;
+            background: linear-gradient(to bottom, #4a4a4a, #222);
+            border-bottom: 2px solid #000; display: flex; align-items: center;
+            justify-content: space-around; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        .stat-card {
-            background: rgba(0,0,0,0.7); padding: 10px; border-radius: 12px;
-            border-bottom: 4px solid #f1c40f; display: flex; justify-content: space-between;
+        .stat { color: #0f0; text-shadow: 1px 1px #000; font-size: 18px; }
+        canvas { image-rendering: pixelated; width: 100vw; height: 100vh; background: #2d7d32; }
+        .toolbar {
+            position: absolute; bottom: 15px; display: flex; gap: 8px;
+            background: rgba(0,0,0,0.6); padding: 10px; border-radius: 10px; z-index: 100;
         }
-        canvas { 
-            image-rendering: pixelated; width: 100vw; height: 100vh;
+        .tool-btn {
+            width: 50px; height: 50px; border: 2px solid #fff; border-radius: 5px;
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+            background: #555; cursor: pointer;
         }
-        .controls {
-            position: absolute; bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 10px; width: 90%; max-width: 400px; z-index: 10;
-        }
-        button {
-            background: #34495e; color: white; border: none; padding: 12px 5px;
-            border-radius: 8px; font-weight: bold; font-size: 10px; border-bottom: 4px solid #2c3e50;
-        }
-        button.active { background: #f1c40f; color: #000; border-color: #f39c12; }
+        .active { background: #f1c40f !important; border-color: #000 !important; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        <div class="stat-card">
-            <span>💰 $<span id="moneyTxt">500</span></span>
-            <span>😊 <span id="happyTxt">100</span>%</span>
-        </div>
+    <div id="ui-top">
+        <div class="stat">💰 $<span id="moneyTxt">1000</span></div>
+        <div class="stat">😊 <span id="happyTxt">100</span>%</div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
-    <div class="controls">
-        <button id="btnCamino" class="active" onclick="setMode('camino')">CAMINO</button>
-        <button id="btnFeria" onclick="setMode('feria')">🎡 FERIA</button>
-        <button id="btnComida" onclick="setMode('comida')">🍔 COMIDA</button>
-        <button id="btnBanco" onclick="setMode('banco')">💺 BANCO</button>
-        <button style="background:#2ecc71" onclick="spawnPeeps(1)">+ VISITANTE</button>
-        <button style="background:#3498db" onclick="hireStaff()">+ LIMPIADOR</button>
+    <div class="toolbar">
+        <div id="btn-camino" class="tool-btn active" onclick="setMode('camino')">🛣️</div>
+        <div id="btn-feria" class="tool-btn" onclick="setMode('feria')">🎡</div>
+        <div id="btn-comida" class="tool-btn" onclick="setMode('comida')">🍔</div>
+        <div id="btn-limpiador" class="tool-btn" style="background:#3498db" onclick="hireStaff()">🧹</div>
+        <div id="btn-peep" class="tool-btn" style="background:#2ecc71" onclick="spawnPeep()">👤</div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
         let width, height;
-        const TILE_W = 60; // Ancho del rombo
-        const TILE_H = 30; // Alto del rombo
-        const GRID_SIZE = 10;
+        const TILE_W = 64; // Tamaño RCT clásico
+        const TILE_H = 32;
+        const GRID_SIZE = 15; // Mapa más grande
 
-        let wallet = 500, currentMode = 'camino';
+        let wallet = 1000, currentMode = 'camino';
         let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
-        let buildings = [], peeps = [];
+        let objects = []; // Edificios y Peeps
+        let camera = { x: 0, y: 0 };
 
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
+            camera.x = width / 2;
+            camera.y = height / 4;
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // Convertir coordenadas de rejilla a pantalla (Isométrica)
-        function isoToScreen(mapX, mapY) {
-            return {
-                x: width / 2 + (mapX - mapY) * (TILE_W / 2),
-                y: height / 4 + (mapX + mapY) * (TILE_H / 2)
-            };
-        }
-
         function setMode(m) {
             currentMode = m;
-            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            if(document.getElementById('btn'+m.charAt(0).toUpperCase()+m.slice(1)))
-                document.getElementById('btn'+m.charAt(0).toUpperCase()+m.slice(1)).classList.add('active');
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-'+m)?.classList.add('active');
+        }
+
+        function toScreen(gx, gy) {
+            return {
+                x: camera.x + (gx - gy) * (TILE_W / 2),
+                y: camera.y + (gx + gy) * (TILE_H / 2)
+            };
         }
 
         class Peep {
             constructor(isStaff = false) {
-                this.x = 0; this.y = 0;
-                this.targetX = 0; this.targetY = 0;
+                this.gx = 0; this.gy = 0;
+                this.px = 0; this.py = 0;
+                this.targetGX = 0; this.targetGY = 0;
                 this.isMoving = false;
                 this.color = isStaff ? "#3498db" : `hsl(${Math.random()*360}, 70%, 50%)`;
                 this.anim = 0;
                 this.isStaff = isStaff;
+                this.type = 'peep';
             }
 
             update() {
                 if(!this.isMoving) {
                     const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
                     const d = dirs[Math.floor(Math.random()*4)];
-                    const nx = this.x + d.x, ny = this.y + d.y;
+                    const nx = this.gx + d.x, ny = this.gy + d.y;
                     if(nx>=0 && nx<GRID_SIZE && ny>=0 && ny<GRID_SIZE && grid[nx][ny] === 1) {
-                        this.targetX = nx; this.targetY = ny;
+                        this.targetGX = nx; this.targetGY = ny;
                         this.isMoving = true;
                     }
                 } else {
-                    this.x += (this.targetX - this.x) * 0.1;
-                    this.y += (this.targetY - this.y) * 0.1;
+                    this.gx += (this.targetGX - this.gx) * 0.1;
+                    this.gy += (this.targetGY - this.gy) * 0.1;
                     this.anim += 0.2;
-                    if(Math.abs(this.x - this.targetX) < 0.05) {
-                        this.x = this.targetX; this.y = this.targetY;
+                    if(Math.abs(this.gx - this.targetGX) < 0.05) {
+                        this.gx = this.targetGX; this.gy = this.targetGY;
                         this.isMoving = false;
                     }
                 }
             }
 
             draw() {
-                const pos = isoToScreen(this.x, this.y);
-                const bounce = Math.abs(Math.sin(this.anim)) * 4;
+                const pos = toScreen(this.gx, this.gy);
+                const bounce = Math.abs(Math.sin(this.anim)) * 3;
                 
                 ctx.save();
-                ctx.translate(pos.x, pos.y - 5);
+                ctx.translate(pos.x, pos.y);
                 
-                // Personaje estilo imagen: Cabeza grande, cuerpo pequeño, contorno negro
-                // Cuerpo
-                ctx.fillStyle = "#000"; ctx.fillRect(-6, -12 - bounce, 12, 10);
-                ctx.fillStyle = this.color; ctx.fillRect(-5, -11 - bounce, 10, 8);
-                // Cabeza
-                ctx.fillStyle = "#000"; ctx.fillRect(-8, -26 - bounce, 16, 15);
-                ctx.fillStyle = "#ffdbac"; ctx.fillRect(-7, -25 - bounce, 14, 13);
-                // Ojos
-                ctx.fillStyle = "#000"; ctx.fillRect(2, -20 - bounce, 2, 3);
+                // Sombra en el suelo
+                ctx.fillStyle = "rgba(0,0,0,0.2)";
+                ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+
+                // CUERPO (Estilo RCT: con volumen)
+                ctx.fillStyle = "#000"; ctx.fillRect(-6, -15-bounce, 12, 12); // Borde
+                ctx.fillStyle = this.color; ctx.fillRect(-5, -14-bounce, 10, 10);
+                
+                // CABEZA
+                ctx.fillStyle = "#000"; ctx.fillRect(-7, -28-bounce, 14, 14); // Borde
+                ctx.fillStyle = "#ffdbac"; ctx.fillRect(-6, -27-bounce, 12, 12);
+                
+                // Cara (Ojos)
+                ctx.fillStyle = "#000"; ctx.fillRect(2, -23-bounce, 2, 3);
                 
                 ctx.restore();
             }
         }
 
-        function drawMap() {
-            ctx.clearRect(0, 0, width, height);
+        function drawTile(gx, gy) {
+            const pos = toScreen(gx, gy);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.lineTo(pos.x + TILE_W/2, pos.y + TILE_H/2);
+            ctx.lineTo(pos.x, pos.y + TILE_H);
+            ctx.lineTo(pos.x - TILE_W/2, pos.y + TILE_H/2);
+            ctx.closePath();
 
-            for (let x = 0; x < GRID_SIZE; x++) {
-                for (let y = 0; y < GRID_SIZE; y++) {
-                    const pos = isoToScreen(x, y);
-                    
-                    // Dibujar el suelo (Rombo)
-                    ctx.beginPath();
-                    ctx.moveTo(pos.x, pos.y);
-                    ctx.lineTo(pos.x + TILE_W / 2, pos.y + TILE_H / 2);
-                    ctx.lineTo(pos.x, pos.y + TILE_H);
-                    ctx.lineTo(pos.x - TILE_W / 2, pos.y + TILE_H / 2);
-                    ctx.closePath();
-                    
-                    ctx.fillStyle = grid[x][y] === 1 ? "#95a5a6" : "#2ecc71";
-                    ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.1)";
-                    ctx.stroke();
-
-                    // Dibujar edificios
-                    const b = buildings.find(b => b.x === x && b.y === y);
-                    if(b) {
-                        ctx.fillStyle = "#000"; ctx.fillRect(pos.x - 10, pos.y - 20, 20, 25);
-                        if(b.type === 'feria') ctx.fillStyle = "#e74c3c";
-                        else if(b.type === 'comida') ctx.fillStyle = "#f39c12";
-                        else ctx.fillStyle = "#7f8c8d";
-                        ctx.fillRect(pos.x - 8, pos.y - 18, 16, 20);
-                    }
-                }
+            // Color de la baldosa (Césped vs Camino)
+            if(grid[gx][gy] === 1) {
+                ctx.fillStyle = "#777"; // Camino
+                ctx.fill();
+                ctx.strokeStyle = "#999"; ctx.stroke();
+            } else {
+                ctx.fillStyle = "#3a8e3f"; // Césped RCT
+                ctx.fill();
+                // Detalle de hierba
+                ctx.fillStyle = "#2d7d32";
+                ctx.fillRect(pos.x-2, pos.y+10, 2, 2);
             }
         }
 
-        canvas.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            // Simplificación: Clic directo en grid para móviles
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = touch.clientX - width/2;
-            const mouseY = touch.clientY - height/4;
-            
-            const gx = Math.floor((mouseY / (TILE_H/2) + mouseX / (TILE_W/2)) / 2);
-            const gy = Math.floor((mouseY / (TILE_H/2) - mouseX / (TILE_W/2)) / 2);
+        function drawObject(obj) {
+            const pos = toScreen(obj.x, obj.y);
+            if(obj.type === 'feria') {
+                // Base
+                ctx.fillStyle = "#000"; ctx.fillRect(pos.x - 20, pos.y - 40, 40, 45);
+                ctx.fillStyle = "#e74c3c"; ctx.fillRect(pos.x - 18, pos.y - 38, 36, 41);
+                // Techo inclinado
+                ctx.fillStyle = "#c0392b";
+                ctx.beginPath(); ctx.moveTo(pos.x-20, pos.y-40); ctx.lineTo(pos.x, pos.y-60); ctx.lineTo(pos.x+20, pos.y-40); ctx.fill();
+            } else if(obj.type === 'comida') {
+                ctx.fillStyle = "#000"; ctx.fillRect(pos.x - 15, pos.y - 30, 30, 35);
+                ctx.fillStyle = "#f39c12"; ctx.fillRect(pos.x - 13, pos.y - 28, 26, 31);
+            }
+        }
+
+        canvas.onclick = (e) => {
+            const mx = e.clientX - camera.x;
+            const my = e.clientY - camera.y;
+            const gx = Math.floor((my / (TILE_H/2) + mx / (TILE_W/2)) / 2);
+            const gy = Math.floor((my / (TILE_H/2) - mx / (TILE_W/2)) / 2);
 
             if(gx >= 0 && gx < GRID_SIZE && gy >= 0 && gy < GRID_SIZE) {
                 if(currentMode === 'camino') { grid[gx][gy] = 1; wallet -= 10; }
-                else { buildings.push({x: gx, y: gy, type: currentMode}); wallet -= 50; }
+                else { objects.push({x: gx, y: gy, type: currentMode}); wallet -= 100; }
                 document.getElementById('moneyTxt').innerText = wallet;
             }
-        });
+        };
 
-        function spawnPeeps(n) { for(let i=0; i<n; i++) peeps.push(new Peep()); }
-        function hireStaff() { peeps.push(new Peep(true)); }
+        function spawnPeep() { objects.push(new Peep()); }
+        function hireStaff() { objects.push(new Peep(true)); }
 
-        function gameLoop() {
-            drawMap();
-            // Ordenar peeps por posición Y para que los de atrás no tapen a los de adelante
-            peeps.sort((a,b) => (a.x + a.y) - (b.x + b.y));
-            peeps.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(gameLoop);
+        function render() {
+            ctx.clearRect(0,0,width,height);
+            
+            // 1. Dibujar suelo
+            for(let i=0; i<GRID_SIZE; i++) {
+                for(let j=0; j<GRID_SIZE; j++) {
+                    drawTile(i, j);
+                }
+            }
+
+            // 2. Dibujar objetos y peeps con orden de profundidad (Z-Sorting)
+            let drawList = [...objects].sort((a,b) => {
+                let ay = (a.gx !== undefined) ? (a.gx + a.gy) : (a.x + a.y);
+                let by = (b.gx !== undefined) ? (b.gx + b.gy) : (b.x + b.y);
+                return ay - by;
+            });
+
+            drawList.forEach(obj => {
+                if(obj instanceof Peep) {
+                    obj.update();
+                    obj.draw();
+                } else {
+                    drawObject(obj);
+                }
+            });
+
+            requestAnimationFrame(render);
         }
 
-        // Inicializar parque
-        grid[0][0] = 1; grid[1][0] = 1; grid[2][0] = 1;
-        gameLoop();
+        // Crear camino inicial
+        for(let i=0; i<5; i++) grid[i][0] = 1;
+        render();
     </script>
 </body>
-    </html>
-    
+</html>
