@@ -3,147 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RCT Ultra Pro: High Density</title>
+    <title>RCT Remake Pro</title>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; touch-action: none; font-family: sans-serif; }
-        #hud { position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none; }
-        .panel { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 5px; border-left: 4px solid #f1c40f; color: #0f0; margin-bottom: 5px; font-weight: bold; }
+        body { margin: 0; background: #1a1a1a; overflow: hidden; touch-action: none; font-family: 'Courier New', monospace; }
+        
+        /* Interfaz superior idéntica a tu captura */
+        #header {
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: #222; display: flex; align-items: center;
+            justify-content: space-around; border-bottom: 2px solid #000; z-index: 10;
+        }
+        .stat { color: #2ecc71; font-size: 22px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+
         canvas { image-rendering: pixelated; width: 100vw; height: 100vh; }
-        .menu { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; background: #333; padding: 10px; border-radius: 12px; border: 2px solid #555; }
-        .btn { width: 45px; height: 45px; background: #555; border: 2px solid #fff; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .btn.active { background: #f1c40f; border-color: #000; }
+
+        /* Barra de herramientas inferior */
+        #toolbar {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(10, 30, 10, 0.9); padding: 12px; border-radius: 15px;
+            display: flex; gap: 10px; border: 3px solid #052205; z-index: 10;
+        }
+        .slot {
+            width: 60px; height: 60px; background: #444; border: 3px solid #fff;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 30px; cursor: pointer; transition: 0.2s;
+        }
+        .slot.active { background: #f1c40f; border-color: #000; transform: scale(1.1); }
     </style>
 </head>
 <body>
 
-<div id="hud">
-    <div class="panel">Caja: $<span id="mText">1000</span></div>
-    <div class="panel">Agentes: <span id="pText">0</span></div>
-</div>
+    <div id="header">
+        <div class="stat">💰 $<span id="money">760</span></div>
+        <div class="stat">😊 <span id="happy">100</span>%</div>
+    </div>
 
-<canvas id="game"></canvas>
+    <canvas id="game"></canvas>
 
-<div class="menu">
-    <div id="b-road" class="btn active" onclick="setMode('road')">🛣️</div>
-    <div id="b-ride" class="btn" onclick="setMode('ride')">🎡</div>
-    <div id="b-food" class="btn" onclick="setMode('food')">🍔</div>
-    <div id="b-tree" class="btn" onclick="setMode('tree')">🌲</div>
-    <div class="btn" style="background:#2ecc71" onclick="addPeep()">👤</div>
-</div>
+    <div id="toolbar">
+        <div class="slot active" onclick="setMode('road', this)">🛣️</div>
+        <div class="slot" onclick="setMode('feria', this)">🎡</div>
+        <div class="slot" onclick="setMode('comida', this)">🍔</div>
+        <div class="slot" style="background: #3498db" onclick="hireStaff()">🧹</div>
+        <div class="slot" style="background: #2ecc71" onclick="addPeep()">👤</div>
+    </div>
 
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const T_W = 64, T_H = 32, SZ = 16; // Mapa de 16x16
-let money = 1000, mode = 'road', cam = {x:0, y:0}, time = 0;
-let grid = Array(SZ).fill().map(() => Array(SZ).fill(0));
-let entities = [];
-
-function resize() { 
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
-    cam.x = canvas.width/2; cam.y = canvas.height/6;
-}
-window.onresize = resize; resize();
-
-function setMode(m) { 
-    mode = m; document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('b-'+m)?.classList.add('active');
-}
-
-// Lógica de dibujo isométrico avanzado
-function drawIsoTile(x, y, color, height = 0) {
-    const p = { x: cam.x + (x - y) * (T_W/2), y: cam.y + (x + y) * (T_H/2) };
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y - height);
-    ctx.lineTo(p.x + T_W/2, p.y + T_H/2 - height);
-    ctx.lineTo(p.x, p.y + T_H - height);
-    ctx.lineTo(p.x - T_W/2, p.y + T_H/2 - height);
-    ctx.fill();
-    return p;
-}
-
-class Agent {
-    constructor() { this.x = 0; this.y = 0; this.tx = 0; this.ty = 0; this.mv = false; this.c = `hsl(${Math.random()*360},70%,50%)`; }
-    update() {
-        if(!this.mv) {
-            let d = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}][Math.floor(Math.random()*4)];
-            if(this.x+d.x>=0 && this.x+d.x<SZ && this.y+d.y>=0 && this.y+d.y<SZ && grid[this.x+d.x][this.y+d.y]===1) {
-                this.tx = this.x+d.x; this.ty = this.y+d.y; this.mv = true;
-            }
-        } else {
-            this.x += (this.tx - this.x) * 0.1; this.y += (this.ty - this.y) * 0.1;
-            if(Math.abs(this.x-this.tx)<0.01) { this.x=this.tx; this.y=this.ty; this.mv=false; }
-        }
-    }
-}
-
-function render() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    time++;
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const T_W = 64, T_H = 32, SZ = 12;
     
-    // Suelo
-    for(let x=0; x<SZ; x++) {
-        for(let y=0; y<SZ; y++) {
-            let col = grid[x][y] === 1 ? "#7f8c8d" : "#27ae60";
-            if(grid[x][y] === 1) { // Bordes de camino
-                drawIsoTile(x,y,"#34495e");
-                drawIsoTile(x,y,col, 2);
+    let money = 760, mode = 'road', cam = {x:0, y:0};
+    let grid = Array(SZ).fill().map(() => Array(SZ).fill(0));
+    let entities = [];
+
+    function resize() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        cam.x = canvas.width / 2; cam.y = canvas.height / 4;
+    }
+    window.onresize = resize; resize();
+
+    function setMode(m, el) {
+        mode = m;
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    class Peep {
+        constructor(isStaff = false) {
+            this.x = 2; this.y = 0; this.tx = 2; this.ty = 0;
+            this.mv = false; this.isStaff = isStaff;
+            this.color = isStaff ? "#3498db" : (Math.random() > 0.5 ? "#e91e63" : "#cddc39");
+            this.anim = 0;
+        }
+        update() {
+            if(!this.mv) {
+                const d = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}][Math.floor(Math.random()*4)];
+                if(this.x+d.x>=0 && this.x+d.x<SZ && this.y+d.y>=0 && this.y+d.y<SZ && grid[this.x+d.x][this.y+d.y]===1) {
+                    this.tx = this.x+d.x; this.ty = this.y+d.y; this.mv = true;
+                }
             } else {
-                drawIsoTile(x,y,col);
+                this.x += (this.tx - this.x) * 0.1; this.y += (this.ty - this.y) * 0.1;
+                this.anim += 0.2;
+                if(Math.abs(this.x - this.tx) < 0.02) { this.x = this.tx; this.y = this.ty; this.mv = false; }
             }
+        }
+        draw() {
+            const p = { x: cam.x + (this.x - this.y) * (T_W/2), y: cam.y + (this.x + this.y) * (T_H/2) };
+            const b = Math.abs(Math.sin(this.anim)) * 3;
+            
+            // Sombra (Crucial para que no floten)
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+
+            // Cuerpo (Cuadrado con borde)
+            ctx.lineWidth = 2; ctx.strokeStyle = "#000";
+            ctx.fillStyle = this.color;
+            ctx.strokeRect(p.x - 6, p.y - 10 - b, 12, 14);
+            ctx.fillRect(p.x - 6, p.y - 10 - b, 12, 14);
+
+            // Cabeza (Cuadrada con borde)
+            ctx.fillStyle = "#ffdbac";
+            ctx.strokeRect(p.x - 7, p.y - 24 - b, 14, 14);
+            ctx.fillRect(p.x - 7, p.y - 24 - b, 14, 14);
+            
+            // Ojo (Un píxel negro)
+            ctx.fillStyle = "#000";
+            ctx.fillRect(p.x + 2, -20 + p.y - b, 2, 3);
         }
     }
 
-    // Entidades (Ordenadas por profundidad)
-    let sorted = [...entities].sort((a,b) => (a.x+a.y) - (b.x+b.y));
-    sorted.forEach(e => {
-        const p = { x: cam.x + (e.x - e.y) * (T_W/2), y: cam.y + (e.x + e.y) * (T_H/2) };
-        if(e instanceof Agent) {
-            e.update();
-            // Sombras de agentes
-            ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.ellipse(p.x, p.y+12, 6, 3, 0, 0, 7); ctx.fill();
-            // Cuerpo
-            ctx.fillStyle = "#000"; ctx.fillRect(p.x-5, p.y-15, 10, 15);
-            ctx.fillStyle = e.c; ctx.fillRect(p.x-4, p.y-14, 8, 13);
-            // Cabeza
-            ctx.fillStyle = "#000"; ctx.fillRect(p.x-7, p.y-25, 14, 12);
-            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x-6, p.y-24, 12, 10);
-        } else {
-            // Edificios y Árboles
-            if(e.type === 'tree') {
-                ctx.fillStyle = "#795548"; ctx.fillRect(p.x-2, p.y-10, 4, 10);
-                ctx.fillStyle = "#1b5e20"; ctx.beginPath(); ctx.arc(p.x, p.y-15, 8, 0, 7); ctx.fill();
-            } else if(e.type === 'ride') {
-                ctx.fillStyle = "#c0392b"; ctx.fillRect(p.x-15, p.y-40, 30, 40);
-                // Animación de rotación
-                ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.arc(p.x, p.y-25, 12 + Math.sin(time*0.1)*2, 0, 7); ctx.stroke();
-            } else if(e.type === 'food') {
-                ctx.fillStyle = "#d35400"; ctx.fillRect(p.x-12, p.y-25, 24, 25);
-                ctx.fillStyle = "#f39c12"; ctx.fillRect(p.x-12, p.y-30, 24, 5);
+    function drawBuilding(x, y, type) {
+        const p = { x: cam.x + (x - y) * (T_W/2), y: cam.y + (x + y) * (T_H/2) };
+        ctx.lineWidth = 3; ctx.strokeStyle = "#000";
+        
+        if(type === 'feria') { // El edificio naranja de tu dibujo
+            // Cara lateral (oscura)
+            ctx.fillStyle = "#d35400"; ctx.fillRect(p.x - 20, p.y - 50, 10, 45); ctx.strokeRect(p.x - 20, p.y - 50, 10, 45);
+            // Cara frontal (clara)
+            ctx.fillStyle = "#f39c12"; ctx.fillRect(p.x - 10, p.y - 50, 30, 45); ctx.strokeRect(p.x - 10, p.y - 50, 30, 45);
+        } else if(type === 'comida') { // El edificio rojo con punta
+            ctx.fillStyle = "#c0392b";
+            ctx.beginPath();
+            ctx.moveTo(p.x - 20, p.y + 10); ctx.lineTo(p.x + 20, p.y + 10);
+            ctx.lineTo(p.x + 20, p.y - 40); ctx.lineTo(p.x, p.y - 65);
+            ctx.lineTo(p.x - 20, p.y - 40); ctx.closePath();
+            ctx.fill(); ctx.stroke();
+        }
+    }
+
+    function render() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        // Dibujar el césped
+        ctx.fillStyle = "#2d7d32"; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        // Dibujar Grid / Suelo
+        for(let x=0; x<SZ; x++) {
+            for(let y=0; y<SZ; y++) {
+                const p = { x: cam.x + (x - y) * (T_W/2), y: cam.y + (x + y) * (T_H/2) };
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + T_W/2, p.y + T_H/2);
+                ctx.lineTo(p.x, p.y + T_H); ctx.lineTo(p.x - T_W/2, p.y + T_H/2);
+                ctx.closePath();
+                ctx.fillStyle = grid[x][y] === 1 ? "#777" : "#3a8e3f";
+                ctx.fill();
+                ctx.strokeStyle = "rgba(0,0,0,0.05)"; ctx.stroke();
             }
         }
-    });
 
-    requestAnimationFrame(render);
-}
+        // Ordenar y dibujar entidades y edificios por profundidad
+        let sorted = [...entities].sort((a,b) => (a.x+a.y) - (b.x+b.y));
+        sorted.forEach(e => {
+            if(e instanceof Peep) { e.update(); e.draw(); }
+            else { drawBuilding(e.x, e.y, e.type); }
+        });
 
-canvas.onclick = (e) => {
-    const mx = e.clientX - cam.x, my = e.clientY - cam.y;
-    const gx = Math.floor((my / (T_H/2) + mx / (T_W/2)) / 2);
-    const gy = Math.floor((my / (T_H/2) - mx / (T_W/2)) / 2);
-    if(gx>=0 && gx<SZ && gy>=0 && gy<SZ) {
-        if(mode === 'road') { grid[gx][gy] = 1; money -= 10; }
-        else { entities.push({x:gx, y:gy, type: mode}); money -= 50; }
-        document.getElementById('mText').innerText = money;
+        requestAnimationFrame(render);
     }
-};
 
-function addPeep() { entities.push(new Agent()); document.getElementById('pText').innerText = entities.filter(e => e instanceof Agent).length; }
+    canvas.onclick = (e) => {
+        const mx = e.clientX - cam.x, my = e.clientY - cam.y;
+        const gx = Math.floor((my / (T_H/2) + mx / (T_W/2)) / 2);
+        const gy = Math.floor((my / (T_H/2) - mx / (T_W/2)) / 2);
+        if(gx>=0 && gx<SZ && gy>=0 && gy<SZ) {
+            if(mode === 'road') grid[gx][gy] = 1;
+            else entities.push({x: gx, y: gy, type: mode});
+        }
+    };
 
-for(let i=0; i<SZ; i++) grid[i][0] = 1; // Camino inicial
-render();
+    function addPeep() { entities.push(new Peep()); }
+    function hireStaff() { entities.push(new Peep(true)); }
+
+    // Camino inicial
+    for(let i=0; i<6; i++) grid[i][2] = 1;
+    grid[5][3] = 1; grid[5][4] = 1;
+
+    render();
 </script>
 </body>
 </html>
