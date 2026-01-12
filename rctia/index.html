@@ -57,6 +57,9 @@
     let grid = Array(SZ).fill().map(() => Array(SZ).fill(0));
     let entities = [];
 
+    const peepSprite = new Image();
+    peepSprite.src = 'peep_walk.png';
+
     function resize() {
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         cam.x = canvas.width / 2; cam.y = canvas.height / 4;
@@ -85,31 +88,29 @@
             } else {
                 this.x += (this.tx - this.x) * 0.1; this.y += (this.ty - this.y) * 0.1;
                 this.anim += 0.2;
-                if(Math.abs(this.x - this.tx) < 0.02) { this.x = this.tx; this.y = this.ty; this.mv = false; }
+                if(Math.abs(this.x - this.tx) < 0.02) {
+                    this.x = this.tx; this.y = this.ty; this.mv = false;
+                    this.anim = 0;
+                }
             }
         }
         draw() {
             const p = { x: cam.x + (this.x - this.y) * (T_W/2), y: cam.y + (this.x + this.y) * (T_H/2) };
-            const b = Math.abs(Math.sin(this.anim)) * 3;
             
             // Sombra (Crucial para que no floten)
             ctx.fillStyle = "rgba(0,0,0,0.2)";
             ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 8, 4, 0, 0, Math.PI*2); ctx.fill();
 
-            // Cuerpo (Cuadrado con borde)
-            ctx.lineWidth = 2; ctx.strokeStyle = "#000";
-            ctx.fillStyle = this.color;
-            ctx.strokeRect(p.x - 6, p.y - 10 - b, 12, 14);
-            ctx.fillRect(p.x - 6, p.y - 10 - b, 12, 14);
-
-            // Cabeza (Cuadrada con borde)
-            ctx.fillStyle = "#ffdbac";
-            ctx.strokeRect(p.x - 7, p.y - 24 - b, 14, 14);
-            ctx.fillRect(p.x - 7, p.y - 24 - b, 14, 14);
-            
-            // Ojo (Un píxel negro)
-            ctx.fillStyle = "#000";
-            ctx.fillRect(p.x + 2, -20 + p.y - b, 2, 3);
+            // Dibujar el sprite del peep
+            const frameWidth = 24;
+            const frameHeight = 32;
+            const frameIndex = Math.floor(this.anim) % 6;
+            ctx.drawImage(
+                peepSprite,
+                frameIndex * frameWidth, 0, frameWidth, frameHeight, // Coordenadas y tamaño del cuadro en la hoja de sprites
+                p.x - frameWidth / 2, p.y - frameHeight + 14, // Posición en el lienzo
+                frameWidth, frameHeight // Tamaño de dibujado en el lienzo
+            );
         }
     }
 
@@ -179,7 +180,9 @@
     for(let i=0; i<6; i++) grid[i][2] = 1;
     grid[5][3] = 1; grid[5][4] = 1;
 
-    render();
+    peepSprite.onload = () => {
+        render();
+    }
 </script>
 </body>
 </html>
