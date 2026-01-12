@@ -3,229 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RCT Ultra-Isometric Pro</title>
+    <title>RCT Ultra Pro: High Density</title>
     <style>
-        body { 
-            display: flex; flex-direction: column; align-items: center; 
-            background: #111; color: white; font-family: 'Arial Black', sans-serif; 
-            margin: 0; padding: 0; overflow: hidden; touch-action: none;
-        }
-        #ui-top {
-            position: absolute; top: 0; width: 100%; height: 50px;
-            background: linear-gradient(to bottom, #4a4a4a, #222);
-            border-bottom: 2px solid #000; display: flex; align-items: center;
-            justify-content: space-around; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        .stat { color: #0f0; text-shadow: 1px 1px #000; font-size: 18px; }
-        canvas { image-rendering: pixelated; width: 100vw; height: 100vh; background: #2d7d32; }
-        .toolbar {
-            position: absolute; bottom: 15px; display: flex; gap: 8px;
-            background: rgba(0,0,0,0.6); padding: 10px; border-radius: 10px; z-index: 100;
-        }
-        .tool-btn {
-            width: 50px; height: 50px; border: 2px solid #fff; border-radius: 5px;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
-            background: #555; cursor: pointer;
-        }
-        .active { background: #f1c40f !important; border-color: #000 !important; }
+        body { margin: 0; background: #000; overflow: hidden; touch-action: none; font-family: sans-serif; }
+        #hud { position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none; }
+        .panel { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 5px; border-left: 4px solid #f1c40f; color: #0f0; margin-bottom: 5px; font-weight: bold; }
+        canvas { image-rendering: pixelated; width: 100vw; height: 100vh; }
+        .menu { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; background: #333; padding: 10px; border-radius: 12px; border: 2px solid #555; }
+        .btn { width: 45px; height: 45px; background: #555; border: 2px solid #fff; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .btn.active { background: #f1c40f; border-color: #000; }
     </style>
 </head>
 <body>
 
-    <div id="ui-top">
-        <div class="stat">💰 $<span id="moneyTxt">1000</span></div>
-        <div class="stat">😊 <span id="happyTxt">100</span>%</div>
-    </div>
+<div id="hud">
+    <div class="panel">Caja: $<span id="mText">1000</span></div>
+    <div class="panel">Agentes: <span id="pText">0</span></div>
+</div>
 
-    <canvas id="gameCanvas"></canvas>
+<canvas id="game"></canvas>
 
-    <div class="toolbar">
-        <div id="btn-camino" class="tool-btn active" onclick="setMode('camino')">🛣️</div>
-        <div id="btn-feria" class="tool-btn" onclick="setMode('feria')">🎡</div>
-        <div id="btn-comida" class="tool-btn" onclick="setMode('comida')">🍔</div>
-        <div id="btn-limpiador" class="tool-btn" style="background:#3498db" onclick="hireStaff()">🧹</div>
-        <div id="btn-peep" class="tool-btn" style="background:#2ecc71" onclick="spawnPeep()">👤</div>
-    </div>
+<div class="menu">
+    <div id="b-road" class="btn active" onclick="setMode('road')">🛣️</div>
+    <div id="b-ride" class="btn" onclick="setMode('ride')">🎡</div>
+    <div id="b-food" class="btn" onclick="setMode('food')">🍔</div>
+    <div id="b-tree" class="btn" onclick="setMode('tree')">🌲</div>
+    <div class="btn" style="background:#2ecc71" onclick="addPeep()">👤</div>
+</div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        const TILE_W = 64; // Tamaño RCT clásico
-        const TILE_H = 32;
-        const GRID_SIZE = 15; // Mapa más grande
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const T_W = 64, T_H = 32, SZ = 16; // Mapa de 16x16
+let money = 1000, mode = 'road', cam = {x:0, y:0}, time = 0;
+let grid = Array(SZ).fill().map(() => Array(SZ).fill(0));
+let entities = [];
 
-        let wallet = 1000, currentMode = 'camino';
-        let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
-        let objects = []; // Edificios y Peeps
-        let camera = { x: 0, y: 0 };
+function resize() { 
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
+    cam.x = canvas.width/2; cam.y = canvas.height/6;
+}
+window.onresize = resize; resize();
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            camera.x = width / 2;
-            camera.y = height / 4;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+function setMode(m) { 
+    mode = m; document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('b-'+m)?.classList.add('active');
+}
 
-        function setMode(m) {
-            currentMode = m;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-'+m)?.classList.add('active');
-        }
+// Lógica de dibujo isométrico avanzado
+function drawIsoTile(x, y, color, height = 0) {
+    const p = { x: cam.x + (x - y) * (T_W/2), y: cam.y + (x + y) * (T_H/2) };
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - height);
+    ctx.lineTo(p.x + T_W/2, p.y + T_H/2 - height);
+    ctx.lineTo(p.x, p.y + T_H - height);
+    ctx.lineTo(p.x - T_W/2, p.y + T_H/2 - height);
+    ctx.fill();
+    return p;
+}
 
-        function toScreen(gx, gy) {
-            return {
-                x: camera.x + (gx - gy) * (TILE_W / 2),
-                y: camera.y + (gx + gy) * (TILE_H / 2)
-            };
-        }
-
-        class Peep {
-            constructor(isStaff = false) {
-                this.gx = 0; this.gy = 0;
-                this.px = 0; this.py = 0;
-                this.targetGX = 0; this.targetGY = 0;
-                this.isMoving = false;
-                this.color = isStaff ? "#3498db" : `hsl(${Math.random()*360}, 70%, 50%)`;
-                this.anim = 0;
-                this.isStaff = isStaff;
-                this.type = 'peep';
+class Agent {
+    constructor() { this.x = 0; this.y = 0; this.tx = 0; this.ty = 0; this.mv = false; this.c = `hsl(${Math.random()*360},70%,50%)`; }
+    update() {
+        if(!this.mv) {
+            let d = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}][Math.floor(Math.random()*4)];
+            if(this.x+d.x>=0 && this.x+d.x<SZ && this.y+d.y>=0 && this.y+d.y<SZ && grid[this.x+d.x][this.y+d.y]===1) {
+                this.tx = this.x+d.x; this.ty = this.y+d.y; this.mv = true;
             }
-
-            update() {
-                if(!this.isMoving) {
-                    const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-                    const d = dirs[Math.floor(Math.random()*4)];
-                    const nx = this.gx + d.x, ny = this.gy + d.y;
-                    if(nx>=0 && nx<GRID_SIZE && ny>=0 && ny<GRID_SIZE && grid[nx][ny] === 1) {
-                        this.targetGX = nx; this.targetGY = ny;
-                        this.isMoving = true;
-                    }
-                } else {
-                    this.gx += (this.targetGX - this.gx) * 0.1;
-                    this.gy += (this.targetGY - this.gy) * 0.1;
-                    this.anim += 0.2;
-                    if(Math.abs(this.gx - this.targetGX) < 0.05) {
-                        this.gx = this.targetGX; this.gy = this.targetGY;
-                        this.isMoving = false;
-                    }
-                }
-            }
-
-            draw() {
-                const pos = toScreen(this.gx, this.gy);
-                const bounce = Math.abs(Math.sin(this.anim)) * 3;
-                
-                ctx.save();
-                ctx.translate(pos.x, pos.y);
-                
-                // Sombra en el suelo
-                ctx.fillStyle = "rgba(0,0,0,0.2)";
-                ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill();
-
-                // CUERPO (Estilo RCT: con volumen)
-                ctx.fillStyle = "#000"; ctx.fillRect(-6, -15-bounce, 12, 12); // Borde
-                ctx.fillStyle = this.color; ctx.fillRect(-5, -14-bounce, 10, 10);
-                
-                // CABEZA
-                ctx.fillStyle = "#000"; ctx.fillRect(-7, -28-bounce, 14, 14); // Borde
-                ctx.fillStyle = "#ffdbac"; ctx.fillRect(-6, -27-bounce, 12, 12);
-                
-                // Cara (Ojos)
-                ctx.fillStyle = "#000"; ctx.fillRect(2, -23-bounce, 2, 3);
-                
-                ctx.restore();
-            }
+        } else {
+            this.x += (this.tx - this.x) * 0.1; this.y += (this.ty - this.y) * 0.1;
+            if(Math.abs(this.x-this.tx)<0.01) { this.x=this.tx; this.y=this.ty; this.mv=false; }
         }
+    }
+}
 
-        function drawTile(gx, gy) {
-            const pos = toScreen(gx, gy);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-            ctx.lineTo(pos.x + TILE_W/2, pos.y + TILE_H/2);
-            ctx.lineTo(pos.x, pos.y + TILE_H);
-            ctx.lineTo(pos.x - TILE_W/2, pos.y + TILE_H/2);
-            ctx.closePath();
-
-            // Color de la baldosa (Césped vs Camino)
-            if(grid[gx][gy] === 1) {
-                ctx.fillStyle = "#777"; // Camino
-                ctx.fill();
-                ctx.strokeStyle = "#999"; ctx.stroke();
+function render() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    time++;
+    
+    // Suelo
+    for(let x=0; x<SZ; x++) {
+        for(let y=0; y<SZ; y++) {
+            let col = grid[x][y] === 1 ? "#7f8c8d" : "#27ae60";
+            if(grid[x][y] === 1) { // Bordes de camino
+                drawIsoTile(x,y,"#34495e");
+                drawIsoTile(x,y,col, 2);
             } else {
-                ctx.fillStyle = "#3a8e3f"; // Césped RCT
-                ctx.fill();
-                // Detalle de hierba
-                ctx.fillStyle = "#2d7d32";
-                ctx.fillRect(pos.x-2, pos.y+10, 2, 2);
+                drawIsoTile(x,y,col);
             }
         }
+    }
 
-        function drawObject(obj) {
-            const pos = toScreen(obj.x, obj.y);
-            if(obj.type === 'feria') {
-                // Base
-                ctx.fillStyle = "#000"; ctx.fillRect(pos.x - 20, pos.y - 40, 40, 45);
-                ctx.fillStyle = "#e74c3c"; ctx.fillRect(pos.x - 18, pos.y - 38, 36, 41);
-                // Techo inclinado
-                ctx.fillStyle = "#c0392b";
-                ctx.beginPath(); ctx.moveTo(pos.x-20, pos.y-40); ctx.lineTo(pos.x, pos.y-60); ctx.lineTo(pos.x+20, pos.y-40); ctx.fill();
-            } else if(obj.type === 'comida') {
-                ctx.fillStyle = "#000"; ctx.fillRect(pos.x - 15, pos.y - 30, 30, 35);
-                ctx.fillStyle = "#f39c12"; ctx.fillRect(pos.x - 13, pos.y - 28, 26, 31);
+    // Entidades (Ordenadas por profundidad)
+    let sorted = [...entities].sort((a,b) => (a.x+a.y) - (b.x+b.y));
+    sorted.forEach(e => {
+        const p = { x: cam.x + (e.x - e.y) * (T_W/2), y: cam.y + (e.x + e.y) * (T_H/2) };
+        if(e instanceof Agent) {
+            e.update();
+            // Sombras de agentes
+            ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.ellipse(p.x, p.y+12, 6, 3, 0, 0, 7); ctx.fill();
+            // Cuerpo
+            ctx.fillStyle = "#000"; ctx.fillRect(p.x-5, p.y-15, 10, 15);
+            ctx.fillStyle = e.c; ctx.fillRect(p.x-4, p.y-14, 8, 13);
+            // Cabeza
+            ctx.fillStyle = "#000"; ctx.fillRect(p.x-7, p.y-25, 14, 12);
+            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x-6, p.y-24, 12, 10);
+        } else {
+            // Edificios y Árboles
+            if(e.type === 'tree') {
+                ctx.fillStyle = "#795548"; ctx.fillRect(p.x-2, p.y-10, 4, 10);
+                ctx.fillStyle = "#1b5e20"; ctx.beginPath(); ctx.arc(p.x, p.y-15, 8, 0, 7); ctx.fill();
+            } else if(e.type === 'ride') {
+                ctx.fillStyle = "#c0392b"; ctx.fillRect(p.x-15, p.y-40, 30, 40);
+                // Animación de rotación
+                ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(p.x, p.y-25, 12 + Math.sin(time*0.1)*2, 0, 7); ctx.stroke();
+            } else if(e.type === 'food') {
+                ctx.fillStyle = "#d35400"; ctx.fillRect(p.x-12, p.y-25, 24, 25);
+                ctx.fillStyle = "#f39c12"; ctx.fillRect(p.x-12, p.y-30, 24, 5);
             }
         }
+    });
 
-        canvas.onclick = (e) => {
-            const mx = e.clientX - camera.x;
-            const my = e.clientY - camera.y;
-            const gx = Math.floor((my / (TILE_H/2) + mx / (TILE_W/2)) / 2);
-            const gy = Math.floor((my / (TILE_H/2) - mx / (TILE_W/2)) / 2);
+    requestAnimationFrame(render);
+}
 
-            if(gx >= 0 && gx < GRID_SIZE && gy >= 0 && gy < GRID_SIZE) {
-                if(currentMode === 'camino') { grid[gx][gy] = 1; wallet -= 10; }
-                else { objects.push({x: gx, y: gy, type: currentMode}); wallet -= 100; }
-                document.getElementById('moneyTxt').innerText = wallet;
-            }
-        };
+canvas.onclick = (e) => {
+    const mx = e.clientX - cam.x, my = e.clientY - cam.y;
+    const gx = Math.floor((my / (T_H/2) + mx / (T_W/2)) / 2);
+    const gy = Math.floor((my / (T_H/2) - mx / (T_W/2)) / 2);
+    if(gx>=0 && gx<SZ && gy>=0 && gy<SZ) {
+        if(mode === 'road') { grid[gx][gy] = 1; money -= 10; }
+        else { entities.push({x:gx, y:gy, type: mode}); money -= 50; }
+        document.getElementById('mText').innerText = money;
+    }
+};
 
-        function spawnPeep() { objects.push(new Peep()); }
-        function hireStaff() { objects.push(new Peep(true)); }
+function addPeep() { entities.push(new Agent()); document.getElementById('pText').innerText = entities.filter(e => e instanceof Agent).length; }
 
-        function render() {
-            ctx.clearRect(0,0,width,height);
-            
-            // 1. Dibujar suelo
-            for(let i=0; i<GRID_SIZE; i++) {
-                for(let j=0; j<GRID_SIZE; j++) {
-                    drawTile(i, j);
-                }
-            }
-
-            // 2. Dibujar objetos y peeps con orden de profundidad (Z-Sorting)
-            let drawList = [...objects].sort((a,b) => {
-                let ay = (a.gx !== undefined) ? (a.gx + a.gy) : (a.x + a.y);
-                let by = (b.gx !== undefined) ? (b.gx + b.gy) : (b.x + b.y);
-                return ay - by;
-            });
-
-            drawList.forEach(obj => {
-                if(obj instanceof Peep) {
-                    obj.update();
-                    obj.draw();
-                } else {
-                    drawObject(obj);
-                }
-            });
-
-            requestAnimationFrame(render);
-        }
-
-        // Crear camino inicial
-        for(let i=0; i<5; i++) grid[i][0] = 1;
-        render();
-    </script>
+for(let i=0; i<SZ; i++) grid[i][0] = 1; // Camino inicial
+render();
+</script>
 </body>
 </html>
