@@ -9,6 +9,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Icon for iOS / fallback -->
+    <link rel="apple-touch-icon" href="icon.svg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
@@ -27,6 +32,8 @@
             line-height: 30px;
         }
         .select2-container { width: 100% !important; }
+        /* ocultar por defecto el botón de instalar hasta recibir beforeinstallprompt */
+        #btnInstall { display: none; }
     </style>
 
     <!-- SheetJS for Excel export -->
@@ -118,7 +125,6 @@
 
                 <input type="text" id="descripcion" placeholder="Descripción del servicio" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200">
 
-                <!-- NUEVOS CAMPOS ORIGEN Y DESTINO -->
                 <div class="grid grid-cols-2 gap-3">
                     <input type="text" id="origen" placeholder="Origen" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                     <input type="text" id="destino" placeholder="Destino" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
@@ -146,24 +152,56 @@
             <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Desarrollado por RIVEROJDU</p>
         </footer>
 
-        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-4 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-5 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
             <button onclick="exportarExcel(false)" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Filtro)</button>
             <button onclick="exportarExcel(true)" class="flex items-center justify-center gap-2 bg-sky-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Todo)</button>
             <button onclick="enviarWhatsApp(false)" class="flex items-center justify-center gap-2 bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Enviar WhatsApp (Filtro)</button>
             <button onclick="enviarWhatsApp(true)" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Enviar WhatsApp (Todo)</button>
+            <button id="btnInstall" class="flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Instalar App</button>
         </div>
 
     </main>
 
     <script>
-        // Nueva base de datos para transporte
+        // PWA: beforeinstallprompt
+        let deferredPrompt = null;
+        const btnInstall = document.getElementById('btnInstall');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            btnInstall.style.display = 'flex';
+        });
+
+        btnInstall.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const choice = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            btnInstall.style.display = 'none';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            btnInstall.style.display = 'none';
+        });
+
+        // Service Worker registration (sw.js in the same folder)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service worker registrado:', reg.scope);
+            }).catch(err => {
+                console.warn('No se pudo registrar el service worker:', err);
+            });
+        }
+
+        // --- El resto del script mantiene la funcionalidad previa ---
         const DB_KEY = 'db_transporte_v1';
         let baseDatos = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
 
         const diasES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
         const mesesES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-        // dataMaster proporcionada (organización -> gerencias)
+        // dataMaster (organización -> gerencias). Copia completa tal como la proporcionaste:
         const dataMaster = {
             "BARIVEN": ["ADMINISTRACION Y SERVICIOS", "ADMON. Y GESTION", "ALMACEN BACHAQUERO", "ALMACEN DISTRIBUCION YAGUA", "ALMACEN DTTO ANACO", "ALMACEN DTTO PUNTA DE MATA", "ALMACEN GAS LA QUIZANDA", "ALMACEN GUAFITA", "ALMACEN JOSE", "ALMACEN LA SALINA", "ALMACEN REFINACION", "ALMACEN SAN FRANCISCO", "ALMACEN SAN ROQUE", "ALMACEN SAN TOME", "ALMACEN SILVESTRE", "AMBIENTE", "ASISTENCIA TECNICA", "CAPTACION Y EMPLEO", "COMPRAS", "COMPRAS AIT CORPORATIVO", "COMPRAS CONSOLIDADAS", "COMPRAS DISTRIBUCION", "COMPRAS GAS", "COMPRAS INTERNACIONALES", "COMPRAS MORON", "COMPRAS NO OPERACIONALES", "COMPRAS OPERACIONALES", "COMPRAS PARADAS", "COMPRAS PARADAS Y PROYECTOS", "COMPRAS PLANTAS DIST. METROP DELT", "COMPRAS PROYECTOS MAYORES", "COMPRAS REFINACION", "COMPRAS SERVICIOS COMPARTIDOS", "COMPRAS T Y D GAS METROP Y P. GAS", "COMPRAS TUBERIAS", "CONSULTORIA JURIDICA", "CONTABILIDAD GENERAL", "CONTROL DE GESTION", "CONTROL DE INVENTARIO", "CONTROL DE INVENTARIOS", "CONTROL INTERNO", "CONVENIOS CORPORATIVOS", "CONVENIOS MORON", "CONVENIOS NO OPERACIONALES", "CONVENIOS OPERACIONALES", "COVENIOS OPERACIONALES", "CUENTAS POR PAGAR", "DESARROLLO DE PROVEEDORES", "EDUCACION Y DESARROLLO", "ESTANDARIZACION Y CATALOGO", "ESTRATEGIA DE SUMINISTRO", "ESTRATEGIAS", "EVALUACIONES ECONOMICAS Y CONTRATACIONES", "GCIA DE PROCURA COSTA AFUERA", "GCIA DE PROCURA EMPRESAS", "GCIA DE RECURSOS HUMANOS", "GCIA REGIONAL DE PROCURA", "GCIA REGIONAL DE PROCURA CENTRO", "GCIA REGIONAL DE PROCURA METROPOLITANA", "GCIA REGIONAL DE PROCURA PARAGUANA", "GCIA REGIONAL DE PROCURA PUERTO LA CRUZ", "GCIA. PROCURA DE PROYECTOS MAYORES", "GERENCIA DE FINANZAS", "GERENCIA DE PLANIFICACION Y GESTION", "GERENCIA DE PROCURA", "GERENCIA DE PROCURA INTERNACIONAL", "GERENCIA DE SERVICIOS TECNICOS", "MEJORAMIENTO DE PROCESOS", "OPERACIONES ADUANERAS", "OPERACIONES ADUANERAS Y PERMISERIA", "ORGANIZACION TRANSITORIA", "PARADA Y PROYECTOS", "PLANIFICACION", "PLANIFICACION DISTRIBUCION Y GAS", "PLANIFICACION DTTO ANACO", "PLANIFICACION DTTO PUNTA DE MATA", "PLANIFICACION ESTRATEGICA", "PLANIFICACION OPERACIONAL", "PLANIFICACION PARADAS", "PLANIFICACION PARADAS Y PROYECTOS", "PLANIFICACION SAN TOME", "PLANIFICACION, ORGANIZ Y COMPENSACION", "PRESIDENCIA", "PRESUPUESTO", "PROYECTO CONVERSION PROFUNDA PLC", "PROYECTOS", "RECURSOS HUMANOS", "REGISTRO MAESTRO DE MATERIALES", "RMM", "SERVICIOS AL PERSONAL", "SISTEMA DE GESTION DE LA CALIDAD", "SISTEMAS DE INFORMACION", "SPTCIA ADMON Y GESTION", "SPTCIA COMPRAS DISTRITO ANACO", "SPTCIA COMPRAS DTTO ORIENTAL CARUPANO", "SPTCIA COMPRAS DTTO ORIENTAL GUIRIA", "SPTCIA COMPRAS DTTO PUNTA", "SPTCIA COMPRAS ELECTRICO", "SPTCIA COMPRAS EMPRESAS MIXTAS", "SPTCIA COMPRAS INSTRUMENTACION", "SPTCIA COMPRAS MECANICO", "SPTCIA COMPRAS PDVSA GAS Y OTRAS FILIALE", "SPTCIA COMPRAS PROYECTOS MAYORES", "SPTCIA COMPRAS REPUESTOS", "SPTCIA COMPRAS SUMINISTROS GENERALES", "SPTCIA CONVENIOS Y ALIANZAS", "SPTCIA DE ADMINISTRACION Y GESTION", "SPTCIA DE ADMON Y GESTION", "SPTCIA DE ADMON. Y GESTION", "SPTCIA DE ALMACEN", "SPTCIA DE COMPRAS", "SPTCIA DE COMPRAS DTTO MORICHAL", "SPTCIA DE COMPRAS DTTO SAN TOME", "SPTCIA DE COMPRAS DTTOS.APURE Y BARINAS", "SPTCIA DE COMPRAS MIXTAS ANZOATEGUI", "SPTCIA DE COMPRAS PRODUCCION", "SPTCIA DE CONVENIOS", "SPTCIA DE CONVENIOS Y ALI", "SPTCIA de CONVENIOS Y ALIANZAS", "SPTCIA DE PLANIFICACION", "SPTCIA DE PROC PROY. MAYORES Y OPERACION", "SPTCIA DE PROCURA GAS Y DIST.", "SPTCIA DE PROCURA OPERACIONAL", "SPTCIA DE PROCURA PARADAS", "SPTCIA de PROCURA REFINACION", "SPTCIA DE SERVICIOS TECNICOS", "SPTCIA PLANIFICACION", "SPTCIA PROC QUIMICOS CATALIZADORES OTRO", "SPTCIA. DE ADMINISTRACION Y GESTION", "SPTCIA. DE ADMON Y GESTION", "SPTCIA. DE ALMACEN", "SPTCIA. DE ALMACEN AMC", "SPTCIA. DE CONVENIOS AMC", "SPTCIA. DE CONVENIOS Y ALIANZAS", "SPTCIA. DE PLANIFICACION AMC", "SPTCIA. DE PROCURA GAS", "SPTCIA. DE PROCURA REFINACION", "SPTCIA. DE PROCURA SERVICIOS COMPARTIDOS", "SPTCIA. DE SERVICIOS TECNICOS", "SPTCIA. DE SERVICIOS TECNICOS AMC", "TESORERIA", "VENTAS"],
             "CVP": ["DG INTERNACIONAL", "GERENCIA DE ASUNTOS JURIDICOS", "GERENCIA DE ASUNTOS PUBLICOS", "GERENCIA DE EVALUACION, DESARROLLO Y SEGUIMIENTO D", "GERENCIA DE FINANZAS", "GERENCIA DE INGENIERIA DE COSTOS", "GERENCIA DE OFICINA DE APOYO", "GERENCIA DE PLANIFICACION ESTRATEGICA", "GERENCIA DE PROCURA", "GERENCIA DE RECURSOS HUMANOS", "GERENCIA DE SALUD INTEGRAL", "GERENCIA DE SERVICIOS LOGISTICOS", "GERENCIA DE TECNICAS OPERACIONALES", "GERENCIA PDVSA LA ESTANCIA", "JUNTA DIRECTIVA CVP", "RECURSOS HUMANOS"],
@@ -214,13 +252,6 @@
             document.getElementById('fecha_serv').valueAsDate = new Date();
             renderLista();
         });
-
-        window.onload = () => {
-            // Service worker placeholder
-            if ('serviceWorker' in navigator) {
-                try { navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ID0+IGV2KTs='); } catch(e){/* noop */ }
-            }
-        };
 
         function rellenarDiaMes(){
             // No muestra directamente, se utiliza al guardar
