@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Taller - RIVEROJDU</title>
+    <title>Registro Transporte de Personal - RIVEROJDU</title>
     
     <meta name="theme-color" content="#1e3a8a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Reporte%20Taller%22,%22short_name%22:%22Talleres%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%231e3a8a%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/2333/2333031.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]} text/plain">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
 
@@ -19,11 +20,11 @@
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-200">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
         </svg>
-        <h1 class="font-bold tracking-tight uppercase text-xs">Gestión de Talleres</h1>
+        <h1 class="font-bold tracking-tight uppercase text-xs">Registro Transporte de Personal</h1>
         <div class="w-8"></div>
     </nav>
 
-    <main class="max-w-2xl mx-auto p-4 space-y-5">
+    <main class="max-w-3xl mx-auto p-4 space-y-5">
         
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-xs uppercase italic">
@@ -31,14 +32,12 @@
             </h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Taller Seleccionado</label>
-                    <select id="taller_sel" onchange="renderLista()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>Taller de Mantenimiento Lagunillas Flota Pesada</option>
-                        <option>Taller de Mantenimiento Lagunillas Flota Liviana</option>
-                        <option>Taller de Mantenimiento La Salina Flota Pesada</option>
-                        <option>Taller de Mantenimiento La Salina Flota Liviana</option>
-                        <option>Taller de Mantenimiento Lago Medio Flota Pesada</option>
-                        <option>Taller de Mantenimiento Lago Medio Flota Liviana</option>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Centro / Taller Seleccionado</label>
+                    <select id="taller_sel" onchange="renderLista()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-300">
+                        <option>Central Transporte Norte</option>
+                        <option>Central Transporte Sur</option>
+                        <option>Base Operativa Este</option>
+                        <option>Base Operativa Oeste</option>
                     </select>
                 </div>
                 <div>
@@ -50,133 +49,251 @@
 
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <h2 class="font-bold text-orange-600 mb-4 flex items-center gap-2 text-xs uppercase italic">
-                <i class="bi bi-plus-square-fill"></i> Registrar Nueva Unidad
+                <i class="bi bi-plus-square-fill"></i> Registrar Servicio
             </h2>
             <div class="space-y-3">
-                <input type="text" id="u_nombre" placeholder="Nombre de Unidad (Ej: Camión 1700)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 font-semibold">
-                <textarea id="u_accion" placeholder="Escriba las acciones tomadas..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400" rows="3"></textarea>
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="u_estatus" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
-                        <option value="OPERATIVO">✅ OPERATIVO</option>
-                        <option value="INOPERATIVO">❎ INOPERATIVO</option>
-                        <option value="RECUPERACION">🛠️ EN RECUPERACIÓN</option>
+                    <select id="servicio" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                        <option value="PROPIO">PROPIO</option>
+                        <option value="CONTRATADO">CONTRATADO</option>
                     </select>
-                    <button onclick="agregarUnidad()" class="bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition shadow-lg shadow-orange-100 uppercase text-xs">
-                        Guardar Registro
-                    </button>
+                    <select id="tipo_unidad" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                        <option value="BUS">BUS</option>
+                        <option value="AUTOBUS">AUTOBÚS</option>
+                        <option value="VAN">VAN</option>
+                        <option value="CARRO">CARRO</option>
+                        <option value="CAMIONETA">CAMIONETA</option>
+                        <option value="MICROBUS">MICROBUS</option>
+                        <option value="OTRO">OTRO</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="organizacion" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm" onchange="renderGerencias()">
+                        <option value="Organización A">Organización A</option>
+                        <option value="Organización B">Organización B</option>
+                        <option value="Organización C">Organización C</option>
+                    </select>
+                    <select id="gerencia" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                        <option value="Gerencia 1">Gerencia 1</option>
+                        <option value="Gerencia 2">Gerencia 2</option>
+                        <option value="Gerencia 3">Gerencia 3</option>
+                    </select>
+                </div>
+
+                <input type="text" id="unidad" placeholder="N° de unidad o Placa" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 font-bold">
+                <input type="text" id="chofer" placeholder="Chofer (Nombre)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 font-bold">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" id="fecha_serv" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold" onchange="rellenarDiaMes()">
+                    <input type="number" id="cantidad" placeholder="Cantidad de pasajeros" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="contacto_directo" placeholder="Contacto directo (Nombre)" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                    <input type="tel" id="contacto" placeholder="Teléfono de contacto" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                </div>
+
+                <input type="text" id="descripcion" placeholder="Descripción del servicio" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200">
+                <textarea id="observacion" placeholder="Observación" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"></textarea>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="guardarRegistro()" class="bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition shadow-lg uppercase text-xs py-3">Guardar Registro</button>
+                    <button onclick="limpiarDB()" class="text-red-500 border border-red-200 rounded-xl font-bold uppercase text-xs py-3">Limpiar Base</button>
                 </div>
             </div>
         </div>
 
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="font-black text-slate-400 text-[10px] uppercase tracking-widest italic">Registros de este Taller</h2>
+                <h2 class="font-black text-slate-400 text-[10px] uppercase tracking-widest italic">Registros del Centro</h2>
                 <span id="cont_total" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-tighter uppercase">0 Unidades</span>
             </div>
-            <div id="lista_unidades" class="space-y-3 max-h-64 overflow-y-auto pr-2"></div>
-        </div>
-
-        <div class="text-center px-10">
-            <button onclick="limpiarBD()" class="text-[9px] text-red-400 uppercase tracking-widest font-bold opacity-50 hover:opacity-100">Limpiar toda la base de datos</button>
+            <div id="lista_unidades" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
         </div>
 
         <footer class="text-center py-6 border-t border-slate-200">
             <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Desarrollado por RIVEROJDU</p>
         </footer>
 
-        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-            <button onclick="exportar('whatsapp')" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform">
-                <i class="bi bi-whatsapp"></i> WHATSAPP
-            </button>
-            <button onclick="exportar('telegram')" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-sky-200 active:scale-95 transition-transform">
-                <i class="bi bi-telegram"></i> TELEGRAM
-            </button>
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-3 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="exportarExcel(false)" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Filtro)</button>
+            <button onclick="exportarExcel(true)" class="flex items-center justify-center gap-2 bg-sky-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Todo)</button>
+            <div class="text-xs text-slate-500 flex items-center justify-center">Archivo: registros-transporte-YYYYMMDD.xlsx</div>
         </div>
 
     </main>
 
     <script>
-        // Lógica de Datos
-        let baseDatos = JSON.parse(localStorage.getItem('db_reportes_v5') || '[]');
+        // Nueva base de datos para transporte
+        const DB_KEY = 'db_transporte_v1';
+        let baseDatos = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+
+        const diasES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+        const mesesES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
         window.onload = () => {
             document.getElementById('fecha_rep').valueAsDate = new Date();
+            document.getElementById('fecha_serv').valueAsDate = new Date();
             renderLista();
-            // Registrar Service Worker para Offline
+            // Registrar Service Worker (placeholder)
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ID0+IGV2KTs=');
+                try { navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ID0+IGV2KTs='); } catch(e){/* noop */}
             }
         };
 
-        function agregarUnidad() {
-            const taller = document.getElementById('taller_sel').value;
-            const nombre = document.getElementById('u_nombre').value;
-            const accion = document.getElementById('u_accion').value;
-            const estatus = document.getElementById('u_estatus').value;
-            if(!nombre || !accion) return alert("Completa los datos.");
-            baseDatos.push({ taller, nombre, accion, estatus, id: Date.now() });
-            localStorage.setItem('db_reportes_v5', JSON.stringify(baseDatos));
-            document.getElementById('u_nombre').value = "";
-            document.getElementById('u_accion').value = "";
+        function renderGerencias(){
+            // Por defecto solo ejemplos; puedes personalizar
+            const org = document.getElementById('organizacion').value;
+            const ger = document.getElementById('gerencia');
+            ger.innerHTML = '';
+            const opciones = ['Gerencia 1','Gerencia 2','Gerencia 3'];
+            opciones.forEach(o => {
+                const opt = document.createElement('option'); opt.value = o; opt.textContent = o; ger.appendChild(opt);
+            });
+        }
+
+        function rellenarDiaMes(){
+            const f = document.getElementById('fecha_serv').value;
+            if(!f) return;
+            const d = new Date(f + 'T00:00:00');
+            // no mostramos directamente, pero se guardará automáticamente al guardar
+        }
+
+        function guardarRegistro(){
+            const servicio = document.getElementById('servicio').value;
+            const organizacion = document.getElementById('organizacion').value;
+            const gerenciaSel = document.getElementById('gerencia').value;
+            const gerencia = organizacion + ' - ' + gerenciaSel;
+            const descripcion = document.getElementById('descripcion').value;
+            const unidad = document.getElementById('unidad').value.trim();
+            const chofer = document.getElementById('chofer').value.trim();
+            const fecha = document.getElementById('fecha_serv').value;
+            const tipo_unidad = document.getElementById('tipo_unidad').value;
+            const contacto_directo = document.getElementById('contacto_directo').value.trim();
+            const contacto = document.getElementById('contacto').value.trim();
+            const cantidad = document.getElementById('cantidad').value || 0;
+            const observacion = document.getElementById('observacion').value;
+
+            if(!unidad || !chofer || !fecha) return alert('Por favor complete: N° unidad/placa, Chofer y Fecha.');
+
+            const d = new Date(fecha + 'T00:00:00');
+            const dia = diasES[d.getDay()];
+            const mes = mesesES[d.getMonth()];
+
+            const registro = { id: Date.now(), centro: document.getElementById('taller_sel').value, servicio, gerencia, descripcion, unidad, chofer, fecha, dia, mes, tipo_unidad, contacto_directo, contacto, cantidad: Number(cantidad), observacion };
+            baseDatos.push(registro);
+            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
+
+            // limpiar campos necesarios
+            document.getElementById('unidad').value = '';
+            document.getElementById('chofer').value = '';
+            document.getElementById('descripcion').value = '';
+            document.getElementById('observacion').value = '';
+            document.getElementById('contacto_directo').value = '';
+            document.getElementById('contacto').value = '';
+            document.getElementById('cantidad').value = '';
+
             renderLista();
         }
 
-        function renderLista() {
-            const tallerActual = document.getElementById('taller_sel').value;
+        function construirFiltrados(all = false){
+            if(all) return baseDatos.slice();
+            const centro = document.getElementById('taller_sel').value;
+            return baseDatos.filter(r => r.centro === centro);
+        }
+
+        function renderLista(){
+            const centro = document.getElementById('taller_sel').value;
             const cont = document.getElementById('lista_unidades');
-            const filtrados = baseDatos.filter(u => u.taller === tallerActual);
-            document.getElementById('cont_total').innerText = filtrados.length + " UNIDADES";
-            if(filtrados.length === 0) {
-                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros hoy.</p>`;
+            const filtrados = construirFiltrados(false);
+            document.getElementById('cont_total').innerText = filtrados.length + ' REG.';
+            if(filtrados.length === 0){
+                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros en este centro.</p>`;
                 return;
             }
-            cont.innerHTML = filtrados.map(u => `
+
+            cont.innerHTML = filtrados.slice().reverse().map(u => `
                 <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
-                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-300"><i class="bi bi-trash-fill"></i></button>
-                    <p class="font-bold text-xs text-blue-900 uppercase">${u.nombre}</p>
-                    <p class="text-[11px] text-slate-600 mb-2">${u.accion}</p>
-                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded-full ${u.estatus === 'OPERATIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${u.estatus}</span>
+                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-400"><i class="bi bi-trash-fill"></i></button>
+                    <p class="font-bold text-xs text-blue-900 uppercase">${u.unidad} — ${u.tipo_unidad}</p>
+                    <p class="text-[11px] text-slate-600 mb-1">${u.descripcion || ''}</p>
+                    <div class="text-[11px] text-slate-600 mb-2">Chofer: <span class="font-bold text-slate-800">${u.chofer}</span> • Pasajeros: ${u.cantidad}</div>
+                    <div class="flex items-center gap-2 text-[11px]">
+                        <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px]">${u.servicio}</span>
+                        <span class="px-2 py-1 rounded-full bg-sky-100 text-sky-700 text-[10px]">${u.gerencia}</span>
+                        <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px]">${u.dia} • ${u.fecha}</span>
+                    </div>
+                    ${u.observacion ? `<p class="mt-2 text-[11px] text-slate-500">Observación: ${u.observacion}</p>` : ''}
                 </div>
-            `).reverse().join('');
+            `).join('');
         }
 
-        function eliminar(id) {
-            baseDatos = baseDatos.filter(u => u.id !== id);
-            localStorage.setItem('db_reportes_v5', JSON.stringify(baseDatos));
+        function eliminar(id){
+            if(!confirm('Eliminar este registro?')) return;
+            baseDatos = baseDatos.filter(r => r.id !== id);
+            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
             renderLista();
         }
 
-        function limpiarBD() {
-            if(confirm("¿Borrar todos los talleres?")) {
+        function limpiarDB(){
+            if(confirm('¿Borrar todos los registros?')){
                 baseDatos = [];
-                localStorage.removeItem('db_reportes_v5');
+                localStorage.removeItem(DB_KEY);
                 renderLista();
             }
         }
 
-        function construirMensaje() {
-            const tallerActual = document.getElementById('taller_sel').value;
-            const filtrados = baseDatos.filter(u => u.taller === tallerActual);
-            if(filtrados.length === 0) return null;
-            const fecha = document.getElementById('fecha_rep').value.split('-').reverse().join('/');
-            const operativos = filtrados.filter(u => u.estatus === 'OPERATIVO').length;
-            const inoperativos = filtrados.filter(u => u.estatus !== 'OPERATIVO').length;
+        function exportarExcel(all = false){
+            const data = construirFiltrados(all);
+            if(data.length === 0) return alert('No hay datos para exportar.');
 
-            let m = `*REPORTE INFORMATIVO*\n*Región/Negocio/Filial:* Cuenca Occidente\n*Gerencia:* Transporte Terrestre\n*Estado:* Zulia\n*Lugar:* ${tallerActual}\n*Fecha:* ${fecha}\n*Hora:* 7:00AM - 04:00PM\n*Asunto:* Reporte Diario ${tallerActual}.\n\n`;
-            m += `🚨 *Total atendidas:* ${filtrados.length}\n🏛️ ${tallerActual}: ${filtrados.length}\n\n`;
-            m += `📌 Correctivos: ${filtrados.length}\n📌 Preventivos: 00\n\n`;
-            m += `✅ Operativos: ${operativos}\n❎ Fuera de Servicio: ${inoperativos}\n\n*Acciones Tomadas:*\n\n`;
-            filtrados.forEach(u => m += `*Unidad ${u.nombre}:*\n${u.accion}\n${u.estatus}.\n\n`);
-            m += `*Fuente:* ${tallerActual}.`;
-            return m;
+            const headers = [
+                'SERVICIOS',
+                'GERENCIA',
+                'DESCRIPCION',
+                'N° DE UNIDAD O PLACA',
+                'CHOFER',
+                'FECHA',
+                'DIA',
+                'MES',
+                'TIPO DE UNIDAD',
+                'CONTACTO DIRECTO',
+                'CONTACTO',
+                'CANTIDAD DE USUARIOS O PASAJEROS',
+                'OBSERVACION'
+            ];
+
+            const rows = data.map(r => ({
+                'SERVICIOS': r.servicio,
+                'GERENCIA': r.gerencia,
+                'DESCRIPCION': r.descripcion || '',
+                'N° DE UNIDAD O PLACA': r.unidad,
+                'CHOFER': r.chofer,
+                'FECHA': r.fecha,
+                'DIA': r.dia,
+                'MES': r.mes,
+                'TIPO DE UNIDAD': r.tipo_unidad,
+                'CONTACTO DIRECTO': r.contacto_directo || '',
+                'CONTACTO': r.contacto || '',
+                'CANTIDAD DE USUARIOS O PASAJEROS': r.cantidad || 0,
+                'OBSERVACION': r.observacion || ''
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows, {header: headers});
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+
+            const hoy = new Date();
+            const y = hoy.getFullYear();
+            const m = String(hoy.getMonth()+1).padStart(2,'0');
+            const d = String(hoy.getDate()).padStart(2,'0');
+            const nombre = `registros-transporte-${y}${m}${d}.xlsx`;
+            XLSX.writeFile(wb, nombre);
         }
 
-        function exportar(canal) {
-            const mensaje = construirMensaje();
-            if(!mensaje) return alert("Sin datos.");
-            const url = canal === 'whatsapp' ? `https://wa.me/?text=${encodeURIComponent(mensaje)}` : `https://t.me/share/url?url=&text=${encodeURIComponent(mensaje)}`;
-            window.open(url, '_blank');
-        }
+        // Alias para botones
+        function exportarExcelWrapper(all){ exportarExcel(all); }
     </script>
 </body>
-  </html>
+</html>
