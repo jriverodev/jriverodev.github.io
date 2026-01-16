@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Generador CV Pro</title>
+    <title>Generador CV Fiel</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c3e50'/><path d='M30 30h40v10H30zm0 20h40v10H30zm0 20h25v10H30z' fill='white'/></svg>">
     <link rel="manifest" id="pwa-manifest">
@@ -14,87 +14,74 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: var(--primary); font-size: 1.6rem; }
-        .section { background: #fff; border: 1px solid #e1e4e8; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        @media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
-        input, textarea, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #d1d5da; border-radius: 8px; font-size: 16px; }
-        button { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn-add { background: #f0f2f5; color: var(--primary); border: 1px dashed var(--primary); }
-        .btn-pdf { background: #e74c3c; }
-        .list-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
-        .delete-btn { width: auto; background: #ff4d4d; padding: 5px 10px; margin: 0; font-size: 0.8rem; }
+        :root { --primary: #2c3e50; --bg: #f4f7f6; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .section { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-add { background: #f8f9fa; color: #2c3e50; border: 1px dashed #2c3e50; }
+        .btn-pdf { background: #c0392b; }
+        .list-preview { font-size: 0.9rem; color: #666; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Generador de CV Profesional</h1>
+    <h2 style="text-align:center">Generador CV (Modelo Fiel)</h2>
     
     <div class="section">
-        <h3>Identidad</h3>
-        <input type="text" id="nombre" placeholder="Ej: JUAN PÉREZ">
-        <input type="text" id="cargo" placeholder="Ej: GERENTE DE VENTAS / INGENIERO">
+        <input type="text" id="nombre" placeholder="Nombre Apellido (Ej: JUAN PÉREZ)">
+        <input type="text" id="cargo" placeholder="PROFESIÓN / CARGO (Ej: DISEÑADOR GRÁFICO)">
+        <input type="text" id="telefono" placeholder="Teléfono (Ej: (+58) 999 999 999)">
+        <input type="text" id="ubicacion" placeholder="Ciudad, País">
+        <input type="text" id="email" placeholder="nombre.apellido@xxxx.com">
     </div>
 
     <div class="section">
-        <h3>Contacto</h3>
-        <div class="grid">
-            <input type="text" id="telefono" placeholder="Ej: (+58) 412 123 4567">
-            <input type="text" id="ubicacion" placeholder="Ej: Caracas, Venezuela">
-            <input type="text" id="email" placeholder="Ej: juan.perez@email.com">
-        </div>
+        <h3>PERFIL</h3>
+        <textarea id="perfil" rows="3" placeholder="Breve descripción de tu perfil profesional..."></textarea>
     </div>
 
     <div class="section">
-        <h3>Perfil Profesional</h3>
-        <textarea id="perfil" rows="3" placeholder="Ej: Profesional proactivo con 5 años de experiencia en..."></textarea>
-    </div>
-
-    <div class="section">
-        <h3>Habilidades (Separadas por comas)</h3>
-        <input type="text" id="habilidades" placeholder="Ej: Office, Photoshop, Liderazgo, Empatía">
-    </div>
-
-    <div class="section">
-        <h3>Experiencia Laboral</h3>
-        <div id="lista-exp"></div>
+        <h3>EXPERIENCIA PROFESIONAL</h3>
+        <div id="lista-exp" class="list-preview"></div>
         <button class="btn-add" onclick="addExp()">+ Agregar Experiencia</button>
     </div>
 
     <div class="section">
-        <h3>Educación</h3>
-        <div id="lista-edu"></div>
+        <h3>EDUCACIÓN</h3>
+        <div id="lista-edu" class="list-preview"></div>
         <button class="btn-add" onclick="addEdu()">+ Agregar Educación</button>
     </div>
 
     <div class="section">
-        <h3>Idiomas</h3>
-        <div id="lista-idioma"></div>
+        <h3>HABILIDADES</h3>
+        <textarea id="habilidades" placeholder="Ej: Office, Photoshop, Drive, Trabajo en equipo..."></textarea>
+    </div>
+
+    <div class="section">
+        <h3>IDIOMAS</h3>
+        <div id="lista-idioma" class="list-preview"></div>
         <button class="btn-add" onclick="addIdioma()">+ Agregar Idioma</button>
     </div>
 
-    <div style="display: flex; gap: 10px; flex-direction: column;">
-        <button onclick="genWord()">DESCARGAR WORD (.DOCX)</button>
-        <button class="btn-pdf" onclick="genPDF()">EXPORTAR PDF</button>
-    </div>
+    <button onclick="genWord()">DESCARGAR WORD (.DOCX)</button>
+    <button class="btn-pdf" onclick="genPDF()">EXPORTAR PDF</button>
 </div>
 
 <script>
-    let cvData = { exp: [], edu: [], idio: [] };
+    let cv = { exp: [], edu: [], idio: [] };
 
+    // Modales SweetAlert2
     async function addExp() {
         const { value: v } = await Swal.fire({
-            title: 'Detalle de Experiencia',
+            title: 'Nueva Experiencia',
             html: `
-                <input id="sw-emp" class="swal2-input" placeholder="Nombre de la Empresa">
-                <input id="sw-car" class="swal2-input" placeholder="Cargo desempeñado">
-                <input id="sw-fec" class="swal2-input" placeholder="Ej: 2018 – ACTUALIDAD">
-                <textarea id="sw-tar" class="swal2-textarea" placeholder="Logros y tareas realizadas..."></textarea>
+                <input id="sw-emp" class="swal2-input" placeholder="Nombre de la empresa">
+                <input id="sw-car" class="swal2-input" placeholder="Cargo o puesto">
+                <input id="sw-fec" class="swal2-input" placeholder="20XX – ACTUALIDAD">
+                <textarea id="sw-tar" class="swal2-textarea" placeholder="Tareas y logros realizados..."></textarea>
             `,
             preConfirm: () => ({
                 emp: document.getElementById('sw-emp').value,
@@ -103,16 +90,16 @@
                 tar: document.getElementById('sw-tar').value
             })
         });
-        if (v && v.emp) { cvData.exp.push(v); render('lista-exp', cvData.exp, 'emp'); }
+        if (v && v.emp) { cv.exp.push(v); updateUI('lista-exp', cv.exp, 'emp'); }
     }
 
     async function addEdu() {
         const { value: v } = await Swal.fire({
             title: 'Educación',
             html: `
-                <input id="sw-tit" class="swal2-input" placeholder="Título obtenido">
-                <input id="sw-uni" class="swal2-input" placeholder="Universidad o Institución">
-                <input id="sw-fec" class="swal2-input" placeholder="Ej: 2010 - 2015">
+                <input id="sw-tit" class="swal2-input" placeholder="Título o diploma">
+                <input id="sw-uni" class="swal2-input" placeholder="Universidad / Institución">
+                <input id="sw-fec" class="swal2-input" placeholder="20XX - 20XX">
                 <input id="sw-ciu" class="swal2-input" placeholder="Ciudad, País">
             `,
             preConfirm: () => ({
@@ -122,112 +109,108 @@
                 ciu: document.getElementById('sw-ciu').value
             })
         });
-        if (v && v.tit) { cvData.edu.push(v); render('lista-edu', cvData.edu, 'tit'); }
+        if (v && v.tit) { cv.edu.push(v); updateUI('lista-edu', cv.edu, 'tit'); }
     }
 
     async function addIdioma() {
         const { value: v } = await Swal.fire({
             title: 'Idioma',
             html: `
-                <input id="sw-nom" class="swal2-input" placeholder="Ej: Inglés">
+                <input id="sw-nom" class="swal2-input" placeholder="Idioma">
                 <select id="sw-niv" class="swal2-input">
                     <option value="Nativo">Nativo</option>
                     <option value="Profesional">Profesional</option>
                     <option value="Avanzado">Avanzado</option>
                 </select>
             `,
-            preConfirm: () => ({
-                nom: document.getElementById('sw-nom').value,
-                niv: document.getElementById('sw-niv').value
-            })
+            preConfirm: () => ({ nom: document.getElementById('sw-nom').value, niv: document.getElementById('sw-niv').value })
         });
-        if (v && v.nom) { cvData.idio.push(v); render('lista-idioma', cvData.idio, 'nom'); }
+        if (v && v.nom) { cv.idio.push(v); updateUI('lista-idioma', cv.idio, 'nom'); }
     }
 
-    function render(id, arr, key) {
-        document.getElementById(id).innerHTML = arr.map((item, i) => `
-            <div class="list-item">
-                <span><b>${item[key]}</b></span>
-                <button class="delete-btn" onclick="cvData['${id.split('-')[1]}'].splice(${i},1); render('${id}', cvData['${id.split('-')[1]}'], '${key}')">Eliminar</button>
-            </div>
-        `).join('');
+    function updateUI(id, arr, key) {
+        document.getElementById(id).innerHTML = arr.map(i => `• ${i[key]}`).join('<br>');
     }
 
-    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, BorderStyle } = docx;
+    // --- GENERACIÓN DE WORD (CLON DEL MODELO) ---
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = docx;
 
     function genWord() {
         const doc = new Document({
             sections: [{
+                properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
                 children: [
-                    // Encabezado Nombre
+                    // CABECERA (NOMBRE)
                     new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase() || "NOMBRE APELLIDO", bold: true, size: 48, font: "Arial" })],
+                        children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase(), bold: true, size: 48, font: "Calibri" })],
                         alignment: AlignmentType.CENTER
                     }),
-                    // Cargo
+                    // CARGO
                     new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase() || "CARGO", size: 28, font: "Arial" })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 }
+                        children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase(), size: 28, font: "Calibri" })],
+                        alignment: AlignmentType.CENTER
                     }),
-                    // Contacto
+                    // CONTACTO
                     new Paragraph({
                         children: [new TextRun({ text: `${document.getElementById('telefono').value} | ${document.getElementById('ubicacion').value} | ${document.getElementById('email').value}`, size: 18 })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 400 }
                     }),
 
-                    // PERFIL
-                    new Paragraph({ text: "PERFIL", heading: HeadingLevel.HEADING_1 }),
-                    new Paragraph({ children: [new TextRun({ text: document.getElementById('perfil').value, size: 22 })], spacing: { after: 300 } }),
-                    
-                    // EXPERIENCIA
-                    new Paragraph({ text: "EXPERIENCIA PROFESIONAL", heading: HeadingLevel.HEADING_1 }),
-                    ...cvData.exp.flatMap(e => [
+                    // SECCIÓN PERFIL
+                    new Paragraph({ text: "PERFIL", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                    new Paragraph({ children: [new TextRun({ text: document.getElementById('perfil').value, size: 22 })], spacing: { after: 200 } }),
+
+                    // SECCIÓN EXPERIENCIA
+                    new Paragraph({ text: "EXPERIENCIA PROFESIONAL", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                    ...cv.exp.flatMap(e => [
                         new Paragraph({
                             children: [new TextRun({ text: `${e.emp}  ${e.car} | ${e.fec}`, bold: true, size: 22 })],
-                            spacing: { before: 200 }
+                            spacing: { before: 150 }
                         }),
                         new Paragraph({ children: [new TextRun({ text: e.tar, size: 20 })] })
                     ]),
 
-                    // EDUCACIÓN
-                    new Paragraph({ text: "EDUCACIÓN", heading: HeadingLevel.HEADING_1, spacing: { before: 400 } }),
-                    ...cvData.edu.flatMap(e => [
+                    // SECCIÓN EDUCACIÓN
+                    new Paragraph({ text: "EDUCACIÓN", heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }),
+                    ...cv.edu.flatMap(e => [
                         new Paragraph({
-                            children: [new TextRun({ text: `${e.tit} ${e.uni} | ${e.fec}, ${e.ciu}`, size: 22 })]
+                            children: [new TextRun({ text: `${e.tit} ${e.uni}  |  ${e.fec}, ${e.ciu}`, size: 22 })],
+                            spacing: { after: 100 }
                         })
                     ]),
 
                     // HABILIDADES
-                    new Paragraph({ text: "HABILIDADES", heading: HeadingLevel.HEADING_1, spacing: { before: 400 } }),
-                    new Paragraph({ children: [new TextRun({ text: document.getElementById('habilidades').value.split(',').join(' | '), size: 22 })] }),
+                    new Paragraph({ text: "HABILIDADES", heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }),
+                    new Paragraph({
+                        children: [new TextRun({ text: document.getElementById('habilidades').value.split(',').join(' | '), size: 22 })]
+                    }),
 
                     // IDIOMAS
-                    new Paragraph({ text: "IDIOMAS", heading: HeadingLevel.HEADING_1, spacing: { before: 400 } }),
-                    ...cvData.idio.flatMap(i => [
+                    new Paragraph({ text: "IDIOMAS", heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }),
+                    ...cv.idio.flatMap(i => [
                         new Paragraph({ children: [new TextRun({ text: `${i.nom}: ${i.niv}`, size: 22 })] })
                     ])
                 ]
             }]
         });
-        Packer.toBlob(doc).then(blob => saveAs(blob, "CV_Final.docx"));
+
+        Packer.toBlob(doc).then(blob => saveAs(blob, "CV_Modelo_Fiel.docx"));
     }
 
     function genPDF() {
         const element = document.querySelector('.container');
-        const opt = { margin: 10, filename: 'CV_Final.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().from(element).set(opt).save();
+        html2pdf().from(element).set({
+            margin: 10, filename: 'CV_Modelo_Fiel.pdf',
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).save();
     }
 
-    // PWA Manifest dinámico
+    // PWA Manifest
     const manifest = {
-        name: "CV Maker Pro",
-        short_name: "CVPro",
-        start_url: ".",
-        display: "standalone",
-        background_color: "#2c3e50",
-        theme_color: "#2c3e50",
+        name: "CV Pro Maker", short_name: "CVPro", start_url: ".", display: "standalone",
+        background_color: "#2c3e50", theme_color: "#2c3e50",
         icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c3e50'/><path d='M30 30h40v10H30zm0 20h40v10H30zm0 20h25v10H30z' fill='white'/></svg>", sizes: "512x512", type: "image/svg+xml" }]
     };
     document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json;base64,' + btoa(JSON.stringify(manifest)));
