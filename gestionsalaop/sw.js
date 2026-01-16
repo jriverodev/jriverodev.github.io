@@ -1,15 +1,18 @@
 // Service Worker simple para caché de recursos (estrategia: Cache falling back to network)
-const CACHE_NAME = 'transporte-app-v1';
+const CACHE_NAME = 'sala-ops-v1';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
-  // librerías externas (si el host/CSP lo permite)
+  './icon.png',
   'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
   'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
   'https://code.jquery.com/jquery-3.6.0.min.js',
-  'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js'
+  'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js',
+  'https://cdn.tailwindcss.com',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
+  'https://cdn.jsdelivr.net/npm/sweetalert2@11'
 ];
 
 // Install: precache app shell
