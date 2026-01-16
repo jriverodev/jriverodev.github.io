@@ -1,1 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Transporte de Personal - RJ</title>
 
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Icon for iOS / fallback -->
+    <link rel="apple-touch-icon" href="icon.svg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Select2 (searchable selects) -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Pequeños ajustes para Select2 dentro de Tailwind */
+        .select2-container--default .select2-selection--single {
+            height: 44px;
+            border-radius: 0.75rem;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 30px;
+        }
+        .select2-container { width: 100% !important; }
+        /* ocultar por defecto el botón de instalar hasta recibir beforeinstallprompt */
+        #btnInstall { display: none; }
+
+        /* Resalte temporal cuando se muestra "Ver" */
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.25); transform: translateY(-2px); }
+            40% { box-shadow: 0 6px 18px rgba(249,115,22,0.18); transform: translateY(0); }
+            100% { box-shadow: none; transform: none; }
+        }
+        .highlight {
+            animation: highlight 900ms ease;
+            border-radius: 12px;
+        }
+    </style>
+
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- jQuery y Select2 (para selects dinámicos con buscador) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
+
+    <nav class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50 flex justify-between items-center">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-200">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <h1 class="font-bold tracking-tight uppercase text-xs">Registro Transporte de Personal</h1>
+        <div class="w-8"></div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-4 space-y-5">
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                <i class="bi bi-gear-wide-connected text-blue-600"></i> Configuración General
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Centro / Taller Seleccionado</label>
+                    <select id="taller_sel" onchange="renderLista()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-300">
+                        <option>Central Transporte Norte</option>
+                        <option>Central Transporte Sur</option>
+                        <option>Base Operativa Este</option>
+                        <option>Base Operativa Oeste</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-blue-600">Fecha del Reporte</label>
+                    <input type="date" id="fecha_rep" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="font-bold text-orange-600 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                <i class="bi bi-plus-square-fill"></i> Registrar Servicio
+            </h2>
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="servicio" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                        <option value="PROPIO">PROPIO</option>
+                        <option value="CONTRATADO">CONTRATADO</option>
+                    </select>
+                    <select id="tipo_unidad" class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                        <option value="BUS">BUS</option>
+                        <option value="AUTOBUS">AUTOBÚS</option>
+                        <option value="VAN">VAN</option>
+                        <option value="CARRO">CARRO</option>
+                        <option value="CAMIONETA">CAMIONETA</option>
+                        <option value="MICROBUS">MICROBUS</option>
+                        <option value="OTRO">OTRO</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Select dinámico con buscador: Organización -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Organización</label>
+                        <select id="organizacion" class="buscador"></select>
+                    </div>
+
+                    <!-- Gerencia dependiente -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Gerencia</label>
+                        <select id="gerencia" class="buscador"><option value="">Seleccione primero una organización</option></select>
+                    </div>
+                </div>
+
+                <input type="text" id="unidad" placeholder="N° de unidad o Placa" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 font-bold">
+                <input type="text" id="chofer" placeholder="Chofer (Nombre)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 font-bold">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" id="fecha_serv" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold" onchange="rellenarDiaMes()">
+                    <input type="number" id="cantidad" placeholder="Cantidad de pasajeros" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="contacto_directo" placeholder="Contacto directo (Nombre)" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                    <input type="tel" id="contacto" placeholder="Teléfono de contacto" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                </div>
+
+                <input type="text" id="descripcion" placeholder="Descripción del servicio" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 font-bold">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="origen" placeholder="Origen" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <input type="text" id="destino" placeholder="Destino" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                </div>
+
+                <textarea id="observacion" placeholder="Observación" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"></textarea>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="guardarRegistro()" class="bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition shadow-lg uppercase text-xs py-3">Guardar Registro</button>
+                    <button onclick="limpiarDB()" class="text-red-500 border border-red-200 rounded-xl font-bold uppercase text-xs py-3">Limpiar Base</button>
+                    <button onclick="migrarDesdeAntiguo()" class="text-slate-700 border border-slate-200 rounded-xl font-bold uppercase text-xs py-3">Migrar desde v5 (opcional)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-black text-slate-400 text-[10px] uppercase tracking-widest italic">Registros del Centro</h2>
+                <span id="cont_total" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-tighter uppercase">0 REG.</span>
+            </div>
+            <div id="lista_unidades" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+        </div>
+
+        <footer class="text-center py-6 border-t border-slate-200">
+            <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Desarrollado por RIVEROJDU</p>
+        </footer>
+
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-5 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="exportarExcel(false)" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Filtro)</button>
+            <button onclick="exportarExcel(true)" class="flex items-center justify-center gap-2 bg-sky-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Todo)</button>
+            <button onclick="enviarWhatsApp(false)" class="flex items-center justify-center gap-2 bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Enviar WhatsApp (Filtro)</button>
+            <button onclick="enviarWhatsApp(true)" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Enviar WhatsApp (Todo)</button>
+            <button id="btnInstall" class="flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Instalar App</button>
+        </div>
+
+    </main>
+
+    <script>
+        // PWA: beforeinstallprompt
+        let deferredPrompt = null;
+        const btnInstall = document.getElementById('btnInstall');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            btnInstall.style.display = 'flex';
+        });
+
+        btnInstall.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const choice = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            btnInstall.style.display = 'none';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            btnInstall.style.display = 'none';
+        });
+
+        // Service Worker registration (sw.js in the same folder)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service worker registrado:', reg.scope);
+            }).catch(err => {
+                console.warn('No se pudo registrar el service worker:', err);
+            });
+        }
+
+        // THEME COLORS (ajustables)
+        const THEME_ORANGE = '#fb923c'; // soft orange
+        const THEME_ORANGE_DARK = '#f97316'; // for confirm buttons
+        const THEME_BLUE = '#0369a1'; // deep blue
+
+        // --- SweetAlert2: helpers responsive y tema (móvil/tablet/desktop) ---
+        function getToastPosition() {
+            // Prefer bottom in portrait (mobile), top-end in landscape/desktop
+            try {
+                const isPortrait = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
+                if (isPortrait || window.innerWidth <= 480) return 'bottom';
+                return 'top-end';
+            } catch (e) {
+                return window.innerWidth <= 768 ? 'bottom' : 'top-end';
+            }
+        }
+
+        function ToastInstance() {
+            return Swal.mixin({
+                toast: true,
+                position: getToastPosition(),
+                showConfirmButton: false,
+                timer: 1800,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        }
+
+        function confirmDialog(options = {}) {
+            // Theme: confirm naranja, cancel azul (coherente con UI)
+            return Swal.fire(Object.assign({
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: THEME_ORANGE_DARK,
+                cancelButtonColor: THEME_BLUE,
+                reverseButtons: false
+            }, options));
+        }
+
+        // Escuchar cambios de orientación/tamaño para que el Toast use la nueva posición
+        window.addEventListener('orientationchange', () => { /* no-op: nueva instancia ToastInstance() leerá getToastPosition() */ });
+        window.addEventListener('resize', () => { /* idem */ });
+
+        // --- El resto del script mantiene la funcionalidad previa ---
+        const DB_KEY = 'db_transporte_v1';
+        let baseDatos = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+
+        const diasES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+        const mesesES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+        // dataMaster (organización -> gerencias).
+        const dataMaster = {
+            "BARIVEN": ["ADMINISTRACION Y SERVICIOS", "ADMON. Y GESTION", "ALMACEN BACHAQUERO", "ALMACEN DISTRIBUCION YAGUA", "ALMACEN DTTO ANACO", "ALMACEN DTTO PUNTA DE MATA", "ALMACEN GAS LA QUIZANDA", "ALMACEN GUAFITA", "ALMACEN JOSE", "ALMACEN LA SALINA", "ALMACEN REFINACION", "ALMACEN SAN FRANCISCO", "ALMACEN SAN ROQUE", "ALMACEN SAN TOME", "ALMACEN SILVESTRE", "AMBIENTE", "ASISTENCIA TECNICA", "CAPTACION Y EMPLEO", "COMPRAS", "COMPRAS AIT CORPORATIVO", "COMPRAS CONSOLIDADAS", "COMPRAS DISTRIBUCION", "COMPRAS GAS", "COMPRAS INTERNACIONALES", "COMPRAS MORON", "COMPRAS NO OPERACIONALES", "COMPRAS OPERACIONALES", "COMPRAS PARADAS", "COMPRAS PARADAS Y PROYECTOS", "COMPRAS PLANTAS DIST. METROP DELT", "COMPRAS PROYECTOS MAYORES", "COMPRAS REFINACION", "COMPRAS SERVICIOS COMPARTIDOS", "COMPRAS T Y D GAS METROP Y P. GAS", "COMPRAS TUBERIAS", "CONSULTORIA JURIDICA", "CONTABILIDAD GENERAL", "CONTROL DE GESTION", "CONTROL DE INVENTARIO", "CONTROL DE INVENTARIOS", "CONTROL INTERNO", "CONVENIOS CORPORATIVOS", "CONVENIOS MORON", "CONVENIOS NO OPERACIONALES", "CONVENIOS OPERACIONALES", "COVENIOS OPERACIONALES", "CUENTAS POR PAGAR", "DESARROLLO DE PROVEEDORES", "EDUCACION Y DESARROLLO", "ESTANDARIZACION Y CATALOGO", "ESTRATEGIA DE SUMINISTRO", "ESTRATEGIAS", "EVALUACIONES ECONOMICAS Y CONTRATACIONES", "GCIA DE PROCURA COSTA AFUERA", "GCIA DE PROCURA EMPRESAS", "GCIA DE RECURSOS HUMANOS", "GCIA REGIONAL DE PROCURA", "GCIA REGIONAL DE PROCURA CENTRO", "GCIA REGIONAL DE PROCURA METROPOLITANA", "GCIA REGIONAL DE PROCURA PARAGUANA", "GCIA REGIONAL DE PROCURA PUERTO LA CRUZ", "GCIA. PROCURA DE PROYECTOS MAYORES", "GERENCIA DE FINANZAS", "GERENCIA DE PLANIFICACION Y GESTION", "GERENCIA DE PROCURA", "GERENCIA DE PROCURA INTERNACIONAL", "GERENCIA DE SERVICIOS TECNICOS", "MEJORAMIENTO DE PROCESOS", "OPERACIONES ADUANERAS", "OPERACIONES ADUANERAS Y PERMISERIA", "ORGANIZACION TRANSITORIA", "PARADA Y PROYECTOS", "PLANIFICACION", "PLANIFICACION DISTRIBUCION Y GAS", "PLANIFICACION DTTO ANACO", "PLANIFICACION DTTO PUNTA DE MATA", "PLANIFICACION ESTRATEGICA", "PLANIFICACION OPERACIONAL", "PLANIFICACION PARADAS", "PLANIFICACION PARADAS Y PROYECTOS", "PLANIFICACION SAN TOME", "PLANIFICACION, ORGANIZ Y COMPENSACION", "PRESIDENCIA", "PRESUPUESTO", "PROYECTO CONVERSION PROFUNDA PLC", "PROYECTOS", "RECURSOS HUMANOS", "REGISTRO MAESTRO DE MATERIALES", "RMM", "SERVICIOS AL PERSONAL", "SISTEMA DE GESTION DE LA CALIDAD", "SISTEMAS DE INFORMACION", "SPTCIA ADMON Y GESTION", "SPTCIA COMPRAS DISTRITO ANACO", "SPTCIA COMPRAS DTTO ORIENTAL CARUPANO", "SPTCIA COMPRAS DTTO ORIENTAL GUIRIA", "SPTCIA COMPRAS DTTO PUNTA", "SPTCIA COMPRAS ELECTRICO", "SPTCIA COMPRAS EMPRESAS MIXTAS", "SPTCIA COMPRAS INSTRUMENTACION", "SPTCIA COMPRAS MECANICO", "SPTCIA COMPRAS PDVSA GAS Y OTRAS FILIALE", "SPTCIA COMPRAS PROYECTOS MAYORES", "SPTCIA COMPRAS REPUESTOS", "SPTCIA COMPRAS SUMINISTROS GENERALES", "SPTCIA CONVENIOS Y ALIANZAS", "SPTCIA DE ADMINISTRACION Y GESTION", "SPTCIA DE ADMON Y GESTION", "SPTCIA DE ADMON. Y GESTION", "SPTCIA DE ALMACEN", "SPTCIA DE COMPRAS", "SPTCIA DE COMPRAS DTTO MORICHAL", "SPTCIA DE COMPRAS DTTO SAN TOME", "SPTCIA DE COMPRAS DTTOS.APURE Y BARINAS", "SPTCIA DE COMPRAS MIXTAS ANZOATEGUI", "SPTCIA DE COMPRAS PRODUCCION", "SPTCIA DE CONVENIOS", "SPTCIA DE CONVENIOS Y ALI", "SPTCIA de CONVENIOS Y ALIANZAS", "SPTCIA DE PLANIFICACION", "SPTCIA DE PROC PROY. MAYORES Y OPERACION", "SPTCIA DE PROCURA GAS Y DIST.", "SPTCIA DE PROCURA OPERACIONAL", "SPTCIA DE PROCURA PARADAS", "SPTCIA de PROCURA REFINACION", "SPTCIA DE SERVICIOS TECNICOS", "SPTCIA PLANIFICACION", "SPTCIA PROC QUIMICOS CATALIZADORES OTRO", "SPTCIA. DE ADMINISTRACION Y GESTION", "SPTCIA. DE ADMON Y GESTION", "SPTCIA. DE ALMACEN", "SPTCIA. DE ALMACEN AMC", "SPTCIA. DE CONVENIOS AMC", "SPTCIA. DE CONVENIOS Y ALIANZAS", "SPTCIA. DE PLANIFICACION AMC", "SPTCIA. DE PROCURA GAS", "SPTCIA. DE PROCURA REFINACION", "SPTCIA. DE PROCURA SERVICIOS COMPARTIDOS", "SPTCIA. DE SERVICIOS TECNICOS", "SPTCIA. DE SERVICIOS TECNICOS AMC", "TESORERIA", "VENTAS"],
+            "CVP": ["DG INTERNACIONAL", "GERENCIA DE ASUNTOS JURIDICOS", "GERENCIA DE ASUNTOS PUBLICOS", "GERENCIA DE EVALUACION, DESARROLLO Y SEGUIMIENTO D", "GERENCIA DE FINANZAS", "GERENCIA DE INGENIERIA DE COSTOS", "GERENCIA DE OFICINA DE APOYO", "GERENCIA DE PLANIFICACION ESTRATEGICA", "GERENCIA DE PROCURA", "GERENCIA DE RECURSOS HUMANOS", "GERENCIA DE SALUD INTEGRAL", "GERENCIA DE SERVICIOS LOGISTICOS", "GERENCIA DE TECNICAS OPERACIONALES", "GERENCIA PDVSA LA ESTANCIA", "JUNTA DIRECTIVA CVP", "RECURSOS HUMANOS"],
+            "DESI": ["BARIVEN", "COMERCIO Y SUMINISTRO", "CONFIABILIDAD OPERACIONAL", "CVP", "DESARROLLO URBANO", "DESPACHO", "DISTRIBUCION", "DIVISION CARABOBO", "EXPLORACION", "EYP FAJA", "EYP LOS LLANOS", "EYP OCCIDENTE", "EYP ORIENTE", "GASIFICACION", "GERENCIAS CORPORATIVAS", "HABILITADORA", "INFORMACION ESTRATEGICA", "INGENIERIA Y CONSTRUCCION", "METROPOLITANA", "OPERACIONES", "OPERACIONES Y MTTO DE PLANTAS", "PDVSA ETANOL", "PDVSA GAS", "PDVSA INDUSTRIAL", "PDVSA INTEVEP", "PLANIFICACION Y CONTROL DE GESTION", "PRESIDENCIA", "PREVENCION", "PREVENCION Y CONTROL DE PERDIDAS", "PRODUCCION COSTA AFUERA", "PROTECCION INDUSTRIAL", "REFINACION", "SEGURIDAD INTEGRAL E HIGIENE OCUPACIONAL (SIHO)", "SERVICIOS PETROLEROS", "TECNICA", "TRANSPORTE Y DISTRIBUCION"],
+            "DEPOCC": ["AMBIENTE", "ASUNTOS JURIDICOS", "ASUNTOS PUBLICOS", "CONFIABILIDAD OPERACIONAL", "CONTRATACION", "COORDINACION OPERACIONAL", "COSTA AFUERA", "DESARROLLO SOCIAL", "DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE", "DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE", "DIVISION COSTA OCCIDENTAL DEL LAGO", "DIVISION COSTA ORIENTAL DEL LAGO", "DIVISION LAGO", "DIVISION SUR DEL LAGO TRUJILLO", "FINANZAS", "GERENCIA CORP DE CONFIGURACION DE PLANES", "GERENCIA OPERACION INTEGRAL DE PLANTAS", "INGENIERIA DE COSTOS", "OFICINA DE APOYO", "PDVSA ECUADOR", "PLANIFICACION, PRESUPUESTO Y GESTION", "PROCURA Y CONTROL DE INVENTARIO", "PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA", "PROYECTOS MAYORES", "RECURSOS HUMANOS", "RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO", "SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL", "SERVICIOS ELECTRICOS", "SERVICIOS LOGISTICOS", "SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE", "TRANSPORTE TERRESTRE"],
+            "DIRECCION EJECUTIVA CYSN": ["ATENCION Y SERVICIOS AL USUARIO", "DESARROLLO SOCIAL", "DIVISION AYACUCHO", "ENFERMERIA", "ESTACIONES DE SERVICIO", "FINANZAS", "GCIA. CORP. LINEA DE GESTION EMPRESARIAL", "GERENCIA SEGURIDAD INTEGRAL", "LEGAL", "MANUFACTURA", "PLANIFICACION", "PLANTAS Y POLIDUCTOS", "RECURSOS HUMANOS", "SEGURIDAD INTEGRAL E HIGIENE OCUPACIONAL (SIHO)", "TECNICA", "TRANSPORTE Y DISTRIBUCION", "VENTAS"],
+            "EM BARIPETROL": ["ASUNTOS PUBLICOS", "CONTRATACIONES", "FINANZAS", "INGENIERIA DE COSTOS", "LEGAL", "OPERACIONES DE PRODUCCION", "PLANIFICACION", "PRESIDENCIA", "PROCURA", "RECURSOS HUMANOS", "RELACIONES GUBERNAMENTALES", "SERVICIOS GENERALES", "SIHO-A", "TECNICA"],
+            "EM LAGOPETROL": ["ASUNTOS PUBLICOS", "CONTRATACIONES", "FINANZAS", "GERENCIA GENERAL", "LEGAL", "OPERACIONES DE PRODUCCION", "PLANIFICACION", "PRESIDENCIA", "PROCURA", "RECURSOS HUMANOS", "SERVICIOS GENERALES", "SIHO-A", "TECNICA"],
+            "EM PETROBOSCAN": ["ADMINISTRACION Y FINANZAS", "ASUNTOS PUBLICOS", "CONTRATACIONES", "DESARROLLO SOCIAL", "INGENIERIA DE COSTOS", "INVERSION SOCIAL", "LEGAL", "PLANIFICACION", "PROCURA", "RECURSOS HUMANOS", "RELACIONES GUBERNAMENTALES", "TECNICA Y OPERACIONES"],
+            "EM PETROPIAR": ["ADMINISTRACION", "ADMINISTRACION Y FINANZAS", "ASUNTOS PUBLICOS", "CONTRATACIONES", "DESARROLLO SOCIAL", "FINANZAS", "GERENCIA GENERAL", "INGENIERIA DE COSTOS", "LEGAL", "MANTENIMIENTO", "OPERACIONES", "PLANIFICACION", "PROCURA", "RECURSOS HUMANOS", "RELACIONES GUBERNAMENTALES", "SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL", "SERVICIOS GENERALES", "TECNICA"],
+            "EM PETROZAMORA": ["ASUNTOS PUBLICOS", "CONTRATACIONES", "FINANZAS", "GERENCIA GENERAL", "LEGAL", "LOGISTICA", "OPERACIONES", "PLANIFICACION", "PRESIDENCIA", "PROCURA", "RECURSOS HUMANOS", "SIHO-A", "TECNICA"],
+            "INTEVEP": ["ADMINISTRACION Y FINANZAS", "ASUNTOS JURIDICOS", "CALIDAD DE GESTION", "CONTROL DE GESTION", "DESARROLLO SOCIAL", "FINANZAS", "GERENCIA DE RECURSOS HUMANOS", "INVESTIGACION", "MANTENIMIENTO", "PLANIFICACION", "PRESIDENCIA", "PROCURA", "SEGURIDAD INTEGRAL", "TESORERIA"],
+            "PDVSA GAS": ["GASIFICACION", "HABILITADORA", "LEGALES", "OPERACIONES Y MTTO DE PLANTAS", "PRESIDENCIA", "PROCESAMIENTO", "PRODUCCION", "PRODUCCION COSTA AFUERA", "TRANSPORTE Y DISTRIBUCION"],
+            "PETROQUIMICA DE VENEZUELA, S.A": ["ADMINISTRACION", "ADUANA", "AMBIENTE", "ASUNTOS JURIDICOS", "ASUNTOS PUBLICOS", "AUDITORIA", "COMERCIALIZACION", "CONTABILIDAD", "CONTROL DE GESTION", "DESARROLLO SOCIAL", "FINANZAS", "GERENCIA GENERAL", "INGENIERIA", "MANTENIMIENTO", "OPERACIONES", "PLANIFICACION", "PRESIDENCIA", "PROCURA", "RECURSOS HUMANOS", "SEGURIDAD INDUSTRIAL", "SIHO", "TECNOLOGIA", "TESORERIA"]
+        };
+                                        
+        // Inicialización cuando carga la página (espera a que Select2 esté listo)
+        $(document).ready(function() {
+            // Inicializar selects con Select2
+            $('#organizacion').select2({ placeholder: 'Escriba para buscar organización...' });
+            $('#gerencia').select2({ placeholder: 'Seleccione primero una organización' });
+
+            // Cargar Organizaciones en orden alfabético
+            const $org = $('#organizacion');
+            Object.keys(dataMaster).sort().forEach(org => {
+                $org.append(new Option(org, org));
+            });
+
+            // Evento: cuando cambie organización, rellenar gerencias
+            $org.on('change', function() {
+                const seleccion = $(this).val();
+                const $ger = $('#gerencia');
+                $ger.empty();
+
+                if (!seleccion) {
+                    $ger.append(new Option("Seleccione primero una organización", ""));
+                } else if (dataMaster[seleccion]) {
+                    const gerencias = dataMaster[seleccion].slice().sort();
+                    gerencias.forEach(g => $ger.append(new Option(g, g)));
+                }
+
+                // Refresh Select2
+                $ger.trigger('change.select2');
+            });
+
+            // Inicializar fechas y lista
+            document.getElementById('fecha_rep').valueAsDate = new Date();
+            document.getElementById('fecha_serv').valueAsDate = new Date();
+            renderLista();
+        });
+
+        function rellenarDiaMes(){
+            // No muestra directamente, se utiliza al guardar
+        }
+
+        async function guardarRegistro(){
+            const servicio = document.getElementById('servicio').value;
+            const organizacion = $('#organizacion').val() || '';
+            const gerenciaSel = $('#gerencia').val() || '';
+            const gerencia = (organizacion ? organizacion + ' - ' : '') + gerenciaSel;
+            const descripcion = document.getElementById('descripcion').value;
+            const origen = document.getElementById('origen').value.trim();
+            const destino = document.getElementById('destino').value.trim();
+            const unidad = document.getElementById('unidad').value.trim();
+            const chofer = document.getElementById('chofer').value.trim();
+            const fecha = document.getElementById('fecha_serv').value;
+            const tipo_unidad = document.getElementById('tipo_unidad').value;
+            const contacto_directo = document.getElementById('contacto_directo').value.trim();
+            const contacto = document.getElementById('contacto').value.trim();
+            const cantidad = document.getElementById('cantidad').value || 0;
+            const observacion = document.getElementById('observacion').value;
+
+            if(!unidad || !chofer || !fecha) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos incompletos',
+                    text: 'Por favor complete: N° unidad/placa, Chofer y Fecha.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: THEME_BLUE
+                });
+                return;
+            }
+
+            const d = new Date(fecha + 'T00:00:00');
+            const dia = diasES[d.getDay()];
+            const mes = mesesES[d.getMonth()];
+
+            const registro = {
+                id: Date.now(),
+                centro: document.getElementById('taller_sel').value,
+                servicio,
+                gerencia,
+                descripcion,
+                origen,
+                destino,
+                unidad,
+                chofer,
+                fecha,
+                dia,
+                mes,
+                tipo_unidad,
+                contacto_directo,
+                contacto,
+                cantidad: Number(cantidad),
+                observacion
+            };
+            baseDatos.push(registro);
+            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
+
+            // Limpiar campos
+            document.getElementById('unidad').value = '';
+            document.getElementById('chofer').value = '';
+            document.getElementById('descripcion').value = '';
+            document.getElementById('origen').value = '';
+            document.getElementById('destino').value = '';
+            document.getElementById('observacion').value = '';
+            document.getElementById('contacto_directo').value = '';
+            document.getElementById('contacto').value = '';
+            document.getElementById('cantidad').value = '';
+
+            // Renderizar y mostrar toast con acción "Ver"
+            renderLista();
+
+            const toastResult = await Swal.fire({
+                title: 'Registro guardado',
+                toast: true,
+                position: getToastPosition(),
+                showConfirmButton: true,
+                confirmButtonText: 'Ver',
+                timer: 5000,
+                timerProgressBar: true,
+                confirmButtonColor: THEME_ORANGE_DARK,
+                showCloseButton: true,
+                didOpen: (el) => {
+                    el.addEventListener('mouseenter', Swal.stopTimer);
+                    el.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+
+            if (toastResult.isConfirmed) {
+                // Desplazarse al registro creado y resaltar
+                const el = document.getElementById('reg-' + registro.id);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('highlight');
+                    setTimeout(() => el.classList.remove('highlight'), 900);
+                }
+            } else {
+                // pequeño toast de confirmación si no se presionó ver
+                ToastInstance().fire({ icon: 'success', title: 'Registro guardado' });
+            }
+        }
+
+        function construirFiltrados(all = false){
+            if(all) return baseDatos.slice();
+            const centro = document.getElementById('taller_sel').value;
+            return baseDatos.filter(r => r.centro === centro);
+        }
+
+        function renderLista(){
+            const cont = document.getElementById('lista_unidades');
+            const filtrados = construirFiltrados(false);
+            document.getElementById('cont_total').innerText = filtrados.length + ' REG.';
+            if(filtrados.length === 0){
+                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros en este centro.</p>`;
+                return;
+            }
+
+            cont.innerHTML = filtrados.slice().reverse().map(u => `
+                <div id="reg-${u.id}" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
+                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-400"><i class="bi bi-trash-fill"></i></button>
+                    <p class="font-bold text-xs text-blue-900 uppercase">${u.unidad} — ${u.tipo_unidad}</p>
+                    <p class="text-[11px] text-slate-600 mb-1">${u.descripcion || ''}</p>
+                    <p class="text-[11px] text-slate-500 mb-1">Origen: <span class="font-bold text-slate-700">${u.origen || '-'}</span> → Destino: <span class="font-bold text-slate-700">${u.destino || '-'}</span></p>
+                    <div class="text-[11px] text-slate-600 mb-2">Chofer: <span class="font-bold text-slate-800">${u.chofer}</span> • Pasajeros: ${u.cantidad}</div>
+                    <div class="flex items-center gap-2 text-[11px]">
+                        <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px]">${u.servicio}</span>
+                        <span class="px-2 py-1 rounded-full bg-sky-100 text-sky-700 text-[10px]">${u.gerencia}</span>
+                        <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px]">${u.dia} • ${u.fecha}</span>
+                    </div>
+                    ${u.observacion ? `<p class="mt-2 text-[11px] text-slate-500">Observación: ${u.observacion}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function eliminar(id){
+            const res = await confirmDialog({
+                title: 'Eliminar registro',
+                text: '¿Eliminar este registro?'
+            });
+            if(!res.isConfirmed) return;
+            baseDatos = baseDatos.filter(r => r.id !== id);
+            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
+            ToastInstance().fire({ icon: 'success', title: 'Registro eliminado' });
+            renderLista();
+        }
+
+        async function limpiarDB(){
+            const res = await confirmDialog({
+                title: 'Borrar todos los registros',
+                text: '¿Borrar todos los registros?'
+            });
+            if(res.isConfirmed){
+                baseDatos = [];
+                localStorage.removeItem(DB_KEY);
+                renderLista();
+                ToastInstance().fire({ icon: 'success', title: 'Base de datos borrada' });
+            }
+        }
+
+        function exportarExcel(all = false){
+            const data = construirFiltrados(all);
+            if(data.length === 0) {
+                Swal.fire({ icon: 'info', title: 'Sin datos', text: 'No hay datos para exportar.', confirmButtonColor: THEME_BLUE });
+                return;
+            }
+
+            const headers = [
+                'SERVICIOS',
+                'GERENCIA',
+                'DESCRIPCION',
+                'ORIGEN',
+                'DESTINO',
+                'N° DE UNIDAD O PLACA',
+                'CHOFER',
+                'FECHA',
+                'DIA',
+                'MES',
+                'TIPO DE UNIDAD',
+                'CONTACTO DIRECTO',
+                'CONTACTO',
+                'CANTIDAD DE USUARIOS O PASAJEROS',
+                'OBSERVACION'
+            ];
+
+            const rows = data.map(r => ({
+                'SERVICIOS': r.servicio,
+                'GERENCIA': r.gerencia,
+                'DESCRIPCION': r.descripcion || '',
+                'ORIGEN': r.origen || '',
+                'DESTINO': r.destino || '',
+                'N° DE UNIDAD O PLACA': r.unidad,
+                'CHOFER': r.chofer,
+                'FECHA': r.fecha,
+                'DIA': r.dia,
+                'MES': r.mes,
+                'TIPO DE UNIDAD': r.tipo_unidad,
+                'CONTACTO DIRECTO': r.contacto_directo || '',
+                'CONTACTO': r.contacto || '',
+                'CANTIDAD DE USUARIOS O PASAJEROS': r.cantidad || 0,
+                'OBSERVACION': r.observacion || ''
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows, {header: headers});
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+
+            const hoy = new Date();
+            const y = hoy.getFullYear();
+            const m = String(hoy.getMonth()+1).padStart(2,'0');
+            const d = String(hoy.getDate()).padStart(2,'0');
+            const nombre = `registros-transporte-${y}${m}${d}.xlsx`;
+            XLSX.writeFile(wb, nombre);
+
+            // Toast para confirmar la descarga (útil en móviles)
+            ToastInstance().fire({ icon: 'success', title: 'Excel descargado' });
+        }
+
+        // Construye mensaje estilo plantilla para un registro (formato WhatsApp)
+        function construirMensajeWhatsAppRegistro(r) {
+            // Fecha dd/mm/yyyy
+            const parts = r.fecha.split('-');
+            const fechaFmt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : r.fecha;
+            const contactoUsuario = r.contacto_directo ? `${r.contacto_directo} (${r.contacto || 's/n'})` : (r.contacto ? r.contacto : '');
+            const lines = [];
+            lines.push('*SERVICIO EVENTUAL*');
+            lines.push('Gerencia de Transporte Terrestre.\n');
+            lines.push(`*📆 Fecha:* ${fechaFmt}`);
+            lines.push(`*▪️ Día:* ${r.dia}`);
+            lines.push(`*▪️Tipo de servicio ( Propio o contratado):* ${capitalize(r.servicio)}`);
+            lines.push(`*▪️Gerencia:* ${r.gerencia}`);
+            lines.push(`*▪️Tipo de Unidad:* ${r.tipo_unidad}`);
+            lines.push(`*▪️N° de Unidad:* ${r.unidad}`);
+            lines.push(`*▪️Chófer:* ${r.chofer}`);
+            lines.push(`*▪️Contacto:* ${r.contacto || ''}`);
+            if (r.origen) lines.push(`*▪️Origen:* ${r.origen}`);
+            if (r.destino) lines.push(`*▪️Destino:* ${r.destino}`);
+            if(contactoUsuario) lines.push(`*📞Contacto de usuario:* ${contactoUsuario}`);
+            lines.push('\n*📝 Descripción:* ' + (r.descripcion || ''));
+            lines.push('\n*👥Cantidad de Usuarios:* ' + (r.cantidad || 0));
+            lines.push('\n*🔎Observación:* ' + (r.observacion || ''));
+            return lines.join('\n');
+        }
+
+        function capitalize(s){ if(!s) return s; return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
+
+        // Enviar por WhatsApp (concatena mensajes si hay varios)
+        function enviarWhatsApp(all = false){
+            const data = construirFiltrados(all);
+            if(data.length === 0) {
+                Swal.fire({ icon: 'info', title: 'Sin datos', text: 'No hay datos para enviar.', confirmButtonColor: THEME_BLUE });
+                return;
+            }
+            // Si hay múltiples registros, los unimos con separador claro
+            const mensajes = data.map(r => construirMensajeWhatsAppRegistro(r));
+            const mensajeFinal = mensajes.join('\n\n-----------------\n\n');
+            const url = `https://wa.me/?text=${encodeURIComponent(mensajeFinal)}`;
+            window.open(url, '_blank');
+
+            // Aviso corto (toast) para indicar que se abrió WhatsApp
+            ToastInstance().fire({ icon: 'success', title: 'WhatsApp abierto' });
+        }
+
+        // Migración de datos desde la key antigua db_reportes_v5 (botón opcional)
+        async function migrarDesdeAntiguo(){
+            const confirmacion = await confirmDialog({
+                title: 'Migrar datos',
+                text: '¿Migrar datos desde la versión antigua (db_reportes_v5) a la nueva base local?',
+                icon: 'question',
+                confirmButtonText: 'Sí, migrar'
+            });
+            if(!confirmacion.isConfirmed) return;
+            const oldKey = 'db_reportes_v5';
+            const old = JSON.parse(localStorage.getItem(oldKey) || '[]');
+            if (!old.length) {
+                Swal.fire({ icon: 'info', title: 'No hay datos', text: 'No se encontraron datos en la versión antigua.', confirmButtonColor: THEME_BLUE });
+                return;
+            }
+
+            // Mapear y preparar migración, mantener lista de nuevos IDs
+            const migrated = old.map(item => {
+                const fecha = item.fecha || (new Date(item.id || Date.now())).toISOString().slice(0,10);
+                const d = new Date(fecha + 'T00:00:00');
+                return {
+                    id: item.id || Date.now() + Math.floor(Math.random()*1000),
+                    centro: item.taller || item.centro || 'Central Transporte Norte',
+                    servicio: item.servicio || 'PROPIO',
+                    gerencia: (item.organizacion ? item.organizacion + ' - ' : '') + (item.gerencia || 'Gerencia 1'),
+                    descripcion: item.accion || item.descripcion || '',
+                    origen: item.origen || item.origin || '',
+                    destino: item.destino || '',
+                    unidad: item.nombre || item.unidad || '',
+                    chofer: item.chofer || '',
+                    fecha: fecha,
+                    dia: diasES[d.getDay()],
+                    mes: mesesES[d.getMonth()],
+                    tipo_unidad: item.tipo_unidad || 'OTRO',
+                    contacto_directo: item.contacto_directo || '',
+                    contacto: item.contacto || '',
+                    cantidad: Number(item.cantidad || 0),
+                    observacion: item.observacion || ''
+                };
+            });
+
+            const existing = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+            const merged = existing.concat(migrated);
+            localStorage.setItem(DB_KEY, JSON.stringify(merged));
+            baseDatos = merged;
+            renderLista();
+
+            // Mostrar modal con contador y opción "Ver últimos n"
+            const totalAdded = migrated.length;
+            const mostrarMax = Math.min(10, totalAdded);
+            const result = await Swal.fire({
+                title: 'Migración completada',
+                html: `<p>Se añadieron <strong>${totalAdded}</strong> registros.</p>`,
+                icon: 'success',
+                showCancelButton: true,
+                confirmButtonText: `Ver últimos ${mostrarMax}`,
+                cancelButtonText: 'Cerrar',
+                confirmButtonColor: THEME_ORANGE_DARK,
+                cancelButtonColor: THEME_BLUE
+            });
+
+            if (result.isConfirmed) {
+                // Seleccionar últimos 'mostrarMax' IDs (ya que se añadieron al final de merged, y renderLista muestra reverse())
+                const lastMigrated = migrated.slice(-mostrarMax);
+                // Scroll al primero (más antiguo de los últimos) para que se vean en contexto
+                const firstId = lastMigrated[0] ? lastMigrated[0].id : null;
+                if (firstId) {
+                    const el = document.getElementById('reg-' + firstId);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+                // Añadir highlight a cada uno de los últimos
+                lastMigrated.forEach(item => {
+                    const node = document.getElementById('reg-' + item.id);
+                    if (node) {
+                        node.classList.add('highlight');
+                        setTimeout(() => node.classList.remove('highlight'), 900);
+                    }
+                });
+                ToastInstance().fire({ icon: 'success', title: `Mostrando últimos ${mostrarMax}` });
+            } else {
+                ToastInstance().fire({ icon: 'info', title: `${totalAdded} registros añadidos` });
+            }
+        }
+    </script>
+</body>
+</html>
