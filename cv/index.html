@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Generador CV Fiel</title>
+    <title>CV Studio Pro</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c3e50'/><path d='M30 30h40v10H30zm0 20h40v10H30zm0 20h25v10H30z' fill='white'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23007AFF'/><path d='M30 35h40M30 50h40M30 65h25' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>">
     <link rel="manifest" id="pwa-manifest">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -14,75 +14,129 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        :root { --primary: #2c3e50; --bg: #f4f7f6; }
-        body { font-family: 'Arial', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .section { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        button { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn-add { background: #f8f9fa; color: #2c3e50; border: 1px dashed #2c3e50; }
-        .btn-pdf { background: #c0392b; }
-        .list-preview { font-size: 0.9rem; color: #666; margin: 5px 0; }
+        :root { --primary: #007AFF; --dark: #1C1C1E; --bg: #F2F2F7; --card: #FFFFFF; }
+        * { box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
+        
+        body { background-color: var(--bg); margin: 0; padding: 20px; color: var(--dark); display: flex; justify-content: center; }
+        
+        .app-container { width: 100%; max-width: 600px; }
+        
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-weight: 800; font-size: 2rem; margin: 0; color: var(--primary); }
+        .header p { color: #8E8E93; margin-top: 5px; }
+
+        .card { 
+            background: var(--card); border-radius: 20px; padding: 24px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card h3 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid #F2F2F7; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+
+        input, textarea, select { 
+            width: 100%; padding: 14px; margin: 8px 0; border: 1.5px solid #E5E5EA; 
+            border-radius: 12px; font-size: 16px; transition: 0.2s; background: #F9F9FB;
+        }
+        input:focus { border-color: var(--primary); outline: none; background: #FFF; }
+
+        .btn-add { 
+            background: #F2F2F7; color: var(--primary); border: 2px dashed #D1D1D6; 
+            width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s;
+        }
+        .btn-add:hover { background: #E5E5EA; }
+
+        .item-row { 
+            background: #F9F9FB; padding: 12px; border-radius: 12px; 
+            display: flex; justify-content: space-between; align-items: center; margin: 8px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .delete-btn { color: #FF3B30; font-weight: bold; cursor: pointer; padding: 5px; }
+
+        .footer-actions { 
+            position: sticky; bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 15px; border-radius: 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        }
+
+        .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
+        .btn-pdf { background: var(--dark); }
+        
+        /* Animaciones para los items */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 style="text-align:center">Generador CV (Modelo Fiel)</h2>
-    
-    <div class="section">
-        <input type="text" id="nombre" placeholder="Nombre Apellido (Ej: JUAN PÉREZ)">
-        <input type="text" id="cargo" placeholder="PROFESIÓN / CARGO (Ej: DISEÑADOR GRÁFICO)">
-        <input type="text" id="telefono" placeholder="Teléfono (Ej: (+58) 999 999 999)">
-        <input type="text" id="ubicacion" placeholder="Ciudad, País">
-        <input type="text" id="email" placeholder="nombre.apellido@xxxx.com">
+<div class="app-container">
+    <div class="header">
+        <h1>CV Studio</h1>
+        <p>Crea un currículum de alto impacto</p>
     </div>
 
-    <div class="section">
-        <h3>PERFIL</h3>
-        <textarea id="perfil" rows="3" placeholder="Breve descripción de tu perfil profesional..."></textarea>
+    <div class="card fade-in">
+        <h3>👤 Información Personal</h3>
+        <input type="text" id="nombre" placeholder="Nombre Completo (Ej: JUAN PÉREZ)">
+        <input type="text" id="cargo" placeholder="Tu Especialidad (Ej: GERENTE OPERATIVO)">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 5px;">
+            <input type="text" id="telefono" placeholder="📱 Teléfono">
+            <input type="text" id="ubicacion" placeholder="📍 Ciudad, País">
+            <input type="text" id="email" placeholder="✉️ Correo electrónico">
+        </div>
     </div>
 
-    <div class="section">
-        <h3>EXPERIENCIA PROFESIONAL</h3>
-        <div id="lista-exp" class="list-preview"></div>
-        <button class="btn-add" onclick="addExp()">+ Agregar Experiencia</button>
+    <div class="card fade-in">
+        <h3>📝 Resumen Profesional</h3>
+        <textarea id="perfil" rows="4" placeholder="Cuéntanos quién eres y qué aportas..."></textarea>
     </div>
 
-    <div class="section">
-        <h3>EDUCACIÓN</h3>
-        <div id="lista-edu" class="list-preview"></div>
-        <button class="btn-add" onclick="addEdu()">+ Agregar Educación</button>
+    <div class="card fade-in">
+        <h3>💼 Experiencia Laboral</h3>
+        <div id="lista-exp"></div>
+        <button class="btn-add" onclick="modalExp()">+ Añadir Trayectoria</button>
     </div>
 
-    <div class="section">
-        <h3>HABILIDADES</h3>
-        <textarea id="habilidades" placeholder="Ej: Office, Photoshop, Drive, Trabajo en equipo..."></textarea>
+    <div class="card fade-in">
+        <h3>🎓 Formación Académica</h3>
+        <div id="lista-edu"></div>
+        <button class="btn-add" onclick="modalEdu()">+ Añadir Estudios</button>
     </div>
 
-    <div class="section">
-        <h3>IDIOMAS</h3>
-        <div id="lista-idioma" class="list-preview"></div>
-        <button class="btn-add" onclick="addIdioma()">+ Agregar Idioma</button>
+    <div class="card fade-in">
+        <h3>🌍 Idiomas</h3>
+        <div id="lista-idioma"></div>
+        <button class="btn-add" onclick="modalIdioma()">+ Añadir Idioma</button>
     </div>
 
-    <button onclick="genWord()">DESCARGAR WORD (.DOCX)</button>
-    <button class="btn-pdf" onclick="genPDF()">EXPORTAR PDF</button>
+    <div class="card fade-in">
+        <h3>🛠️ Habilidades Técnicas</h3>
+        <input type="text" id="habilidades" placeholder="Ej: Office, Liderazgo, CRM (Separa con comas)">
+    </div>
+
+    <div class="footer-actions">
+        <button class="btn-main" onclick="generarWord()">Descargar Word</button>
+        <button class="btn-main btn-pdf" onclick="generarPDF()">Exportar PDF</button>
+    </div>
 </div>
 
 <script>
     let cv = { exp: [], edu: [], idio: [] };
 
-    // Modales SweetAlert2
-    async function addExp() {
+    // Modales amigables con SweetAlert2
+    async function modalExp() {
         const { value: v } = await Swal.fire({
-            title: 'Nueva Experiencia',
+            title: 'Añadir Experiencia',
             html: `
-                <input id="sw-emp" class="swal2-input" placeholder="Nombre de la empresa">
-                <input id="sw-car" class="swal2-input" placeholder="Cargo o puesto">
-                <input id="sw-fec" class="swal2-input" placeholder="20XX – ACTUALIDAD">
-                <textarea id="sw-tar" class="swal2-textarea" placeholder="Tareas y logros realizados..."></textarea>
+                <input id="sw-emp" class="swal2-input" style="margin: 10px 0" placeholder="Empresa">
+                <input id="sw-car" class="swal2-input" style="margin: 10px 0" placeholder="Cargo">
+                <input id="sw-fec" class="swal2-input" style="margin: 10px 0" placeholder="Año Inicio - Fin">
+                <textarea id="sw-tar" class="swal2-textarea" style="margin: 10px 0" placeholder="Descripción de logros..."></textarea>
             `,
+            confirmButtonColor: '#007AFF',
+            confirmButtonText: 'Añadir',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
             preConfirm: () => ({
                 emp: document.getElementById('sw-emp').value,
                 car: document.getElementById('sw-car').value,
@@ -90,128 +144,154 @@
                 tar: document.getElementById('sw-tar').value
             })
         });
-        if (v && v.emp) { cv.exp.push(v); updateUI('lista-exp', cv.exp, 'emp'); }
+        if (v && v.emp) { cv.exp.push(v); updateList('lista-exp', cv.exp, 'car'); }
     }
 
-    async function addEdu() {
+    async function modalEdu() {
         const { value: v } = await Swal.fire({
-            title: 'Educación',
+            title: 'Añadir Educación',
             html: `
-                <input id="sw-tit" class="swal2-input" placeholder="Título o diploma">
-                <input id="sw-uni" class="swal2-input" placeholder="Universidad / Institución">
-                <input id="sw-fec" class="swal2-input" placeholder="20XX - 20XX">
-                <input id="sw-ciu" class="swal2-input" placeholder="Ciudad, País">
+                <input id="sw-tit" class="swal2-input" style="margin: 10px 0" placeholder="Título">
+                <input id="sw-uni" class="swal2-input" style="margin: 10px 0" placeholder="Institución">
+                <input id="sw-fec" class="swal2-input" style="margin: 10px 0" placeholder="Años (Ej: 2015-2019)">
             `,
+            confirmButtonColor: '#007AFF',
             preConfirm: () => ({
                 tit: document.getElementById('sw-tit').value,
                 uni: document.getElementById('sw-uni').value,
-                fec: document.getElementById('sw-fec').value,
-                ciu: document.getElementById('sw-ciu').value
+                fec: document.getElementById('sw-fec').value
             })
         });
-        if (v && v.tit) { cv.edu.push(v); updateUI('lista-edu', cv.edu, 'tit'); }
+        if (v && v.tit) { cv.edu.push(v); updateList('lista-edu', cv.edu, 'tit'); }
     }
 
-    async function addIdioma() {
+    async function modalIdioma() {
         const { value: v } = await Swal.fire({
-            title: 'Idioma',
+            title: 'Añadir Idioma',
             html: `
-                <input id="sw-nom" class="swal2-input" placeholder="Idioma">
+                <input id="sw-nom" class="swal2-input" placeholder="Ej: Inglés">
                 <select id="sw-niv" class="swal2-input">
                     <option value="Nativo">Nativo</option>
                     <option value="Profesional">Profesional</option>
-                    <option value="Avanzado">Avanzado</option>
+                    <option value="Intermedio">Intermedio</option>
                 </select>
             `,
+            confirmButtonColor: '#007AFF',
             preConfirm: () => ({ nom: document.getElementById('sw-nom').value, niv: document.getElementById('sw-niv').value })
         });
-        if (v && v.nom) { cv.idio.push(v); updateUI('lista-idioma', cv.idio, 'nom'); }
+        if (v && v.nom) { cv.idio.push(v); updateList('lista-idioma', cv.idio, 'nom'); }
     }
 
-    function updateUI(id, arr, key) {
-        document.getElementById(id).innerHTML = arr.map(i => `• ${i[key]}`).join('<br>');
+    function updateList(id, arr, key) {
+        document.getElementById(id).innerHTML = arr.map((item, i) => `
+            <div class="item-row fade-in">
+                <span><b>${item[key]}</b></span>
+                <span class="delete-btn" onclick="removeItem('${id}', ${i})">✕</span>
+            </div>
+        `).join('');
     }
 
-    // --- GENERACIÓN DE WORD (CLON DEL MODELO) ---
-    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = docx;
+    function removeItem(id, index) {
+        const key = id.split('-')[1];
+        cv[key].splice(index, 1);
+        updateList(id, cv[key], key === 'exp' ? 'car' : (key === 'edu' ? 'tit' : 'nom'));
+    }
 
-    function genWord() {
+    // --- LÓGICA DE EXPORTACIÓN PROFESIONAL ---
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, BorderStyle } = docx;
+
+    function generarWord() {
         const doc = new Document({
             sections: [{
                 properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
                 children: [
-                    // CABECERA (NOMBRE)
+                    // Encabezado Premium
                     new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase(), bold: true, size: 48, font: "Calibri" })],
+                        children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase(), bold: true, size: 52, font: "Arial" })],
                         alignment: AlignmentType.CENTER
                     }),
-                    // CARGO
                     new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase(), size: 28, font: "Calibri" })],
-                        alignment: AlignmentType.CENTER
+                        children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase(), size: 24, font: "Arial", color: "666666" })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
                     }),
-                    // CONTACTO
                     new Paragraph({
-                        children: [new TextRun({ text: `${document.getElementById('telefono').value} | ${document.getElementById('ubicacion').value} | ${document.getElementById('email').value}`, size: 18 })],
+                        children: [new TextRun({ text: `${document.getElementById('telefono').value}  •  ${document.getElementById('ubicacion').value}  •  ${document.getElementById('email').value}`, size: 18 })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 400 }
                     }),
 
-                    // SECCIÓN PERFIL
-                    new Paragraph({ text: "PERFIL", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
-                    new Paragraph({ children: [new TextRun({ text: document.getElementById('perfil').value, size: 22 })], spacing: { after: 200 } }),
+                    // Secciones con bordes inferiores (Look Profesional)
+                    ...createSection("PERFIL"),
+                    new Paragraph({ children: [new TextRun({ text: document.getElementById('perfil').value, size: 21 })], spacing: { after: 300 } }),
 
-                    // SECCIÓN EXPERIENCIA
-                    new Paragraph({ text: "EXPERIENCIA PROFESIONAL", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                    ...createSection("EXPERIENCIA PROFESIONAL"),
                     ...cv.exp.flatMap(e => [
                         new Paragraph({
-                            children: [new TextRun({ text: `${e.emp}  ${e.car} | ${e.fec}`, bold: true, size: 22 })],
-                            spacing: { before: 150 }
+                            children: [new TextRun({ text: `${e.emp.toUpperCase()} | ${e.car}`, bold: true, size: 21 })],
+                            spacing: { before: 200 }
                         }),
-                        new Paragraph({ children: [new TextRun({ text: e.tar, size: 20 })] })
+                        new Paragraph({
+                            children: [new TextRun({ text: e.fec, italic: true, size: 18, color: "444444" })]
+                        }),
+                        new Paragraph({ children: [new TextRun({ text: e.tar, size: 20 })], spacing: { after: 100 } })
                     ]),
 
-                    // SECCIÓN EDUCACIÓN
-                    new Paragraph({ text: "EDUCACIÓN", heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }),
+                    ...createSection("EDUCACIÓN"),
                     ...cv.edu.flatMap(e => [
                         new Paragraph({
-                            children: [new TextRun({ text: `${e.tit} ${e.uni}  |  ${e.fec}, ${e.ciu}`, size: 22 })],
-                            spacing: { after: 100 }
-                        })
+                            children: [new TextRun({ text: `${e.tit} — ${e.uni}`, bold: true, size: 21 })]
+                        }),
+                        new Paragraph({ children: [new TextRun({ text: e.fec, size: 18 })], spacing: { after: 150 } })
                     ]),
 
-                    // HABILIDADES
-                    new Paragraph({ text: "HABILIDADES", heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }),
+                    ...createSection("HABILIDADES & IDIOMAS"),
                     new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('habilidades').value.split(',').join(' | '), size: 22 })]
+                        children: [
+                            new TextRun({ text: "HERRAMIENTAS: ", bold: true, size: 20 }),
+                            new TextRun({ text: document.getElementById('habilidades').value.split(',').join(' • '), size: 20 })
+                        ],
+                        spacing: { after: 100 }
                     }),
-
-                    // IDIOMAS
-                    new Paragraph({ text: "IDIOMAS", heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }),
-                    ...cv.idio.flatMap(i => [
-                        new Paragraph({ children: [new TextRun({ text: `${i.nom}: ${i.niv}`, size: 22 })] })
-                    ])
+                    ...cv.idio.map(i => new Paragraph({
+                        children: [new TextRun({ text: `• ${i.nom}: ${i.niv}`, size: 20 })]
+                    }))
                 ]
             }]
         });
 
-        Packer.toBlob(doc).then(blob => saveAs(blob, "CV_Modelo_Fiel.docx"));
+        Packer.toBlob(doc).then(blob => {
+            saveAs(blob, `CV_${document.getElementById('nombre').value.replace(" ", "_")}.docx`);
+            Swal.fire('¡Éxito!', 'Tu Word se ha generado correctamente', 'success');
+        });
     }
 
-    function genPDF() {
-        const element = document.querySelector('.container');
-        html2pdf().from(element).set({
-            margin: 10, filename: 'CV_Modelo_Fiel.pdf',
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).save();
+    function createSection(title) {
+        return [
+            new Paragraph({
+                children: [new TextRun({ text: title, bold: true, size: 24, font: "Arial", color: "007AFF" })],
+                border: { bottom: { color: "007AFF", space: 1, style: BorderStyle.SINGLE, size: 6 } },
+                spacing: { before: 400, after: 100 }
+            })
+        ];
     }
 
-    // PWA Manifest
+    function generarPDF() {
+        Swal.fire({ title: 'Generando PDF...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const element = document.querySelector('.app-container');
+        const opt = { 
+            margin: 10, filename: 'Curriculum_Pro.pdf', 
+            html2canvas: { scale: 3 }, 
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+        };
+        html2pdf().from(element).set(opt).save().then(() => Swal.close());
+    }
+
+    // PWA Manifest Dinámico
     const manifest = {
-        name: "CV Pro Maker", short_name: "CVPro", start_url: ".", display: "standalone",
-        background_color: "#2c3e50", theme_color: "#2c3e50",
-        icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c3e50'/><path d='M30 30h40v10H30zm0 20h40v10H30zm0 20h25v10H30z' fill='white'/></svg>", sizes: "512x512", type: "image/svg+xml" }]
+        name: "CV Studio Pro", short_name: "CVStudio", start_url: ".", display: "standalone",
+        background_color: "#F2F2F7", theme_color: "#007AFF",
+        icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23007AFF'/><path d='M30 35h40M30 50h40M30 65h25' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>", sizes: "512x512", type: "image/svg+xml" }]
     };
     document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json;base64,' + btoa(JSON.stringify(manifest)));
 </script>
