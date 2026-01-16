@@ -1,24 +1,19 @@
 {
-  "name": "Registro Transporte de Personal",
-  "short_name": "Transporte",
-  "description": "Registro y exportación de servicios de transporte de personal",
+  "name": "Sala de Operaciones - Transporte Terrestre",
+  "short_name": "Sala Ops",
+  "description": "Registro de actividades diarias de la Sala de Operaciones",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e3a8a",
   "icons": [
     {
-      "src": "icon.pnh",
+      "src": "icon.svg",
       "type": "image/svg+xml",
       "sizes": "any"
     },
     {
-      "src": "icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "icon-512.png",
+      "src": "icon.png",
       "type": "image/png",
       "sizes": "512x512"
     }
