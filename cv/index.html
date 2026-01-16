@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generador CV Pro</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c3e50'/><path d='M30 30h40v10H30zm0 20h40v10H30zm0 20h25v10H30z' fill='white'/></svg>">
+    <link rel="manifest" id="pwa-manifest">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); margin: 0; padding: 10px; color: #333; 
+        }
+
+        .container { 
+            max-width: 800px; margin: auto; background: white; 
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        }
+
+        h1 { text-align: center; color: var(--primary); font-size: 1.5rem; margin-bottom: 20px; }
+        
+        .section { 
+            background: #fff; border: 1px solid #e1e4e8; 
+            padding: 15px; border-radius: 10px; margin-bottom: 15px; 
+        }
+        
+        .section h3 { margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+
+        /* Adaptabilidad de la cuadrícula */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+        input, textarea, select { 
+            width: 100%; padding: 12px; margin: 5px 0; 
+            border: 1px solid #d1d5da; border-radius: 8px; font-size: 16px; /* Evita zoom automático en iOS */
+        }
+
+        button { 
+            width: 100%; background: var(--primary); color: white; border: none; 
+            padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; 
+            font-size: 1rem; margin-top: 10px; active: scale(0.98); 
+        }
+
+        .btn-add { background: #f0f2f5; color: var(--primary); border: 1px dashed var(--primary); }
+        .btn-pdf { background: #e74c3c; }
+
+        .list-item { 
+            background: #f8f9fa; padding: 12px; margin: 8px 0; 
+            border-radius: 6px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid #eee; font-size: 0.9rem;
+        }
+
+        .delete-btn { width: auto; background: #ff4d4d; padding: 5px 12px; margin: 0; font-size: 0.8rem; }
+
+        /* Botones flotantes o fijos al final en móvil */
+        .actions { display: flex; gap: 10px; margin-top: 20px; flex-direction: column; }
+        @media (min-width: 600px) { .actions { flex-direction: row; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Generador de CV</h1>
+    
+    <div class="section">
+        <h3>Identidad [cite: 5, 6]</h3>
+        <input type="text" id="nombre" placeholder="Nombre y Apellido [cite: 5]">
+        <input type="text" id="cargo" placeholder="Profesión / Cargo [cite: 3]">
+    </div>
+
+    <div class="section">
+        <h3>Contacto </h3>
+        <div class="grid">
+            <input type="text" id="telefono" placeholder="Teléfono [cite: 1]">
+            <input type="text" id="ubicacion" placeholder="Ciudad, País [cite: 1]">
+            <input type="text" id="email" placeholder="Email [cite: 1]">
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Perfil [cite: 15]</h3>
+        <textarea id="perfil" rows="3" placeholder="Descripción breve de tu perfil... [cite: 13]"></textarea>
+    </div>
+
+    <div class="section">
+        <h3>Experiencia [cite: 17]</h3>
+        <div id="lista-exp"></div>
+        <button class="btn-add" onclick="addExp()">+ Agregar Puesto [cite: 19]</button>
+    </div>
+
+    <div class="section">
+        <h3>Educación [cite: 37]</h3>
+        <div id="lista-edu"></div>
+        <button class="btn-add" onclick="addEdu()">+ Agregar Título [cite: 7]</button>
+    </div>
+
+    <div class="section">
+        <h3>Idiomas [cite: 51]</h3>
+        <div id="lista-idioma"></div>
+        <button class="btn-add" onclick="addIdioma()">+ Agregar Idioma [cite: 45]</button>
+    </div>
+
+    <div class="actions">
+        <button onclick="genWord()">DESCARGAR WORD (.DOCX)</button>
+        <button class="btn-pdf" onclick="genPDF()">EXPORTAR PDF</button>
+    </div>
+</div>
+
+<script>
+    let cvData = { exp: [], edu: [], idio: [] };
+
+    // --- FUNCIONES DE MODALES (SWEETALERT2) ---
+    async function addExp() {
+        const { value: v } = await Swal.fire({
+            title: 'Experiencia Profesional [cite: 17]',
+            html: `
+                <input id="sw-emp" class="swal2-input" placeholder="Nombre Empresa [cite: 19]">
+                <input id="sw-car" class="swal2-input" placeholder="Cargo [cite: 19]">
+                <input id="sw-fec" class="swal2-input" placeholder="20XX – ACTUALIDAD [cite: 19]">
+                <textarea id="sw-tar" class="swal2-textarea" placeholder="Tareas y Logros [cite: 20]"></textarea>
+            `,
+            confirmButtonText: 'Guardar',
+            preConfirm: () => ({
+                emp: document.getElementById('sw-emp').value,
+                car: document.getElementById('sw-car').value,
+                fec: document.getElementById('sw-fec').value,
+                tar: document.getElementById('sw-tar').value
+            })
+        });
+        if (v && v.emp) { cvData.exp.push(v); render('lista-exp', cvData.exp, 'emp'); }
+    }
+
+    async function addEdu() {
+        const { value: v } = await Swal.fire({
+            title: 'Educación [cite: 37]',
+            html: `
+                <input id="sw-tit" class="swal2-input" placeholder="Título [cite: 7]">
+                <input id="sw-uni" class="swal2-input" placeholder="Institución [cite: 7]">
+                <input id="sw-fec" class="swal2-input" placeholder="Año [cite: 7]">
+                <input id="sw-ciu" class="swal2-input" placeholder="Ciudad [cite: 7]">
+            `,
+            confirmButtonText: 'Guardar',
+            preConfirm: () => ({
+                tit: document.getElementById('sw-tit').value,
+                uni: document.getElementById('sw-uni').value,
+                fec: document.getElementById('sw-fec').value,
+                ciu: document.getElementById('sw-ciu').value
+            })
+        });
+        if (v && v.tit) { cvData.edu.push(v); render('lista-edu', cvData.edu, 'tit'); }
+    }
+
+    async function addIdioma() {
+        const { value: v } = await Swal.fire({
+            title: 'Idioma [cite: 51]',
+            html: `
+                <input id="sw-nom" class="swal2-input" placeholder="Idioma [cite: 45]">
+                <select id="sw-niv" class="swal2-input">
+                    <option value="Nativo">Nativo [cite: 45]</option>
+                    <option value="Profesional">Profesional [cite: 46]</option>
+                    <option value="Avanzado">Avanzado [cite: 47]</option>
+                </select>
+            `,
+            confirmButtonText: 'Guardar',
+            preConfirm: () => ({
+                nom: document.getElementById('sw-nom').value,
+                niv: document.getElementById('sw-niv').value
+            })
+        });
+        if (v && v.nom) { cvData.idio.push(v); render('lista-idioma', cvData.idio, 'nom'); }
+    }
+
+    function render(id, arr, key) {
+        document.getElementById(id).innerHTML = arr.map((item, i) => `
+            <div class="list-item">
+                <span><b>${item[key]}</b></span>
+                <button class="delete-btn" onclick="cvData['${id.split('-')[1]}'].splice(${i},1); render('${id}', cvData['${id.split('-')[1]}'], '${key}')">Eliminar</button>
+            </div>
+        `).join('');
+    }
+
+    // --- EXPORTACIÓN WORD (ESTILO ORIGINAL) ---
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = docx;
+
+    function genWord() {
+        const doc = new Document({
+            sections: [{
+                children: [
+                    new Paragraph({
+                        children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase() || "NOMBRE", bold: true, size: 44, font: "Arial" })],
+                        alignment: AlignmentType.CENTER
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase() || "CARGO", size: 26, font: "Arial" })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: `${document.getElementById('telefono').value} | ${document.getElementById('ubicacion').value} | ${document.getElementById('email').value}`, size: 18 })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }),
+                    new Paragraph({ text: "PERFIL [cite: 15]", heading: HeadingLevel.HEADING_1 }),
+                    new Paragraph({ children: [new TextRun({ text: document.getElementById('perfil').value, size: 22 })], spacing: { after: 300 } }),
+                    
+                    new Paragraph({ text: "EXPERIENCIA PROFESIONAL [cite: 17]", heading: HeadingLevel.HEADING_1 }),
+                    ...cvData.exp.flatMap(e => [
+                        new Paragraph({
+                            children: [new TextRun({ text: `${e.emp}  ${e.car} | ${e.fec}`, bold: true, size: 22 })],
+                            spacing: { before: 200 }
+                        }),
+                        new Paragraph({ children: [new TextRun({ text: e.tar, size: 20 })] })
+                    ])
+                ]
+            }]
+        });
+        Packer.toBlob(doc).then(blob => saveAs(blob, "CV_Profesional.docx"));
+    }
+
+    function genPDF() {
+        const element = document.querySelector('.container');
+        html2pdf().from(element).set({
+            margin: 10, filename: 'CV_Profesional.pdf',
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).save();
+    }
+
+    // --- PWA SETUP ---
+    const manifest = {
+        name: "CV Pro Maker",
+        short_name: "CVPro",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#2c3e50",
+        theme_color: "#2c3e50",
+        icons: [{
+            src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c3e50'/><path d='M30 30h40v10H30zm0 20h40v10H30zm0 20h25v10H30z' fill='white'/></svg>",
+            sizes: "512x512", type: "image/svg+xml"
+        }]
+    };
+    document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json;base64,' + btoa(JSON.stringify(manifest)));
+
+    if ('serviceWorker' in navigator) {
+        const sw = `self.addEventListener('fetch', function(e) {});`;
+        const blob = new Blob([sw], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob));
+    }
+</script>
+
+</body>
+</html>
