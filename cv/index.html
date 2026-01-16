@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CV Studio Pro</title>
+    <title>CV Studio Pro v2</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23007AFF'/><path d='M30 35h40M30 50h40M30 65h25' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>">
     <link rel="manifest" id="pwa-manifest">
@@ -16,283 +16,205 @@
     <style>
         :root { --primary: #007AFF; --dark: #1C1C1E; --bg: #F2F2F7; --card: #FFFFFF; }
         * { box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
-        
-        body { background-color: var(--bg); margin: 0; padding: 20px; color: var(--dark); display: flex; justify-content: center; }
-        
-        .app-container { width: 100%; max-width: 600px; }
-        
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-weight: 800; font-size: 2rem; margin: 0; color: var(--primary); }
-        .header p { color: #8E8E93; margin-top: 5px; }
-
-        .card { 
-            background: var(--card); border-radius: 20px; padding: 24px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .card h3 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid #F2F2F7; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-
-        input, textarea, select { 
-            width: 100%; padding: 14px; margin: 8px 0; border: 1.5px solid #E5E5EA; 
-            border-radius: 12px; font-size: 16px; transition: 0.2s; background: #F9F9FB;
-        }
-        input:focus { border-color: var(--primary); outline: none; background: #FFF; }
-
-        .btn-add { 
-            background: #F2F2F7; color: var(--primary); border: 2px dashed #D1D1D6; 
-            width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s;
-        }
-        .btn-add:hover { background: #E5E5EA; }
-
-        .item-row { 
-            background: #F9F9FB; padding: 12px; border-radius: 12px; 
-            display: flex; justify-content: space-between; align-items: center; margin: 8px 0;
-            border-left: 4px solid var(--primary);
-        }
-
-        .delete-btn { color: #FF3B30; font-weight: bold; cursor: pointer; padding: 5px; }
-
-        .footer-actions { 
-            position: sticky; bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 15px; border-radius: 20px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
-        }
-
-        .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
+        body { background-color: var(--bg); margin: 0; padding: 15px; color: var(--dark); display: flex; flex-direction: column; align-items: center; }
+        .app-container { width: 100%; max-width: 600px; padding-bottom: 120px; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
+        .card h3 { margin-top: 0; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid #F2F2F7; padding-bottom: 10px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #E5E5EA; border-radius: 10px; font-size: 16px; background: #F9F9FB; }
+        .btn-add { background: #F2F2F7; color: var(--primary); border: 2px dashed #D1D1D6; width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .item-row { background: #F9F9FB; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin: 8px 0; border-left: 4px solid var(--primary); }
+        .footer-actions { position: fixed; bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); width: calc(100% - 30px); max-width: 570px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer; }
         .btn-pdf { background: var(--dark); }
-        
-        /* Animaciones para los items */
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid #ddd; }
+        .credits { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #8E8E93; }
+        .swal-date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="header">
-        <h1>CV Studio</h1>
-        <p>Crea un currículum de alto impacto</p>
+    <div style="text-align: center; margin-bottom: 25px;">
+        <h1 style="color: var(--primary); margin:0;">CV Studio Pro</h1>
+        <p style="color: #8E8E93;">Desarrollado por: jesus.rivero86@gmail.com</p>
     </div>
 
-    <div class="card fade-in">
-        <h3>👤 Información Personal</h3>
-        <input type="text" id="nombre" placeholder="Nombre Completo (Ej: JUAN PÉREZ)">
-        <input type="text" id="cargo" placeholder="Tu Especialidad (Ej: GERENTE OPERATIVO)">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 5px;">
-            <input type="text" id="telefono" placeholder="📱 Teléfono">
-            <input type="text" id="ubicacion" placeholder="📍 Ciudad, País">
-            <input type="text" id="email" placeholder="✉️ Correo electrónico">
-        </div>
+    <div class="card">
+        <h3>👤 Datos Personales</h3>
+        <input type="text" id="nombre" placeholder="Nombre Completo">
+        <input type="text" id="cargo" placeholder="Profesión o Título">
+        <input type="text" id="telefono" placeholder="📱 Teléfono">
+        <input type="text" id="ubicacion" placeholder="📍 Ciudad, País">
+        <input type="text" id="email" placeholder="✉️ Correo">
     </div>
 
-    <div class="card fade-in">
-        <h3>📝 Resumen Profesional</h3>
-        <textarea id="perfil" rows="4" placeholder="Cuéntanos quién eres y qué aportas..."></textarea>
-    </div>
-
-    <div class="card fade-in">
+    <div class="card">
         <h3>💼 Experiencia Laboral</h3>
         <div id="lista-exp"></div>
-        <button class="btn-add" onclick="modalExp()">+ Añadir Trayectoria</button>
+        <button class="btn-add" onclick="modalExp()">+ Añadir Cargo</button>
     </div>
 
-    <div class="card fade-in">
-        <h3>🎓 Formación Académica</h3>
+    <div class="card">
+        <h3>🎓 Educación</h3>
         <div id="lista-edu"></div>
-        <button class="btn-add" onclick="modalEdu()">+ Añadir Estudios</button>
+        <button class="btn-add" onclick="modalEdu()">+ Añadir Educación</button>
     </div>
 
-    <div class="card fade-in">
-        <h3>🌍 Idiomas</h3>
-        <div id="lista-idioma"></div>
-        <button class="btn-add" onclick="modalIdioma()">+ Añadir Idioma</button>
-    </div>
-
-    <div class="card fade-in">
-        <h3>🛠️ Habilidades Técnicas</h3>
-        <input type="text" id="habilidades" placeholder="Ej: Office, Liderazgo, CRM (Separa con comas)">
+    <div class="card">
+        <h3>📂 Anexos y Documentos</h3>
+        <input type="file" id="input-anexos" accept="image/*" multiple onchange="manejarAnexos(this)" style="display: none;">
+        <button class="btn-add" onclick="document.getElementById('input-anexos').click()">📷 Subir Títulos o Fotos</button>
+        <div id="preview-anexos" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;"></div>
     </div>
 
     <div class="footer-actions">
-        <button class="btn-main" onclick="generarWord()">Descargar Word</button>
-        <button class="btn-main btn-pdf" onclick="generarPDF()">Exportar PDF</button>
+        <button class="btn-main" onclick="generarWord()">Bajar Word</button>
+        <button class="btn-main btn-pdf" onclick="generarPDF()">Bajar PDF</button>
     </div>
 </div>
 
 <script>
-    let cv = { exp: [], edu: [], idio: [] };
+    let cv = { exp: [], edu: [], anexos: [] };
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, ImageRun, BorderStyle, PageBreak } = docx;
 
-    // Modales amigables con SweetAlert2
+    // Generador de opciones para el selector de fechas
+    const getYears = () => {
+        let years = "";
+        for(let i = new Date().getFullYear(); i >= 1970; i--) years += `<option value="${i}">${i}</option>`;
+        return years;
+    };
+    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const getMonths = () => months.map((m, i) => `<option value="${m}">${m}</option>`).join('');
+
+    // MODAL EXPERIENCIA CON FECHAS INICIO/FIN
     async function modalExp() {
         const { value: v } = await Swal.fire({
-            title: 'Añadir Experiencia',
+            title: 'Detalles del Puesto',
             html: `
-                <input id="sw-emp" class="swal2-input" style="margin: 10px 0" placeholder="Empresa">
-                <input id="sw-car" class="swal2-input" style="margin: 10px 0" placeholder="Cargo">
-                <input id="sw-fec" class="swal2-input" style="margin: 10px 0" placeholder="Año Inicio - Fin">
-                <textarea id="sw-tar" class="swal2-textarea" style="margin: 10px 0" placeholder="Descripción de logros..."></textarea>
+                <input id="sw-emp" class="swal2-input" placeholder="Empresa">
+                <input id="sw-car" class="swal2-input" placeholder="Cargo">
+                <p style="text-align:left; margin:10px 0 0 5px; font-size:0.8rem">Fecha Inicio:</p>
+                <div class="swal-date-grid">
+                    <select id="sw-mes-in" class="swal2-input">${getMonths()}</select>
+                    <select id="sw-ano-in" class="swal2-input">${getYears()}</select>
+                </div>
+                <p style="text-align:left; margin:10px 0 0 5px; font-size:0.8rem">Fecha Fin:</p>
+                <div class="swal-date-grid">
+                    <select id="sw-mes-fi" class="swal2-input"><option value="Act">Actualidad</option>${getMonths()}</select>
+                    <select id="sw-ano-fi" class="swal2-input"><option value="">-</option>${getYears()}</select>
+                </div>
+                <textarea id="sw-tar" class="swal2-textarea" placeholder="Descripción..."></textarea>
             `,
             confirmButtonColor: '#007AFF',
-            confirmButtonText: 'Añadir',
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar',
-            preConfirm: () => ({
-                emp: document.getElementById('sw-emp').value,
-                car: document.getElementById('sw-car').value,
-                fec: document.getElementById('sw-fec').value,
-                tar: document.getElementById('sw-tar').value
-            })
+            preConfirm: () => {
+                const fin = document.getElementById('sw-mes-fi').value === 'Act' ? 'Actualidad' : `${document.getElementById('sw-mes-fi').value} ${document.getElementById('sw-ano-fi').value}`;
+                return {
+                    emp: document.getElementById('sw-emp').value,
+                    car: document.getElementById('sw-car').value,
+                    periodo: `${document.getElementById('sw-mes-in').value} ${document.getElementById('sw-ano-in').value} – ${fin}`,
+                    tar: document.getElementById('sw-tar').value
+                }
+            }
         });
-        if (v && v.emp) { cv.exp.push(v); updateList('lista-exp', cv.exp, 'car'); }
+        if (v && v.emp) { cv.exp.push(v); updateUI('lista-exp', cv.exp, 'emp'); }
     }
 
     async function modalEdu() {
         const { value: v } = await Swal.fire({
-            title: 'Añadir Educación',
+            title: 'Educación',
             html: `
-                <input id="sw-tit" class="swal2-input" style="margin: 10px 0" placeholder="Título">
-                <input id="sw-uni" class="swal2-input" style="margin: 10px 0" placeholder="Institución">
-                <input id="sw-fec" class="swal2-input" style="margin: 10px 0" placeholder="Años (Ej: 2015-2019)">
+                <input id="sw-tit" class="swal2-input" placeholder="Título obtenido">
+                <input id="sw-uni" class="swal2-input" placeholder="Institución">
+                <div class="swal-date-grid">
+                    <select id="sw-ano-edu" class="swal2-input">${getYears()}</select>
+                </div>
             `,
-            confirmButtonColor: '#007AFF',
             preConfirm: () => ({
                 tit: document.getElementById('sw-tit').value,
                 uni: document.getElementById('sw-uni').value,
-                fec: document.getElementById('sw-fec').value
+                fec: document.getElementById('sw-ano-edu').value
             })
         });
-        if (v && v.tit) { cv.edu.push(v); updateList('lista-edu', cv.edu, 'tit'); }
+        if (v && v.tit) { cv.edu.push(v); updateUI('lista-edu', cv.edu, 'tit'); }
     }
 
-    async function modalIdioma() {
-        const { value: v } = await Swal.fire({
-            title: 'Añadir Idioma',
-            html: `
-                <input id="sw-nom" class="swal2-input" placeholder="Ej: Inglés">
-                <select id="sw-niv" class="swal2-input">
-                    <option value="Nativo">Nativo</option>
-                    <option value="Profesional">Profesional</option>
-                    <option value="Intermedio">Intermedio</option>
-                </select>
-            `,
-            confirmButtonColor: '#007AFF',
-            preConfirm: () => ({ nom: document.getElementById('sw-nom').value, niv: document.getElementById('sw-niv').value })
+    function manejarAnexos(input) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => { cv.anexos.push(e.target.result); renderAnexos(); };
+            reader.readAsDataURL(file);
         });
-        if (v && v.nom) { cv.idio.push(v); updateList('lista-idioma', cv.idio, 'nom'); }
     }
 
-    function updateList(id, arr, key) {
-        document.getElementById(id).innerHTML = arr.map((item, i) => `
-            <div class="item-row fade-in">
-                <span><b>${item[key]}</b></span>
-                <span class="delete-btn" onclick="removeItem('${id}', ${i})">✕</span>
+    function renderAnexos() {
+        const div = document.getElementById('preview-anexos');
+        div.innerHTML = cv.anexos.map((src, i) => `
+            <div style="position: relative;">
+                <img src="${src}" class="preview-img">
+                <span onclick="cv.anexos.splice(${i},1); renderAnexos()" style="position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:20px; height:20px; font-size:12px; line-height:20px; text-align:center; cursor:pointer;">×</span>
             </div>
         `).join('');
     }
 
-    function removeItem(id, index) {
-        const key = id.split('-')[1];
-        cv[key].splice(index, 1);
-        updateList(id, cv[key], key === 'exp' ? 'car' : (key === 'edu' ? 'tit' : 'nom'));
+    function updateUI(id, arr, key) {
+        document.getElementById(id).innerHTML = arr.map(i => `<div class="item-row"><span>${i[key]}</span></div>`).join('');
     }
 
-    // --- LÓGICA DE EXPORTACIÓN PROFESIONAL ---
-    const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, BorderStyle } = docx;
+    async function generarWord() {
+        Swal.fire({ title: 'Creando Documento...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    function generarWord() {
-        const doc = new Document({
-            sections: [{
-                properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
-                children: [
-                    // Encabezado Premium
-                    new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase(), bold: true, size: 52, font: "Arial" })],
-                        alignment: AlignmentType.CENTER
-                    }),
-                    new Paragraph({
-                        children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase(), size: 24, font: "Arial", color: "666666" })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 }
-                    }),
-                    new Paragraph({
-                        children: [new TextRun({ text: `${document.getElementById('telefono').value}  •  ${document.getElementById('ubicacion').value}  •  ${document.getElementById('email').value}`, size: 18 })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 400 }
-                    }),
+        const children = [
+            new Paragraph({ children: [new TextRun({ text: document.getElementById('nombre').value.toUpperCase(), bold: true, size: 48, font: "Arial" })], alignment: AlignmentType.CENTER }),
+            new Paragraph({ children: [new TextRun({ text: document.getElementById('cargo').value.toUpperCase(), size: 24, font: "Arial", color: "666666" })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+            new Paragraph({ children: [new TextRun({ text: `${document.getElementById('telefono').value} | ${document.getElementById('email').value}`, size: 18 })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+            
+            ...createH("EXPERIENCIA"),
+            ...cv.exp.flatMap(e => [
+                new Paragraph({ children: [new TextRun({ text: `${e.emp.toUpperCase()} | ${e.car}`, bold: true, size: 22 })], spacing: { before: 200 } }),
+                new Paragraph({ children: [new TextRun({ text: e.periodo, italic: true, size: 18 })] }),
+                new Paragraph({ children: [new TextRun({ text: e.tar, size: 20 })], spacing: { after: 100 } })
+            ]),
 
-                    // Secciones con bordes inferiores (Look Profesional)
-                    ...createSection("PERFIL"),
-                    new Paragraph({ children: [new TextRun({ text: document.getElementById('perfil').value, size: 21 })], spacing: { after: 300 } }),
-
-                    ...createSection("EXPERIENCIA PROFESIONAL"),
-                    ...cv.exp.flatMap(e => [
-                        new Paragraph({
-                            children: [new TextRun({ text: `${e.emp.toUpperCase()} | ${e.car}`, bold: true, size: 21 })],
-                            spacing: { before: 200 }
-                        }),
-                        new Paragraph({
-                            children: [new TextRun({ text: e.fec, italic: true, size: 18, color: "444444" })]
-                        }),
-                        new Paragraph({ children: [new TextRun({ text: e.tar, size: 20 })], spacing: { after: 100 } })
-                    ]),
-
-                    ...createSection("EDUCACIÓN"),
-                    ...cv.edu.flatMap(e => [
-                        new Paragraph({
-                            children: [new TextRun({ text: `${e.tit} — ${e.uni}`, bold: true, size: 21 })]
-                        }),
-                        new Paragraph({ children: [new TextRun({ text: e.fec, size: 18 })], spacing: { after: 150 } })
-                    ]),
-
-                    ...createSection("HABILIDADES & IDIOMAS"),
-                    new Paragraph({
-                        children: [
-                            new TextRun({ text: "HERRAMIENTAS: ", bold: true, size: 20 }),
-                            new TextRun({ text: document.getElementById('habilidades').value.split(',').join(' • '), size: 20 })
-                        ],
-                        spacing: { after: 100 }
-                    }),
-                    ...cv.idio.map(i => new Paragraph({
-                        children: [new TextRun({ text: `• ${i.nom}: ${i.niv}`, size: 20 })]
-                    }))
-                ]
-            }]
-        });
-
-        Packer.toBlob(doc).then(blob => {
-            saveAs(blob, `CV_${document.getElementById('nombre').value.replace(" ", "_")}.docx`);
-            Swal.fire('¡Éxito!', 'Tu Word se ha generado correctamente', 'success');
-        });
-    }
-
-    function createSection(title) {
-        return [
-            new Paragraph({
-                children: [new TextRun({ text: title, bold: true, size: 24, font: "Arial", color: "007AFF" })],
-                border: { bottom: { color: "007AFF", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-                spacing: { before: 400, after: 100 }
-            })
+            ...createH("EDUCACIÓN"),
+            ...cv.edu.flatMap(e => [
+                new Paragraph({ children: [new TextRun({ text: `${e.tit} — ${e.uni} (${e.fec})`, bold: true, size: 21 })], spacing: { after: 150 } })
+            ])
         ];
+
+        // AGREGAR ANEXOS: CADA UNO EN UNA PÁGINA COMPLETA
+        for (const base64 of cv.anexos) {
+            children.push(new Paragraph({ children: [new PageBreak()] })); // Salto de página
+            const resp = await fetch(base64);
+            const blob = await resp.blob();
+            children.push(new Paragraph({
+                children: [
+                    new ImageRun({
+                        data: blob,
+                        transformation: { width: 600, height: 800 }, // Tamaño máximo en A4
+                    })
+                ],
+                alignment: AlignmentType.CENTER
+            }));
+        }
+
+        const doc = new Document({ sections: [{ children }] });
+        Packer.toBlob(doc).then(blob => {
+            saveAs(blob, "CV_Final_Profesional.docx");
+            Swal.fire('¡Éxito!', 'Archivo descargado', 'success');
+        });
+    }
+
+    function createH(t) {
+        return [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 24, color: "007AFF" })], border: { bottom: { color: "007AFF", style: BorderStyle.SINGLE, size: 6 } }, spacing: { before: 400, after: 150 } })];
     }
 
     function generarPDF() {
-        Swal.fire({ title: 'Generando PDF...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        const element = document.querySelector('.app-container');
-        const opt = { 
-            margin: 10, filename: 'Curriculum_Pro.pdf', 
-            html2canvas: { scale: 3 }, 
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-        };
-        html2pdf().from(element).set(opt).save().then(() => Swal.close());
+        const element = document.body;
+        html2pdf().from(element).set({ margin: 10, filename: 'CV_JesusRivero.pdf', html2canvas: { scale: 2 } }).save();
     }
 
-    // PWA Manifest Dinámico
-    const manifest = {
-        name: "CV Studio Pro", short_name: "CVStudio", start_url: ".", display: "standalone",
-        background_color: "#F2F2F7", theme_color: "#007AFF",
-        icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23007AFF'/><path d='M30 35h40M30 50h40M30 65h25' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>", sizes: "512x512", type: "image/svg+xml" }]
-    };
+    // Manifest Autoinyectado
+    const manifest = { name: "CV Maker Pro", short_name: "CVPro", start_url: ".", display: "standalone", background_color: "#F2F2F7", theme_color: "#007AFF", icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23007AFF'/><path d='M30 35h40M30 50h40M30 65h25' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>", sizes: "512x512", type: "image/svg+xml" }] };
     document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json;base64,' + btoa(JSON.stringify(manifest)));
 </script>
 
