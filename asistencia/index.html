@@ -139,6 +139,21 @@
                 }
             },
             methods: {
+                marcarAreaPresente() {
+        if(this.filtroArea === 'Todos') return;
+        
+        const confirmacion = confirm(`¿Marcar como PRESENTES a todos los trabajadores de ${this.filtroArea}?`);
+        
+        if(confirmacion) {
+            this.trabajadores.forEach(t => {
+                if(t.area === this.filtroArea) {
+                    t.presente = true;
+                }
+            });
+            this.save();
+            alert(`Personal de ${this.filtroArea} actualizado.`);
+        }
+    },
                 importar(e) {
                     const reader = new FileReader();
                     reader.onload = (f) => {
