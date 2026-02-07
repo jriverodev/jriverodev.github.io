@@ -18,6 +18,15 @@
     <div id="app" class="max-w-xl mx-auto min-h-screen pb-40">
         
         <section v-if="trabajadores.length > 0" class="p-6">
+            <div class="flex justify-between items-center mb-4 gap-2">
+                <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2">
+                    <button @click="cambiarDia(-1)" class="p-2 text-indigo-600">◀</button>
+                    <input type="date" v-model="fechaSeleccionada" class="bg-transparent py-2 rounded-xl text-sm font-bold text-indigo-600 border-none focus:ring-0">
+                    <button @click="cambiarDia(1)" class="p-2 text-indigo-600">▶</button>
+                </div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right flex-1">{{ fechaLegible }}</p>
+            </div>
+
             <div class="stats-card rounded-[2.5rem] p-6 text-white shadow-2xl shadow-indigo-200 mb-6">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -70,19 +79,19 @@
 
             <div class="grid gap-3">
                 <div v-for="t in filtrados" :key="t.cedula" 
-                     @click="t.presente = !t.presente"
-                     :class="t.presente ? 'bg-indigo-600 border-indigo-500 scale-[0.98]' : 'bg-white border-white'"
+                     @click="toggleAsistencia(t.cedula)"
+                     :class="estaPresente(t.cedula) ? 'bg-indigo-600 border-indigo-500 scale-[0.98]' : 'bg-white border-white'"
                      class="flex items-center p-5 rounded-[2rem] border-2 transition-all duration-200 cursor-pointer shadow-sm">
                     
                     <div class="flex-1">
-                        <p :class="t.presente ? 'text-white' : 'text-slate-800'" class="font-bold text-base tracking-tight mb-1" v-text="t.nombre"></p>
+                        <p :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-800'" class="font-bold text-base tracking-tight mb-1" v-text="t.nombre"></p>
                         <div class="flex gap-2">
-                            <span :class="t.presente ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.cargo"></span>
-                            <span :class="t.presente ? 'text-indigo-200' : 'text-slate-400'" class="text-[9px] font-mono leading-relaxed">C.I. {{t.cedula}}</span>
+                            <span :class="estaPresente(t.cedula) ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.cargo"></span>
+                            <span :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'" class="text-[9px] font-mono leading-relaxed">C.I. {{t.cedula}}</span>
                         </div>
                     </div>
                     
-                    <div v-if="t.presente" class="bg-white rounded-full p-1.5 ml-2 shadow-lg">
+                    <div v-if="estaPresente(t.cedula)" class="bg-white rounded-full p-1.5 ml-2 shadow-lg">
                         <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M5 13l4 4L19 7"></path></svg>
                     </div>
                 </div>
@@ -110,22 +119,61 @@
                 ⚙️
             </button>
         </nav>
+
+        <!-- Modal Configuración -->
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-black text-slate-800">Configuración</h3>
+                    <button @click="menuConfig = false" class="text-slate-400 text-2xl">✕</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">GitHub Personal Token</label>
+                        <input v-model="config.token" type="password" placeholder="ghp_..."
+                               class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Repositorio (usuario/repo)</label>
+                        <input v-model="config.repo" type="text" placeholder="usuario/asistencia-logs"
+                               class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
+                    </div>
+
+                    <div class="pt-4 space-y-3">
+                        <button @click="guardarConfig" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all">
+                            Guardar Cambios
+                        </button>
+                        <button @click="resetearDatos" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold active:scale-95 transition-all text-sm">
+                            Limpiar Base de Datos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const { createApp } = Vue;
         createApp({
             data() {
+                const now = new Date();
+                const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 return {
-                    trabajadores: JSON.parse(localStorage.getItem('nexus_final_db') || '[]'),
+                    trabajadores: JSON.parse(localStorage.getItem('nexus_workers') || localStorage.getItem('nexus_final_db') || '[]'),
+                    asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
+                    fechaSeleccionada: hoy,
                     config: JSON.parse(localStorage.getItem('nexus_final_cfg') || '{"token":"","repo":""}'),
                     searchQuery: '',
                     filtroArea: 'Todos',
-                    menuConfig: false,
-                    fechaActual: new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+                    menuConfig: false
                 }
             },
             computed: {
+                fechaLegible() {
+                    const d = new Date(this.fechaSeleccionada + 'T12:00:00');
+                    return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                },
                 areas() {
                     return [...new Set(this.trabajadores.map(t => t.area))];
                 },
@@ -136,7 +184,10 @@
                         return cumpleBusqueda && cumpleArea;
                     });
                 },
-                conteoPresentes() { return this.trabajadores.filter(t => t.presente).length; },
+                conteoPresentes() {
+                    const hoyAsis = this.asistencias[this.fechaSeleccionada] || {};
+                    return this.trabajadores.filter(t => hoyAsis[t.cedula]).length;
+                },
                 conteoAusentes() { return this.trabajadores.length - this.conteoPresentes; },
                 porcentajeAsistencia() { 
                     if(this.trabajadores.length === 0) return 0;
@@ -144,21 +195,39 @@
                 }
             },
             methods: {
+                cambiarDia(delta) {
+                    const d = new Date(this.fechaSeleccionada + 'T12:00:00');
+                    d.setDate(d.getDate() + delta);
+                    this.fechaSeleccionada = d.toISOString().slice(0, 10);
+                },
+                estaPresente(cedula) {
+                    return !!(this.asistencias[this.fechaSeleccionada] && this.asistencias[this.fechaSeleccionada][cedula]);
+                },
+                toggleAsistencia(cedula) {
+                    if (!this.asistencias[this.fechaSeleccionada]) {
+                        this.asistencias[this.fechaSeleccionada] = {};
+                    }
+                    this.asistencias[this.fechaSeleccionada][cedula] = !this.asistencias[this.fechaSeleccionada][cedula];
+                    this.save();
+                },
                 marcarAreaPresente() {
-        if(this.filtroArea === 'Todos') return;
-        
-        const confirmacion = confirm(`¿Marcar como PRESENTES a todos los trabajadores de ${this.filtroArea}?`);
-        
-        if(confirmacion) {
-            this.trabajadores.forEach(t => {
-                if(t.area === this.filtroArea) {
-                    t.presente = true;
-                }
-            });
-            this.save();
-            alert(`Personal de ${this.filtroArea} actualizado.`);
-        }
-    },
+                    if(this.filtroArea === 'Todos') return;
+
+                    const confirmacion = confirm(`¿Marcar como PRESENTES a todos los trabajadores de ${this.filtroArea} para el día ${this.fechaSeleccionada}?`);
+
+                    if(confirmacion) {
+                        if (!this.asistencias[this.fechaSeleccionada]) {
+                            this.asistencias[this.fechaSeleccionada] = {};
+                        }
+                        this.trabajadores.forEach(t => {
+                            if(t.area === this.filtroArea) {
+                                this.asistencias[this.fechaSeleccionada][t.cedula] = true;
+                            }
+                        });
+                        this.save();
+                        alert(`Personal de ${this.filtroArea} actualizado.`);
+                    }
+                },
                 importar(e) {
                     const reader = new FileReader();
                     reader.onload = (f) => {
@@ -168,8 +237,7 @@
                             nombre: r.Nombre || r.nombre,
                             cedula: r.Cedula || r.cedula,
                             cargo: r.Cargo || r.cargo,
-                            area: r.Area || r.area,
-                            presente: false
+                            area: r.Area || r.area
                         }));
                         this.save();
                     };
@@ -177,30 +245,55 @@
                 },
                 async sincronizarGitHub() {
                     if(!this.config.token || !this.config.repo) return alert("Configura GitHub primero");
-                    const url = `https://api.github.com/repos/${this.config.repo}/contents/logs/asistencia_${new Date().toISOString().slice(0,10)}.json`;
+                    const url = `https://api.github.com/repos/${this.config.repo}/contents/logs/asistencia_${this.fechaSeleccionada}.json`;
                     let sha = "";
                     try {
                         const r = await fetch(url, { headers: { "Authorization": `token ${this.config.token}` } });
                         if(r.ok) { const d = await r.json(); sha = d.sha; }
                     } catch(e) {}
+
+                    const dataToSync = this.trabajadores.map(t => ({
+                        ...t,
+                        presente: this.estaPresente(t.cedula)
+                    }));
+
                     const res = await fetch(url, {
                         method: 'PUT',
                         headers: { "Authorization": `token ${this.config.token}`, "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            message: `Sync ${new Date().toLocaleTimeString()}`,
-                            content: btoa(unescape(encodeURIComponent(JSON.stringify(this.trabajadores, null, 2)))),
+                            message: `Sync ${this.fechaSeleccionada} ${new Date().toLocaleTimeString()}`,
+                            content: btoa(unescape(encodeURIComponent(JSON.stringify(dataToSync, null, 2)))),
                             sha: sha
                         })
                     });
                     if(res.ok) alert("✅ Sincronizado");
                 },
                 exportarExcel() {
-                    const ws = XLSX.utils.json_to_sheet(this.trabajadores);
+                    const dataExport = this.trabajadores.map(t => ({
+                        ...t,
+                        asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
+                        fecha: this.fechaSeleccionada
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(dataExport);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
-                    XLSX.writeFile(wb, `Reporte_Nexus_${new Date().toISOString().slice(0,10)}.xlsx`);
+                    XLSX.writeFile(wb, `Reporte_Nexus_${this.fechaSeleccionada}.xlsx`);
                 },
-                save() { localStorage.setItem('nexus_final_db', JSON.stringify(this.trabajadores)); },
+                save() {
+                    localStorage.setItem('nexus_workers', JSON.stringify(this.trabajadores));
+                    localStorage.setItem('nexus_attendance', JSON.stringify(this.asistencias));
+                },
+                resetearDatos() {
+                    if(confirm("¿Estás seguro de eliminar TODOS los trabajadores y el historial de asistencia? Esta acción no se puede deshacer.")) {
+                        this.trabajadores = [];
+                        this.asistencias = {};
+                        localStorage.removeItem('nexus_workers');
+                        localStorage.removeItem('nexus_attendance');
+                        localStorage.removeItem('nexus_final_db');
+                        alert("Datos eliminados correctamente.");
+                        location.reload();
+                    }
+                },
                 guardarConfig() { 
                     localStorage.setItem('nexus_final_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
