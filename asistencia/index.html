@@ -53,6 +53,11 @@
                         class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
                     {{ area }}
                 </button>
+                <button v-if="filtroArea !== 'Todos'" 
+            @click="marcarAreaPresente" 
+            class="px-5 py-2 rounded-full text-xs font-bold bg-emerald-500 text-white whitespace-nowrap shadow-lg shadow-emerald-100 animate-pulse">
+        ✅ Marcar todo {{ filtroArea }}
+    </button>
             </div>
         </section>
 
