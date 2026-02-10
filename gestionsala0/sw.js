@@ -1,0 +1,3 @@
+// Copied content from gestionsalaop/sw.js
+
+// Your original content here...
