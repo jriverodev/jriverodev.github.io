@@ -3,58 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro Sala de Operaciones - RJ</title>
-
-    <meta name="theme-color" content="#1e3a8a">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="manifest.json">
-    <!-- Icon for iOS / fallback -->
-    <link rel="apple-touch-icon" href="icon.png">
+    <title>Registro Sala de Operaciones - B</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Select2 (searchable selects) -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        /* Pequeños ajustes para Select2 dentro de Tailwind */
-        .select2-container--default .select2-selection--single {
-            height: 44px;
-            border-radius: 0.75rem;
-            padding: 6px 10px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 30px;
-        }
-        .select2-container { width: 100% !important; }
-        /* ocultar por defecto el botón de instalar hasta recibir beforeinstallprompt */
-        #btnInstall { display: none; }
-
-        /* Resalte temporal cuando se muestra "Ver" */
-        @keyframes highlight {
-            0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.25); transform: translateY(-2px); }
-            40% { box-shadow: 0 6px 18px rgba(249,115,22,0.18); transform: translateY(0); }
-            100% { box-shadow: none; transform: none; }
-        }
-        .highlight {
-            animation: highlight 900ms ease;
-            border-radius: 12px;
+        .disabled-overlay {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+            filter: grayscale(0.5);
         }
     </style>
-
-    <!-- SheetJS for Excel export -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <!-- jQuery y Select2 (para selects dinámicos con buscador) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
 
@@ -62,532 +24,96 @@
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-200">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
         </svg>
-        <h1 class="font-bold tracking-tight uppercase text-xs">Registro Sala de Operaciones</h1>
+        <h1 class="font-bold tracking-tight uppercase text-xs">Registro Sala de Operaciones - Acceso Restringido</h1>
         <div class="w-8"></div>
     </nav>
 
     <main class="max-w-3xl mx-auto p-4 space-y-5">
 
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-xs uppercase italic">
-                <i class="bi bi-gear-wide-connected text-blue-600"></i> Configuración General
-            </h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Centro / Taller Seleccionado</label>
-                    <select id="taller_sel" onchange="renderLista()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-300">
-                        <option>Central Transporte Norte</option>
-                        <option>Central Transporte Sur</option>
-                        <option>Base Operativa Este</option>
-                        <option>Base Operativa Oeste</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-blue-600">Fecha del Reporte</label>
-                    <input type="date" id="fecha_rep" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+            <div class="flex items-center">
+                <i class="bi bi-exclamation-octagon-fill text-red-500 text-xl mr-3"></i>
+                <p class="text-red-700 font-bold text-sm uppercase">Licencia de uso suspendida por el desarrollador.</p>
+            </div>
+        </div>
+
+        <div class="disabled-overlay space-y-5">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                    <i class="bi bi-gear-wide-connected"></i> Configuración General
+                </h2>
+                <div class="h-20 bg-slate-50 rounded-xl"></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-orange-600 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                    <i class="bi bi-plus-square-fill"></i> Registrar Actividad
+                </h2>
+                <div class="space-y-3">
+                    <div class="h-10 bg-slate-50 rounded-xl"></div>
+                    <div class="h-10 bg-slate-50 rounded-xl w-1/2"></div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <h2 class="font-bold text-orange-600 mb-4 flex items-center gap-2 text-xs uppercase italic">
-                <i class="bi bi-plus-square-fill"></i> Registrar Actividad
-            </h2>
-            <div class="space-y-3">
-
-                <textarea id="descripcion" placeholder="Descripción de la actividad (ej: MONTACARGA PARA TRABAJOS...)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-200"></textarea>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Fecha</label>
-                        <input type="date" id="fecha_act" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Guardia</label>
-                        <select id="guardia" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
-                            <option value="DIURNA">DIURNA</option>
-                            <option value="NOCTURNA">NOCTURNA</option>
-                            <option value="MIXTA">MIXTA</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Proceso</label>
-                    <select id="proceso" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
-                        <option value="MOVILIZACION DE EQUIPOS Y MATERIALES (MEM)">MOVILIZACION DE EQUIPOS Y MATERIALES (MEM)</option>
-                        <option value="TRANSPORTE DE LIQUIDOS Y ACHIQUES (TLA)">TRANSPORTE DE LIQUIDOS Y ACHIQUES (TLA)</option>
-                        <option value="TRANSPORTE DE PERSONAL (TP)">TRANSPORTE DE PERSONAL (TP)</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Número Equipo/s</label>
-                        <input type="text" id="unidad" placeholder="N° de unidad o Placa" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Tipo de Equipo/s</label>
-                        <select id="tipo_equipo" class="buscador"></select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Estatus</label>
-                        <select id="estatus" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
-                            <option value="EJECUTADA">EJECUTADA</option>
-                            <option value="PENDIENTE">PENDIENTE</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Duración (Horas)</label>
-                        <select id="duracion" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
-                            <option value="0">0</option>
-                            <option value="8">8</option>
-                            <option value="12">12</option>
-                            <option value="16">16</option>
-                            <option value="24">24</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Gerencia</label>
-                        <select id="gerencia" class="buscador"></select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Cantidad</label>
-                        <input type="number" id="cantidad" placeholder="Cantidad" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Fecha Desde</label>
-                        <input type="date" id="fecha_desde" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Fecha Hasta</label>
-                        <input type="date" id="fecha_hasta" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Esfuerzo</label>
-                        <select id="esfuerzo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
-                            <option value="PROPIO">PROPIO</option>
-                            <option value="CONTRATADO">CONTRATADO</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Empresa</label>
-                        <select id="empresa" class="buscador"></select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Origen</label>
-                        <input type="text" id="origen" placeholder="Origen" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Destino</label>
-                        <input type="text" id="destino" placeholder="Destino" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Usuario Solicitante</label>
-                        <input type="text" id="usuario" placeholder="Nombre del usuario" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Cédula</label>
-                        <input type="text" id="cedula" placeholder="Cédula" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Teléfono</label>
-                        <input type="tel" id="telefono" placeholder="Teléfono" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Centro de Costo (CECO)</label>
-                        <input type="text" id="ceco" placeholder="CECO" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
-                    </div>
-                </div>
-
-                <textarea id="observacion" placeholder="Observación" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"></textarea>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="guardarRegistro()" class="bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition shadow-lg uppercase text-xs py-3">Guardar Registro</button>
-                    <button onclick="limpiarDB()" class="text-red-500 border border-red-200 rounded-xl font-bold uppercase text-xs py-3">Limpiar Base</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="font-black text-slate-400 text-[10px] uppercase tracking-widest italic">Registros del Centro</h2>
-                <span id="cont_total" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-tighter uppercase">0 REG.</span>
-            </div>
-            <div id="lista_unidades" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+        <div class="grid grid-cols-1 gap-3">
+            <button onclick="mostrarError()" class="bg-slate-800 text-white font-bold rounded-xl py-4 transition shadow-lg uppercase text-xs">
+                Guardar Registro
+            </button>
+            <button onclick="mostrarError()" class="text-slate-400 border border-slate-200 rounded-xl font-bold uppercase text-xs py-3">
+                Limpiar Base
+            </button>
         </div>
 
         <footer class="text-center py-6 border-t border-slate-200">
-            <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">Desarrollado por RIVEROJDU</p>
+            <p class="text-[10px] font-black text-red-500 tracking-[0.2em] uppercase">
+                SOPORTE TÉCNICO REVOCADO POR RIVEROJDU
+            </p>
         </footer>
 
-        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-5 gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-            <button onclick="exportarExcel(false)" class="flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Filtro)</button>
-            <button onclick="exportarExcel(true)" class="flex items-center justify-center gap-2 bg-sky-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Exportar Excel (Todo)</button>
-            <button onclick="enviarWhatsApp(false)" class="flex items-center justify-center gap-2 bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Enviar WhatsApp (Filtro)</button>
-            <button onclick="enviarWhatsApp(true)" class="flex items-center justify-center gap-2 bg-sky-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Enviar WhatsApp (Todo)</button>
-            <button id="btnInstall" class="flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg">Instalar App</button>
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 gap-3 z-50">
+            <button onclick="mostrarError()" class="bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg uppercase">Exportar Excel</button>
+            <button onclick="mostrarError()" class="bg-sky-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg uppercase">Enviar WhatsApp</button>
         </div>
 
     </main>
 
     <script>
-        // PWA: beforeinstallprompt
-        let deferredPrompt = null;
-        const btnInstall = document.getElementById('btnInstall');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            btnInstall.style.display = 'flex';
-        });
-
-        btnInstall.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const choice = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            btnInstall.style.display = 'none';
-        });
-
-        window.addEventListener('appinstalled', () => {
-            btnInstall.style.display = 'none';
-        });
-
-        // Service Worker registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                console.log('Service worker registrado:', reg.scope);
-            }).catch(err => {
-                console.warn('No se pudo registrar el service worker:', err);
-            });
-        }
-
-        const THEME_ORANGE = '#fb923c';
-        const THEME_ORANGE_DARK = '#f97316';
-        const THEME_BLUE = '#0369a1';
-
-        function getToastPosition() {
-            try {
-                const isPortrait = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
-                if (isPortrait || window.innerWidth <= 480) return 'bottom';
-                return 'top-end';
-            } catch (e) {
-                return window.innerWidth <= 768 ? 'bottom' : 'top-end';
-            }
-        }
-
-        function ToastInstance() {
-            return Swal.mixin({
-                toast: true,
-                position: getToastPosition(),
-                showConfirmButton: false,
-                timer: 1800,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
-        }
-
-        function confirmDialog(options = {}) {
-            return Swal.fire(Object.assign({
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: THEME_ORANGE_DARK,
-                cancelButtonColor: THEME_BLUE,
-                reverseButtons: false
-            }, options));
-        }
-
-        const DB_KEY = 'db_sala_operaciones_v1';
-        let baseDatos = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-
-        const gerenciasLista = ["COORDINACION OPERACIONAL", "DESARROLLO SOCIAL", "DIV COSTA OCCIDENTAL", "DIV LAGO", "DIV SUR LAGO TRUJILLO", "DESI", "GAS ASOCIADO", "GOIP", "PERFORACION OMT TIERRA PESADO", "PERFORACION Y SUBSUELO", "PETROZAMORA", "PLANTA DE GAS", "SALUD OCC", "SERVICIOS ELECTRICOS", "SERVICIOS INDUSTRIALES", "SERVICIOS LOGISTICOS", "SIHO", "TALLERES", "TIA JUANA LAGO", "TRANSPORTE LACUSTRE", "TRANSPORTE TERRESTRE"];
-        const empresasLista = ["AERONASA", "CANEVECA", "CONILKA", "DACATRON", "PDVSA", "RAM", "REFERMILLCA"];
-        const tiposEquiposLista = ["AMBULANCIAS", "AUTOBUS", "BATEA", "CAMION 750 BRAZO ARTICULADO", "CAMION CAVA", "CAMION CESTA", "CAMION VOLTEO", "CAMIONETA", "CHUTO CON BATEA", "CHUTO CON VAGON", "CISTERNA DE 36 MIL", "CONTENEDOR", "GRUA TELESCOPICA 100 TON", "GRUA TELESCOPICA 80 TON", "GRUA TELESCOPICA 75 TON", "MONTA CARGA 05 TON", "TOYOTA JEEP", "VACUUN DE 25 MIL AGUA POTABLE", "VACUUN DE ACHIQUE", "VAN"];
-
-        $(document).ready(function() {
-            $('#gerencia').select2({
-                placeholder: 'Seleccione o escriba gerencia...',
-                tags: true,
-                data: gerenciasLista.map(g => ({id: g, text: g}))
-            });
-
-            $('#empresa').select2({
-                placeholder: 'Seleccione o escriba empresa...',
-                tags: true,
-                data: empresasLista.map(e => ({id: e, text: e}))
-            });
-
-            $('#tipo_equipo').select2({
-                placeholder: 'Seleccione tipo de equipo...',
-                data: tiposEquiposLista.map(t => ({id: t, text: t}))
-            });
-
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha_rep').value = hoy;
-            document.getElementById('fecha_act').value = hoy;
-            document.getElementById('fecha_desde').value = hoy;
-            document.getElementById('fecha_hasta').value = hoy;
-
-            renderLista();
-        });
-
-        async function guardarRegistro(){
-            const descripcion = document.getElementById('descripcion').value.trim();
-            const fecha = document.getElementById('fecha_act').value;
-            const guardia = document.getElementById('guardia').value;
-            const proceso = document.getElementById('proceso').value;
-            const unidad = document.getElementById('unidad').value.trim();
-            const tipo_equipo = $('#tipo_equipo').val();
-            const estatus = document.getElementById('estatus').value;
-            const duracion = document.getElementById('duracion').value;
-            const gerencia = $('#gerencia').val();
-            const cantidad = document.getElementById('cantidad').value || 0;
-            const fecha_desde = document.getElementById('fecha_desde').value;
-            const fecha_hasta = document.getElementById('fecha_hasta').value;
-            const esfuerzo = document.getElementById('esfuerzo').value;
-            const empresa = $('#empresa').val();
-            const origen = document.getElementById('origen').value.trim();
-            const destino = document.getElementById('destino').value.trim();
-            const usuario = document.getElementById('usuario').value.trim();
-            const cedula = document.getElementById('cedula').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-            const ceco = document.getElementById('ceco').value.trim();
-            const observacion = document.getElementById('observacion').value.trim();
-
-            if(!descripcion || !fecha || !unidad) {
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'Campos incompletos',
-                    text: 'Por favor complete: Descripción, Fecha y N° unidad/placa.',
-                    confirmButtonColor: THEME_BLUE
-                });
-                return;
-            }
-
-            const registro = {
-                id: Date.now(),
-                centro: document.getElementById('taller_sel').value,
-                descripcion,
-                fecha,
-                guardia,
-                proceso,
-                unidad,
-                tipo_equipo,
-                estatus,
-                duracion,
-                gerencia,
-                cantidad: Number(cantidad),
-                fecha_desde,
-                fecha_hasta,
-                esfuerzo,
-                empresa,
-                origen,
-                destino,
-                usuario,
-                cedula,
-                telefono,
-                ceco,
-                observacion
-            };
-
-            baseDatos.push(registro);
-            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
-
-            // Limpiar campos específicos
-            document.getElementById('descripcion').value = '';
-            document.getElementById('unidad').value = '';
-            document.getElementById('cantidad').value = '';
-            document.getElementById('origen').value = '';
-            document.getElementById('destino').value = '';
-            document.getElementById('usuario').value = '';
-            document.getElementById('cedula').value = '';
-            document.getElementById('telefono').value = '';
-            document.getElementById('ceco').value = '';
-            document.getElementById('observacion').value = '';
-
-            renderLista();
-
-            const toastResult = await Swal.fire({
-                title: 'Registro guardado',
-                toast: true,
-                position: getToastPosition(),
-                showConfirmButton: true,
-                confirmButtonText: 'Ver',
-                timer: 5000,
-                timerProgressBar: true,
-                confirmButtonColor: THEME_ORANGE_DARK,
-                showCloseButton: true
-            });
-
-            if (toastResult.isConfirmed) {
-                const el = document.getElementById('reg-' + registro.id);
-                if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.classList.add('highlight');
-                    setTimeout(() => el.classList.remove('highlight'), 900);
-                }
-            } else {
-                ToastInstance().fire({ icon: 'success', title: 'Registro guardado' });
-            }
-        }
-
-        function construirFiltrados(all = false){
-            if(all) return baseDatos.slice();
-            const centro = document.getElementById('taller_sel').value;
-            return baseDatos.filter(r => r.centro === centro);
-        }
-
-        function renderLista(){
-            const cont = document.getElementById('lista_unidades');
-            const filtrados = construirFiltrados(false);
-            document.getElementById('cont_total').innerText = filtrados.length + ' REG.';
-            if(filtrados.length === 0){
-                cont.innerHTML = `<p class="text-slate-400 text-center text-[11px] py-10 italic">No hay registros en este centro.</p>`;
-                return;
-            }
-
-            cont.innerHTML = filtrados.slice().reverse().map(u => `
-                <div id="reg-${u.id}" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
-                    <button onclick="eliminar(${u.id})" class="absolute top-3 right-3 text-slate-400"><i class="bi bi-trash-fill"></i></button>
-                    <p class="font-bold text-xs text-blue-900 uppercase">${u.unidad} — ${u.tipo_equipo}</p>
-                    <p class="text-[11px] text-slate-600 mb-1">${u.descripcion}</p>
-                    <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 mb-2">
-                        <span><i class="bi bi-calendar-event"></i> ${u.fecha} (${u.guardia})</span>
-                        <span><i class="bi bi-briefcase"></i> ${u.proceso}</span>
-                        <span><i class="bi bi-check-circle"></i> ${u.estatus}</span>
-                        <span><i class="bi bi-clock"></i> ${u.duracion}h</span>
+        // Función principal que b todo el uso
+        function mostrarError() {
+            Swal.fire({
+                title: '<strong>ACCESO DENEGADO</strong>',
+                icon: 'error',
+                html: `
+                    <div class="text-left text-sm">
+                        <p class="mb-3">La aplicación ha sido <b>deshabilitada permanentemente</b> por el desarrollador original (RIVEROJDU).</p>
+                        <ul class="list-disc ml-5 space-y-1 text-slate-600">
+                            <li>Falta de cumplimiento de términos éticos.</li>
+                            <li>Uso indebido de la herramienta cedida.</li>
+                            <li>Licencia de cortesía revocada.</li>
+                        </ul>
+                        <p class="mt-4 font-bold text-blue-900">Contacte al programador para restablecer el servicio.</p>
                     </div>
-                    <div class="flex flex-wrap gap-2 text-[10px]">
-                        <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold">${u.esfuerzo}</span>
-                        <span class="px-2 py-1 rounded-full bg-sky-100 text-sky-700 font-bold">${u.gerencia}</span>
-                        <span class="px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-bold">${u.empresa}</span>
-                    </div>
-                </div>
-            `).join('');
+                `,
+                confirmButtonColor: '#1e3a8a',
+                confirmButtonText: 'Cerrar Aplicación',
+                backdrop: `rgba(15, 23, 42, 0.9)`
+            });
         }
 
-        async function eliminar(id){
-            const res = await confirmDialog({ title: 'Eliminar registro', text: '¿Eliminar este registro?' });
-            if(!res.isConfirmed) return;
-            baseDatos = baseDatos.filter(r => r.id !== id);
-            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
-            ToastInstance().fire({ icon: 'success', title: 'Registro eliminado' });
-            renderLista();
-        }
+        // Ejecutar inmediatamente al cargar para "congelar" la experiencia
+        window.onload = function() {
+            console.warn("La aplicación no cuenta con una licencia válida.");
+            // Borramos cualquier rastro de datos locales por si acaso
+            localStorage.clear();
+        };
 
-        async function limpiarDB(){
-            const res = await confirmDialog({ title: 'Borrar todos los registros', text: '¿Borrar todos los registros?' });
-            if(res.isConfirmed){
-                baseDatos = [];
-                localStorage.removeItem(DB_KEY);
-                renderLista();
-                ToastInstance().fire({ icon: 'success', title: 'Base de datos borrada' });
-            }
-        }
-
-        function exportarExcel(all = false){
-            const data = construirFiltrados(all);
-            if(data.length === 0) {
-                Swal.fire({ icon: 'info', title: 'Sin datos', text: 'No hay datos para exportar.', confirmButtonColor: THEME_BLUE });
-                return;
-            }
-
-            const headers = [
-                'DESCRIPCION', 'FECHA', 'GUARDIA', 'PROCESO', 'NUMERO EQUIPO/S', 'TIPO DE EQUIPOS',
-                'ESTATUS', 'DURACION DE HORAS', 'GERENCIA', 'CANTIDAD', 'FECHA DESDE', 'FECHA HASTA',
-                'ESFUERZO', 'EMPRESA', 'ORIGEN', 'DESTINO', 'USUARIO', 'CEDULA', 'TELEFONO',
-                'CENTRO DE COSTO (CECO)', 'OBSERVACION'
-            ];
-
-            const rows = data.map(r => ({
-                'DESCRIPCION': r.descripcion,
-                'FECHA': r.fecha,
-                'GUARDIA': r.guardia,
-                'PROCESO': r.proceso,
-                'NUMERO EQUIPO/S': r.unidad,
-                'TIPO DE EQUIPOS': r.tipo_equipo,
-                'ESTATUS': r.estatus,
-                'DURACION DE HORAS': r.duracion,
-                'GERENCIA': r.gerencia,
-                'CANTIDAD': r.cantidad,
-                'FECHA DESDE': r.fecha_desde,
-                'FECHA HASTA': r.fecha_hasta,
-                'ESFUERZO': r.esfuerzo,
-                'EMPRESA': r.empresa,
-                'ORIGEN': r.origen,
-                'DESTINO': r.destino,
-                'USUARIO': r.usuario,
-                'CEDULA': r.cedula,
-                'TELEFONO': r.telefono,
-                'CENTRO DE COSTO (CECO)': r.ceco,
-                'OBSERVACION': r.observacion
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(rows, {header: headers});
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Reportes');
-
-            const hoy = new Date().toISOString().slice(0,10).replace(/-/g,'');
-            XLSX.writeFile(wb, `reporte-sala-ops-${hoy}.xlsx`);
-            ToastInstance().fire({ icon: 'success', title: 'Excel descargado' });
-        }
-
-        function construirMensajeWhatsApp(r) {
-            return `*REPORTE SALA DE OPERACIONES*\n` +
-                   `--------------------------\n` +
-                   `*Actividad:* ${r.descripcion}\n` +
-                   `*Fecha:* ${r.fecha}\n` +
-                   `*Guardia:* ${r.guardia}\n` +
-                   `*Proceso:* ${r.proceso}\n` +
-                   `*Equipo/s:* ${r.unidad} (${r.tipo_equipo})\n` +
-                   `*Estatus:* ${r.estatus}\n` +
-                   `*Duración:* ${r.duracion}h\n` +
-                   `*Gerencia:* ${r.gerencia}\n` +
-                   `*Esfuerzo:* ${r.esfuerzo} (${r.empresa})\n` +
-                   `*Origen/Destino:* ${r.origen || '-'} -> ${r.destino || '-'}\n` +
-                   `*Usuario:* ${r.usuario} (${r.cedula})\n` +
-                   `*Cant:* ${r.cantidad} | *CECO:* ${r.ceco || '-'}\n` +
-                   `*Obs:* ${r.observacion || '-'}`;
-        }
-
-        function enviarWhatsApp(all = false){
-            const data = construirFiltrados(all);
-            if(data.length === 0) {
-                Swal.fire({ icon: 'info', title: 'Sin datos', text: 'No hay datos para enviar.', confirmButtonColor: THEME_BLUE });
-                return;
-            }
-            const mensajes = data.map(r => construirMensajeWhatsApp(r));
-            const mensajeFinal = mensajes.join('\n\n====================\n\n');
-            window.open(`https://wa.me/?text=${encodeURIComponent(mensajeFinal)}`, '_blank');
-            ToastInstance().fire({ icon: 'success', title: 'WhatsApp abierto' });
-        }
+        // B funciones que el usuario podría llamar desde consola
+        window.guardarRegistro = mostrarError;
+        window.exportarExcel = mostrarError;
+        window.enviarWhatsApp = mostrarError;
+        window.limpiarDB = mostrarError;
     </script>
+
 </body>
 </html>
