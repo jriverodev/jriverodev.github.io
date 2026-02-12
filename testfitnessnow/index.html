@@ -8,75 +8,85 @@
     <meta name="theme-color" content="#f39200">
     <style>
         :root { --orange: #f39200; --dark: #000000; --gray: #1a1a1a; --text: #ffffff; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--dark); color: var(--text); margin: 0; padding: 10px; }
-        .brand { text-align: center; padding: 20px; }
-        .brand img { max-width: 150px; height: auto; border-radius: 10px; }
-        .card { background: var(--gray); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; }
-        h3 { color: var(--orange); margin-top: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); margin: 0; padding: 10px; padding-bottom: 50px; }
+        .brand { text-align: center; padding: 15px; }
+        .brand img { max-width: 140px; height: auto; border-radius: 12px; border: 2px solid var(--orange); }
+        .card { background: var(--gray); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        h3 { color: var(--orange); margin-top: 0; font-size: 0.9rem; text-transform: uppercase; border-left: 4px solid var(--orange); padding-left: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full { grid-column: span 2; }
-        label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
-        input { width: 100%; padding: 12px; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-size: 1rem; }
-        button { background: var(--orange); color: #000; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-        .timer { font-size: 2.5rem; text-align: center; color: var(--orange); font-family: monospace; margin: 15px 0; }
-        #ruffier-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
+        label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 3px; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-size: 0.9rem; }
+        input:focus { border-color: var(--orange); outline: none; }
+        button { background: var(--orange); color: #000; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        .timer { font-size: 2.8rem; text-align: center; color: var(--orange); font-family: monospace; margin: 10px 0; font-weight: bold; }
+        #ruffier-box { margin-top: 10px; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
+        hr { border: 0; border-top: 1px solid #333; margin: 15px 0; }
     </style>
 </head>
 <body>
 
 <div class="brand">
-    <img src="logo.png" alt="FitnessNow Logo">
+    <img src="logo.png" alt="FitnessNow">
 </div>
 
 <div class="card">
-    <h3>👤 Perfil Atleta</h3>
+    <h3>👤 Atleta</h3>
     <div class="grid">
         <div class="full"><label>Nombre</label><input type="text" id="nombre"></div>
         <div><label>Edad</label><input type="number" id="edad"></div>
-        <div><label>Estatura</label><input type="number" id="estatura" placeholder="cm"></div>
+        <div><label>Estatura (cm)</label><input type="number" id="estatura"></div>
     </div>
 </div>
 
 <div class="card">
-    <h3>📏 Medidas (CM)</h3>
+    <h3>📏 Medidas y Peso</h3>
     <div class="grid">
-        <div><label>Peso (kg)</label><input type="number" id="peso"></div>
+        <div><label>Peso Real (kg)</label><input type="number" id="peso"></div>
+        <div><label>P.I. (Peso Ideal)</label><input type="number" id="peso_ideal"></div>
+        <div class="full"><hr></div>
         <div><label>Cuello</label><input type="number" id="cuello"></div>
         <div><label>Pecho</label><input type="number" id="pecho"></div>
         <div><label>Cintura</label><input type="number" id="cintura"></div>
         <div><label>Cadera</label><input type="number" id="cadera"></div>
-        <div><label>Pierna Der/Izq</label><input type="number" id="pierna"></div>
-        <div><label>Brazo Der</label><input type="number" id="brazo_d"></div>
-        <div><label>Brazo Izq</label><input type="number" id="brazo_i"></div>
+        <div><label>Pierna Der.</label><input type="number" id="pierna_d"></div>
+        <div><label>Pierna Izq.</label><input type="number" id="pierna_i"></div>
+        <div><label>Brazo Der.</label><input type="number" id="brazo_d"></div>
+        <div><label>Brazo Izq.</label><input type="number" id="brazo_i"></div>
     </div>
 </div>
 
 <div class="card">
-    <h3>❤️ Test de Ruffier</h3>
+    <h3>❤️ Índice de Ruffier</h3>
     <div class="grid">
         <div><label>P1 (Reposo)</label><input type="number" id="p1"></div>
         <div><label>P2 (Esfuerzo)</label><input type="number" id="p2"></div>
         <div class="full"><label>P3 (Recuperación)</label><input type="number" id="p3"></div>
     </div>
-    <button onclick="calcRuffier()" style="margin-top:10px">Calcular Índice</button>
+    <button onclick="calcRuffier()" style="margin-top:10px">Calcular IR</button>
     <div id="ruffier-box"></div>
 </div>
 
 <div class="card">
     <h3>⚡ Workout Test</h3>
     <div class="timer" id="clock">00:00</div>
-    <div class="grid">
+    <div class="grid" style="margin-bottom:15px">
         <button onclick="runTimer(30)" style="background:#333; color:white">30 seg</button>
         <button onclick="runTimer(60)" style="background:#333; color:white">1 min</button>
+    </div>
+    <div class="grid">
+        <div><label>M Run</label><input type="text" id="mrun"></div>
+        <div><label>30M Speed</label><input type="text" id="speed"></div>
         <div><label>30" ABS</label><input type="number" id="abs"></div>
         <div><label>1' Burpees</label><input type="number" id="burpees"></div>
-        <div><label>30" Push-ups</label><input type="number" id="pushups"></div>
-        <div><label>1' Jump Jacks</label><input type="number" id="jacks"></div>
     </div>
-    <button onclick="saveData()" style="margin-top:20px; background:#fff">Guardar Registro</button>
+    <br>
+    <button onclick="saveData()" style="background:#fff; color:#000">Guardar Test Mensual</button>
 </div>
 
 <script>
+    // Lógica Ruffier
     function calcRuffier() {
         const p1 = parseFloat(document.getElementById('p1').value);
         const p2 = parseFloat(document.getElementById('p2').value);
@@ -85,12 +95,15 @@
             const ir = ((p1 + p2 + p3) * 4 - 200) / 10;
             const box = document.getElementById('ruffier-box');
             box.style.display = 'block';
-            box.innerHTML = `Índice Ruffier: ${ir.toFixed(1)}`;
-            box.style.background = ir <= 5 ? '#2ecc71' : (ir <= 10 ? '#f1c40f' : '#e74c3c');
-            box.style.color = ir <= 5 || ir > 10 ? 'white' : 'black';
+            box.innerHTML = `IR: ${ir.toFixed(1)}`;
+            if(ir <= 0) box.style.background = "#2ecc71";
+            else if(ir <= 5) box.style.background = "#8bc34a";
+            else if(ir <= 10) box.style.background = "#f1c40f";
+            else box.style.background = "#e74c3c";
         }
     }
 
+    // Lógica Timer
     let countdown;
     function runTimer(sec) {
         clearInterval(countdown);
@@ -102,17 +115,32 @@
             display.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             if (t-- <= 0) {
                 clearInterval(countdown);
-                navigator.vibrate([200, 100, 200]);
-                alert("¡Tiempo completado!");
+                if(navigator.vibrate) navigator.vibrate(500);
+                alert("¡Tiempo!");
             }
         }, 1000);
     }
 
+    // Guardado Local (Persistence)
     function saveData() {
-        alert("¡Datos guardados en tu dispositivo!");
+        const data = {
+            fecha: new Date().toLocaleDateString(),
+            nombre: document.getElementById('nombre').value,
+            peso: document.getElementById('peso').value,
+            cintura: document.getElementById('cintura').value,
+            pierna_d: document.getElementById('pierna_d').value,
+            pierna_i: document.getElementById('pierna_i').value
+        };
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        history.push(data);
+        localStorage.setItem('fn_history', JSON.stringify(history));
+        alert("Registro guardado en este dispositivo.");
     }
 
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
 </script>
 </body>
 </html>
