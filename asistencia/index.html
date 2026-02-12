@@ -85,9 +85,20 @@
                     
                     <div class="flex-1">
                         <p :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-800'" class="font-bold text-base tracking-tight mb-1" v-text="t.nombre"></p>
-                        <div class="flex gap-2">
+                        <div class="flex flex-wrap gap-2">
                             <span :class="estaPresente(t.cedula) ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.cargo"></span>
+                            <span :class="estaPresente(t.cedula) ? 'bg-indigo-800/30 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.area"></span>
                             <span :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'" class="text-[9px] font-mono leading-relaxed">C.I. {{t.cedula}}</span>
+                        </div>
+                        <div v-if="t.ubicacion || t.nomina" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 opacity-80">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">📍</span>
+                                <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.ubicacion"></span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">💳</span>
+                                <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.nomina"></span>
+                            </div>
                         </div>
                     </div>
                     
@@ -179,7 +190,11 @@
                 },
                 filtrados() {
                     return this.trabajadores.filter(t => {
-                        const cumpleBusqueda = t.nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) || t.cedula.toString().includes(this.searchQuery);
+                        const s = this.searchQuery.toLowerCase();
+                        const cumpleBusqueda = t.nombre.toLowerCase().includes(s) ||
+                                             t.cedula.toString().includes(s) ||
+                                             (t.ubicacion || '').toLowerCase().includes(s) ||
+                                             (t.nomina || '').toLowerCase().includes(s);
                         const cumpleArea = this.filtroArea === 'Todos' || t.area === this.filtroArea;
                         return cumpleBusqueda && cumpleArea;
                     });
@@ -237,7 +252,9 @@
                             nombre: r.Nombre || r.nombre,
                             cedula: r.Cedula || r.cedula,
                             cargo: r.Cargo || r.cargo,
-                            area: r.Area || r.area
+                            area: r.Area || r.area,
+                            ubicacion: r['Ubicación laboral'] || r.ubicacion || r.Ubicacion || '',
+                            nomina: r['Tipo de nómina'] || r.nomina || r.Nomina || ''
                         }));
                         this.save();
                     };
