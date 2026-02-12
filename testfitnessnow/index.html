@@ -208,6 +208,20 @@
             return;
         }
 
+        // Validación de formato de tiempo
+        const mrunRegex = /^[0-9]{1,2}:[0-9]{2}$/;
+        if(data.mrun && !mrunRegex.test(data.mrun)) {
+            Swal.fire({
+                title: 'Formato Incorrecto',
+                text: 'M Run debe tener el formato MM:SS (ej: 10:30)',
+                icon: 'warning',
+                background: '#1a1a1a',
+                color: '#fff',
+                confirmButtonColor: '#f39200'
+            });
+            return;
+        }
+
         let history = JSON.parse(localStorage.getItem('fn_history') || '[]');
 
         if (currentEditingId) {
@@ -403,6 +417,15 @@ Brazo D: ${reg.brazo_d} | Brazo I: ${reg.brazo_i}
 
     // Cargar historial al iniciar
     renderHistory();
+
+    // Validaciones de Entrada
+    document.getElementById('mrun').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9:]/g, '');
+    });
+
+    document.getElementById('speed').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9.]/g, '');
+    });
 
     // Registrar Service Worker para PWA
     if ('serviceWorker' in navigator) {
