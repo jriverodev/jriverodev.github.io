@@ -170,9 +170,30 @@
             data() {
                 const now = new Date();
                 const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+                let workers = JSON.parse(localStorage.getItem('nexus_workers'));
+                let asistencias = JSON.parse(localStorage.getItem('nexus_attendance') || '{}');
+
+                if (!workers) {
+                    const legacy = JSON.parse(localStorage.getItem('nexus_final_db') || '[]');
+                    workers = legacy.map(t => ({
+                        nombre: t.nombre,
+                        cedula: t.cedula,
+                        cargo: t.cargo,
+                        area: t.area,
+                        ubicacion: t.ubicacion || '',
+                        nomina: t.nomina || ''
+                    }));
+
+                    if (Object.keys(asistencias).length === 0 && legacy.some(t => t.presente)) {
+                        asistencias[hoy] = {};
+                        legacy.forEach(t => { if(t.presente) asistencias[hoy][t.cedula] = true; });
+                    }
+                }
+
                 return {
-                    trabajadores: JSON.parse(localStorage.getItem('nexus_workers') || localStorage.getItem('nexus_final_db') || '[]'),
-                    asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
+                    trabajadores: workers || [],
+                    asistencias: asistencias,
                     fechaSeleccionada: hoy,
                     config: JSON.parse(localStorage.getItem('nexus_final_cfg') || '{"token":"","repo":""}'),
                     searchQuery: '',
