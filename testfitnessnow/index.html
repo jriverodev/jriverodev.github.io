@@ -101,6 +101,8 @@
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 <script>
+    let currentEditingId = null;
+
     // Lógica Ruffier
     function getIR() {
         const p1 = parseFloat(document.getElementById('p1').value);
@@ -159,6 +161,7 @@
     }
 
     function clearForm() {
+        currentEditingId = null;
         const ids = ['nombre', 'edad', 'estatura', 'peso', 'peso_ideal', 'cuello', 'pecho', 'cintura', 'cadera', 'pierna_d', 'pierna_i', 'brazo_d', 'brazo_i', 'p1', 'p2', 'p3', 'mrun', 'speed', 'abs', 'burpees'];
         ids.forEach(id => document.getElementById(id).value = '');
         document.getElementById('ruffier-box').style.display = 'none';
@@ -170,8 +173,6 @@
     function saveData() {
         const ir = getIR();
         const data = {
-            id: Date.now(),
-            fecha: new Date().toLocaleDateString(),
             nombre: document.getElementById('nombre').value,
             edad: document.getElementById('edad').value,
             estatura: document.getElementById('estatura').value,
@@ -207,8 +208,22 @@
             return;
         }
 
-        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
-        history.push(data);
+        let history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+
+        if (currentEditingId) {
+            const index = history.findIndex(r => r.id === currentEditingId);
+            if (index !== -1) {
+                data.id = currentEditingId;
+                data.fecha = history[index].fecha;
+                history[index] = data;
+                currentEditingId = null;
+            }
+        } else {
+            data.id = Date.now();
+            data.fecha = new Date().toLocaleDateString();
+            history.push(data);
+        }
+
         localStorage.setItem('fn_history', JSON.stringify(history));
         Swal.fire({
             title: '¡Guardado!',
@@ -220,6 +235,7 @@
             color: '#fff'
         });
         renderHistory();
+        clearForm();
     }
 
     function renderHistory() {
@@ -242,12 +258,66 @@
                 <div style="margin-top:5px; color:#aaa">
                     IR: ${reg.ir || '-'} | M Run: ${reg.mrun || '-'} | Speed: ${reg.speed || '-'}
                 </div>
-                <div class="grid" style="margin-top:10px">
+                <div class="grid" style="margin-top:10px; grid-template-columns: 1fr 1fr 1fr;">
                     <button onclick="shareWhatsApp(${reg.id})" style="padding:5px; font-size:0.7rem; background:#25D366; color:white">WhatsApp</button>
+                    <button onclick="loadRecord(${reg.id})" style="padding:5px; font-size:0.7rem; background:#3498db; color:white">Modificar</button>
                     <button onclick="deleteRecord(${reg.id})" style="padding:5px; font-size:0.7rem; background:#e74c3c; color:white">Eliminar</button>
                 </div>
             </div>
         `).join('');
+    }
+
+    function loadRecord(id) {
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        const reg = history.find(r => r.id === id);
+        if(!reg) return;
+
+        currentEditingId = id;
+        document.getElementById('nombre').value = reg.nombre || '';
+        document.getElementById('edad').value = reg.edad || '';
+        document.getElementById('estatura').value = reg.estatura || '';
+        document.getElementById('peso').value = reg.peso || '';
+        document.getElementById('peso_ideal').value = reg.peso_ideal || '';
+        document.getElementById('cuello').value = reg.cuello || '';
+        document.getElementById('pecho').value = reg.pecho || '';
+        document.getElementById('cintura').value = reg.cintura || '';
+        document.getElementById('cadera').value = reg.cadera || '';
+        document.getElementById('pierna_d').value = reg.pierna_d || '';
+        document.getElementById('pierna_i').value = reg.pierna_i || '';
+        document.getElementById('brazo_d').value = reg.brazo_d || '';
+        document.getElementById('brazo_i').value = reg.brazo_i || '';
+        document.getElementById('p1').value = reg.p1 || '';
+        document.getElementById('p2').value = reg.p2 || '';
+        document.getElementById('p3').value = reg.p3 || '';
+        document.getElementById('mrun').value = reg.mrun || '';
+        document.getElementById('speed').value = reg.speed || '';
+        document.getElementById('abs').value = reg.abs || '';
+        document.getElementById('burpees').value = reg.burpees || '';
+
+        const ir = getIR();
+        if (ir !== null) {
+            const box = document.getElementById('ruffier-box');
+            box.style.display = 'block';
+            box.innerHTML = `IR: ${ir.toFixed(1)}`;
+            if(ir <= 0) box.style.background = "#2ecc71";
+            else if(ir <= 5) box.style.background = "#8bc34a";
+            else if(ir <= 10) box.style.background = "#f1c40f";
+            else box.style.background = "#e74c3c";
+        } else {
+            document.getElementById('ruffier-box').style.display = 'none';
+        }
+
+        window.scrollTo(0, 0);
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'info',
+            title: 'Editando registro de ' + reg.nombre,
+            showConfirmButton: false,
+            timer: 3000,
+            background: '#1a1a1a',
+            color: '#fff'
+        });
     }
 
     function deleteRecord(id) {
