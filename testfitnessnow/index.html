@@ -6,6 +6,7 @@
     <title>FitnessNow Tía Juana</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f39200">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --orange: #f39200; --dark: #000000; --gray: #1a1a1a; --text: #ffffff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); margin: 0; padding: 10px; padding-bottom: 50px; }
@@ -122,7 +123,14 @@
             else if(ir <= 10) box.style.background = "#f1c40f";
             else box.style.background = "#e74c3c";
         } else {
-            alert("Por favor completa P1, P2 y P3 para calcular el IR.");
+            Swal.fire({
+                title: 'Atención',
+                text: 'Por favor completa P1, P2 y P3 para calcular el IR.',
+                icon: 'info',
+                background: '#1a1a1a',
+                color: '#fff',
+                confirmButtonColor: '#f39200'
+            });
         }
     }
 
@@ -139,7 +147,13 @@
             if (t-- <= 0) {
                 clearInterval(countdown);
                 if(navigator.vibrate) navigator.vibrate(500);
-                alert("¡Tiempo!");
+                Swal.fire({
+                    title: '¡Tiempo!',
+                    icon: 'warning',
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    confirmButtonColor: '#f39200'
+                });
             }
         }, 1000);
     }
@@ -182,14 +196,29 @@
         };
 
         if(!data.nombre) {
-            alert("Por favor ingresa el nombre del atleta.");
+            Swal.fire({
+                title: 'Error',
+                text: 'Por favor ingresa el nombre del atleta.',
+                icon: 'error',
+                background: '#1a1a1a',
+                color: '#fff',
+                confirmButtonColor: '#f39200'
+            });
             return;
         }
 
         const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
         history.push(data);
         localStorage.setItem('fn_history', JSON.stringify(history));
-        alert("Registro guardado con éxito.");
+        Swal.fire({
+            title: '¡Guardado!',
+            text: 'Registro guardado con éxito.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            background: '#1a1a1a',
+            color: '#fff'
+        });
         renderHistory();
     }
 
@@ -222,12 +251,33 @@
     }
 
     function deleteRecord(id) {
-        if(confirm('¿Estás seguro de eliminar este registro?')) {
-            let history = JSON.parse(localStorage.getItem('fn_history') || '[]');
-            history = history.filter(r => r.id !== id);
-            localStorage.setItem('fn_history', JSON.stringify(history));
-            renderHistory();
-        }
+        Swal.fire({
+            title: '¿Eliminar registro?',
+            text: "Esta acción no se puede deshacer",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#444',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            background: '#1a1a1a',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+                history = history.filter(r => r.id !== id);
+                localStorage.setItem('fn_history', JSON.stringify(history));
+                renderHistory();
+                Swal.fire({
+                    title: 'Eliminado',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    background: '#1a1a1a',
+                    color: '#fff'
+                });
+            }
+        });
     }
 
     function shareWhatsApp(id) {
