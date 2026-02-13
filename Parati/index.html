@@ -3,107 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Para el amor de mi vida</title>
+    <title>Para el amor de mi vida ❤️</title>
     <style>
         :root {
-            --letter-love: #ff4d6d;
-            --background: #fff0f3;
+            --bg-color: #fce4ec;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --text-color: #5d4037;
+            --heart-red: #e91e63;
         }
 
         body {
-            background-color: var(--background);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
             margin: 0;
-            font-family: 'Arial', sans-serif;
-            color: #590d22;
-            text-align: center;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .container {
-            position: relative;
             width: 90%;
-            max-width: 500px;
+            max-width: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            z-index: 10;
         }
 
-        /* Estilo del "Árbol" de corazones */
-        .tree-container {
-            height: 250px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            margin-bottom: 20px;
+        #tree-canvas {
+            width: 100%;
+            height: 300px;
         }
 
-        .heart-tree {
-            font-size: 100px;
-            animation: grow 2s ease-out;
+        .message {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            margin: 15px 0;
+            line-height: 1.4;
+            font-weight: 500;
         }
 
-        @keyframes grow {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
+        .timer-box {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 15px;
         }
 
-        h1 { font-size: 1.5rem; margin-bottom: 10px; }
-        p { font-size: 1.1rem; margin: 5px 0; }
-
-        /* Estilo del Contador */
         #timer {
+            font-size: 0.85rem;
+            color: var(--heart-red);
             font-weight: bold;
-            color: var(--letter-love);
-            font-size: 1.2rem;
-            margin-top: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        .footer { margin-top: 30px; font-style: italic; }
+        h2 { color: var(--heart-red); margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="tree-container">
-            <div class="heart-tree">🌳❤️</div>
-        </div>
+<div class="container">
+    <h2>Para el amor de mi vida:</h2>
+    <p class="message">
+        "Si pudiera elegir un lugar seguro, sería a tu lado.<br>
+        Cuanto más tiempo estoy contigo, más te amo."
+    </p>
+    
+    <canvas id="tree-canvas"></canvas>
 
-        <h1>Para el amor de mi vida:</h1>
-        <p>Si pudiera elegir un lugar seguro,</p>
-        <p><b>sería a tu lado.</b></p>
-        <p>Cuanto más tiempo estoy contigo,</p>
-        <p>más te amo.</p>
-
+    <div class="timer-box">
+        <p style="margin: 0 0 5px 0; font-size: 0.8rem;">Mi amor por ti comenzó hace...</p>
         <div id="timer">Cargando tiempo...</div>
-
-        <div class="footer">— I Love You! —</div>
     </div>
+</div>
 
-    <script>
-        // CONFIGURACIÓN: Pon aquí la fecha en que se conocieron o empezaron (Año, Mes-1, Día)
-        // Enero es 0, Febrero es 1, etc.
-        const startDate = new Date(2023, 1, 14, 0, 0, 0); 
+<script>
+    // --- LÓGICA DEL CONTADOR ---
+    // CAMBIA ESTA FECHA POR LA TUYA: (Año, Mes - 1, Día, Hora, Minuto)
+    // Ejemplo: 15 de Marzo de 2023 a las 10:00 AM
+    const startDate = new Date(2023, 2, 15, 10, 0, 0); 
 
-        function updateTimer() {
-            const now = new Date();
-            const diff = now - startDate;
+    function updateTimer() {
+        const now = new Date();
+        const diff = now - startDate;
 
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-            const minutes = Math.floor((diff / 1000 / 60) % 60);
-            const seconds = Math.floor((diff / 1000) % 60);
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / 1000 / 60) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
 
-            document.getElementById('timer').innerHTML = 
-                `${days} días ${hours} horas ${minutes} min ${seconds} seg`;
+        document.getElementById('timer').innerHTML = 
+            `${days} días ${hours} horas ${minutes} minutos ${seconds} segundos`;
+    }
+
+    setInterval(updateTimer, 1000);
+
+    // --- LÓGICA DEL ÁRBOL (CANVAS) ---
+    const canvas = document.getElementById('tree-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 400;
+    canvas.height = 300;
+
+    function drawTree(startX, startY, len, angle, branchWidth) {
+        ctx.beginPath();
+        ctx.save();
+        ctx.strokeStyle = "#4e342e"; // Color del tronco
+        ctx.lineWidth = branchWidth;
+        ctx.translate(startX, startY);
+        ctx.rotate(angle * Math.PI / 180);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -len);
+        ctx.stroke();
+
+        if (len < 10) {
+            // Dibujar corazones en lugar de hojas
+            drawHeart(0, -len);
+            ctx.restore();
+            return;
         }
 
-        setInterval(updateTimer, 1000);
-        updateTimer();
-    </script>
+        drawTree(0, -len, len * 0.75, angle - 20, branchWidth * 0.7);
+        drawTree(0, -len, len * 0.75, angle + 20, branchWidth * 0.7);
+
+        ctx.restore();
+    }
+
+    function drawHeart(x, y) {
+        ctx.fillStyle = Math.random() > 0.5 ? "#e91e63" : "#ff80ab";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(x, y - 3, x - 5, y - 3, x - 5, y);
+        ctx.bezierCurveTo(x - 5, y + 3, x, y + 5, x, y + 7);
+        ctx.bezierCurveTo(x, y + 5, x + 5, y + 3, x + 5, y);
+        ctx.bezierCurveTo(x + 5, y - 3, x, y - 3, x, y);
+        ctx.fill();
+    }
+
+    // Dibujar el árbol centrado
+    drawTree(200, 300, 70, 0, 8);
+
+</script>
+
 </body>
 </html>
