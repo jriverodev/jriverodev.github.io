@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Master APK Creator - HTML5</title>
+    
+    <style>
+        :root {
+            --primary: #6200ee;
+            --secondary: #03dac6;
+            --bg: #f5f5f5;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-gps { background-color: var(--secondary); color: #000; }
+        .btn-cam { background-color: var(--primary); color: #fff; }
+
+        #status-box {
+            font-size: 14px;
+            color: #666;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            min-height: 40px;
+            word-wrap: break-word;
+        }
+
+        #preview-img {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 10px;
+            display: none;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        footer {
+            margin-top: auto;
+            padding-bottom: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mi App Nativa</h1>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h3>Panel de Control</h3>
+            <p>Usa los sensores de tu móvil:</p>
+            
+            <button class="btn-gps" onclick="app.getGPS()">
+                📍 Obtener Ubicación
+            </button>
+            
+            <button class="btn-cam" onclick="app.takePhoto()">
+                📸 Abrir Cámara
+            </button>
+        </div>
+
+        <div class="card">
+            <strong>Consola de salida:</strong>
+            <div id="status-box">Esperando acción...</div>
+            <img id="preview-img" src="" alt="Captura de cámara">
+        </div>
+    </div>
+
+    <footer>Compilado en la Nube vía GitHub Actions</footer>
+
+    <script>
+        // Objeto principal de la aplicación
+        const app = {
+            status: document.getElementById('status-box'),
+            image: document.getElementById('preview-img'),
+
+            log: (msg) => {
+                app.status.innerHTML = msg;
+                console.log(msg);
+            },
+
+            // Función GPS
+            getGPS: async () => {
+                app.log("⏳ Localizando dispositivo...");
+                try {
+                    // Verificación de si Capacitor está disponible
+                    if (window.Capacitor && window.Capacitor.Plugins.Geolocation) {
+                        const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition();
+                        app.log(`<b>Lat:</b> ${position.coords.latitude.toFixed(5)}<br><b>Lon:</b> ${position.coords.longitude.toFixed(5)}`);
+                    } else {
+                        // Fallback para navegador si no es APK
+                        navigator.geolocation.getCurrentPosition(
+                            (p) => app.log(`Modo Web - Lat: ${p.coords.latitude.toFixed(5)}`),
+                            (e) => app.log("Error: Permiso denegado")
+                        );
+                    }
+                } catch (err) {
+                    app.log("Error GPS: " + err.message);
+                }
+            },
+
+            // Función Cámara
+            takePhoto: async () => {
+                app.log("⏳ Iniciando cámara...");
+                try {
+                    if (window.Capacitor && window.Capacitor.Plugins.Camera) {
+                        const photo = await window.Capacitor.Plugins.Camera.getPhoto({
+                            quality: 90,
+                            allowEditing: false,
+                            resultType: "uri" // 'uri' es más eficiente para mostrar previsualizaciones
+                        });
+                        
+                        app.image.src = photo.webPath;
+                        app.image.style.display = 'block';
+                        app.log("✅ ¡Foto capturada!");
+                    } else {
+                        app.log("❌ Cámara solo funcional en APK (Capacitor)");
+                    }
+                } catch (err) {
+                    app.log("Cámara cerrada: " + err.message);
+                }
+            }
+        };
+
+        // Escuchar cuando la app esté lista
+        document.addEventListener('DOMContentLoaded', () => {
+            app.log("App lista. Esperando sensores...");
+        });
+    </script>
+
+    <script src="capacitor.js"></script>
+</body>
+</html>
