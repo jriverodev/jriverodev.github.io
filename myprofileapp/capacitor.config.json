@@ -1,1 +1,7 @@
+{
+  "appId": "com.cloudbuild.app",
+  "appName": "CloudBuildApp",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
 
