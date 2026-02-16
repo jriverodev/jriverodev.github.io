@@ -1,7 +1,6 @@
 {
-  "appId": "com.cloudbuild.app",
-  "appName": "CloudBuildApp",
+  "appId": "com.jrivero.myprofileapp",
+  "appName": "MyProfileApp",
   "webDir": "www",
   "bundledWebRuntime": false
 }
-
