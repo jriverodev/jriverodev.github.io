@@ -1,0 +1,49 @@
+name: Build Android APK
+on:
+  workflow_dispatch: # Gatillo manual desde el móvil
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Capacitor CLI
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/camera @capacitor/geolocation
+
+      - name: Create Android Project
+        run: |
+          # Si no existe la carpeta android, la creamos desde cero
+          npx cap add android
+          
+      - name: Inject Permissions (Camera & GPS)
+        run: |
+          # Este comando inserta los permisos directamente en el manifiesto de Android
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' android/app/src/main/AndroidManifest.xml
+
+      - name: Sync Web Assets
+        run: npx cap sync android
+
+      - name: Build with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-profile-app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
