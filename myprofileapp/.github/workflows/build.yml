@@ -1,6 +1,6 @@
 name: Build Android APK
 on:
-  workflow_dispatch: # Allows manual trigger from mobile
+  workflow_dispatch: # Gatillo manual desde el móvil
 
 jobs:
   build:
@@ -14,19 +14,26 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Dependencies
-        run: npm install
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Build Web Assets
-        run: npm run build
+      - name: Install Capacitor CLI
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/camera @capacitor/geolocation
 
-      - name: Capacitor Sync
+      - name: Create Android Project
+        run: |
+          # Si no existe la carpeta android, la creamos desde cero
+          npx cap add android
+          
+      - name: Inject Permissions (Camera & GPS)
+        run: |
+          # Este comando inserta los permisos directamente en el manifiesto de Android
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' android/app/src/main/AndroidManifest.xml
+
+      - name: Sync Web Assets
         run: npx cap sync android
 
       - name: Build with Gradle
@@ -38,6 +45,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
+          name: my-profile-app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
