@@ -120,15 +120,15 @@
         </main>
 
         <nav class="fixed bottom-6 left-6 right-6 flex gap-2">
-            <!--button @click="sincronizarGitHub" class="flex-[3] bg-slate-900 text-white py-5 rounded-[1.8rem] font-bold text-xs tracking-widest shadow-2xl active:scale-95 transition-all">
-                SUBIR A GITHUB
-            </button-->
-            <button @click="exportarExcel" class="flex-1 bg-emerald-500 text-white rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
+            <button @click="exportarExcel" class="flex-1 bg-emerald-500 text-white py-5 rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
                 📊
             </button>
-            <!--button @click="menuConfig = true" class="flex-1 bg-white border border-slate-100 text-slate-400 rounded-[1.8rem] flex items-center justify-center active:scale-95 transition-all text-xl shadow-lg">
+            <button @click="sincronizarGoogleSheets" class="flex-1 bg-indigo-600 text-white py-5 rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
+                ☁️
+            </button>
+            <button @click="menuConfig = true" class="flex-1 bg-white border border-slate-100 text-slate-400 py-5 rounded-[1.8rem] flex items-center justify-center active:scale-95 transition-all text-xl shadow-lg">
                 ⚙️
-            </button-->
+            </button>
         </nav>
 
         <!-- Modal Configuración -->
@@ -141,13 +141,8 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">GitHub Personal Token</label>
-                        <input v-model="config.token" type="password" placeholder="ghp_..."
-                               class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Repositorio (usuario/repo)</label>
-                        <input v-model="config.repo" type="text" placeholder="usuario/asistencia-logs"
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Google Sheet Script URL</label>
+                        <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec"
                                class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
                     </div>
 
@@ -170,11 +165,15 @@
             data() {
                 const now = new Date();
                 const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const savedConfig = JSON.parse(localStorage.getItem('nexus_final_cfg') || '{}');
                 return {
                     trabajadores: JSON.parse(localStorage.getItem('nexus_workers') || localStorage.getItem('nexus_final_db') || '[]'),
                     asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
                     fechaSeleccionada: hoy,
-                    config: JSON.parse(localStorage.getItem('nexus_final_cfg') || '{"token":"","repo":""}'),
+                    config: {
+                        googleSheetUrl: '',
+                        ...savedConfig
+                    },
                     searchQuery: '',
                     filtroArea: 'Todos',
                     menuConfig: false
@@ -260,30 +259,26 @@
                     };
                     reader.readAsArrayBuffer(e.target.files[0]);
                 },
-                async sincronizarGitHub() {
-                    if(!this.config.token || !this.config.repo) return alert("Configura GitHub primero");
-                    const url = `https://api.github.com/repos/${this.config.repo}/contents/logs/asistencia_${this.fechaSeleccionada}.json`;
-                    let sha = "";
-                    try {
-                        const r = await fetch(url, { headers: { "Authorization": `token ${this.config.token}` } });
-                        if(r.ok) { const d = await r.json(); sha = d.sha; }
-                    } catch(e) {}
+                async sincronizarGoogleSheets() {
+                    if(!this.config.googleSheetUrl) return alert("Configura la URL de Google Sheets primero");
 
                     const dataToSync = this.trabajadores.map(t => ({
                         ...t,
-                        presente: this.estaPresente(t.cedula)
+                        asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
+                        fecha: this.fechaSeleccionada
                     }));
 
-                    const res = await fetch(url, {
-                        method: 'PUT',
-                        headers: { "Authorization": `token ${this.config.token}`, "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            message: `Sync ${this.fechaSeleccionada} ${new Date().toLocaleTimeString()}`,
-                            content: btoa(unescape(encodeURIComponent(JSON.stringify(dataToSync, null, 2)))),
-                            sha: sha
-                        })
-                    });
-                    if(res.ok) alert("✅ Sincronizado");
+                    try {
+                        await fetch(this.config.googleSheetUrl, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(dataToSync)
+                        });
+                        alert("✅ Datos enviados a Google Sheets");
+                    } catch (error) {
+                        alert("❌ Error al sincronizar: " + error.message);
+                    }
                 },
                 exportarExcel() {
                     const dataExport = this.trabajadores.map(t => ({
