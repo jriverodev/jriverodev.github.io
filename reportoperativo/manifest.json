@@ -1,0 +1,26 @@
+{
+  "short_name": "Reporte OUM",
+  "name": "Reporte Operativo OUM - División Lago",
+  "description": "Sistema de registro y reporte de estatus operacional para Unidades Mayores (SSL).",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#1e3a8a",
+  "background_color": "#f1f5f9",
+  "orientation": "portrait-primary",
+  "lang": "es-VE",
+  "scope": "./"
+}
