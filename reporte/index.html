@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte OUM - División Lago</title>
+    <title>OUM - División Lago</title>
 
     <meta name="theme-color" content="#1e3a8a">
     <meta name="mobile-web-app-capable" content="yes">
@@ -20,8 +20,6 @@
         #btnInstall { display: none; }
         .highlight { animation: highlight 900ms ease; border: 2px solid #1e3a8a !important; }
         @keyframes highlight { 0% { transform: scale(1.02); } 100% { transform: scale(1); } }
-        
-        /* Scrollbar personalizada */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
@@ -54,13 +52,18 @@
     <main class="max-w-3xl mx-auto p-4 space-y-5">
 
         <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="grid grid-cols-2 gap-4">
+            <h2 class="font-bold text-slate-400 mb-3 text-[9px] uppercase tracking-widest">Parámetros del Reporte</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Fecha</label>
-                    <input type="date" id="fecha_rep" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs">
+                    <label class="block text-[9px] font-black text-blue-600 uppercase mb-1">Fecha</label>
+                    <input type="date" id="fecha_rep" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Backup</label>
+                    <label class="block text-[9px] font-black text-blue-600 uppercase mb-1">Hora Reporte</label>
+                    <input type="time" id="hora_rep" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none">
+                </div>
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Backup Datos</label>
                     <div class="flex gap-2">
                         <button onclick="respaldarDatos()" class="flex-1 bg-slate-700 text-white py-2 rounded-lg text-[9px] font-bold uppercase"><i class="bi bi-cloud-arrow-down"></i></button>
                         <button onclick="document.getElementById('fileImport').click()" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 rounded-lg text-[9px] font-bold uppercase"><i class="bi bi-cloud-arrow-up"></i></button>
@@ -72,7 +75,7 @@
 
         <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
             <h2 class="font-bold text-blue-700 dark:text-blue-400 mb-4 flex items-center gap-2 text-[10px] uppercase italic">
-                <i class="bi bi-plus-circle-fill"></i> Registrar Estatus Operacional
+                <i class="bi bi-plus-circle-fill"></i> Nueva Entrada Operacional
             </h2>
             <div class="space-y-3">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -82,7 +85,7 @@
                         <option value="RECOLECTORES">Recolectores de Crudo</option>
                         <option value="MUDANZA">Mudanza y Boyado</option>
                         <option value="BOMBAS">Bombas Operativas</option>
-                        <option value="MTTO">En Mantenimiento</option>
+                        <option value="MTTO">En Mantenimiento / Próximas</option>
                     </select>
                     <select id="estatus" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs">
                         <option value="OP">OPERATIVO (OP)</option>
@@ -92,17 +95,17 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="unidad" placeholder="Unidad (R-IND-XX)" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold uppercase text-xs">
-                    <input type="text" id="asignacion" placeholder="Asignación / Contrato" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs">
+                    <input type="text" id="unidad" placeholder="Nombre Unidad" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold uppercase text-xs">
+                    <input type="text" id="asignacion" placeholder="Contrato / Asignación" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold text-xs">
                 </div>
 
-                <textarea id="actividad" placeholder="Descripción de la actividad..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none h-20"></textarea>
+                <textarea id="actividad" placeholder="Escriba la actividad o novedad aquí..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none h-20"></textarea>
 
-                <button onclick="guardarRegistro()" class="w-full bg-blue-800 dark:bg-blue-600 text-white font-bold rounded-xl py-3 shadow-lg uppercase text-[10px]">Guardar en Reporte</button>
+                <button onclick="guardarRegistro()" class="w-full bg-blue-800 dark:bg-blue-600 text-white font-bold rounded-xl py-3 shadow-lg uppercase text-[10px] italic">Añadir al Reporte</button>
             </div>
         </div>
 
-        <div id="contenedor_reporte" class="space-y-6"></div>
+        <div id="contenedor_reporte" class="space-y-6 pb-10"></div>
 
     </main>
 
@@ -110,33 +113,36 @@
         <button onclick="exportarExcel()" class="bg-emerald-700 text-white py-3 rounded-xl font-bold text-[10px] uppercase shadow-lg"><i class="bi bi-file-earmark-excel"></i> Excel</button>
         <button onclick="enviarWhatsApp()" class="bg-green-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase shadow-lg"><i class="bi bi-whatsapp"></i> WhatsApp</button>
         <button id="btnInstall" class="bg-indigo-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase">Instalar App</button>
-        <button onclick="limpiarDB()" class="bg-red-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase">Borrar Todo</button>
+        <button onclick="limpiarDB()" class="bg-red-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase">Reiniciar Hoy</button>
     </div>
 
     <script>
-        const DB_KEY = 'db_oum_pro_v3';
+        const DB_KEY = 'db_oum_final_v1';
         let baseDatos = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
 
-        const titulos = {
-            "REMOLQUE": "✅ Operaciones de Remolque",
-            "SUMINISTRO": "✅ Suministro Lacustre",
-            "RECOLECTORES": "> Recolectores de Crudo <",
-            "MUDANZA": "✅ Mudanza y Boyado",
+        const titulosWhatsApp = {
+            "REMOLQUE": "✅ *Operaciones de Remolque*",
+            "SUMINISTRO": "✅ *Operaciones de Suministro Lacustre*",
+            "RECOLECTORES": "*> Recolectores de Crudo <*",
+            "MUDANZA": "✅ *Operaciones de Mudanza y Boyado*",
             "BOMBAS": "*BOMBAS OPERATIVAS*",
-            "MTTO": "🚨 UNIDADES EN MANTENIMIENTO"
+            "MTTO": "🚨 *UNIDADES EN MANTENIMIENTO / PROXIMAS*"
         };
 
         $(document).ready(function() {
-            document.getElementById('fecha_rep').valueAsDate = new Date();
-            // Splash screen delay
+            // Inicializar fecha y hora
+            const ahora = new Date();
+            document.getElementById('fecha_rep').valueAsDate = ahora;
+            document.getElementById('hora_rep').value = ahora.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
             setTimeout(() => {
                 $('#splash-screen').addClass('opacity-0');
                 setTimeout(() => $('#splash-screen').remove(), 500);
-            }, 1500);
+            }, 1200);
             
-            // Auto Dark Mode (18:00 a 06:00)
-            const hora = new Date().getHours();
-            if (hora >= 18 || hora < 6) toggleDarkMode(true);
+            // Dark mode automático
+            const horaActual = ahora.getHours();
+            if (horaActual >= 18 || horaActual < 6) toggleDarkMode(true);
             
             renderLista();
         });
@@ -154,7 +160,7 @@
             const actividad = $('#actividad').val().trim();
             const asignacion = $('#asignacion').val().trim();
 
-            if(!unidad || !actividad) return Swal.fire('Error', 'Completa los campos', 'error');
+            if(!unidad || !actividad) return Swal.fire('Faltan Datos', 'Indique la unidad y la actividad', 'warning');
 
             const reg = { id: Date.now(), seccion, unidad, estatus, actividad, asignacion };
             baseDatos.push(reg);
@@ -162,25 +168,27 @@
             
             $('#unidad, #actividad, #asignacion').val('');
             renderLista();
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Agregado', showConfirmButton: false, timer: 1000 });
+            
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            Toast.fire({ icon: 'success', title: 'Registro guardado' });
         }
 
         function renderLista() {
             const cont = $('#contenedor_reporte');
             cont.empty();
 
-            Object.keys(titulos).forEach(key => {
+            Object.keys(titulosWhatsApp).forEach(key => {
                 const items = baseDatos.filter(r => r.seccion === key);
                 if(items.length > 0) {
                     let html = `<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                        <h2 class="font-bold text-blue-900 dark:text-blue-300 mb-4 text-[9px] uppercase italic border-b dark:border-slate-700 pb-2">${titulos[key]}</h2>
+                        <h2 class="font-bold text-blue-900 dark:text-blue-300 mb-4 text-[9px] uppercase italic border-b dark:border-slate-700 pb-2">${titulosWhatsApp[key].replace(/\*/g, '')}</h2>
                         <div class="space-y-3">`;
                     
                     items.forEach(u => {
                         html += `
                         <div class="p-3 bg-slate-50 dark:bg-slate-900 border-l-4 ${u.estatus==='OP'?'border-green-500':'border-red-500'} rounded-r-lg relative">
-                            <button onclick="eliminar(${u.id})" class="absolute top-2 right-2 text-slate-300"><i class="bi bi-x-circle"></i></button>
-                            <div class="font-black text-[10px] uppercase">${u.unidad} <span class="opacity-50 text-[8px]">(${u.estatus})</span></div>
+                            <button onclick="eliminar(${u.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500"><i class="bi bi-trash"></i></button>
+                            <div class="font-black text-[10px] uppercase">${u.unidad} <span class="text-slate-400">(${u.estatus})</span></div>
                             <div class="text-[10px] text-slate-500 mt-1">${u.actividad}</div>
                         </div>`;
                     });
@@ -188,6 +196,9 @@
                     cont.append(html);
                 }
             });
+            if(baseDatos.length === 0) {
+                cont.append('<div class="text-center py-10 opacity-30 text-xs uppercase tracking-widest">No hay datos registrados hoy</div>');
+            }
         }
 
         function eliminar(id) {
@@ -197,17 +208,30 @@
         }
 
         function enviarWhatsApp() {
-            let msg = `*REPORTE OUM - DIVISIÓN LAGO*\n*FECHA*: ${$('#fecha_rep').val()}\n\n`;
-            Object.keys(titulos).forEach(key => {
+            const fechaInput = $('#fecha_rep').val().split('-');
+            const fechaFormateada = `${fechaInput[2]}-${fechaInput[1]}-${fechaInput[0]}`;
+            const horaManual = $('#hora_rep').val();
+            
+            let msg = `*REPORTE INFORMATIVO*\n`;
+            msg += `*NEGOCIO*: *DEP OCCIDENTE / División Lago/Mtto Lago/SSL/OUM*\n`;
+            msg += `*ESTADO*: ZULIA\n`;
+            msg += `*FECHA*: ${fechaFormateada}\n`;
+            msg += `*HORA*: ${horaManual}Hrs\n`;
+            msg += `*ASUNTO*: Estatus actual de las actividades Operacionales de Unidades Mayores.\n\n`;
+
+            Object.keys(titulosWhatsApp).forEach(key => {
                 const items = baseDatos.filter(r => r.seccion === key);
                 if(items.length > 0) {
-                    msg += `*${titulos[key]}*\n`;
+                    msg += `${titulosWhatsApp[key]}\n\n`;
                     items.forEach(u => {
-                        msg += `✓ *${u.unidad}* (${u.estatus})\n- ${u.actividad}\n`;
+                        msg += `✓ *${u.unidad}* : (${u.estatus})\n`;
+                        if(u.asignacion) msg += `*Asignación*: ${u.asignacion}\n`;
+                        msg += `*Actividad*: ${u.actividad}\n\n`;
                     });
-                    msg += `\n`;
                 }
             });
+
+            msg += `*FUENTE*: Ing. Xavier Rivero - Gte de Guardia OUM`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -215,17 +239,19 @@
             const blob = new Blob([JSON.stringify(baseDatos)], {type: 'application/json'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `OUM_Backup_${$('#fecha_rep').val()}.json`;
+            a.download = `Backup_OUM_${$('#fecha_rep').val()}.json`;
             a.click();
         }
 
         function procesarRestauracion(e) {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                baseDatos = JSON.parse(ev.target.result);
-                localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
-                renderLista();
-                Swal.fire('Restaurado', 'Copia de seguridad cargada', 'success');
+                try {
+                    baseDatos = JSON.parse(ev.target.result);
+                    localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
+                    renderLista();
+                    Swal.fire('Restaurado', 'Se han cargado los datos del respaldo', 'success');
+                } catch(e) { Swal.fire('Error', 'Archivo no válido', 'error'); }
             };
             reader.readAsText(e.target.files[0]);
         }
@@ -233,12 +259,19 @@
         function exportarExcel() {
             const ws = XLSX.utils.json_to_sheet(baseDatos);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Reporte");
-            XLSX.writeFile(wb, `Reporte_OUM_${$('#fecha_rep').val()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Data_OUM");
+            XLSX.writeFile(wb, `Reporte_Excel_OUM_${$('#fecha_rep').val()}.xlsx`);
         }
 
         function limpiarDB() {
-            Swal.fire({ title: '¿Borrar todo?', icon: 'warning', showCancelButton: true }).then(r => {
+            Swal.fire({ 
+                title: '¿Reiniciar Reporte?', 
+                text: 'Se borrarán todos los registros actuales de la pantalla.',
+                icon: 'warning', 
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sí, borrar todo'
+            }).then(r => {
                 if(r.isConfirmed) { baseDatos = []; localStorage.removeItem(DB_KEY); renderLista(); }
             });
         }
