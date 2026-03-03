@@ -1,1 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Operativo OUM - Division Lago</title>
 
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        #btnInstall { display: none; }
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 0 rgba(30, 58, 138, 0.3); transform: translateY(-2px); }
+            100% { box-shadow: none; transform: none; }
+        }
+        .highlight { animation: highlight 900ms ease; border-radius: 12px; border: 2px solid #1e3a8a !important; }
+        .sticky-nav { background: rgba(30, 58, 138, 0.95); backdrop-filter: blur(8px); }
+    </style>
+
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
+
+    <nav class="sticky-nav text-white p-4 shadow-xl sticky top-0 z-50 flex justify-between items-center">
+        <i class="bi bi-anchor text-blue-200 text-xl"></i>
+        <h1 class="font-bold tracking-tight uppercase text-xs">OUM - Reporte Operativo Lacustre</h1>
+        <div class="w-8"></div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-4 space-y-5">
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-[10px] uppercase italic">
+                <i class="bi bi-info-circle-fill"></i> Información General
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 text-blue-600">Fecha del Reporte</label>
+                    <input type="date" id="fecha_rep" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Estado</label>
+                    <input type="text" id="estado_rep" value="ZULIA" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none uppercase">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="font-bold text-blue-700 mb-4 flex items-center gap-2 text-[10px] uppercase italic">
+                <i class="bi bi-plus-circle-fill"></i> Registrar Actividad / Unidad
+            </h2>
+            <div class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Sección del Reporte</label>
+                        <select id="seccion" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                            <option value="REMOLQUE">Operaciones de Remolque</option>
+                            <option value="SUMINISTRO">Suministro Lacustre</option>
+                            <option value="RECOLECTORES">Recolectores de Crudo</option>
+                            <option value="MUDANZA">Mudanza y Boyado</option>
+                            <option value="RESCATE">Gabarra y Rescate</option>
+                            <option value="BOMBAS">Bombas Operativas</option>
+                            <option value="MTTO">Unidades en Mantenimiento</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Estatus</label>
+                        <select id="estatus" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm">
+                            <option value="OP">OPERATIVO (OP)</option>
+                            <option value="F/S">FUERA DE SERVICIO (F/S)</option>
+                            <option value="S/A">SIN ASIGNACIÓN (S/A)</option>
+                            <option value="STAND-BY">EN ESPERA (STAND-BY)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="unidad" placeholder="Nombre (Ej: R-IND-XX o Bomba 2'')" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold uppercase">
+                    <input type="text" id="asignacion" placeholder="Asignación (Ej: C-2167)" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold">
+                </div>
+
+                <textarea id="actividad" placeholder="Descripción de la actividad..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none h-20"></textarea>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="guardarRegistro()" class="bg-blue-800 text-white font-bold rounded-xl hover:bg-blue-900 transition shadow-lg uppercase text-[10px] py-3 italic">Guardar Registro</button>
+                    <button onclick="limpiarDB()" class="text-red-500 border border-red-200 rounded-xl font-bold uppercase text-[10px] py-3 italic">Limpiar Todo</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="contenedor_reporte" class="space-y-6">
+            </div>
+
+        <footer class="text-center py-6">
+            <p class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">OUM - SSL DIVISION LAGO</p>
+        </footer>
+
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-3 z-50 shadow-2xl">
+            <button onclick="exportarExcel()" class="flex items-center justify-center gap-2 bg-emerald-700 text-white py-3 rounded-xl font-bold text-xs uppercase shadow-lg">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </button>
+            <button onclick="enviarWhatsApp()" class="flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl font-bold text-xs uppercase shadow-lg">
+                <i class="bi bi-whatsapp"></i> WhatsApp
+            </button>
+            <button id="btnInstall" class="bg-indigo-600 text-white py-3 rounded-xl font-bold text-xs uppercase">Instalar</button>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-xs uppercase"><i class="bi bi-arrow-up"></i></button>
+        </div>
+
+    </main>
+
+    <script>
+        const DB_KEY = 'db_oum_completo_v2';
+        let baseDatos = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+
+        const seccionTitulos = {
+            "REMOLQUE": "✅ Operaciones de Remolque",
+            "SUMINISTRO": "✅ Operaciones de Suministro Lacustre",
+            "RECOLECTORES": "> Recolectores de Crudo <",
+            "MUDANZA": "✅ Operaciones de Mudanza y Boyado",
+            "RESCATE": "> OP de Gabarra y Rescate <",
+            "BOMBAS": "*BOMBAS OPERATIVAS*",
+            "MTTO": "🚨 UNIDADES EN MANTENIMIENTO / PROXIMAS"
+        };
+
+        $(document).ready(function() {
+            document.getElementById('fecha_rep').valueAsDate = new Date();
+            renderLista();
+        });
+
+        function guardarRegistro(){
+            const seccion = document.getElementById('seccion').value;
+            const unidad = document.getElementById('unidad').value.trim();
+            const estatus = document.getElementById('estatus').value;
+            const actividad = document.getElementById('actividad').value.trim();
+            const asignacion = document.getElementById('asignacion').value.trim();
+
+            if(!unidad || !actividad) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Nombre y Actividad son obligatorios' });
+                return;
+            }
+
+            const registro = { id: Date.now(), seccion, unidad, estatus, actividad, asignacion };
+            baseDatos.push(registro);
+            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
+            
+            // Limpiar
+            document.getElementById('unidad').value = '';
+            document.getElementById('actividad').value = '';
+            document.getElementById('asignacion').value = '';
+
+            renderLista();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Agregado al reporte', showConfirmButton: false, timer: 1000 });
+        }
+
+        function renderLista(){
+            const cont = document.getElementById('contenedor_reporte');
+            cont.innerHTML = '';
+
+            Object.keys(seccionTitulos).forEach(secKey => {
+                const filtrados = baseDatos.filter(r => r.seccion === secKey);
+                if(filtrados.length > 0){
+                    const secDiv = document.createElement('div');
+                    secDiv.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-200";
+                    secDiv.innerHTML = `<h2 class="font-bold text-blue-900 mb-4 text-xs uppercase italic border-b pb-2">${seccionTitulos[secKey]}</h2>`;
+                    
+                    const itemsDiv = document.createElement('div');
+                    itemsDiv.className = "space-y-3";
+                    
+                    filtrados.forEach(u => {
+                        const card = document.createElement('div');
+                        card.className = `p-3 bg-slate-50 border-l-4 ${u.estatus === 'OP' ? 'border-green-500' : 'border-red-400'} rounded-r-lg relative`;
+                        card.innerHTML = `
+                            <button onclick="eliminar(${u.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500"><i class="bi bi-trash"></i></button>
+                            <div class="font-bold text-xs uppercase">${u.unidad} <span class="text-[10px] text-slate-400">(${u.estatus})</span></div>
+                            ${u.asignacion ? `<div class="text-[10px] text-blue-600 font-bold italic">Asignación: ${u.asignacion}</div>` : ''}
+                            <div class="text-[11px] text-slate-600 mt-1">${u.actividad}</div>
+                        `;
+                        itemsDiv.appendChild(card);
+                    });
+                    
+                    secDiv.appendChild(itemsDiv);
+                    cont.appendChild(secDiv);
+                }
+            });
+
+            if(baseDatos.length === 0){
+                cont.innerHTML = `<div class="text-center py-20 text-slate-400 italic text-xs uppercase tracking-widest">No hay datos en el reporte actual</div>`;
+            }
+        }
+
+        async function eliminar(id){
+            baseDatos = baseDatos.filter(r => r.id !== id);
+            localStorage.setItem(DB_KEY, JSON.stringify(baseDatos));
+            renderLista();
+        }
+
+        function enviarWhatsApp(){
+            const fecha = document.getElementById('fecha_rep').value;
+            const estado = document.getElementById('estado_rep').value;
+            
+            let msg = `*REPORTE INFORMATIVO*\n*NEGOCIO*: *DEP OCCIDENTE / OUM*\n*ESTADO*: ${estado}\n*FECHA*: ${fecha}\n*ASUNTO*: Estatus Operacional Unidades Mayores\n\n`;
+
+            Object.keys(seccionTitulos).forEach(secKey => {
+                const filtrados = baseDatos.filter(r => r.seccion === secKey);
+                if(filtrados.length > 0){
+                    msg += `*${seccionTitulos[secKey]}*\n\n`;
+                    filtrados.forEach(u => {
+                        msg += `✓ *${u.unidad}* : (${u.estatus})\n`;
+                        if(u.asignacion) msg += `*Asignación*: ${u.asignacion}\n`;
+                        msg += `*Actividad*: ${u.actividad}\n\n`;
+                    });
+                }
+            });
+
+            msg += `*FUENTE*: Ing. Xavier Rivero - Gte de Guardia OUM`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function limpiarDB(){
+            Swal.fire({
+                title: '¿Borrar reporte?',
+                text: "Se eliminarán todos los registros del día",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, limpiar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    baseDatos = [];
+                    localStorage.removeItem(DB_KEY);
+                    renderLista();
+                }
+            });
+        }
+
+        function exportarExcel(){
+            const ws = XLSX.utils.json_to_sheet(baseDatos);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte_OUM");
+            XLSX.writeFile(wb, `Reporte_OUM_${document.getElementById('fecha_rep').value}.xlsx`);
+        }
+    </script>
+</body>
+</html>
