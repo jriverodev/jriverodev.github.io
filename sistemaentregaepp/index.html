@@ -232,7 +232,7 @@
                 importarExcel(e) {
                     const reader = new FileReader();
                     reader.onload = (f) => {
-                        const wb = XLSX.read(f.target.result, { type: 'array' });
+                         const wb = XLSX.read(f.target.result, { type: 'array' });
                         const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
                         this.trabajadores = json.map(r => ({
                             nombre: r.Nombre || r.nombre,
