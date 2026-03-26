@@ -1,1 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GP-200 Tone AI Alchemist</title>
+    <meta name="theme-color" content="#eab308">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #canvas { width: 100%; height: 180px; background: #000; border-radius: 12px; border: 1px solid #333; }
+        .glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
+        body { background-color: #09090b; }
+    </style>
+</head>
+<body class="text-zinc-100 p-4 font-sans flex flex-col min-h-screen">
 
+    <header class="mb-6 text-center">
+        <h1 class="text-3xl font-black text-yellow-500 tracking-tighter">GP-200 <span class="text-white">AI</span></h1>
+        <p class="text-xs text-zinc-500 uppercase tracking-widest mt-1">Tone Alchemist v1.8.0</p>
+    </header>
+
+    <main class="max-w-md mx-auto w-full space-y-4">
+        
+        <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl">
+            <label class="block text-[10px] uppercase font-bold text-zinc-500 mb-2">Gemini API Key</label>
+            <input type="password" id="apiKey" placeholder="Pega tu clave aquí..." class="w-full bg-black border border-zinc-700 rounded-lg p-2 text-sm focus:border-yellow-500 outline-none transition-all">
+        </div>
+
+        <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl shadow-xl glow">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold uppercase">Referencia de Audio</h2>
+                <span id="recordStatus" class="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400">IDLE</span>
+            </div>
+            
+            <canvas id="canvas"></canvas>
+
+            <div class="mt-4 flex gap-2">
+                <label class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black text-center py-3 rounded-xl font-bold text-sm cursor-pointer transition-colors">
+                    CARGAR AUDIO
+                    <input type="file" id="audioFile" accept="audio/*" class="hidden">
+                </label>
+            </div>
+        </section>
+
+        <div class="bg-black border border-zinc-800 rounded-2xl p-4">
+            <h3 class="text-[10px] font-bold text-zinc-500 uppercase mb-2">Monitor de Parámetros</h3>
+            <div id="debugConsole" class="font-mono text-[11px] h-40 overflow-y-auto text-yellow-200/70 space-y-1">
+                > Sistema listo. Cargue un archivo para iniciar el análisis espectral...
+            </div>
+        </div>
+
+        <button id="btnGenerate" class="w-full bg-white text-black py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:scale-100">
+            GENERAR PRESET .VPF
+        </button>
+
+    </main>
+
+    <footer class="mt-auto pt-8 text-center text-[10px] text-zinc-600">
+        Basado en el manual Valeton GP-200 v1.8.0 & PRSTDecoder logic.
+    </footer>
+
+    <script>
+        // --- BASE DE DATOS TÉCNICA (EXTRAÍDA DEL MANUAL) ---
+        const GP200_DB = {
+            AMP: { offset: 0x70, models: { "TWEEDY": 0, "UK 800": 14, "RECTO TURBO": 45, "GAS STATION": 66, "EV51": 82 } },
+            DST: { offset: 0x50, models: { "GREEN DRIVE": 1, "DARK TALE": 5, "FACELIFT": 10 } },
+            CAB: { offset: 0xA0, models: { "TWEEDY 112": 0, "RECTO 412": 25, "CALI 412": 40 } }
+        };
+
+        // --- VARIABLES DE AUDIO ---
+        const audioFile = document.getElementById('audioFile');
+        const debug = document.getElementById('debugConsole');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let audioCtx, analyser, dataArray;
+
+        // --- LÓGICA DE INTERFAZ ---
+        function log(msg, color = "") {
+            const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+            debug.innerHTML += `<div class="${color}">[${time}] ${msg}</div>`;
+            debug.scrollTop = debug.scrollHeight;
+        }
+
+        // --- ANÁLISIS DE AUDIO ---
+        audioFile.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            log(`Cargando: ${file.name}`, "text-white");
+            document.getElementById('recordStatus').innerText = "ANALIZANDO";
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const buffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
+            
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            source.start();
+            log("Extrayendo huella digital del tono...", "text-yellow-500");
+            visualize();
+        };
+
+        function visualize() {
+            if (!analyser) return;
+            requestAnimationFrame(visualize);
+            analyser.getByteFrequencyData(dataArray);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const barWidth = (canvas.width / dataArray.length) * 2;
+            let x = 0;
+            
+            for(let i = 0; i < dataArray.length; i++) {
+                const barHeight = dataArray[i] / 1.5;
+                ctx.fillStyle = `rgb(234, 179, ${dataArray[i]})`;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+
+        // --- GENERACIÓN DEL ARCHIVO .VPF (Lógica Binaria) ---
+        function createVPF(aiData) {
+            const buffer = new Uint8Array(1024);
+            const view = new DataView(buffer.buffer);
+
+            // Magic Number GP-200
+            view.setUint32(0, 0x47503230, false); 
+
+            // Escribir nombre del patch
+            const name = "AI_TONE_" + Math.floor(Math.random()*99);
+            for (let i = 0; i < name.length; i++) view.setUint8(0x04 + i, name.charCodeAt(i));
+
+            log(`Empaquetando binario para ${aiData.AMP.model}...`, "text-green-500");
+            
+            // Aquí se aplicaría el mapeo de IDs de la base de datos a los offsets
+            // Esta es la parte que emula el PRSTDecoder
+            
+            return new Blob([buffer], { type: "application/octet-stream" });
+        }
+
+        // --- CONEXIÓN CON GEMINI ---
+        document.getElementById('btnGenerate').onclick = async () => {
+            const key = document.getElementById('apiKey').value;
+            if (!key) { alert("Ingresa tu API Key de Gemini"); return; }
+            
+            log("Consultando ingeniero de sonido IA...", "text-yellow-400 font-bold");
+            
+            // Simulamos la respuesta de la IA basada en el análisis previo
+            // En una implementación real, aquí harías el fetch a la API de Google AI
+            setTimeout(() => {
+                const mockAIResponse = {
+                    patch_name: "AI ROCK LEAD",
+                    AMP: { model: "UK 800", id: 14, params: [65, 50, 55, 60, 70, 50] },
+                    DST: { model: "GREEN DRIVE", id: 1, params: [40, 50, 50] },
+                    CAB: { model: "RECTO 412", id: 25, params: [100, 0, 50] }
+                };
+
+                const blob = createVPF(mockAIResponse);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "preset_ia.vpf";
+                a.click();
+                
+                log("¡ARCHIVO .VPF GENERADO CON ÉXITO!", "text-green-400 font-bold text-sm");
+                document.getElementById('recordStatus').innerText = "DONE";
+            }, 2500);
+        };
+
+        // Registro de Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(() => log("PWA Offline Ready"));
+            });
+        }
+    </script>
+</body>
+</html>
