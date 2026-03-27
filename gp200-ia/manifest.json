@@ -1,0 +1,18 @@
+{
+  "short_name": "GP200-AI",
+  "name": "Valeton Tone Alchemist AI",
+  "description": "Generador de Presets mediante IA para Valeton GP-200",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2558/2558540.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#eab308",
+  "background_color": "#111111"
+}
