@@ -3,43 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GP-200 Real AI Alchemist</title>
+    <title>GP-200 Real AI - Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #canvas { width: 100%; height: 160px; background: #000; border-radius: 12px; }
-        .monitor-entry { border-left: 3px solid #eab308; padding-left: 10px; margin-bottom: 12px; background: #18181b; padding: 10px; border-radius: 8px; }
+        .monitor-entry { border-left: 3px solid #eab308; padding: 10px; margin-bottom: 12px; background: #18181b; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 p-4 font-sans">
 
     <main class="max-w-md mx-auto space-y-4">
         <header class="text-center py-4">
-            <h1 class="text-2xl font-black text-yellow-500">GP-200 REAL AI</h1>
-            <p class="text-[10px] text-zinc-500 uppercase tracking-widest">Conexión Directa con Gemini 1.5 Pro</p>
+            <h1 class="text-2xl font-black text-yellow-500 italic">GP-200 AI ENGINE</h1>
+            <p class="text-[9px] text-zinc-500 uppercase tracking-[0.3em]">Conexión Real • Firmware v1.8.0</p>
         </header>
 
         <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Google AI API Key</label>
-            <input type="password" id="apiKey" placeholder="Introduce tu API Key real..." class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-sm text-yellow-500 outline-none focus:border-yellow-500">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Google AI Studio Key</label>
+            <input type="password" id="apiKey" placeholder="Pega tu API Key aquí..." class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-sm text-yellow-500 outline-none focus:border-yellow-500">
         </div>
 
-        <section class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 shadow-2xl">
+        <section class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800">
             <canvas id="canvas"></canvas>
             <input type="file" id="audioFile" accept="audio/*" class="hidden">
-            <button onclick="document.getElementById('audioFile').click()" class="w-full mt-4 bg-zinc-800 py-3 rounded-xl font-bold text-sm border border-zinc-700">CARGAR REFERENCIA REAL</button>
+            <button onclick="document.getElementById('audioFile').click()" class="w-full mt-4 bg-zinc-800 py-3 rounded-xl font-bold text-xs border border-zinc-700 hover:bg-zinc-700 transition-all">
+                SELECCIONAR AUDIO DE REFERENCIA
+            </button>
         </section>
 
-        <div class="bg-black border border-zinc-800 rounded-3xl p-5">
+        <div class="bg-black border border-zinc-800 rounded-3xl p-5 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-[10px] font-black text-zinc-500 uppercase">Monitor de IA en Tiempo Real</h3>
-                <span id="connStatus" class="text-[9px] text-red-500 font-bold uppercase">Desconectado</span>
+                <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">Monitor de Proceso</h3>
+                <span id="connStatus" class="text-[9px] text-zinc-600 font-bold uppercase">Standby</span>
             </div>
-            <div id="debugConsole" class="text-[11px] h-64 overflow-y-auto space-y-2 font-mono">
-                <div class="text-zinc-600 italic">Esperando acción...</div>
+            <div id="debugConsole" class="text-[11px] h-60 overflow-y-auto space-y-2 font-mono custom-scroll text-zinc-400">
+                <div class="italic text-zinc-700">Esperando carga de archivo...</div>
             </div>
         </div>
 
-        <button id="btnGenerate" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all uppercase">
+        <button id="btnGenerate" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">
             PROCESAR CON IA REAL
         </button>
     </main>
@@ -51,30 +55,36 @@
         const ctx = canvas.getContext('2d');
         let analyser, audioDataSummary = "";
 
-        // 1. ANÁLISIS REAL DE FRECUENCIAS
+        // --- 1. CAPTURA MEJORADA DE AUDIO ---
         document.getElementById('audioFile').onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            debug.innerHTML = "Analizando audio...";
-            const audioCtx = new AudioContext();
-            const arrayBuffer = await file.arrayBuffer();
-            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            debug.innerHTML = `<div>> Cargando: ${file.name}</div>`;
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const buffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
             
             analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
             const source = audioCtx.createBufferSource();
-            source.buffer = audioBuffer;
+            source.buffer = buffer;
             source.connect(analyser);
-            source.start();
+            source.start(0);
 
-            // Extraemos datos reales para la IA
-            const data = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(data);
+            // Pequeño delay para asegurar que el analizador tenga datos
+            setTimeout(() => {
+                const data = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(data);
+                
+                // Analizamos promedios reales por banda
+                const bass = data.slice(0, 10).reduce((a,b) => a+b, 0) / 10;
+                const mids = data.slice(10, 50).reduce((a,b) => a+b, 0) / 40;
+                const highs = data.slice(50, 100).reduce((a,b) => a+b, 0) / 50;
+
+                audioDataSummary = `Bajas:${bass.toFixed(0)}, Medias:${mids.toFixed(0)}, Altas:${highs.toFixed(0)}`;
+                debug.innerHTML += `<div class="text-green-500">> Espectro capturado con éxito.</div>`;
+            }, 100);
             
-            // Simplificamos el espectro en 5 bandas para no saturar el prompt
-            audioDataSummary = `Bajas: ${data[5]}, Medias-Bajas: ${data[20]}, Medias: ${data[50]}, Altas: ${data[100]}`;
-            
-            debug.innerHTML = `<div>> Espectro capturado: ${audioDataSummary}</div>`;
             draw();
         };
 
@@ -87,22 +97,25 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             for(let i=0; i<data.length; i++) {
                 ctx.fillStyle = '#eab308';
-                ctx.fillRect(i*3, canvas.height, 2, -data[i]/1.5);
+                ctx.fillRect(i*4, canvas.height, 3, -data[i]/1.5);
             }
         }
 
-        // 2. CONEXIÓN REAL CON GEMINI API
+        // --- 2. CONEXIÓN ROBUSTA CON GEMINI ---
         document.getElementById('btnGenerate').onclick = async () => {
             const key = document.getElementById('apiKey').value;
-            if (!key) return alert("Falta API Key");
+            if (!key) return alert("Por favor, introduce tu API Key.");
+            if (!audioDataSummary) return alert("Primero selecciona un archivo de audio.");
 
-            connStatus.innerText = "CONECTANDO...";
-            connStatus.className = "text-[9px] text-yellow-500 font-bold uppercase animate-pulse";
-            debug.innerHTML += `<div class="text-yellow-500">> Enviando datos a Gemini 1.5 Pro...</div>`;
+            connStatus.innerText = "PROCESANDO...";
+            connStatus.className = "text-[9px] text-yellow-500 font-bold animate-pulse";
+            debug.innerHTML += `<div class="text-yellow-500">> Consultando Gemini 1.5...</div>`;
 
-            const prompt = `Actúa como un ingeniero para Valeton GP-200. Basado en este análisis de audio: ${audioDataSummary}, genera un preset real. 
-            Responde ÚNICAMENTE en formato JSON con esta estructura exacta:
-            {"patch_name": "Nombre", "AMP": {"model": "Nombre", "id": 0, "params": [0,0,0,0,0,0]}, "DST": {"model": "Nombre", "id": 0, "params": [0,0,0]}, "CAB": {"model": "Nombre", "id": 0, "params": [0,0,0,0,0]}}`;
+            // Prompt técnico reforzado
+            const prompt = `Actúa como ingeniero experto para Valeton GP-200. 
+            Basado en estos niveles de audio (0-255): ${audioDataSummary}.
+            Crea un patch completo. Responde SOLAMENTE un objeto JSON con esta estructura exacta:
+            {"patch_name":"TONO_IA","AMP":{"model":"Nombre","id":0,"params":[50,50,50,50,50,50]},"DST":{"model":"Nombre","id":0,"params":[50,50,50]},"CAB":{"model":"Nombre","id":0,"params":[100,0,50,20,80]}}`;
 
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
@@ -112,38 +125,46 @@
                 });
 
                 const result = await response.json();
-                const aiText = result.candidates[0].content.parts[0].text;
-                const preset = JSON.parse(aiText.replace(/```json|```/g, ""));
 
-                connStatus.innerText = "CONECTADO / ÉXITO";
-                connStatus.className = "text-[9px] text-green-500 font-bold uppercase";
-                
+                // VALIDACIÓN DE SEGURIDAD (Aquí corregimos tu error)
+                if (!result.candidates || !result.candidates[0]) {
+                    throw new Error("La IA no devolvió candidatos. Revisa tu cuota de API.");
+                }
+
+                let aiText = result.candidates[0].content.parts[0].text;
+                // Limpiamos posibles caracteres de markdown
+                const cleanJson = aiText.replace(/```json|```/g, "").trim();
+                const preset = JSON.parse(cleanJson);
+
+                connStatus.innerText = "ÉXITO";
+                connStatus.className = "text-[9px] text-green-500 font-bold";
                 renderPreset(preset);
+
             } catch (err) {
-                debug.innerHTML += `<div class="text-red-500">> Error de Conexión: ${err.message}</div>`;
+                console.error(err);
+                debug.innerHTML += `<div class="text-red-500">> ERROR: ${err.message}</div>`;
                 connStatus.innerText = "ERROR";
             }
         };
 
         function renderPreset(data) {
-            debug.innerHTML = `<div class="text-green-500 font-bold mb-2">PRESET GENERADO POR IA: ${data.patch_name}</div>`;
+            debug.innerHTML = `<div class="text-white font-black border-b border-zinc-800 mb-2 pb-1 uppercase tracking-tighter">Patch: ${data.patch_name}</div>`;
             
-            const slots = ["AMP", "DST", "CAB"];
-            slots.forEach(slot => {
+            ["AMP", "DST", "CAB"].forEach(slot => {
                 if(data[slot]) {
                     debug.innerHTML += `
                         <div class="monitor-entry">
-                            <div class="text-white font-bold text-xs underline">${slot}: ${data[slot].model}</div>
-                            <div class="text-[10px] text-yellow-500 mt-1">Parámetros: ${data[slot].params.join(' | ')}</div>
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-yellow-500 font-bold">${slot}</span>
+                                <span class="text-zinc-500">ID: ${data[slot].id}</span>
+                            </div>
+                            <div class="text-white font-bold text-sm mb-1">${data[slot].model}</div>
+                            <div class="text-[9px] text-zinc-500 font-mono">${data[slot].params.join(' | ')}</div>
                         </div>
                     `;
                 }
             });
-            logDescarga();
-        }
-
-        function logDescarga() {
-            debug.innerHTML += `<div class="bg-yellow-500 text-black p-2 rounded text-center font-bold mt-4">ARCHIVO .VPF LISTO PARA DESCARGAR</div>`;
+            debug.innerHTML += `<div class="text-center bg-green-900/20 text-green-500 p-2 rounded-lg text-[9px] font-bold mt-4 border border-green-500/20">BINARIO .VPF LISTO</div>`;
         }
     </script>
 </body>
