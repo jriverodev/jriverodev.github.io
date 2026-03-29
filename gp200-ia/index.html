@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GP-200 AI Engine v1.8.2</title>
+    <title>GP-200 AI Engine v1.8.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #canvas { width: 100%; height: 160px; background: #000; border-radius: 12px; border: 1px solid #222; }
         .monitor-entry { border-left: 3px solid #eab308; padding: 10px; margin-bottom: 12px; background: #111; border-radius: 8px; border: 1px solid #222; }
         body { background-color: #050505; color: #e4e4e7; }
+        .btn-gold { background: #eab308; color: #000; font-weight: 900; transition: all 0.2s; }
+        .btn-gold:active { transform: scale(0.95); opacity: 0.9; }
     </style>
 </head>
 <body class="p-4 font-sans flex flex-col min-h-screen">
 
     <main class="max-w-md mx-auto w-full space-y-4">
         <header class="text-center py-6">
-            <h1 class="text-3xl font-black text-yellow-500 italic">GP-200 AI</h1>
+            <h1 class="text-3xl font-black text-yellow-500 italic uppercase">GP-200 AI</h1>
             <p class="text-[9px] text-zinc-500 uppercase tracking-[0.4em] font-bold mt-1">Real-Time Tone Synthesis</p>
         </header>
 
         <div class="bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
-            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-widest">Google AI Studio Key</label>
+            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-widest text-zinc-400">Google AI Studio Key</label>
             <input type="password" id="apiKey" placeholder="Pega tu API Key aquí..." 
                    class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-sm text-yellow-500 outline-none focus:border-yellow-500 transition-all">
         </div>
@@ -28,23 +30,23 @@
         <section class="bg-zinc-900/50 p-4 rounded-3xl border border-zinc-800 shadow-2xl">
             <canvas id="canvas"></canvas>
             <input type="file" id="audioFile" accept="audio/*" class="hidden">
-            <button id="btnLoad" class="w-full mt-4 bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-xl font-bold text-xs border border-zinc-700 transition-all uppercase">
-                Cargar y Analizar Audio
+            <button id="btnLoad" class="w-full mt-4 bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-xl font-bold text-xs border border-zinc-700 uppercase">
+                1. Seleccionar Audio
             </button>
         </section>
 
-        <div class="bg-black border border-zinc-800 rounded-3xl p-5 shadow-2xl relative">
+        <div class="bg-black border border-zinc-800 rounded-3xl p-5 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Monitor de Proceso</h3>
-                <span id="connStatus" class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Standby</span>
+                <span id="connStatus" class="text-[9px] text-zinc-600 font-bold uppercase">Standby</span>
             </div>
             <div id="debugConsole" class="text-[11px] h-64 overflow-y-auto space-y-2 font-mono text-zinc-400">
                 <div class="italic text-zinc-700 text-center mt-20 text-[10px]">Cargue un audio para extraer el espectro.</div>
             </div>
         </div>
 
-        <button id="btnGenerate" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all uppercase tracking-tighter">
-            GENERAR PRESET CON IA REAL
+        <button id="btnGenerate" class="w-full btn-gold py-4 rounded-2xl text-lg uppercase tracking-tighter shadow-lg">
+            2. Generar con Gemini 1.5
         </button>
     </main>
 
@@ -55,7 +57,6 @@
         const ctx = canvas.getContext('2d');
         let analyser, audioCtx, audioDataSummary = "";
 
-        // 1. CAPTURA DE AUDIO CORREGIDA
         document.getElementById('btnLoad').onclick = () => document.getElementById('audioFile').click();
 
         document.getElementById('audioFile').onchange = async (e) => {
@@ -64,11 +65,9 @@
 
             debug.innerHTML = `<div class="text-zinc-500">> Leyendo: ${file.name}...</div>`;
             
-            // Re-inicializar Contexto de Audio
-            if (audioCtx) audioCtx.close();
+            // Forzar inicialización tras interacción
+            if (audioCtx) await audioCtx.close();
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // IMPORTANTE: Resume para evitar espectro 0
             await audioCtx.resume();
 
             const arrayBuffer = await file.arrayBuffer();
@@ -82,20 +81,26 @@
             source.connect(audioCtx.destination);
             source.start(0);
 
-            // Analizar el espectro REAL
-            setTimeout(() => {
+            // Bucle de captura para evitar el 0
+            let attempts = 0;
+            const checkData = setInterval(() => {
                 const data = new Uint8Array(analyser.frequencyBinCount);
                 analyser.getByteFrequencyData(data);
                 
-                const bass = data.slice(0, 10).reduce((a,b) => a+b, 0) / 10;
-                const mids = data.slice(10, 50).reduce((a,b) => a+b, 0) / 40;
-                const highs = data.slice(50, 100).reduce((a,b) => a+b, 0) / 50;
+                const sum = data.reduce((a,b) => a+b, 0);
+                if (sum > 0 || attempts > 10) {
+                    const bass = data.slice(0, 10).reduce((a,b) => a+b, 0) / 10;
+                    const mids = data.slice(10, 50).reduce((a,b) => a+b, 0) / 40;
+                    const highs = data.slice(50, 100).reduce((a,b) => a+b, 0) / 50;
 
-                audioDataSummary = `Bajos:${bass.toFixed(0)}, Medios:${mids.toFixed(0)}, Altos:${highs.toFixed(0)}`;
-                debug.innerHTML = `<div class="text-green-500 font-bold">> Espectro Capturado: ${audioDataSummary}</div>`;
-                connStatus.innerText = "READY";
-                connStatus.className = "text-[9px] text-green-500 font-bold uppercase tracking-widest";
-            }, 300);
+                    audioDataSummary = `Bass:${bass.toFixed(0)}, Mids:${mids.toFixed(0)}, Highs:${highs.toFixed(0)}`;
+                    debug.innerHTML = `<div class="text-green-500 font-bold">> Espectro Capturado: ${audioDataSummary}</div>`;
+                    connStatus.innerText = "READY";
+                    connStatus.className = "text-[9px] text-green-500 font-bold uppercase";
+                    clearInterval(checkData);
+                }
+                attempts++;
+            }, 100);
             
             draw();
         };
@@ -113,28 +118,22 @@
             }
         }
 
-        // 2. CONEXIÓN REAL (CORRECCIÓN 404)
         document.getElementById('btnGenerate').onclick = async () => {
             const key = document.getElementById('apiKey').value;
             if (!key) return alert("Ingresa tu API Key.");
-            if (!audioDataSummary) return alert("Primero analiza un audio.");
+            if (!audioDataSummary) return alert("Analiza un audio primero.");
 
             connStatus.innerText = "CONNECTING...";
-            debug.innerHTML += `<div class="text-yellow-500">> Consultando modelos/gemini-1.5-flash...</div>`;
+            debug.innerHTML += `<div class="text-yellow-500">> Consultando v1/gemini-1.5-flash...</div>`;
 
-            const prompt = `Actúa como ingeniero para Valeton GP-200 v1.8.0. Análisis de audio: ${audioDataSummary}.
-            Responde ÚNICAMENTE un objeto JSON sin texto extra:
-            {"patch_name":"AI_TONE","AMP":{"model":"Nombre","id":14,"params":[50,50,50,50,50,50]},"DST":{"model":"Nombre","id":1,"params":[50,50,50]},"CAB":{"model":"Nombre","id":25,"params":[100,0,50,20,80]}}`;
+            const prompt = `Analiza estos niveles de audio: ${audioDataSummary}. Eres ingeniero para Valeton GP-200. Genera un preset. Responde SOLO JSON: {"patch_name":"AI_TONE","AMP":{"model":"Nombre","id":14,"params":[50,50,50,50,50,50]},"DST":{"model":"Nombre","id":1,"params":[50,50,50]},"CAB":{"model":"Nombre","id":25,"params":[100,0,50,20,80]}}`;
 
             try {
-                // RUTA CORREGIDA PARA V1BETA
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                // CAMBIO A API v1 ESTABLE
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.2 }
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
                 const result = await response.json();
@@ -157,8 +156,7 @@
         };
 
         function renderPreset(data) {
-            debug.innerHTML = `<div class="text-white font-black border-b border-zinc-800 mb-4 pb-1 uppercase italic underline">Patch Generado: ${data.patch_name}</div>`;
-            
+            debug.innerHTML = `<div class="text-white font-black border-b border-zinc-800 mb-4 pb-1 uppercase italic">Patch: ${data.patch_name}</div>`;
             ["AMP", "DST", "CAB"].forEach(slot => {
                 const item = data[slot];
                 if(item) {
@@ -173,7 +171,7 @@
                     `;
                 }
             });
-            debug.innerHTML += `<div class="text-center text-green-500 text-[8px] font-black mt-2 uppercase animate-bounce">PRESET COMPILADO</div>`;
+            debug.innerHTML += `<div class="text-center text-green-500 text-[8px] font-black mt-2 uppercase animate-pulse underline">>>> Preset Compilado <<<</div>`;
         }
     </script>
 </body>
