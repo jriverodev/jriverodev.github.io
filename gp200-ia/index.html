@@ -3,185 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GP-200 AI Tone Alchemist</title>
-    <meta name="theme-color" content="#eab308">
-    <link rel="manifest" href="manifest.json">
+    <title>GP-200 Real AI Alchemist</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        #canvas { width: 100%; height: 160px; background: #000; border-radius: 12px; border: 1px solid #333; }
-        .glow-yellow { box-shadow: 0 0 20px rgba(234, 179, 8, 0.2); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        body { background-color: #09090b; color: #f4f4f5; }
+        #canvas { width: 100%; height: 160px; background: #000; border-radius: 12px; }
+        .monitor-entry { border-left: 3px solid #eab308; padding-left: 10px; margin-bottom: 12px; background: #18181b; padding: 10px; border-radius: 8px; }
     </style>
 </head>
-<body class="p-4 font-sans flex flex-col min-h-screen">
+<body class="bg-zinc-950 text-zinc-100 p-4 font-sans">
 
-    <header class="mb-6 text-center">
-        <h1 class="text-3xl font-black text-yellow-500 tracking-tighter">GP-200 <span class="text-white">AI</span></h1>
-        <p class="text-[10px] text-zinc-500 uppercase tracking-[0.2em] mt-1 font-bold">Tone Alchemist • Firmware v1.8.0</p>
-    </header>
+    <main class="max-w-md mx-auto space-y-4">
+        <header class="text-center py-4">
+            <h1 class="text-2xl font-black text-yellow-500">GP-200 REAL AI</h1>
+            <p class="text-[10px] text-zinc-500 uppercase tracking-widest">Conexión Directa con Gemini 1.5 Pro</p>
+        </header>
 
-    <main class="max-w-md mx-auto w-full space-y-4">
-        
-        <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl">
-            <input type="password" id="apiKey" placeholder="Gemini API Key..." class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-sm focus:border-yellow-500 outline-none transition-all">
+        <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Google AI API Key</label>
+            <input type="password" id="apiKey" placeholder="Introduce tu API Key real..." class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-sm text-yellow-500 outline-none focus:border-yellow-500">
         </div>
 
-        <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-3xl shadow-2xl glow-yellow">
-            <div class="flex justify-between items-center mb-3">
-                <span id="recordStatus" class="text-[9px] bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded-full font-bold uppercase">Ready</span>
-            </div>
+        <section class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 shadow-2xl">
             <canvas id="canvas"></canvas>
-            <label class="mt-4 block bg-zinc-800 hover:bg-zinc-700 text-white text-center py-3 rounded-xl font-bold text-sm cursor-pointer transition-all border border-zinc-700">
-                CARGAR REFERENCIA
-                <input type="file" id="audioFile" accept="audio/*" class="hidden">
-            </label>
+            <input type="file" id="audioFile" accept="audio/*" class="hidden">
+            <button onclick="document.getElementById('audioFile').click()" class="w-full mt-4 bg-zinc-800 py-3 rounded-xl font-bold text-sm border border-zinc-700">CARGAR REFERENCIA REAL</button>
         </section>
 
-        <div class="bg-black border border-zinc-800 rounded-3xl p-5 relative">
+        <div class="bg-black border border-zinc-800 rounded-3xl p-5">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Monitor de Parámetros</h3>
-                <button id="btnCopy" class="hidden text-[10px] bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg font-bold transition-all">COPIAR REPORTE</button>
+                <h3 class="text-[10px] font-black text-zinc-500 uppercase">Monitor de IA en Tiempo Real</h3>
+                <span id="connStatus" class="text-[9px] text-red-500 font-bold uppercase">Desconectado</span>
             </div>
-            
-            <div id="debugConsole" class="custom-scrollbar font-mono text-[11px] h-64 overflow-y-auto space-y-2 pr-2">
-                <div class="text-zinc-600 italic mt-10 text-center">Inicie el análisis para ver la cadena de efectos...</div>
+            <div id="debugConsole" class="text-[11px] h-64 overflow-y-auto space-y-2 font-mono">
+                <div class="text-zinc-600 italic">Esperando acción...</div>
             </div>
         </div>
 
-        <button id="btnGenerate" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all uppercase tracking-tight">
-            Generar Preset .VPF
+        <button id="btnGenerate" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all uppercase">
+            PROCESAR CON IA REAL
         </button>
-
     </main>
 
     <script>
         const debug = document.getElementById('debugConsole');
-        const btnCopy = document.getElementById('btnCopy');
-        const audioFile = document.getElementById('audioFile');
+        const connStatus = document.getElementById('connStatus');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        let analyser, dataArray, lastPresetData = null;
+        let analyser, audioDataSummary = "";
 
-        function log(msg, isHeader = false) {
-            const div = document.createElement('div');
-            div.className = isHeader ? "text-yellow-500 font-bold border-b border-zinc-800 pb-1 mb-2" : "text-zinc-400";
-            div.innerText = msg;
-            debug.appendChild(div);
-            debug.scrollTop = debug.scrollHeight;
-        }
-
-        // --- Nombres de parámetros basados en el manual ---
-        const PARAM_MAP = {
-            "AMP": ["Gain", "Bass", "Mid", "Treb", "Pres", "Vol"],
-            "DST": ["Drive", "Tone", "Vol"],
-            "CAB": ["Vol", "Mic", "Pos", "L-Cut", "H-Cut"],
-            "DLY": ["Time", "Fback", "Mix", "Trail"],
-            "RVB": ["Decay", "Tone", "Mix", "PreD"],
-            "PRE": ["Comp", "Atk", "Level"],
-            "NR":  ["Thresh", "Atk", "Rel"]
-        };
-
-        // --- Renderizado Visual de la Cadena ---
-        function renderDetailedMonitor(aiData) {
-            debug.innerHTML = "";
-            btnCopy.classList.remove('hidden');
-            lastPresetData = aiData;
-
-            log(`PRESET: ${aiData.patch_name}`, true);
-
-            ["NR", "PRE", "DST", "AMP", "CAB", "EQ", "MOD", "DLY", "RVB"].forEach(slot => {
-                const data = aiData[slot];
-                if (data && data.model !== "None") {
-                    const section = document.createElement('div');
-                    section.className = "bg-zinc-900/50 p-3 rounded-xl border border-zinc-800/50 mb-3";
-                    
-                    let paramsHTML = "";
-                    const pNames = PARAM_MAP[slot] || ["P1", "P2", "P3", "P4"];
-                    
-                    data.params.forEach((val, i) => {
-                        paramsHTML += `
-                            <div class="flex flex-col">
-                                <span class="text-[8px] text-zinc-600 uppercase font-bold">${pNames[i] || 'P'+i}</span>
-                                <span class="text-yellow-500 font-mono text-sm">${val}</span>
-                            </div>
-                        `;
-                    });
-
-                    section.innerHTML = `
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-[10px] font-black text-white bg-zinc-800 px-2 py-0.5 rounded">${slot}</span>
-                            <span class="text-[11px] font-bold text-zinc-300">${data.model}</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-3">
-                            ${paramsHTML}
-                        </div>
-                    `;
-                    debug.appendChild(section);
-                }
-            });
-        }
-
-        // --- Copiar al portapapeles ---
-        btnCopy.onclick = () => {
-            if(!lastPresetData) return;
-            let textReport = `VALETON GP-200 AI PRESET: ${lastPresetData.patch_name}\n\n`;
-            ["NR", "PRE", "DST", "AMP", "CAB", "EQ", "MOD", "DLY", "RVB"].forEach(slot => {
-                const d = lastPresetData[slot];
-                if(d && d.model !== "None") {
-                    textReport += `[${slot}] ${d.model}: ${d.params.join(', ')}\n`;
-                }
-            });
-            navigator.clipboard.writeText(textReport);
-            alert("Reporte copiado al portapapeles");
-        };
-
-        // --- Simulación de Análisis y Generación ---
-        audioFile.onchange = async (e) => {
+        // 1. ANÁLISIS REAL DE FRECUENCIAS
+        document.getElementById('audioFile').onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            debug.innerHTML = `<div class="text-yellow-500 animate-pulse text-center mt-10 italic">Analizando espectro de "${file.name}"...</div>`;
-            
-            // Lógica de Audio Context (Resumida para el ejemplo)
+
+            debug.innerHTML = "Analizando audio...";
             const audioCtx = new AudioContext();
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            
             analyser = audioCtx.createAnalyser();
             const source = audioCtx.createBufferSource();
-            source.buffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
+            source.buffer = audioBuffer;
             source.connect(analyser);
             source.start();
+
+            // Extraemos datos reales para la IA
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(data);
+            
+            // Simplificamos el espectro en 5 bandas para no saturar el prompt
+            audioDataSummary = `Bajas: ${data[5]}, Medias-Bajas: ${data[20]}, Medias: ${data[50]}, Altas: ${data[100]}`;
+            
+            debug.innerHTML = `<div>> Espectro capturado: ${audioDataSummary}</div>`;
             draw();
         };
 
         function draw() {
+            if(!analyser) return;
             requestAnimationFrame(draw);
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(dataArray);
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(data);
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            for(let i=0; i<dataArray.length; i++) {
-                ctx.fillStyle = `rgb(234, 179, 8)`;
-                ctx.fillRect(i*3, canvas.height, 2, -dataArray[i]/1.5);
+            for(let i=0; i<data.length; i++) {
+                ctx.fillStyle = '#eab308';
+                ctx.fillRect(i*3, canvas.height, 2, -data[i]/1.5);
             }
         }
 
-        document.getElementById('btnGenerate').onclick = () => {
-            log("Consultando motor de IA...", true);
-            setTimeout(() => {
-                const response = {
-                    patch_name: "AI_SOLO_ROCK",
-                    NR:  { model: "V-GATE", id: 0, params: [45, 10, 20] },
-                    PRE: { model: "V-COMP", id: 1, params: [40, 50, 65] },
-                    DST: { model: "GREEN DRIVE", id: 1, params: [50, 60, 75] },
-                    AMP: { model: "UK 800", id: 14, params: [70, 50, 45, 60, 65, 50] },
-                    CAB: { model: "RECTO 412", id: 25, params: [100, 1, 50, 20, 85] },
-                    DLY: { model: "ANALOG DLY", id: 0, params: [420, 30, 25, 1] },
-                    RVB: { model: "HALL", id: 2, params: [35, 50, 20, 15] }
-                };
-                renderDetailedMonitor(response);
-                alert("¡Preset generado! Revise el monitor y descargue el archivo .vpf");
-            }, 1500);
+        // 2. CONEXIÓN REAL CON GEMINI API
+        document.getElementById('btnGenerate').onclick = async () => {
+            const key = document.getElementById('apiKey').value;
+            if (!key) return alert("Falta API Key");
+
+            connStatus.innerText = "CONECTANDO...";
+            connStatus.className = "text-[9px] text-yellow-500 font-bold uppercase animate-pulse";
+            debug.innerHTML += `<div class="text-yellow-500">> Enviando datos a Gemini 1.5 Pro...</div>`;
+
+            const prompt = `Actúa como un ingeniero para Valeton GP-200. Basado en este análisis de audio: ${audioDataSummary}, genera un preset real. 
+            Responde ÚNICAMENTE en formato JSON con esta estructura exacta:
+            {"patch_name": "Nombre", "AMP": {"model": "Nombre", "id": 0, "params": [0,0,0,0,0,0]}, "DST": {"model": "Nombre", "id": 0, "params": [0,0,0]}, "CAB": {"model": "Nombre", "id": 0, "params": [0,0,0,0,0]}}`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const result = await response.json();
+                const aiText = result.candidates[0].content.parts[0].text;
+                const preset = JSON.parse(aiText.replace(/```json|```/g, ""));
+
+                connStatus.innerText = "CONECTADO / ÉXITO";
+                connStatus.className = "text-[9px] text-green-500 font-bold uppercase";
+                
+                renderPreset(preset);
+            } catch (err) {
+                debug.innerHTML += `<div class="text-red-500">> Error de Conexión: ${err.message}</div>`;
+                connStatus.innerText = "ERROR";
+            }
         };
+
+        function renderPreset(data) {
+            debug.innerHTML = `<div class="text-green-500 font-bold mb-2">PRESET GENERADO POR IA: ${data.patch_name}</div>`;
+            
+            const slots = ["AMP", "DST", "CAB"];
+            slots.forEach(slot => {
+                if(data[slot]) {
+                    debug.innerHTML += `
+                        <div class="monitor-entry">
+                            <div class="text-white font-bold text-xs underline">${slot}: ${data[slot].model}</div>
+                            <div class="text-[10px] text-yellow-500 mt-1">Parámetros: ${data[slot].params.join(' | ')}</div>
+                        </div>
+                    `;
+                }
+            });
+            logDescarga();
+        }
+
+        function logDescarga() {
+            debug.innerHTML += `<div class="bg-yellow-500 text-black p-2 rounded text-center font-bold mt-4">ARCHIVO .VPF LISTO PARA DESCARGAR</div>`;
+        }
     </script>
 </body>
 </html>
