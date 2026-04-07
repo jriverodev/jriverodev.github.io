@@ -1,3 +1,10 @@
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registrado', reg))
+            .catch(err => console.warn('Error al registrar SW', err));
+    });
+}
 // Configuración de la fecha por defecto al cargar
 document.addEventListener('DOMContentLoaded', () => {
     const fechaInput = document.getElementById('fecha');
