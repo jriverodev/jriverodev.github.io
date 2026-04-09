@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catpeg Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --p-blue: #1e40af; --p-green: #16a34a; }
+        body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
+        .glass-header { background: rgba(30, 64, 175, 0.95); backdrop-filter: blur(10px); }
+        .product-card { transition: all 0.2s ease; border-left: 4px solid transparent; }
+        .product-card.active { border-left-color: var(--p-green); background: #f0fdf4; }
+        .qty-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.1s; }
+        .qty-btn:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="pb-44">
+
+    <header class="glass-header text-white p-5 sticky top-0 z-50 shadow-xl rounded-b-3xl">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xl font-black tracking-tighter italic">CATPEG PRO <span class="text-xs font-light not-italic opacity-70">v2.0</span></h1>
+                <div class="flex gap-2">
+                    <button onclick="exportarWA()" class="bg-green-500 p-2 rounded-lg text-sm shadow-lg"><i class="fab fa-whatsapp"></i></button>
+                    <button onclick="limpiar()" class="bg-red-500 p-2 rounded-lg text-sm shadow-lg"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+            <div class="bg-white/10 p-4 rounded-2xl flex justify-between items-center border border-white/20">
+                <div>
+                    <p class="text-[10px] uppercase opacity-70 font-bold">Presupuesto</p>
+                    <p class="text-2xl font-black">$150.00</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] uppercase opacity-70 font-bold">Disponible</p>
+                    <p id="disp-val" class="text-2xl font-black text-green-400">$150.00</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="p-4 max-w-md mx-auto">
+        <div class="relative">
+            <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+            <input type="text" id="search" placeholder="Buscar producto..." 
+                   class="w-full pl-11 pr-4 py-3 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                   oninput="render()">
+        </div>
+    </div>
+
+    <main class="px-4 max-w-md mx-auto space-y-3" id="main-list"></main>
+
+    <footer class="fixed bottom-0 left-0 right-0 bg-white p-6 shadow-[0_-10px_25px_rgba(0,0,0,0.1)] rounded-t-3xl">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div>
+                <p id="item-count" class="text-xs text-gray-500 font-bold uppercase">0 Productos seleccionados</p>
+                <p id="total-val" class="text-4xl font-black text-blue-900 tracking-tighter">$0.00</p>
+            </div>
+            <button onclick="exportarWA()" class="bg-blue-800 text-white px-6 py-4 rounded-2xl font-bold shadow-lg flex items-center gap-3">
+                LISTO <i class="fas fa-chevron-right text-xs"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // Datos con precios dinámicos (puedes editarlos luego en la app)
+        const DB_KEY = "catpeg_pro_data";
+        let state = JSON.parse(localStorage.getItem(DB_KEY)) || {
+            items: [
+                { id: 1, n: 'Harina Maíz (Bulto)', p: 22.00, e: '📦', c: 0 },
+                { id: 2, n: 'Arroz (Kg)', p: 1.50, e: '🍚', c: 0 },
+                { id: 3, n: 'Pasta (Kg)', p: 2.00, e: '🍝', c: 0 },
+                { id: 4, n: 'Huevos (Cartón)', p: 6.20, e: '🥚', c: 0 },
+                { id: 5, n: 'Café (500g)', p: 4.80, e: '☕', c: 0 },
+                { id: 6, n: 'Aceite (L)', p: 3.30, e: '🌻', c: 0 },
+                { id: 7, n: 'Carne Molida (Kg)', p: 9.20, e: '🥩', c: 0 },
+                { id: 8, n: 'Pollo (Kg)', p: 4.20, e: '🍗', c: 0 },
+                { id: 9, n: 'Azúcar (Kg)', p: 1.40, e: '🍬', c: 0 },
+                { id: 10, n: 'Detergente (Kg)', p: 3.50, e: '🧼', c: 0 }
+            ]
+        };
+
+        function render() {
+            const list = document.getElementById('main-list');
+            const search = document.getElementById('search').value.toLowerCase();
+            list.innerHTML = '';
+            let total = 0;
+            let count = 0;
+
+            state.items.forEach(item => {
+                if (!item.n.toLowerCase().includes(search)) return;
+                
+                const sub = item.c * item.p;
+                total += sub;
+                if(item.c > 0) count++;
+
+                list.innerHTML += `
+                    <div class="product-card bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between ${item.c > 0 ? 'active' : ''}">
+                        <div class="flex-1">
+                            <span class="text-xs text-gray-400 font-bold uppercase tracking-tighter">Precio: $${item.p.toFixed(2)}</span>
+                            <h3 class="font-bold text-gray-800 text-lg leading-none mb-1">${item.e} ${item.n}</h3>
+                            <p class="text-green-600 font-black text-sm">$${sub.toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+                            <button onclick="update(${item.id}, -1)" class="qty-btn bg-white text-red-500 shadow-sm"><i class="fas fa-minus"></i></button>
+                            <span class="w-8 text-center font-black">${item.c}</span>
+                            <button onclick="update(${item.id}, 1)" class="qty-btn bg-white text-blue-600 shadow-sm"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Update Dashboard
+            document.getElementById('total-val').innerText = `$${total.toFixed(2)}`;
+            const disp = 150 - total;
+            const dispEl = document.getElementById('disp-val');
+            dispEl.innerText = `$${disp.toFixed(2)}`;
+            dispEl.className = disp < 0 ? "text-red-400 text-2xl font-black animate-pulse" : "text-green-400 text-2xl font-black";
+            document.getElementById('item-count').innerText = `${count} productos en el carrito`;
+        }
+
+        function update(id, delta) {
+            const item = state.items.find(i => i.id === id);
+            item.c = Math.max(0, item.c + delta);
+            save();
+        }
+
+        function save() {
+            localStorage.setItem(DB_KEY, JSON.stringify(state));
+            render();
+        }
+
+        function limpiar() {
+            if(confirm('¿Reiniciar lista?')) {
+                state.items.forEach(i => i.c = 0);
+                save();
+            }
+        }
+
+        function exportarWA() {
+            const selected = state.items.filter(i => i.c > 0);
+            if(selected.length === 0) return alert('El carrito está vacío');
+            
+            let total = 0;
+            let msg = "✅ *RESUMEN DE COMPRA CATPEG*\n";
+            msg += "━━━━━━━━━━━━━━━━━━\n";
+            selected.forEach(i => {
+                const sub = i.c * i.p;
+                msg += `${i.e} *${i.c}x* ${i.n}\n      └ _Subtotal: $${sub.toFixed(2)}_\n`;
+                total += sub;
+            });
+            msg += "━━━━━━━━━━━━━━━━━━\n";
+            msg += `💰 *TOTAL: $${total.toFixed(2)}*\n`;
+            msg += `📊 *DISPONIBLE: $${(150-total).toFixed(2)}*`;
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        render();
+    </script>
+</body>
+</html>
