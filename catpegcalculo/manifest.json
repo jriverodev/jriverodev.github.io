@@ -1,1 +1,25 @@
 
+{
+  "short_name": "CatpegPro",
+  "name": "Catpeg Pro: Calculadora de Víveres",
+  "description": "Control de presupuesto de $150 para compras en el Zulia.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2331/2331970.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/192/2331/2331970.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#1e40af",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#1e40af",
+  "orientation": "portrait"
+}
