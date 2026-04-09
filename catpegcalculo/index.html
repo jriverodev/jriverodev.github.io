@@ -160,5 +160,12 @@
 
         render();
     </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('https://cdn.jsdelivr.net/npm/pwacompat@2.0.17/pwacompat.min.js', { scope: './' });
+  });
+}
+    </script>
 </body>
 </html>
