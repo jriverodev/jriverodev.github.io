@@ -21,7 +21,6 @@
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
@@ -31,14 +30,14 @@
         .input-mobile { @apply w-full p-4 bg-white rounded-xl-mobile border border-slate-100 text-sm focus:ring-2 focus:ring-pdvsa-blue outline-none transition-all shadow-sm; }
         .label-mobile { @apply text-[11px] font-bold uppercase text-slate-400 ml-3 mb-1 block tracking-widest; }
         
-        /* Spinner Animación */
+        /* Spinner */
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #1e40af; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Botón Flotante IA */
+        /* Botón IA */
         .fab-ia { @apply absolute bottom-4 right-4 flex items-center gap-2 bg-pdvsa-blue text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all z-10; }
         
-        /* Modal Config */
+        /* Modal Animation */
         .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease; }
         .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
     </style>
@@ -49,13 +48,12 @@
         <header class="p-6 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100">
             <div>
                 <h1 class="text-2xl font-black text-pdvsa-blue tracking-tighter">NEXUS <span class="text-slate-300">OFICIOS</span></h1>
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">Sistema de Control Digital</p>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Control de Correspondencia</p>
             </div>
             <button @click="menuConfig = true" class="bg-slate-50 p-3 rounded-2xl border border-slate-100 active:scale-90 transition-all text-xl">⚙️</button>
         </header>
 
         <main class="p-5 space-y-6">
-            
             <section class="space-y-4">
                 <div>
                     <label class="label-mobile">Fecha Recepción</label>
@@ -63,8 +61,8 @@
                 </div>
                 
                 <div>
-                    <label class="label-mobile">Organización Remitente</label>
-                    <input v-model="form.organizacion" type="text" placeholder="Ej: Gerencia Técnica" class="input-mobile">
+                    <label class="label-mobile">Organización / Remitente</label>
+                    <input v-model="form.organizacion" type="text" placeholder="Ej. Gerencia de DSI" class="input-mobile">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -83,25 +81,23 @@
                 </div>
 
                 <div>
-                    <label class="label-mobile">Persona de Contacto</label>
-                    <input v-model="form.contacto" type="text" placeholder="Nombre completo" class="input-mobile">
-                </div>
-
-                <div>
-                    <label class="label-mobile">Teléfono Móvil</label>
-                    <input v-model="form.telefono" type="tel" placeholder="04XXXXXXXXX" class="input-mobile font-mono">
+                    <label class="label-mobile">Contacto / Teléfono</label>
+                    <div class="flex gap-2">
+                        <input v-model="form.contacto" type="text" placeholder="Nombre" class="input-mobile flex-1">
+                        <input v-model="form.telefono" type="tel" placeholder="Teléfono" class="input-mobile w-1/3 text-xs font-mono">
+                    </div>
                 </div>
 
                 <div class="relative bg-white p-4 rounded-xl-mobile shadow-sm border border-slate-100">
-                    <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue">Descripción del Requerimiento</label>
+                    <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue">Descripción del Asunto</label>
                     <textarea v-model="form.descripcion" rows="8" 
                               class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" 
-                              :placeholder="isScanning ? 'La IA está analizando la imagen...' : 'Escribe aquí o usa el escáner'"></textarea>
+                              :placeholder="isScanning ? 'La IA está extrayendo el texto...' : 'Describa el requerimiento o use el escáner'"></textarea>
                     
-                    <label class="fab-ia" :class="{'opacity-50 cursor-not-allowed': isScanning}">
+                    <label class="fab-ia" :class="{'opacity-50': isScanning}">
                         <span v-if="isScanning" class="loader"></span>
                         <span v-else>📷</span>
-                        <span>{{ isScanning ? 'PROCESANDO' : 'IA SCAN' }}</span>
+                        <span>{{ isScanning ? 'LEYENDO' : 'IA SCAN' }}</span>
                         <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
                     </label>
                 </div>
@@ -110,26 +106,26 @@
 
         <div class="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-f8fafc via-f8fafc to-transparent z-30">
             <button @click="enviarOficio" :disabled="isSyncing || isScanning" 
-                    class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3 uppercase tracking-widest text-sm">
+                    class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3">
                 <span v-if="isSyncing" class="loader border-t-white border-white/20"></span>
-                <span>{{ isSyncing ? 'Sincronizando' : 'Registrar Oficio' }}</span>
+                <span class="uppercase tracking-widest text-xs">{{ isSyncing ? 'Sincronizando...' : 'Registrar en Excel' }}</span>
             </button>
         </div>
 
         <transition name="slide-up">
             <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 backdrop-blur-sm" @click.self="menuConfig = false">
-                <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6 overflow-hidden">
-                    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
+                <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6">
+                    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto"></div>
                     <h3 class="text-xl font-black text-center">Configuración</h3>
                     
                     <div class="space-y-4">
                         <div>
                             <label class="label-mobile">Google App Script URL</label>
-                            <input v-model="config.url" type="text" placeholder="https://script.google.com/..." class="input-mobile text-[10px] font-mono">
+                            <input v-model="config.url" type="text" class="input-mobile text-[10px] font-mono">
                         </div>
                         <div>
                             <label class="label-mobile">Hugging Face Token</label>
-                            <input v-model="config.hfToken" type="password" placeholder="hf_xxxxxxxxxxxx" class="input-mobile text-[10px] font-mono">
+                            <input v-model="config.hfToken" type="password" class="input-mobile text-[10px] font-mono">
                         </div>
                     </div>
 
@@ -143,7 +139,7 @@
 
     </div>
 
-    <script>
+    <script type="module">
         const { createApp } = Vue;
 
         createApp({
@@ -160,19 +156,10 @@
                 getEmptyForm() {
                     return {
                         fechaRecepcion: new Date().toISOString().split('T')[0],
-                        recibidoPor: 'Jesús Rivero',
-                        organizacion: '',
-                        dirigidoA: 'Gerencia',
-                        claseRequerimiento: 'Mantenimiento',
-                        tipoApoyo: 'Social o Personal',
-                        estatus: 'Pendiente',
-                        numDocumento: '',
-                        contacto: '',
-                        telefono: '',
-                        tipoEquipo: '',
-                        cantidad: 1,
-                        descripcion: '',
-                        observacion: '',
+                        recibidoPor: 'Jesús Rivero', organizacion: '', dirigidoA: 'Gerencia',
+                        claseRequerimiento: 'Mantenimiento', tipoApoyo: 'Social o Personal',
+                        estatus: 'Pendiente', numDocumento: '', contacto: '', telefono: '',
+                        tipoEquipo: '', cantidad: 1, descripcion: '', observacion: '',
                         fechaRequerimiento: new Date().toISOString().split('T')[0]
                     }
                 },
@@ -184,51 +171,52 @@
                     console.log("🚀 Archivo seleccionado:", file.name);
 
                     if (!this.config.hfToken) {
-                        Swal.fire('Atención', 'Configura tu Token de Hugging Face primero.', 'warning');
+                        Swal.fire('Atención', 'Configura tu Token de HF en ajustes.', 'warning');
                         return;
                     }
 
                     this.isScanning = true;
                     const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000 });
-                    Toast.fire({ icon: 'info', title: 'Conectando con IA...' });
+                    Toast.fire({ icon: 'info', title: 'Iniciando IA...' });
 
                     try {
-                        // Acceso a la librería Gradio
-                        const { Client } = window.gradio_client;
+                        // IMPORTACIÓN DINÁMICA PARA EVITAR ERRORES DE EXPORT
+                        const gradioModule = await import("https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js");
+                        const Client = gradioModule.Client;
+
                         const hfToken = this.config.hfToken.trim();
                         const finalToken = hfToken.startsWith('hf_') ? hfToken : `hf_${hfToken}`;
 
-                        console.log("📡 Conectando al Space prithivMLmods/GLM-OCR-Demo...");
+                        console.log("📡 Conectando al Space...");
                         const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
                             hf_token: finalToken
                         });
 
-                        console.log("✅ Conexión establecida. Procesando OCR...");
-                        // Enviamos los parámetros como un arreglo posicional: [imagen, tipo_ocr]
+                        console.log("✅ Procesando imagen...");
                         const result = await client.predict(0, [file, "format"]);
 
-                        console.log("📥 Resultado recibido de la IA:", result);
+                        console.log("📥 Resultado:", result);
 
                         if (result.data && result.data[0]) {
                             this.form.descripcion = result.data[0];
-                            Toast.fire({ icon: 'success', title: 'Texto extraído con éxito' });
+                            Toast.fire({ icon: 'success', title: 'Texto extraído correctamente' });
                         } else {
-                            throw new Error("La IA no pudo leer texto en esta imagen.");
+                            throw new Error("No se detectó texto legible.");
                         }
 
                     } catch (error) {
-                        console.error("❌ ERROR EN OCR:", error);
-                        Swal.fire('Error de IA', `No se pudo procesar: ${error.message}`, 'error');
+                        console.error("❌ ERROR OCR:", error);
+                        Swal.fire('Error de IA', error.message, 'error');
                     } finally {
                         this.isScanning = false;
-                        event.target.value = ''; // Reset del input file
+                        event.target.value = '';
                     }
                 },
 
                 guardarConfig() {
                     localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
-                    Swal.fire({ icon: 'success', title: 'Configuración Guardada', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
+                    Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
                 },
 
                 async enviarOficio() {
@@ -238,18 +226,16 @@
                     }
                     this.isSyncing = true;
                     try {
-                        console.log("📤 Enviando datos a Google Sheets...");
                         await fetch(this.config.url, { 
                             method: 'POST', 
                             mode: 'no-cors', 
                             body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) 
                         });
-                        
-                        Swal.fire('¡Registrado!', 'Los datos se sincronizaron con éxito.', 'success');
+                        Swal.fire('¡Registrado!', 'Los datos se enviaron al Excel.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        console.error("❌ Error Sincronización:", e);
-                        Swal.fire('Error', 'No se pudo conectar con Google.', 'error');
+                        console.error("❌ Error Sincro:", e);
+                        Swal.fire('Error', 'Fallo de red.', 'error');
                     } finally {
                         this.isSyncing = false;
                     }
