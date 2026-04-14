@@ -11,16 +11,9 @@
             theme: {
                 extend: {
                     colors: {
-                        pdvsa: {
-                            red: '#ed1c24',
-                            blue: '#1e40af',
-                            dark: '#0f172a'
-                        }
+                        pdvsa: { red: '#ed1c24', blue: '#1e40af', dark: '#0f172a' }
                     },
-                    borderRadius: {
-                        'xl-mobile': '1.25rem',
-                        '2xl-mobile': '1.75rem',
-                    }
+                    borderRadius: { 'xl-mobile': '1.25rem', '2xl-mobile': '1.75rem' }
                 }
             }
         }
@@ -28,105 +21,60 @@
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            -webkit-tap-highlight-color: transparent;
-            background-color: #f1f5f9;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
         [v-cloak] { display: none; }
+        .input-mobile { @apply w-full p-4 bg-white rounded-xl-mobile border border-slate-100 text-sm focus:ring-2 focus:ring-pdvsa-blue outline-none transition-all shadow-sm; }
+        .label-mobile { @apply text-[11px] font-bold uppercase text-slate-400 ml-3 mb-1 block tracking-widest; }
         
-        /* Estilo base para inputs - Grande para dedos */
-        .input-mobile {
-            @apply w-full p-4 bg-white rounded-xl-mobile border border-slate-100 text-sm focus:ring-2 focus:ring-pdvsa-blue focus:border-pdvsa-blue outline-none transition-all shadow-sm;
-        }
+        /* Spinner Animación */
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #1e40af; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Botón Flotante IA */
+        .fab-ia { @apply absolute bottom-4 right-4 flex items-center gap-2 bg-pdvsa-blue text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all z-10; }
         
-        .label-mobile {
-            @apply text-[11px] font-semibold uppercase text-slate-500 ml-3 mb-1.5 block tracking-wider;
-        }
-
-        /* Animación para el menú de configuración */
-        .slide-up-enter-active, .slide-up-leave-active {
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-        }
-        .slide-up-enter-from, .slide-up-leave-to {
-            transform: translateY(100%);
-            opacity: 0;
-        }
-
-        /* Spinner de carga */
-        .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #1e40af;
-            border-radius: 50%;
-            width: 14px;
-            height: 14px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        /* Modal Config */
+        .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease; }
+        .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
     </style>
 </head>
-<body class="text-slate-950 antialiased">
-    <div id="app" v-cloak class="min-h-screen flex flex-col pb-[90px]">
+<body class="text-slate-900">
+    <div id="app" v-cloak class="min-h-screen flex flex-col pb-32">
         
-        <header class="sticky top-0 z-40 bg-f1f5f9/90 backdrop-blur-sm border-b border-slate-100 px-5 py-4 flex justify-between items-center">
+        <header class="p-6 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100">
             <div>
-                <h1 class="text-2xl font-extrabold text-pdvsa-blue tracking-tighter">NEXUS <span class="text-slate-400">OFICIOS</span></h1>
-                <p class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Gestión de Requerimientos</p>
+                <h1 class="text-2xl font-black text-pdvsa-blue tracking-tighter">NEXUS <span class="text-slate-300">OFICIOS</span></h1>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">Sistema de Control Digital</p>
             </div>
-            <button @click="menuConfig = true" class="bg-white shadow-sm text-slate-500 p-3 rounded-2xl border border-slate-100 active:scale-95 transition-all">
-                ⚙️
-            </button>
+            <button @click="menuConfig = true" class="bg-slate-50 p-3 rounded-2xl border border-slate-100 active:scale-90 transition-all text-xl">⚙️</button>
         </header>
 
-        <main class="flex-grow p-5 space-y-6">
+        <main class="p-5 space-y-6">
             
-            <div class="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <div class="text-3xl">📝</div>
+            <section class="space-y-4">
                 <div>
-                    <h2 class="font-bold text-slate-900 text-base">Nuevo Registro</h2>
-                    <p class="text-xs text-slate-500">Rellena los datos del oficio recibido.</p>
-                </div>
-            </div>
-
-            <section class="space-y-5">
-                <div>
-                    <label class="label-mobile">Fecha de Recepción</label>
+                    <label class="label-mobile">Fecha Recepción</label>
                     <input v-model="form.fechaRecepcion" type="date" class="input-mobile">
                 </div>
                 
                 <div>
-                    <label class="label-mobile">Recibido Por:</label>
-                    <input v-model="form.recibidoPor" type="text" placeholder="Nombre completo" class="input-mobile">
-                </div>
-
-                <div>
                     <label class="label-mobile">Organización Remitente</label>
-                    <input v-model="form.organizacion" type="text" placeholder="Ej: Alcaldía de Cabimas" class="input-mobile">
-                </div>
-
-                <div>
-                    <label class="label-mobile">Clase de Requerimiento</label>
-                    <select v-model="form.claseRequerimiento" class="input-mobile appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2364748b%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')] bg-[length:1.25em] bg-[right_1rem_center] bg-no-repeat">
-                        <option value="Mantenimiento">Mantenimiento</option>
-                        <option value="Operaciones">Operaciones</option>
-                        <option value="Otros">Otros</option>
-                    </select>
+                    <input v-model="form.organizacion" type="text" placeholder="Ej: Gerencia Técnica" class="input-mobile">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="label-style uppercase text-[10px] text-slate-400 ml-2">Num Documento</label>
-                        <input v-model="form.numDocumento" type="text" placeholder="OFI-001" class="input-mobile !p-3">
+                        <label class="label-mobile">N° Documento</label>
+                        <input v-model="form.numDocumento" type="text" placeholder="OFI-000" class="input-mobile">
                     </div>
                     <div>
-                        <label class="label-style uppercase text-[10px] text-slate-400 ml-2">Estatus</label>
-                        <select v-model="form.estatus" class="input-mobile font-bold !p-3 !text-xs appearance-none">
+                        <label class="label-mobile">Estatus</label>
+                        <select v-model="form.estatus" class="input-mobile font-bold appearance-none">
                             <option value="Pendiente">🟡 PENDIENTE</option>
                             <option value="Aprobado">🟢 APROBADO</option>
                             <option value="Denegado">🔴 DENEGADO</option>
@@ -140,57 +88,54 @@
                 </div>
 
                 <div>
-                    <label class="label-mobile">Teléfono</label>
-                    <input v-model="form.telefono" type="tel" placeholder="04120000000" class="input-mobile font-mono">
+                    <label class="label-mobile">Teléfono Móvil</label>
+                    <input v-model="form.telefono" type="tel" placeholder="04XXXXXXXXX" class="input-mobile font-mono">
                 </div>
-                
+
                 <div class="relative bg-white p-4 rounded-xl-mobile shadow-sm border border-slate-100">
-                    <label class="label-mobile !ml-0">Descripción del Requerimiento</label>
+                    <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue">Descripción del Requerimiento</label>
                     <textarea v-model="form.descripcion" rows="8" 
-                              class="w-full p-0 bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" 
-                              :placeholder="isScanning ? 'La IA está analizando la imagen...' : 'Escribe aquí o usa el escáner de IA...'"></textarea>
+                              class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" 
+                              :placeholder="isScanning ? 'La IA está analizando la imagen...' : 'Escribe aquí o usa el escáner'"></textarea>
                     
-                    <label class="absolute bottom-4 right-4 cursor-pointer flex items-center gap-2.5 bg-pdvsa-blue text-white p-3.5 rounded-2xl font-bold text-xs hover:bg-blue-800 shadow-lg shadow-blue-200 active:scale-95 transition-all z-10" :class="{ 'opacity-60': isScanning }">
+                    <label class="fab-ia" :class="{'opacity-50 cursor-not-allowed': isScanning}">
                         <span v-if="isScanning" class="loader"></span>
-                        <span v-if="!isScanning">📷</span>
-                        <span>{{ isScanning ? 'LEYENDO' : 'ESCANEAR' }}</span>
+                        <span v-else>📷</span>
+                        <span>{{ isScanning ? 'PROCESANDO' : 'IA SCAN' }}</span>
                         <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
                     </label>
                 </div>
             </section>
         </main>
 
-        <div class="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-f1f5f9 via-f1f5f9 to-f1f5f9/0 z-30">
+        <div class="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-f8fafc via-f8fafc to-transparent z-30">
             <button @click="enviarOficio" :disabled="isSyncing || isScanning" 
-                    class="w-full bg-slate-950 text-white py-4.5 rounded-2xl font-bold shadow-lg active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3">
-                <span v-if="isSyncing" class="loader border-t-slate-950 border-slate-200"></span>
-                <span>{{ isSyncing ? 'REGISTRANDO...' : 'REGISTRAR EN EXCEL' }}</span>
+                    class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3 uppercase tracking-widest text-sm">
+                <span v-if="isSyncing" class="loader border-t-white border-white/20"></span>
+                <span>{{ isSyncing ? 'Sincronizando' : 'Registrar Oficio' }}</span>
             </button>
         </div>
 
         <transition name="slide-up">
-            <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 backdrop-blur-sm" @click.self="menuConfig = false">
-                <div class="bg-white w-full rounded-t-2xl-mobile p-7 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-bold">Configuración de Enlaces</h3>
-                        <button @click="menuConfig = false" class="text-2xl text-slate-400 p-1">&times;</button>
-                    </div>
+            <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 backdrop-blur-sm" @click.self="menuConfig = false">
+                <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6 overflow-hidden">
+                    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
+                    <h3 class="text-xl font-black text-center">Configuración</h3>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="label-mobile">URL de Google Script</label>
-                            <input v-model="config.url" type="text" placeholder="https://script.google.com/..." class="input-mobile text-xs font-mono">
+                            <label class="label-mobile">Google App Script URL</label>
+                            <input v-model="config.url" type="text" placeholder="https://script.google.com/..." class="input-mobile text-[10px] font-mono">
                         </div>
                         <div>
                             <label class="label-mobile">Hugging Face Token</label>
-                            <input v-model="config.hfToken" type="password" placeholder="hf_xxxxxxxxxxxx" class="input-mobile text-xs font-mono">
-                            <p class="text-[9px] text-slate-400 mt-1.5 italic">* Requerido para el OCR por IA.</p>
+                            <input v-model="config.hfToken" type="password" placeholder="hf_xxxxxxxxxxxx" class="input-mobile text-[10px] font-mono">
                         </div>
                     </div>
 
                     <div class="flex gap-3 pt-4">
-                        <button @click="guardarConfig" class="flex-1 bg-pdvsa-blue text-white py-4 rounded-xl-mobile font-bold text-sm active:scale-95">Guardar Cambios</button>
-                        <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl-mobile font-semibold text-sm">Cerrar</button>
+                        <button @click="guardarConfig" class="flex-1 bg-pdvsa-blue text-white py-4 rounded-2xl font-bold">Guardar</button>
+                        <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -198,14 +143,15 @@
 
     </div>
 
-    <script type="module">
-        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+    <script>
         const { createApp } = Vue;
 
         createApp({
             data() {
                 return {
-                    isSyncing: false, isScanning: false, menuConfig: false,
+                    isSyncing: false,
+                    isScanning: false,
+                    menuConfig: false,
                     config: JSON.parse(localStorage.getItem('nexus_oficios_cfg') || '{ "url": "", "hfToken": "" }'),
                     form: this.getEmptyForm()
                 }
@@ -214,61 +160,96 @@
                 getEmptyForm() {
                     return {
                         fechaRecepcion: new Date().toISOString().split('T')[0],
-                        recibidoPor: '', organizacion: '', dirigidoA: 'Gerencia',
-                        claseRequerimiento: 'Mantenimiento', tipoApoyo: 'Social o Personal',
-                        estatus: 'Pendiente', numDocumento: '', contacto: '', telefono: '',
-                        tipoEquipo: '', cantidad: 1, descripcion: '', observacion: '',
+                        recibidoPor: 'Jesús Rivero',
+                        organizacion: '',
+                        dirigidoA: 'Gerencia',
+                        claseRequerimiento: 'Mantenimiento',
+                        tipoApoyo: 'Social o Personal',
+                        estatus: 'Pendiente',
+                        numDocumento: '',
+                        contacto: '',
+                        telefono: '',
+                        tipoEquipo: '',
+                        cantidad: 1,
+                        descripcion: '',
+                        observacion: '',
                         fechaRequerimiento: new Date().toISOString().split('T')[0]
                     }
                 },
+
                 async escanearDocumento(event) {
                     const file = event.target.files[0];
                     if (!file) return;
-                    if (!this.config.hfToken) return Swal.fire('Falta Token', 'Ingresa tu Token de Hugging Face en ajustes ⚙️', 'warning');
+                    
+                    console.log("🚀 Archivo seleccionado:", file.name);
+
+                    if (!this.config.hfToken) {
+                        Swal.fire('Atención', 'Configura tu Token de Hugging Face primero.', 'warning');
+                        return;
+                    }
 
                     this.isScanning = true;
-                    // Notificación silenciosa en la esquina para móvil
-                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 4000 });
-                    Toast.fire({ icon: 'info', title: 'IA Analizando imagen...' });
+                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000 });
+                    Toast.fire({ icon: 'info', title: 'Conectando con IA...' });
 
                     try {
-                        const token = this.config.hfToken.trim();
+                        // Acceso a la librería Gradio
+                        const { Client } = window.gradio_client;
+                        const hfToken = this.config.hfToken.trim();
+                        const finalToken = hfToken.startsWith('hf_') ? hfToken : `hf_${hfToken}`;
+
+                        console.log("📡 Conectando al Space prithivMLmods/GLM-OCR-Demo...");
                         const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
-                            hf_token: token.startsWith('hf_') ? token : `hf_${token}`
+                            hf_token: finalToken
                         });
 
+                        console.log("✅ Conexión establecida. Procesando OCR...");
+                        // Enviamos los parámetros como un arreglo posicional: [imagen, tipo_ocr]
                         const result = await client.predict(0, [file, "format"]);
+
+                        console.log("📥 Resultado recibido de la IA:", result);
 
                         if (result.data && result.data[0]) {
                             this.form.descripcion = result.data[0];
-                            Toast.fire({ icon: 'success', title: 'Texto extraído correctamente' });
+                            Toast.fire({ icon: 'success', title: 'Texto extraído con éxito' });
+                        } else {
+                            throw new Error("La IA no pudo leer texto en esta imagen.");
                         }
-                    } catch (e) {
-                        console.error(e);
-                        Swal.fire('Error de IA', 'No se pudo conectar con el servidor OCR. Verifica tu Token.', 'error');
+
+                    } catch (error) {
+                        console.error("❌ ERROR EN OCR:", error);
+                        Swal.fire('Error de IA', `No se pudo procesar: ${error.message}`, 'error');
                     } finally {
                         this.isScanning = false;
-                        // Limpiar input file para permitir subir la misma foto
-                        event.target.value = '';
+                        event.target.value = ''; // Reset del input file
                     }
                 },
+
                 guardarConfig() {
                     localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
                     Swal.fire({ icon: 'success', title: 'Configuración Guardada', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
                 },
+
                 async enviarOficio() {
                     if(!this.config.url) {
                         this.menuConfig = true;
-                        return Swal.fire('Configuración', 'URL de Google Script requerida.', 'warning');
+                        return Swal.fire('Error', 'Falta URL de Google Script', 'warning');
                     }
                     this.isSyncing = true;
                     try {
-                        await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
-                        Swal.fire('¡Registrado!', 'Datos enviados a Excel.', 'success');
+                        console.log("📤 Enviando datos a Google Sheets...");
+                        await fetch(this.config.url, { 
+                            method: 'POST', 
+                            mode: 'no-cors', 
+                            body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) 
+                        });
+                        
+                        Swal.fire('¡Registrado!', 'Los datos se sincronizaron con éxito.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        Swal.fire('Error', 'Fallo de red.', 'error');
+                        console.error("❌ Error Sincronización:", e);
+                        Swal.fire('Error', 'No se pudo conectar con Google.', 'error');
                     } finally {
                         this.isSyncing = false;
                     }
