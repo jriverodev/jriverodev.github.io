@@ -10,9 +10,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        pdvsa: { red: '#ed1c24', blue: '#1e40af', dark: '#0f172a' }
-                    },
+                    colors: { pdvsa: { red: '#ed1c24', blue: '#1e40af', dark: '#0f172a' } },
                     borderRadius: { 'xl-mobile': '1.25rem', '2xl-mobile': '1.75rem' }
                 }
             }
@@ -21,25 +19,16 @@
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; padding-bottom: constant(safe-area-inset-bottom); padding-bottom: env(safe-area-inset-bottom); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
         [v-cloak] { display: none; }
         .input-mobile { @apply w-full p-4 bg-white rounded-xl-mobile border border-slate-100 text-sm focus:ring-2 focus:ring-pdvsa-blue outline-none transition-all shadow-sm; }
         .label-mobile { @apply text-[11px] font-bold uppercase text-slate-400 ml-3 mb-1 block tracking-widest; }
-        
-        /* Spinner */
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #1e40af; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Botón IA */
         .fab-ia { @apply absolute bottom-4 right-4 flex items-center gap-2 bg-pdvsa-blue text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all z-10; }
-        
-        /* Modal Animation */
-        .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease-out; }
-        .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); opacity: 0; }
     </style>
 </head>
 <body class="text-slate-900">
@@ -55,49 +44,24 @@
 
         <main class="p-5 space-y-6 flex-grow">
             <section class="space-y-4">
-                <div>
-                    <label class="label-mobile">Fecha Recepción</label>
-                    <input v-model="form.fechaRecepcion" type="date" class="input-mobile">
-                </div>
-                
-                <div>
-                    <label class="label-mobile">Organización Remitente</label>
-                    <input v-model="form.organizacion" type="text" placeholder="Ej. Gerencia de Transporte Terrestre" class="input-mobile">
-                </div>
-
+                <div><label class="label-mobile">Fecha Recepción</label><input v-model="form.fechaRecepcion" type="date" class="input-mobile"></div>
+                <div><label class="label-mobile">Organización Remitente</label><input v-model="form.organizacion" type="text" placeholder="Ej. Gerencia de Transporte" class="input-mobile"></div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="label-mobile">N° Documento</label>
-                        <input v-model="form.numDocumento" type="text" placeholder="GGZ-2026-04-014" class="input-mobile">
-                    </div>
-                    <div>
-                        <label class="label-mobile">Estatus</label>
-                        <select v-model="form.estatus" class="input-mobile font-bold appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23cbd5e1%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')] bg-[length:1em] bg-[right_1rem_center] bg-no-repeat">
+                    <div><label class="label-mobile">N° Documento</label><input v-model="form.numDocumento" type="text" placeholder="OFI-000" class="input-mobile"></div>
+                    <div><label class="label-mobile">Estatus</label>
+                        <select v-model="form.estatus" class="input-mobile font-bold appearance-none">
                             <option value="Pendiente">🟡 PENDIENTE</option>
                             <option value="Aprobado">🟢 APROBADO</option>
                             <option value="Denegado">🔴 DENEGADO</option>
                         </select>
                     </div>
                 </div>
-
-                <div>
-                    <label class="label-mobile">Persona de Contacto</label>
-                    <input v-model="form.contacto" type="text" placeholder="Nombre completo" class="input-mobile">
-                </div>
-
-                <div>
-                    <label class="label-mobile">Teléfono de Contacto</label>
-                    <input v-model="form.telefono" type="tel" placeholder="04XXXXXXXXX" class="input-mobile font-mono">
-                </div>
+                <div><label class="label-mobile">Persona de Contacto</label><input v-model="form.contacto" type="text" placeholder="Nombre" class="input-mobile"></div>
+                <div><label class="label-mobile">Teléfono</label><input v-model="form.telefono" type="tel" placeholder="04XXXXXXXXX" class="input-mobile font-mono"></div>
 
                 <div class="relative bg-white p-4 rounded-xl-mobile shadow-sm border border-slate-100">
-                    <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue flex items-center gap-2">
-                        <span>📄</span>
-                        <span>Descripción detallada del Asunto</span>
-                    </label>
-                    <textarea v-model="form.descripcion" rows="10" 
-                              class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" 
-                              :placeholder="isScanning ? 'La Inteligencia Artificial está procesando el documento...' : 'Describe el requerimiento aquí o usa el botón para escanear con IA'"></textarea>
+                    <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue flex items-center gap-2"><span>📄</span><span>Descripción del Asunto</span></label>
+                    <textarea v-model="form.descripcion" rows="10" class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" :placeholder="isScanning ? 'Procesando...' : 'Use el botón para escanear con IA'"></textarea>
                     
                     <label class="fab-ia" :class="{'opacity-50 cursor-not-allowed': isScanning}">
                         <span v-if="isScanning" class="loader"></span>
@@ -110,38 +74,25 @@
         </main>
 
         <div class="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-f8fafc via-f8fafc to-transparent z-30">
-            <button @click="enviarOficio" :disabled="isSyncing || isScanning" 
-                    class="w-full bg-slate-950 text-white py-4.5 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3">
+            <button @click="enviarOficio" :disabled="isSyncing || isScanning" class="w-full bg-slate-950 text-white py-4.5 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3">
                 <span v-if="isSyncing" class="loader border-t-white border-white/20"></span>
-                <span class="uppercase tracking-widest text-xs font-bold">{{ isSyncing ? 'Sincronizando...' : 'Registrar Oficio en Excel' }}</span>
+                <span class="uppercase tracking-widest text-xs font-bold">{{ isSyncing ? 'Sincronizando...' : 'Registrar Oficio' }}</span>
             </button>
         </div>
 
-        <transition name="slide-up">
-            <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 backdrop-blur-sm" @click.self="menuConfig = false">
-                <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-                    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto"></div>
-                    <h3 class="text-xl font-black text-center">Configuración</h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="label-mobile">Google App Script URL</label>
-                            <input v-model="config.url" type="text" class="input-mobile text-[10px] font-mono">
-                        </div>
-                        <div>
-                            <label class="label-mobile">Hugging Face Token</label>
-                            <input v-model="config.hfToken" type="password" class="input-mobile text-[10px] font-mono">
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 pt-4 pb-constant">
-                        <button @click="guardarConfig" class="flex-1 bg-pdvsa-blue text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">Guardar</button>
-                        <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold">Cerrar</button>
-                    </div>
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 backdrop-blur-sm" @click.self="menuConfig = false">
+            <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-black text-center">Configuración</h3>
+                <div class="space-y-4">
+                    <div><label class="label-mobile">Google App Script URL</label><input v-model="config.url" type="text" class="input-mobile text-[10px] font-mono"></div>
+                    <div><label class="label-mobile">Hugging Face Token</label><input v-model="config.hfToken" type="password" class="input-mobile text-[10px] font-mono"></div>
+                </div>
+                <div class="flex gap-3 pt-4 pb-4">
+                    <button @click="guardarConfig" class="flex-1 bg-pdvsa-blue text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">Guardar</button>
+                    <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold">Cerrar</button>
                 </div>
             </div>
-        </transition>
-
+        </div>
     </div>
 
     <script type="module">
@@ -150,9 +101,7 @@
         createApp({
             data() {
                 return {
-                    isSyncing: false,
-                    isScanning: false,
-                    menuConfig: false,
+                    isSyncing: false, isScanning: false, menuConfig: false,
                     config: JSON.parse(localStorage.getItem('nexus_oficios_cfg') || '{ "url": "", "hfToken": "" }'),
                     form: this.getEmptyForm()
                 }
@@ -168,99 +117,63 @@
                         fechaRequerimiento: new Date().toISOString().split('T')[0]
                     }
                 },
-
                 async escanearDocumento(event) {
                     const file = event.target.files[0];
                     if (!file) return;
-                    
-                    console.log("🚀 Archivo seleccionado:", file.name);
-
-                    if (!this.config.hfToken) {
-                        Swal.fire('Atención', 'Configura tu Token de HF en ajustes.', 'warning');
-                        return;
-                    }
+                    if (!this.config.hfToken) return Swal.fire('Atención', 'Falta Token de HF.', 'warning');
 
                     this.isScanning = true;
-                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 5000 });
-                    Toast.fire({ icon: 'info', title: 'Iniciando IA y cargando modelo...' });
+                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 6000 });
+                    Toast.fire({ icon: 'info', title: 'Conectando con IA...' });
 
                     try {
-                        // Importación dinámica de la librería
                         const gradioModule = await import("https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js");
                         const Client = gradioModule.Client;
-
-                        const hfToken = this.config.hfToken.trim();
-                        const finalToken = hfToken.startsWith('hf_') ? hfToken : `hf_${hfToken}`;
-
-                        console.log("📡 Conectando al Space prithivMLmods/GLM-OCR-Demo...");
+                        const token = this.config.hfToken.trim();
+                        
                         const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
-                            hf_token: finalToken
+                            hf_token: token.startsWith('hf_') ? token : `hf_${token}`
                         });
 
-                        console.log("✅ Conexión establecida. Procesando imagen (esto puede tardar la primera vez)...");
+                        // LA SOLUCIÓN DEFINITIVA: 
+                        // Enviamos los argumentos directamente como parámetros de la función predict,
+                        // NO envueltos en un objeto {data: [...]}, sino como argumentos sueltos.
+                        const result = await client.predict(0, [
+                            file,       // Parámetro 1: Imagen
+                            "format"    // Parámetro 2: ocr_type
+                        ]);
 
-                        // --- CORRECCIÓN CRÍTICA DE PARÁMETROS ---
-                        // Para este modelo, debemos enviar un objeto de datos con la propiedad 'data'
-                        // que contenga la lista de parámetros posicionales.
-                        // El orden es: [Imagen, Tipo_OCR]
-                        const result = await client.predict(0, {
-                            data: [file, "format"]
-                        });
+                        console.log("📥 Resultado IA:", result);
 
-                        console.log("📥 Resultado completo recibido:", result);
-
-                        if (result.data && result.data.length > 0) {
-                            // Extraemos el primer elemento que debería ser el texto
-                            const extractedText = result.data[0];
-                            console.log("📝 Texto extraído:", extractedText);
-                            
-                            if (extractedText && extractedText.trim() !== "") {
-                                this.form.descripcion = extractedText;
-                                Toast.fire({ icon: 'success', title: 'Texto extraído correctamente' });
-                            } else {
-                                throw new Error("La IA procesó la imagen pero devolvió un texto vacío.");
-                            }
+                        if (result && result.data && result.data[0]) {
+                            this.form.descripcion = result.data[0];
+                            Toast.fire({ icon: 'success', title: 'Texto extraído' });
                         } else {
-                            throw new Error("La IA no devolvió ninguna estructura de datos reconocible.");
+                            throw new Error("No se recibió texto legible.");
                         }
-
                     } catch (error) {
-                        console.error("❌ ERROR CRÍTICO EN OCR:", error);
-                        Swal.fire('Error de IA', `No se pudo procesar la imagen. Detalle: ${error.message}`, 'error');
+                        console.error("❌ ERROR:", error);
+                        Swal.fire('Error de IA', error.message, 'error');
                     } finally {
                         this.isScanning = false;
-                        event.target.value = ''; // Reset del input file
+                        event.target.value = '';
                     }
                 },
-
                 guardarConfig() {
                     localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
-                    Swal.fire({ icon: 'success', title: 'Configuración Guardada', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
+                    Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
                 },
-
                 async enviarOficio() {
-                    if(!this.config.url) {
-                        this.menuConfig = true;
-                        return Swal.fire('Error', 'Falta URL de Google Script', 'warning');
-                    }
+                    if(!this.config.url) { this.menuConfig = true; return Swal.fire('Error', 'Falta URL', 'warning'); }
                     this.isSyncing = true;
                     try {
-                        console.log("📤 Enviando datos a Google Sheets...");
-                        await fetch(this.config.url, { 
-                            method: 'POST', 
-                            mode: 'no-cors', 
-                            body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) 
-                        });
-                        
-                        Swal.fire('¡Registrado!', 'Los datos se enviaron correctamente al Excel.', 'success');
+                        await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
+                        Swal.fire('¡Registrado!', 'Enviado a Excel.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        console.error("❌ Error Sincronización:", e);
-                        Swal.fire('Error', 'Fallo de red. No se pudo conectar con Google.', 'error');
-                    } finally {
-                        this.isSyncing = false;
-                    }
+                        Swal.fire('Error', 'Fallo de red.', 'error');
+                    } finally { this.isSyncing = false; }
                 }
             }
         }).mount('#app')
