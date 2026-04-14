@@ -116,44 +116,39 @@
                 async escanearDocumento(event) {
                     const file = event.target.files[0];
                     if (!file) return;
-                    if (!this.config.hfToken) return Swal.fire('Atención', 'Configura tu Token de HF en ajustes.', 'warning');
+                    if (!this.config.hfToken) return Swal.fire('Atención', 'Configura tu Token de HF.', 'warning');
 
                     this.isScanning = true;
-                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 10000 });
-                    Toast.fire({ icon: 'info', title: 'IA: Procesando documento...' });
+                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 15000 });
+                    Toast.fire({ icon: 'info', title: 'IA: Procesando...' });
 
                     try {
-                        // Importación dinámica
                         const gradioModule = await import("https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js");
-                        const { Client, handle_file } = gradioModule;
+                        const { Client } = gradioModule;
                         
                         const token = this.config.hfToken.trim();
                         const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
                             hf_token: token.startsWith('hf_') ? token : `hf_${token}`
                         });
 
-                        // CAMBIO CLAVE: Usamos handle_file para asegurar que el archivo se procese correctamente
-                        // y enviamos los parámetros como espera la API del Space.
-                        const result = await client.predict("/predict", [
-                            handle_file(file), 
+                        // LLAMADA SIMPLIFICADA POR ÍNDICE
+                        // Usamos predict(0, ...) que es el punto de entrada más común
+                        const result = await client.predict(0, [
+                            file, 
                             "format"
                         ]);
 
                         console.log("📥 Resultado IA:", result);
 
                         if (result && result.data && result.data[0]) {
-                            // Limpiamos el resultado por si viene con tags de formato
-                            let textoFinal = result.data[0];
-                            if (typeof textoFinal === 'string') {
-                                this.form.descripcion = textoFinal.trim();
-                                Toast.fire({ icon: 'success', title: 'Texto extraído con éxito', timer: 2000 });
-                            }
+                            this.form.descripcion = result.data[0].trim();
+                            Toast.fire({ icon: 'success', title: 'Texto extraído', timer: 2000 });
                         } else {
-                            throw new Error("El modelo no detectó texto. Intenta con una foto más clara.");
+                            throw new Error("El modelo no devolvió texto.");
                         }
                     } catch (error) {
                         console.error("❌ ERROR:", error);
-                        Swal.fire('Error de Lectura', `La IA no pudo procesar esta imagen. Detalle: ${error.message}`, 'error');
+                        Swal.fire('Error', `Fallo en el servidor de IA: ${error.message}`, 'error');
                     } finally {
                         this.isScanning = false;
                         event.target.value = '';
@@ -165,14 +160,14 @@
                     Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
                 },
                 async enviarOficio() {
-                    if(!this.config.url) return Swal.fire('Error', 'Falta URL de Google Script', 'warning');
+                    if(!this.config.url) return Swal.fire('Error', 'Falta URL', 'warning');
                     this.isSyncing = true;
                     try {
                         await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
-                        Swal.fire('¡Éxito!', 'Oficio registrado en la base de datos.', 'success');
+                        Swal.fire('¡Éxito!', 'Registrado.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        Swal.fire('Error', 'No se pudo conectar con el servidor de Google.', 'error');
+                        Swal.fire('Error', 'Fallo de red.', 'error');
                     } finally { this.isSyncing = false; }
                 }
             }
