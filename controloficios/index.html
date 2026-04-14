@@ -48,7 +48,7 @@
                 <div><label class="label-mobile">Organización Remitente</label><input v-model="form.organizacion" type="text" placeholder="Ej. Gerencia de Transporte" class="input-mobile"></div>
                 
                 <div class="grid grid-cols-2 gap-3">
-                    <div><label class="label-mobile">N° Documento</label><input v-model="form.numDocumento" type="text" placeholder="GGZ-2026-04-014" class="input-mobile"></div>
+                    <div><label class="label-mobile">N° Documento</label><input v-model="form.numDocumento" type="text" placeholder="OFI-000" class="input-mobile"></div>
                     <div><label class="label-mobile">Estatus</label>
                         <select v-model="form.estatus" class="input-mobile font-bold appearance-none bg-white">
                             <option value="Pendiente">🟡 PENDIENTE</option>
@@ -60,12 +60,12 @@
 
                 <div class="relative bg-white p-4 rounded-xl-mobile shadow-sm border border-slate-100">
                     <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue flex items-center gap-2"><span>📄</span><span>Descripción del Asunto</span></label>
-                    <textarea v-model="form.descripcion" rows="12" class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Suba una foto del oficio para extraer el texto automáticamente'"></textarea>
+                    <textarea v-model="form.descripcion" rows="12" class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Use el botón para escanear con IA'"></textarea>
                     
                     <label class="fab-ia" :class="{'opacity-50 cursor-not-allowed': isScanning}">
                         <span v-if="isScanning" class="loader"></span>
                         <span v-else>📷</span>
-                        <span>{{ isScanning ? 'PROCESANDO' : 'ESCANEAR' }}</span>
+                        <span>{{ isScanning ? 'LEYENDO' : 'IA SCAN' }}</span>
                         <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
                     </label>
                 </div>
@@ -120,35 +120,35 @@
 
                     this.isScanning = true;
                     const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 15000 });
-                    Toast.fire({ icon: 'info', title: 'IA: Procesando...' });
+                    Toast.fire({ icon: 'info', title: 'Conectando a tu Space...' });
 
                     try {
                         const gradioModule = await import("https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js");
-                        const { Client } = gradioModule;
+                        const { Client, handle_file } = gradioModule;
                         
                         const token = this.config.hfToken.trim();
-                        const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
+                        // Conectamos a TU nuevo Space
+                        const client = await Client.connect("jesusdaver86/registrooficio", {
                             hf_token: token.startsWith('hf_') ? token : `hf_${token}`
                         });
 
-                        // LLAMADA SIMPLIFICADA POR ÍNDICE
-                        // Usamos predict(0, ...) que es el punto de entrada más común
+                        // Enviamos el archivo usando handle_file para asegurar compatibilidad
                         const result = await client.predict(0, [
-                            file, 
+                            handle_file(file), 
                             "format"
                         ]);
 
-                        console.log("📥 Resultado IA:", result);
+                        console.log("📥 Resultado de TU Space:", result);
 
                         if (result && result.data && result.data[0]) {
                             this.form.descripcion = result.data[0].trim();
-                            Toast.fire({ icon: 'success', title: 'Texto extraído', timer: 2000 });
+                            Toast.fire({ icon: 'success', title: 'Texto procesado', timer: 2000 });
                         } else {
-                            throw new Error("El modelo no devolvió texto.");
+                            throw new Error("El modelo no devolvió texto. Asegúrate de que el Space esté 'Running'.");
                         }
                     } catch (error) {
                         console.error("❌ ERROR:", error);
-                        Swal.fire('Error', `Fallo en el servidor de IA: ${error.message}`, 'error');
+                        Swal.fire('Error', `Fallo en jesusdaver86/registrooficio: ${error.message}`, 'error');
                     } finally {
                         this.isScanning = false;
                         event.target.value = '';
@@ -157,14 +157,14 @@
                 guardarConfig() {
                     localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
-                    Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
+                    Swal.fire({ icon: 'success', title: 'Configuración Guardada', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
                 },
                 async enviarOficio() {
-                    if(!this.config.url) return Swal.fire('Error', 'Falta URL', 'warning');
+                    if(!this.config.url) return Swal.fire('Error', 'Falta URL de Google Script', 'warning');
                     this.isSyncing = true;
                     try {
                         await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
-                        Swal.fire('¡Éxito!', 'Registrado.', 'success');
+                        Swal.fire('¡Éxito!', 'Registrado en la base de datos.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
                         Swal.fire('Error', 'Fallo de red.', 'error');
