@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NEXUS OFICIOS - PDVSA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -25,16 +25,12 @@
                 <h1 class="text-2xl font-black text-blue-600 tracking-tighter">NEXUS <span class="text-slate-400">OFICIOS</span></h1>
                 <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Gestión de Requerimientos con IA</p>
             </div>
-            <button @click="menuConfig = true" class="bg-white shadow-sm text-slate-600 p-3 rounded-xl active:scale-95 border border-slate-100">
-                ⚙️
-            </button>
+            <button @click="menuConfig = true" class="bg-white shadow-sm text-slate-600 p-3 rounded-xl active:scale-95 border border-slate-100">⚙️</button>
         </header>
 
         <main class="px-6">
             <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
-                <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center">
-                    <span class="mr-2">📝</span> Registro de Información
-                </h2>
+                <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center"><span class="mr-2">📝</span> Registro de Información</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-4">
@@ -87,15 +83,13 @@
                 <div class="mt-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                     <div class="flex justify-between items-center mb-3">
                         <label class="text-[10px] font-black uppercase text-blue-600 ml-1">Descripción del Oficio</label>
-                        <label class="cursor-pointer flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-[10px] hover:bg-blue-700 transition-all shadow-md active:scale-95">
+                        <label class="cursor-pointer flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-[10px] hover:bg-blue-700 shadow-md active:scale-95">
                             <span v-if="!isScanning">📷 ESCANEAR CON IA</span>
                             <span v-else>⌛ PROCESANDO...</span>
                             <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
                         </label>
                     </div>
-                    <textarea v-model="form.descripcion" rows="5" 
-                              class="w-full p-4 bg-white rounded-xl border-none text-sm focus:ring-2 focus:ring-blue-500 shadow-inner" 
-                              :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Escribe aquí o usa el escáner para extraer texto automáticamente.'"></textarea>
+                    <textarea v-model="form.descripcion" rows="5" class="w-full p-4 bg-white rounded-xl border-none text-sm focus:ring-2 focus:ring-blue-500 shadow-inner" :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Escribe aquí o usa el escáner'"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mt-4">
@@ -122,21 +116,18 @@
         </main>
 
         <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm card-shadow">
+            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm">
                 <h3 class="text-xl font-black mb-6">Configuración</h3>
-                
                 <div class="space-y-4">
                     <div>
                         <label class="label-style">Google App Script URL</label>
-                        <input v-model="config.url" type="text" placeholder="https://script.google.com/..." class="input-field text-[10px] font-mono">
+                        <input v-model="config.url" type="text" class="input-field text-[10px] font-mono">
                     </div>
                     <div>
                         <label class="label-style">Hugging Face Token</label>
-                        <input v-model="config.hfToken" type="password" placeholder="hf_xxxxxxxxxxxx" class="input-field text-[10px] font-mono">
-                        <p class="text-[8px] text-slate-400 mt-1 italic">* Requerido para usar el OCR de forma estable.</p>
+                        <input v-model="config.hfToken" type="password" class="input-field text-[10px] font-mono">
                     </div>
                 </div>
-
                 <div class="flex gap-2 mt-8">
                     <button @click="guardarConfig" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">Guardar</button>
                     <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-sm">Cerrar</button>
@@ -163,83 +154,59 @@
                 getEmptyForm() {
                     return {
                         fechaRecepcion: new Date().toISOString().split('T')[0],
-                        recibidoPor: '',
-                        organizacion: '',
-                        dirigidoA: 'Gerencia General',
-                        claseRequerimiento: 'Mantenimiento',
-                        tipoApoyo: 'Social o Personal',
-                        estatus: 'Pendiente',
-                        numDocumento: '',
-                        contacto: '',
-                        telefono: '',
-                        tipoEquipo: '',
-                        cantidad: 1,
-                        descripcion: '',
-                        observacion: '',
+                        recibidoPor: '', organizacion: '', dirigidoA: 'Gerencia General',
+                        claseRequerimiento: 'Mantenimiento', tipoApoyo: 'Social o Personal',
+                        estatus: 'Pendiente', numDocumento: '', contacto: '', telefono: '',
+                        tipoEquipo: '', cantidad: 1, descripcion: '', observacion: '',
                         fechaRequerimiento: new Date().toISOString().split('T')[0]
                     }
                 },
-
                 async escanearDocumento(event) {
                     const file = event.target.files[0];
-                    if (!file) return;
+                    if (!file || !this.config.hfToken) {
+                        return Swal.fire('Configuración', 'Por favor, ingresa tu HF Token en ajustes ⚙️', 'warning');
+                    }
 
                     this.isScanning = true;
-                    Swal.fire({
-                        title: 'IA Analizando',
-                        text: 'Extrayendo texto del oficio...',
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
+                    Swal.fire({ title: 'IA Analizando', text: 'Leyendo documento...', showConfirmButton: false, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
                     try {
+                        const token = this.config.hfToken.trim();
                         const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
-                            hf_token: this.config.hfToken.startsWith('hf_') ? this.config.hfToken : `hf_${this.config.hfToken}`
+                            hf_token: token.startsWith('hf_') ? token : `hf_${token}`
                         });
 
-                        // El endpoint suele ser /process_image para este Space específico
-                        const result = await client.predict("/process_image", { 
+                        // Cambio clave: Usamos el índice 0 en lugar de un nombre de endpoint
+                        const result = await client.predict(0, { 
                             image: file,
                             ocr_type: "format" 
                         });
 
                         if (result.data && result.data[0]) {
                             this.form.descripcion = result.data[0];
-                            Swal.fire({ icon: 'success', title: 'Completado', text: 'Texto extraído con éxito', timer: 1500 });
+                            Swal.fire({ icon: 'success', title: 'Completado', timer: 1500 });
                         }
                     } catch (error) {
-                        console.error(error);
-                        Swal.fire('Error de IA', 'No se pudo conectar con Hugging Face. Revisa tu Token.', 'error');
+                        console.error("Detalle del error:", error);
+                        Swal.fire('Error', 'No se pudo procesar la imagen.', 'error');
                     } finally {
                         this.isScanning = false;
                     }
                 },
-
                 guardarConfig() {
                     localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
-                    Swal.fire('Configuración Guardada', '', 'success');
+                    Swal.fire('Listo', '', 'success');
                 },
-
                 async enviarOficio() {
-                    if(!this.config.url) {
-                        this.menuConfig = true;
-                        return Swal.fire('Falta Configuración', 'Debes pegar la URL de tu Google Script.', 'warning');
-                    }
-
+                    if(!this.config.url) return Swal.fire('Error', 'Falta URL de Google', 'warning');
                     this.isSyncing = true;
                     try {
-                        await fetch(this.config.url, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            body: JSON.stringify({ type: 'nuevo_oficio', data: this.form })
-                        });
-                        
-                        Swal.fire('¡Registrado!', 'Los datos se enviaron a la hoja de Excel.', 'success');
+                        await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
+                        Swal.fire('Registrado', '', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        Swal.fire('Error', 'Fallo al conectar con Google Sheets.', 'error');
+                        Swal.fire('Error', 'Fallo de red', 'error');
                     } finally {
                         this.isSyncing = false;
                     }
