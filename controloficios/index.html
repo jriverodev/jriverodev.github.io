@@ -14,6 +14,7 @@
         [v-cloak] { display: none; }
         .input-field { @apply w-full p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all; }
         .label-style { @apply text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block; }
+        .btn-primary { @apply w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:bg-slate-300; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
@@ -22,15 +23,17 @@
         <header class="p-6 flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-black text-blue-600 tracking-tighter">NEXUS <span class="text-slate-400">OFICIOS</span></h1>
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Registro de Requerimientos y Apoyo</p>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Gestión de Requerimientos con IA</p>
             </div>
-            <button @click="menuConfig = true" class="bg-slate-200 text-slate-600 p-3 rounded-xl active:scale-95">⚙️</button>
+            <button @click="menuConfig = true" class="bg-white shadow-sm text-slate-600 p-3 rounded-xl active:scale-95 border border-slate-100">
+                ⚙️
+            </button>
         </header>
 
         <main class="px-6">
             <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center">
-                    <span class="mr-2">📝</span> Nuevo Registro de Oficio
+                    <span class="mr-2">📝</span> Registro de Información
                 </h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -48,10 +51,6 @@
                             <input v-model="form.organizacion" type="text" placeholder="Ej: Alcaldía, Consejo Comunal" class="input-field">
                         </div>
                         <div>
-                            <label class="label-style">Dirigido A</label>
-                            <input v-model="form.dirigidoA" type="text" placeholder="Nombre de la autoridad" class="input-field">
-                        </div>
-                        <div>
                             <label class="label-style">Clase de Requerimiento</label>
                             <select v-model="form.claseRequerimiento" class="input-field">
                                 <option value="Mantenimiento">Mantenimiento</option>
@@ -59,21 +58,11 @@
                                 <option value="Otros">Otros</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="label-style">Tipo de Apoyo</label>
-                            <select v-model="form.tipoApoyo" class="input-field">
-                                <option value="Deportivo">Deportivo</option>
-                                <option value="Religioso">Religioso</option>
-                                <option value="Cultural">Cultural</option>
-                                <option value="Social o Personal">Social o Personal</option>
-                                <option value="Suministros de Materiales y Combustible">Suministros de Materiales y Combustible</option>
-                            </select>
-                        </div>
                     </div>
 
                     <div class="space-y-4">
                         <div>
-                            <label class="label-style">Número de Documento / Oficio</label>
+                            <label class="label-style">Número de Documento</label>
                             <input v-model="form.numDocumento" type="text" placeholder="Ej: OFI-2024-001" class="input-field">
                         </div>
                         <div>
@@ -82,64 +71,91 @@
                         </div>
                         <div>
                             <label class="label-style">Teléfono</label>
-                            <input v-model="form.telefono" type="tel" placeholder="04XX-0000000" class="input-field">
+                            <input v-model="form.telefono" type="tel" placeholder="04120000000" class="input-field">
                         </div>
                         <div>
-                            <label class="label-style">Estatus</label>
+                            <label class="label-style">Estatus Inicial</label>
                             <select v-model="form.estatus" class="input-field font-bold">
                                 <option value="Pendiente">🟡 Pendiente</option>
                                 <option value="Aprobado">🟢 Aprobado</option>
                                 <option value="Denegado">🔴 Denegado</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="label-style">Tipo de Equipo/Material</label>
-                            <input v-model="form.tipoEquipo" type="text" placeholder="Ej: Transformador, Pintura" class="input-field">
-                        </div>
-                        <div>
-                            <label class="label-style">Cantidad</label>
-                            <input v-model="form.cantidad" type="number" class="input-field">
-                        </div>
                     </div>
                 </div>
 
-                <div class="mt-4 space-y-4">
+                <div class="mt-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[10px] font-black uppercase text-blue-600 ml-1">Descripción del Oficio</label>
+                        <label class="cursor-pointer flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-[10px] hover:bg-blue-700 transition-all shadow-md active:scale-95">
+                            <span v-if="!isScanning">📷 ESCANEAR CON IA</span>
+                            <span v-else>⌛ PROCESANDO...</span>
+                            <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
+                        </label>
+                    </div>
+                    <textarea v-model="form.descripcion" rows="5" 
+                              class="w-full p-4 bg-white rounded-xl border-none text-sm focus:ring-2 focus:ring-blue-500 shadow-inner" 
+                              :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Escribe aquí o usa el escáner para extraer texto automáticamente.'"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label class="label-style">Descripción del Requerimiento</label>
-                        <textarea v-model="form.descripcion" rows="2" class="input-field" placeholder="Detalle la solicitud..."></textarea>
+                        <label class="label-style">Tipo de Apoyo</label>
+                        <select v-model="form.tipoApoyo" class="input-field">
+                            <option value="Deportivo">Deportivo</option>
+                            <option value="Religioso">Religioso</option>
+                            <option value="Cultural">Cultural</option>
+                            <option value="Social o Personal">Social o Personal</option>
+                            <option value="Suministros de Materiales y Combustible">Suministros</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="label-style">Observaciones / Anexos</label>
-                        <input v-model="form.observacion" type="text" placeholder="Notas adicionales" class="input-field">
+                        <label class="label-style">Cantidad</label>
+                        <input v-model="form.cantidad" type="number" class="input-field">
                     </div>
                 </div>
 
-                <button @click="enviarOficio" :disabled="isSyncing" 
-                        class="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:bg-slate-300">
-                    {{ isSyncing ? 'PROCESANDO...' : 'REGISTRAR OFICIO' }}
+                <button @click="enviarOficio" :disabled="isSyncing || isScanning" class="btn-primary mt-8">
+                    {{ isSyncing ? 'SINCRONIZANDO...' : 'REGISTRAR EN EXCEL' }}
                 </button>
             </div>
         </main>
 
         <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm">
+            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm card-shadow">
                 <h3 class="text-xl font-black mb-6">Configuración</h3>
-                <label class="label-style">Google Script URL</label>
-                <input v-model="config.url" type="text" class="input-field mb-6 font-mono text-[10px]">
-                <button @click="guardarConfig" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-sm">Guardar</button>
-                <button @click="menuConfig = false" class="w-full text-slate-400 py-2 text-xs mt-2">Cerrar</button>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="label-style">Google App Script URL</label>
+                        <input v-model="config.url" type="text" placeholder="https://script.google.com/..." class="input-field text-[10px] font-mono">
+                    </div>
+                    <div>
+                        <label class="label-style">Hugging Face Token</label>
+                        <input v-model="config.hfToken" type="password" placeholder="hf_xxxxxxxxxxxx" class="input-field text-[10px] font-mono">
+                        <p class="text-[8px] text-slate-400 mt-1 italic">* Requerido para usar el OCR de forma estable.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-8">
+                    <button @click="guardarConfig" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">Guardar</button>
+                    <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-sm">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
         const { createApp } = Vue;
         createApp({
             data() {
                 return {
                     isSyncing: false,
+                    isScanning: false,
                     menuConfig: false,
-                    config: JSON.parse(localStorage.getItem('nexus_oficios_cfg') || '{ "url": "" }'),
+                    config: JSON.parse(localStorage.getItem('nexus_oficios_cfg') || '{ "url": "", "hfToken": "" }'),
                     form: this.getEmptyForm()
                 }
             },
@@ -149,7 +165,7 @@
                         fechaRecepcion: new Date().toISOString().split('T')[0],
                         recibidoPor: '',
                         organizacion: '',
-                        dirigidoA: '',
+                        dirigidoA: 'Gerencia General',
                         claseRequerimiento: 'Mantenimiento',
                         tipoApoyo: 'Social o Personal',
                         estatus: 'Pendiente',
@@ -163,14 +179,55 @@
                         fechaRequerimiento: new Date().toISOString().split('T')[0]
                     }
                 },
+
+                async escanearDocumento(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    this.isScanning = true;
+                    Swal.fire({
+                        title: 'IA Analizando',
+                        text: 'Extrayendo texto del oficio...',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+
+                    try {
+                        const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
+                            hf_token: this.config.hfToken.startsWith('hf_') ? this.config.hfToken : `hf_${this.config.hfToken}`
+                        });
+
+                        // El endpoint suele ser /process_image para este Space específico
+                        const result = await client.predict("/process_image", { 
+                            image: file,
+                            ocr_type: "format" 
+                        });
+
+                        if (result.data && result.data[0]) {
+                            this.form.descripcion = result.data[0];
+                            Swal.fire({ icon: 'success', title: 'Completado', text: 'Texto extraído con éxito', timer: 1500 });
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        Swal.fire('Error de IA', 'No se pudo conectar con Hugging Face. Revisa tu Token.', 'error');
+                    } finally {
+                        this.isScanning = false;
+                    }
+                },
+
                 guardarConfig() {
                     localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
-                    Swal.fire('Listo', 'Configuración guardada', 'success');
+                    Swal.fire('Configuración Guardada', '', 'success');
                 },
+
                 async enviarOficio() {
-                    if(!this.config.url) return Swal.fire('Error', 'Configura la URL de Google Script', 'warning');
-                    
+                    if(!this.config.url) {
+                        this.menuConfig = true;
+                        return Swal.fire('Falta Configuración', 'Debes pegar la URL de tu Google Script.', 'warning');
+                    }
+
                     this.isSyncing = true;
                     try {
                         await fetch(this.config.url, {
@@ -179,10 +236,10 @@
                             body: JSON.stringify({ type: 'nuevo_oficio', data: this.form })
                         });
                         
-                        Swal.fire('¡Éxito!', 'Oficio registrado correctamente', 'success');
+                        Swal.fire('¡Registrado!', 'Los datos se enviaron a la hoja de Excel.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        Swal.fire('Error', 'No se pudo conectar con la nube', 'error');
+                        Swal.fire('Error', 'Fallo al conectar con Google Sheets.', 'error');
                     } finally {
                         this.isSyncing = false;
                     }
