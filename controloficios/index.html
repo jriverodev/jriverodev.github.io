@@ -37,7 +37,7 @@
         <header class="p-6 flex justify-between items-center bg-f8fafc/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100">
             <div>
                 <h1 class="text-2xl font-black text-pdvsa-blue tracking-tighter">NEXUS <span class="text-slate-300">OFICIOS</span></h1>
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Gestión de Correspondencia</p>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Control de Correspondencia</p>
             </div>
             <button @click="menuConfig = true" class="bg-white shadow-sm text-slate-500 p-3 rounded-2xl border border-slate-100 active:scale-90 transition-all text-xl">⚙️</button>
         </header>
@@ -46,27 +46,26 @@
             <section class="space-y-4">
                 <div><label class="label-mobile">Fecha Recepción</label><input v-model="form.fechaRecepcion" type="date" class="input-mobile"></div>
                 <div><label class="label-mobile">Organización Remitente</label><input v-model="form.organizacion" type="text" placeholder="Ej. Gerencia de Transporte" class="input-mobile"></div>
+                
                 <div class="grid grid-cols-2 gap-3">
-                    <div><label class="label-mobile">N° Documento</label><input v-model="form.numDocumento" type="text" placeholder="OFI-000" class="input-mobile"></div>
+                    <div><label class="label-mobile">N° Documento</label><input v-model="form.numDocumento" type="text" placeholder="GGZ-2026-04-014" class="input-mobile"></div>
                     <div><label class="label-mobile">Estatus</label>
-                        <select v-model="form.estatus" class="input-mobile font-bold appearance-none">
+                        <select v-model="form.estatus" class="input-mobile font-bold appearance-none bg-white">
                             <option value="Pendiente">🟡 PENDIENTE</option>
                             <option value="Aprobado">🟢 APROBADO</option>
                             <option value="Denegado">🔴 DENEGADO</option>
                         </select>
                     </div>
                 </div>
-                <div><label class="label-mobile">Persona de Contacto</label><input v-model="form.contacto" type="text" placeholder="Nombre" class="input-mobile"></div>
-                <div><label class="label-mobile">Teléfono</label><input v-model="form.telefono" type="tel" placeholder="04XXXXXXXXX" class="input-mobile font-mono"></div>
 
                 <div class="relative bg-white p-4 rounded-xl-mobile shadow-sm border border-slate-100">
                     <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue flex items-center gap-2"><span>📄</span><span>Descripción del Asunto</span></label>
-                    <textarea v-model="form.descripcion" rows="10" class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" :placeholder="isScanning ? 'Procesando...' : 'Use el botón para escanear con IA'"></textarea>
+                    <textarea v-model="form.descripcion" rows="12" class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Suba una foto del oficio para extraer el texto automáticamente'"></textarea>
                     
                     <label class="fab-ia" :class="{'opacity-50 cursor-not-allowed': isScanning}">
                         <span v-if="isScanning" class="loader"></span>
                         <span v-else>📷</span>
-                        <span>{{ isScanning ? 'LEYENDO' : 'IA SCAN' }}</span>
+                        <span>{{ isScanning ? 'PROCESANDO' : 'ESCANEAR' }}</span>
                         <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
                     </label>
                 </div>
@@ -76,18 +75,18 @@
         <div class="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-f8fafc via-f8fafc to-transparent z-30">
             <button @click="enviarOficio" :disabled="isSyncing || isScanning" class="w-full bg-slate-950 text-white py-4.5 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3">
                 <span v-if="isSyncing" class="loader border-t-white border-white/20"></span>
-                <span class="uppercase tracking-widest text-xs font-bold">{{ isSyncing ? 'Sincronizando...' : 'Registrar Oficio' }}</span>
+                <span class="uppercase tracking-widest text-xs font-bold">{{ isSyncing ? 'Enviando...' : 'Registrar en Excel' }}</span>
             </button>
         </div>
 
         <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 backdrop-blur-sm" @click.self="menuConfig = false">
-            <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-                <h3 class="text-xl font-black text-center">Configuración</h3>
+            <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6">
+                <h3 class="text-xl font-black text-center text-pdvsa-blue">Ajustes del Sistema</h3>
                 <div class="space-y-4">
-                    <div><label class="label-mobile">Google App Script URL</label><input v-model="config.url" type="text" class="input-mobile text-[10px] font-mono"></div>
-                    <div><label class="label-mobile">Hugging Face Token</label><input v-model="config.hfToken" type="password" class="input-mobile text-[10px] font-mono"></div>
+                    <div><label class="label-mobile">URL de Google Script</label><input v-model="config.url" type="text" class="input-mobile text-[10px] font-mono"></div>
+                    <div><label class="label-mobile">Token de Hugging Face</label><input v-model="config.hfToken" type="password" class="input-mobile text-[10px] font-mono"></div>
                 </div>
-                <div class="flex gap-3 pt-4 pb-4">
+                <div class="flex gap-3 pt-4">
                     <button @click="guardarConfig" class="flex-1 bg-pdvsa-blue text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">Guardar</button>
                     <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold">Cerrar</button>
                 </div>
@@ -110,50 +109,51 @@
                 getEmptyForm() {
                     return {
                         fechaRecepcion: new Date().toISOString().split('T')[0],
-                        recibidoPor: 'Jesús Rivero', organizacion: '', dirigidoA: 'Gerencia',
-                        claseRequerimiento: 'Mantenimiento', tipoApoyo: 'Social o Personal',
-                        estatus: 'Pendiente', numDocumento: '', contacto: '', telefono: '',
-                        tipoEquipo: '', cantidad: 1, descripcion: '', observacion: '',
-                        fechaRequerimiento: new Date().toISOString().split('T')[0]
+                        recibidoPor: 'Jesús Rivero', organizacion: '', estatus: 'Pendiente', 
+                        numDocumento: '', contacto: '', telefono: '', descripcion: ''
                     }
                 },
                 async escanearDocumento(event) {
                     const file = event.target.files[0];
                     if (!file) return;
-                    if (!this.config.hfToken) return Swal.fire('Atención', 'Falta Token de HF.', 'warning');
+                    if (!this.config.hfToken) return Swal.fire('Atención', 'Configura tu Token de HF en ajustes.', 'warning');
 
                     this.isScanning = true;
-                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 6000 });
-                    Toast.fire({ icon: 'info', title: 'Conectando con IA...' });
+                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 10000 });
+                    Toast.fire({ icon: 'info', title: 'IA: Procesando documento...' });
 
                     try {
+                        // Importación dinámica
                         const gradioModule = await import("https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js");
-                        const Client = gradioModule.Client;
-                        const token = this.config.hfToken.trim();
+                        const { Client, handle_file } = gradioModule;
                         
+                        const token = this.config.hfToken.trim();
                         const client = await Client.connect("prithivMLmods/GLM-OCR-Demo", {
                             hf_token: token.startsWith('hf_') ? token : `hf_${token}`
                         });
 
-                        // LA SOLUCIÓN DEFINITIVA: 
-                        // Enviamos los argumentos directamente como parámetros de la función predict,
-                        // NO envueltos en un objeto {data: [...]}, sino como argumentos sueltos.
-                        const result = await client.predict(0, [
-                            file,       // Parámetro 1: Imagen
-                            "format"    // Parámetro 2: ocr_type
+                        // CAMBIO CLAVE: Usamos handle_file para asegurar que el archivo se procese correctamente
+                        // y enviamos los parámetros como espera la API del Space.
+                        const result = await client.predict("/predict", [
+                            handle_file(file), 
+                            "format"
                         ]);
 
                         console.log("📥 Resultado IA:", result);
 
                         if (result && result.data && result.data[0]) {
-                            this.form.descripcion = result.data[0];
-                            Toast.fire({ icon: 'success', title: 'Texto extraído' });
+                            // Limpiamos el resultado por si viene con tags de formato
+                            let textoFinal = result.data[0];
+                            if (typeof textoFinal === 'string') {
+                                this.form.descripcion = textoFinal.trim();
+                                Toast.fire({ icon: 'success', title: 'Texto extraído con éxito', timer: 2000 });
+                            }
                         } else {
-                            throw new Error("No se recibió texto legible.");
+                            throw new Error("El modelo no detectó texto. Intenta con una foto más clara.");
                         }
                     } catch (error) {
                         console.error("❌ ERROR:", error);
-                        Swal.fire('Error de IA', error.message, 'error');
+                        Swal.fire('Error de Lectura', `La IA no pudo procesar esta imagen. Detalle: ${error.message}`, 'error');
                     } finally {
                         this.isScanning = false;
                         event.target.value = '';
@@ -165,14 +165,14 @@
                     Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
                 },
                 async enviarOficio() {
-                    if(!this.config.url) { this.menuConfig = true; return Swal.fire('Error', 'Falta URL', 'warning'); }
+                    if(!this.config.url) return Swal.fire('Error', 'Falta URL de Google Script', 'warning');
                     this.isSyncing = true;
                     try {
                         await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
-                        Swal.fire('¡Registrado!', 'Enviado a Excel.', 'success');
+                        Swal.fire('¡Éxito!', 'Oficio registrado en la base de datos.', 'success');
                         this.form = this.getEmptyForm();
                     } catch (e) {
-                        Swal.fire('Error', 'Fallo de red.', 'error');
+                        Swal.fire('Error', 'No se pudo conectar con el servidor de Google.', 'error');
                     } finally { this.isSyncing = false; }
                 }
             }
