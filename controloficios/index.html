@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXUS OFICIOS - PDVSA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        [v-cloak] { display: none; }
+        .input-field { @apply w-full p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all; }
+        .label-style { @apply text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+    <div id="app" v-cloak class="max-w-2xl mx-auto min-h-screen pb-20">
+        
+        <header class="p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black text-blue-600 tracking-tighter">NEXUS <span class="text-slate-400">OFICIOS</span></h1>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Registro de Requerimientos y Apoyo</p>
+            </div>
+            <button @click="menuConfig = true" class="bg-slate-200 text-slate-600 p-3 rounded-xl active:scale-95">⚙️</button>
+        </header>
+
+        <main class="px-6">
+            <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
+                <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center">
+                    <span class="mr-2">📝</span> Nuevo Registro de Oficio
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label-style">Fecha de Recepción</label>
+                            <input v-model="form.fechaRecepcion" type="date" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Recibido Por:</label>
+                            <input v-model="form.recibidoPor" type="text" placeholder="Nombre del receptor" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Organización Remitente</label>
+                            <input v-model="form.organizacion" type="text" placeholder="Ej: Alcaldía, Consejo Comunal" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Dirigido A</label>
+                            <input v-model="form.dirigidoA" type="text" placeholder="Nombre de la autoridad" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Clase de Requerimiento</label>
+                            <select v-model="form.claseRequerimiento" class="input-field">
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Operaciones">Operaciones</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label-style">Tipo de Apoyo</label>
+                            <select v-model="form.tipoApoyo" class="input-field">
+                                <option value="Deportivo">Deportivo</option>
+                                <option value="Religioso">Religioso</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Social o Personal">Social o Personal</option>
+                                <option value="Suministros de Materiales y Combustible">Suministros de Materiales y Combustible</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label-style">Número de Documento / Oficio</label>
+                            <input v-model="form.numDocumento" type="text" placeholder="Ej: OFI-2024-001" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Persona de Contacto</label>
+                            <input v-model="form.contacto" type="text" placeholder="Nombre completo" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Teléfono</label>
+                            <input v-model="form.telefono" type="tel" placeholder="04XX-0000000" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Estatus</label>
+                            <select v-model="form.estatus" class="input-field font-bold">
+                                <option value="Pendiente">🟡 Pendiente</option>
+                                <option value="Aprobado">🟢 Aprobado</option>
+                                <option value="Denegado">🔴 Denegado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label-style">Tipo de Equipo/Material</label>
+                            <input v-model="form.tipoEquipo" type="text" placeholder="Ej: Transformador, Pintura" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-style">Cantidad</label>
+                            <input v-model="form.cantidad" type="number" class="input-field">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-4">
+                    <div>
+                        <label class="label-style">Descripción del Requerimiento</label>
+                        <textarea v-model="form.descripcion" rows="2" class="input-field" placeholder="Detalle la solicitud..."></textarea>
+                    </div>
+                    <div>
+                        <label class="label-style">Observaciones / Anexos</label>
+                        <input v-model="form.observacion" type="text" placeholder="Notas adicionales" class="input-field">
+                    </div>
+                </div>
+
+                <button @click="enviarOficio" :disabled="isSyncing" 
+                        class="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:bg-slate-300">
+                    {{ isSyncing ? 'PROCESANDO...' : 'REGISTRAR OFICIO' }}
+                </button>
+            </div>
+        </main>
+
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm">
+                <h3 class="text-xl font-black mb-6">Configuración</h3>
+                <label class="label-style">Google Script URL</label>
+                <input v-model="config.url" type="text" class="input-field mb-6 font-mono text-[10px]">
+                <button @click="guardarConfig" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-sm">Guardar</button>
+                <button @click="menuConfig = false" class="w-full text-slate-400 py-2 text-xs mt-2">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isSyncing: false,
+                    menuConfig: false,
+                    config: JSON.parse(localStorage.getItem('nexus_oficios_cfg') || '{ "url": "" }'),
+                    form: this.getEmptyForm()
+                }
+            },
+            methods: {
+                getEmptyForm() {
+                    return {
+                        fechaRecepcion: new Date().toISOString().split('T')[0],
+                        recibidoPor: '',
+                        organizacion: '',
+                        dirigidoA: '',
+                        claseRequerimiento: 'Mantenimiento',
+                        tipoApoyo: 'Social o Personal',
+                        estatus: 'Pendiente',
+                        numDocumento: '',
+                        contacto: '',
+                        telefono: '',
+                        tipoEquipo: '',
+                        cantidad: 1,
+                        descripcion: '',
+                        observacion: '',
+                        fechaRequerimiento: new Date().toISOString().split('T')[0]
+                    }
+                },
+                guardarConfig() {
+                    localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
+                    this.menuConfig = false;
+                    Swal.fire('Listo', 'Configuración guardada', 'success');
+                },
+                async enviarOficio() {
+                    if(!this.config.url) return Swal.fire('Error', 'Configura la URL de Google Script', 'warning');
+                    
+                    this.isSyncing = true;
+                    try {
+                        await fetch(this.config.url, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            body: JSON.stringify({ type: 'nuevo_oficio', data: this.form })
+                        });
+                        
+                        Swal.fire('¡Éxito!', 'Oficio registrado correctamente', 'success');
+                        this.form = this.getEmptyForm();
+                    } catch (e) {
+                        Swal.fire('Error', 'No se pudo conectar con la nube', 'error');
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
