@@ -1,0 +1,9 @@
+{
+  "name": "Dolar BCV PWA",
+  "short_name": "DolarBCV",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
+  "icons": [{ "src": "https://placeholder.com", "sizes": "192x192", "type": "image/png" }]
+}
