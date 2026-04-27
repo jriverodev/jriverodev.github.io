@@ -1,1 +1,27 @@
+name: Actualizar Dólar Diario
+on:
+  schedule:
+    - cron: '0 12 * * *' # Se ejecuta a las 8:00 AM hora Venezuela aprox.
+  workflow_dispatch: # Permite ejecutarlo manualmente
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configurar Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Instalar librerías
+        run: pip install requests beautifulsoup4
+      - name: Ejecutar Scraper
+        run: python scraper.py
+      - name: Commit y Push de los cambios
+        run: |
+          git config --global user.name 'BCV-Bot'
+          git config --global user.email 'bot@github.com'
+          git add index.html
+          git commit -m "Actualización precio: $(date)" || exit 0
+          git push
 
