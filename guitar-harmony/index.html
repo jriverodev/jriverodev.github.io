@@ -3,221 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Harmony Engine - v2.5 (Fixed Audio)</title>
+    <title>Nexus Harmony - Flow Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
-            --bg-dark: #050507;
+            --bg: #050508;
             --major: #00d4ff;
             --minor: #ff007c;
             --guide: #deff9a;
-            --current-glow: rgba(0, 212, 255, 0.05);
+            --path: rgba(222, 255, 154, 0.15);
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at center, var(--current-glow) 0%, var(--bg-dark) 85%);
+            background: var(--bg);
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
             touch-action: manipulation;
-            transition: background 0.6s ease;
         }
-
-        .header h1 { font-weight: 200; letter-spacing: 5px; font-size: 0.9rem; color: #444; margin: 20px 0; }
 
         .controls {
-            display: flex; gap: 15px; background: rgba(255,255,255,0.03);
-            padding: 8px 20px; border-radius: 20px; border: 1px solid #1a1a1a;
-            backdrop-filter: blur(10px); z-index: 100;
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            background: rgba(255,255,255,0.05);
+            padding: 10px 25px;
+            border-radius: 40px;
+            border: 1px solid #1a1a1a;
+            backdrop-filter: blur(10px);
         }
 
-        select { background: transparent; color: var(--guide); border: none; font-size: 0.8rem; cursor: pointer; outline: none; }
+        select {
+            background: transparent;
+            color: var(--guide);
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            outline: none;
+            font-weight: bold;
+        }
 
-        #canvas-container { width: 95vw; max-width: 580px; margin-top: 10px; }
+        #canvas-container { width: 95vw; max-width: 550px; margin-top: 20px; }
         svg { width: 100%; height: auto; }
 
-        .node-circle { transition: all 0.3s ease; cursor: pointer; }
-        .chord-text { pointer-events: none; font-weight: bold; fill: #fff; user-select: none; }
+        .node-circle { transition: all 0.4s ease; cursor: pointer; }
+        .chord-text { pointer-events: none; font-size: 10px; fill: white; font-weight: bold; }
 
-        .guide-line {
-            fill: none; stroke: var(--guide); stroke-width: 2;
-            stroke-dasharray: 1000; stroke-dashoffset: 1000;
-            animation: drawLine 1s ease forwards;
-            filter: drop-shadow(0 0 5px var(--guide));
+        /* Líneas de caminos posibles (Ghost Paths) */
+        .ghost-path {
+            fill: none;
+            stroke: var(--path);
+            stroke-width: 1;
+            stroke-dasharray: 4,4;
+            transition: all 0.5s ease;
         }
 
-        @keyframes drawLine { to { stroke-dashoffset: 0; } }
-        .status-bar { margin-top: 15px; font-size: 0.6rem; color: #333; letter-spacing: 2px; }
+        /* Línea activa de ejecución */
+        .active-path {
+            fill: none;
+            stroke: var(--guide);
+            stroke-width: 2.5;
+            filter: drop-shadow(0 0 8px var(--guide));
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: flow 1.5s linear forwards;
+        }
+
+        @keyframes flow { to { stroke-dashoffset: 0; } }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1>HARMONY ENGINE PRO</h1></div>
-
     <div class="controls">
-        <select id="pattern-select">
-            <option value="none">MODO LIBRE</option>
-            <option value="251">JAZZ 2-5-1 (ii-V-I)</option>
-            <option value="gospel">GOSPEL (IV-V-I)</option>
-            <option value="pop">POP (I-V-vi-IV)</option>
+        <select id="style-select">
+            <option value="jazz">ESTILO: JAZZ (2-5-1)</option>
+            <option value="gospel">ESTILO: GOSPEL (VAMP)</option>
+            <option value="pop">ESTILO: POP (CIRCLE)</option>
         </select>
     </div>
     
     <div id="canvas-container">
         <svg id="harmony-svg" viewBox="0 0 400 400">
-            <g id="guide-layer"></g>
-            <circle cx="200" cy="200" r="150" fill="none" stroke="#111" stroke-width="1" />
-            <circle cx="200" cy="200" r="95" fill="none" stroke="#111" stroke-width="1" />
+            <g id="ghost-layer"></g>
+            <g id="active-layer"></g>
         </svg>
     </div>
 
-    <div class="status-bar" id="status">CARGANDO ENGINE...</div>
-
     <script>
-        // --- 1. DICCIONARIO MAESTRO DE NOTAS (El "Cerebro" del sonido) ---
-        const diccionarioAcordes = {
-            // MAYORES (Anillo Exterior)
-            "C": ["C3", "E3", "G3", "B3"], "G": ["G2", "B2", "D3", "F#3"],
-            "D": ["D3", "F#3", "A3", "C#4"], "A": ["A2", "C#3", "E3", "G#3"],
-            "E": ["E2", "G#2", "B2", "D#3"], "B": ["B2", "D#3", "F#3", "A#3"],
-            "Gb": ["Gb2", "Bb2", "Db3", "F3"], "Db": ["Db3", "F3", "Ab3", "C4"],
-            "Ab": ["Ab2", "C3", "Eb3", "G3"], "Eb": ["Eb3", "G3", "Bb3", "D4"],
-            "Bb": ["Bb2", "D3", "F3", "A3"], "F": ["F2", "A2", "C3", "E3"],
-            // MENORES (Anillo Interior)
-            "Am": ["A2", "C3", "E3", "G3"], "Em": ["E2", "G2", "B2", "D3"],
-            "Bm": ["B2", "D3", "F#3", "A3"], "F#m": ["F#2", "A2", "C#3", "E3"],
-            "C#m": ["C#2", "E2", "G#2", "B2"], "G#m": ["G#2", "B2", "D#3", "F#3"],
-            "D#m": ["Eb2", "Gb2", "Bb2", "Db3"], "Bbm": ["Bb2", "Db3", "F3", "Ab3"],
-            "Fm": ["F2", "Ab2", "C3", "Eb3"], "Cm": ["C3", "Eb3", "G3", "Bb3"],
-            "Gm": ["G2", "Bb2", "D3", "F3"], "Dm": ["D3", "F3", "A3", "C4"]
-        };
-
-        // --- 2. AUDIO ENGINE ---
-        const chorus = new Tone.Chorus(4, 2.5, 0.5).start();
-        const reverb = new Tone.Reverb({ decay: 7, wet: 0.45 }).toDestination();
+        // --- 1. ENGINE DE AUDIO POLIFÓNICO ---
+        const reverb = new Tone.Reverb({ decay: 10, wet: 0.5 }).toDestination();
+        const delay = new Tone.FeedbackDelay("4n", 0.3).connect(reverb);
+        
+        // El sampler ahora tiene un release largo para que las notas se mezclen
         const sampler = new Tone.Sampler({
             urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
             baseUrl: "./samples/",
-            attack: 0.08, release: 2.5,
-            onload: () => document.getElementById('status').innerText = "ENGINE READY"
-        }).connect(chorus);
-        chorus.connect(reverb);
+            volume: -5,
+            release: 4, // Crucial: mantiene el sonido del acorde anterior
+            onload: () => console.log("Engine Ready")
+        }).connect(delay);
 
-        // --- 3. TEORÍA Y PATRONES ---
+        // --- 2. MAPA DE NOTAS Y RELACIONES ---
         const circle = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
-        const nodesPos = {}; 
-
-        const patterns = {
-            "251": (i) => [
-                { id: circle[(i+2)%12]+'m', label: 'ii7' },
-                { id: circle[(i+1)%12], label: 'V7' },
-                { id: circle[i], label: 'I maj7' }
-            ],
-            "pop": (i) => [
-                { id: circle[i], label: 'I' },
-                { id: circle[(i+1)%12], label: 'V' },
-                { id: circle[(i+9)%12]+'m', label: 'vi' },
-                { id: circle[(i+11)%12], label: 'IV' }
-            ],
-            "gospel": (i) => [
-                { id: circle[(i+11)%12], label: 'IV' },
-                { id: circle[(i+1)%12], label: 'V' },
-                { id: circle[i], label: 'I' }
-            ]
+        const nodesPos = {};
+        const activeLayer = document.getElementById('active-layer');
+        const ghostLayer = document.getElementById('ghost-layer');
+        
+        // Definimos los intervalos de los caminos según el estilo
+        const styleRules = {
+            "jazz": [2, 1, 0], // ii -> V -> I (índices relativos en el círculo)
+            "pop": [0, 1, 9, 11], // I -> V -> vi -> IV
+            "gospel": [11, 1, 0] // IV -> V -> I
         };
 
-        // --- 4. GENERACIÓN DE INTERFAZ ---
-        const svg = document.getElementById('harmony-svg');
-        const guideLayer = document.getElementById('guide-layer');
+        // --- 3. DIBUJAR INTERFAZ ---
+        function init() {
+            const svg = document.getElementById('harmony-svg');
+            
+            // Crear Nodos
+            drawRing(circle, 150, 'major', "var(--major)");
+            drawRing(circle, 95, 'minor', "var(--minor)");
 
-        function drawNodes(list, radio, type, color) {
+            // Dibujar Caminos Iniciales
+            updateGhostPaths();
+        }
+
+        function drawRing(list, radio, type, color) {
             list.forEach((name, i) => {
                 const angle = (i/12) * 2 * Math.PI - Math.PI/2;
                 const x = 200 + radio * Math.cos(angle);
                 const y = 200 + radio * Math.sin(angle);
-                const id = (type === 'major' ? name : name + 'm');
-                nodesPos[id] = { x, y };
+                const id = type === 'major' ? name : name + 'm';
+                nodesPos[id] = { x, y, rootIdx: i, type };
 
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 c.setAttribute("cx", x); c.setAttribute("cy", y);
-                c.setAttribute("r", type === 'major' ? 18 : 15);
-                c.setAttribute("fill", "#050507");
+                c.setAttribute("r", type === 'major' ? 18 : 14);
+                c.setAttribute("fill", "#0a0a0c");
                 c.setAttribute("stroke", color);
-                c.setAttribute("stroke-width", "1.5");
                 c.setAttribute("id", "node-" + id);
                 c.setAttribute("class", "node-circle");
 
                 const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                t.setAttribute("x", x); t.setAttribute("y", y + 5);
+                t.setAttribute("x", x); t.setAttribute("y", y + 4);
                 t.setAttribute("text-anchor", "middle");
                 t.setAttribute("class", "chord-text");
-                t.setAttribute("font-size", type === 'major' ? "12" : "10");
                 t.textContent = id;
 
                 g.appendChild(c); g.appendChild(t);
                 
-                const playEvent = async () => {
-                    if (Tone.context.state !== 'running') await Tone.start();
-                    tocar(id);
-                    actualizarGuia(name, i);
-                    
-                    // Efectos visuales
-                    document.body.style.setProperty('--current-glow', color.replace('rgb', 'rgba').replace(')', ', 0.1)'));
-                    c.setAttribute("fill", color);
-                    setTimeout(() => c.setAttribute("fill", "#050507"), 300);
-                };
-
-                g.addEventListener('mousedown', playEvent);
-                g.addEventListener('touchstart', (e) => { e.preventDefault(); playEvent(); });
+                g.addEventListener('pointerdown', (e) => {
+                    playChord(id);
+                    drawActiveFlow(id);
+                });
                 svg.appendChild(g);
             });
         }
 
-        drawNodes(circle, 150, 'major', "rgb(0, 212, 255)");
-        drawNodes(circle, 95, 'minor', "rgb(255, 0, 124)");
+        // --- 4. LÓGICA DE CAMINOS (GHOST PATHS) ---
+        function updateGhostPaths() {
+            ghostLayer.innerHTML = "";
+            const style = document.getElementById('style-select').value;
+            const rules = styleRules[style];
 
-        function actualizarGuia(rootName, rootIdx) {
-            guideLayer.innerHTML = "";
-            const mode = document.getElementById('pattern-select').value;
-            if (mode === "none") return;
-
-            const pathSteps = patterns[mode](rootIdx);
-            let d = "";
-            pathSteps.forEach((step, i) => {
-                const pos = nodesPos[step.id];
-                if (i === 0) d += `M ${pos.x} ${pos.y}`;
-                else d += ` L ${pos.x} ${pos.y}`;
-            });
-
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            line.setAttribute("d", d);
-            line.setAttribute("class", "guide-line");
-            guideLayer.appendChild(line);
-        }
-
-        // --- 5. LÓGICA DE SONIDO CORREGIDA ---
-        function tocar(id) {
-            const notas = diccionarioAcordes[id];
-            if (!notas) return;
-
-            const ahora = Tone.now();
-            notas.forEach((nota, i) => {
-                // Disparo de sampler con dinámica aleatoria y arpegio fluido
-                sampler.triggerAttackRelease(
-                    nota, 
-                    "1n", 
-                    ahora + (i * 0.13), 
-                    0.5 + Math.random() * 0.4
-                );
+            // Dibujamos todas las conexiones posibles en el círculo para ese estilo
+            circle.forEach((name, i) => {
+                let d = "";
+                rules.forEach((offset, step) => {
+                    const targetIdx = (i + offset) % 12;
+                    const targetName = (style === "jazz" && step === 0) ? circle[targetIdx] + 'm' : circle[targetIdx];
+                    const pos = nodesPos[targetName];
+                    if (pos) {
+                        if (step === 0) d += `M ${pos.x} ${pos.y}`;
+                        else d += ` L ${pos.x} ${pos.y}`;
+                    }
+                });
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", d);
+                path.setAttribute("class", "ghost-path");
+                ghostLayer.appendChild(path);
             });
         }
+
+        // --- 5. FLUJO ACTIVO Y AUDIO ---
+        let lastChordPos = null;
+
+        function drawActiveFlow(id) {
+            const currentPos = nodesPos[id];
+            if (lastChordPos) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                line.setAttribute("d", `M ${lastChordPos.x} ${lastChordPos.y} L ${currentPos.x} ${currentPos.y}`);
+                line.setAttribute("class", "active-path");
+                activeLayer.appendChild(line);
+                
+                // Limpiar líneas viejas para no saturar el SVG
+                if (activeLayer.children.length > 5) activeLayer.removeChild(activeLayer.firstChild);
+            }
+            lastChordPos = currentPos;
+        }
+
+        function playChord(id) {
+            if (Tone.context.state !== 'running') Tone.start();
+            
+            // Simulación de arpegio (puedes usar tu diccionario de notas aquí)
+            const now = Tone.now();
+            const notes = ["C4", "E4", "G4", "B4"]; // Ejemplo
+            
+            notes.forEach((n, i) => {
+                // triggerAttack sin Release inmediato para que el sonido fluya
+                sampler.triggerAttackRelease(n, "2n", now + (i * 0.12));
+            });
+        }
+
+        document.getElementById('style-select').addEventListener('change', updateGhostPaths);
+        init();
     </script>
 </body>
 </html>
