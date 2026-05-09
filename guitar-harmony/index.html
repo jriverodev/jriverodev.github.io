@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Guitar Harmony - PWA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --accent-color: #00d4ff;
+            --card-bg: #1a1a1d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { font-weight: 300; letter-spacing: 2px; color: var(--accent-color); }
+
+        .status {
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            color: #888;
+        }
+
+        /* Contenedor del Círculo */
+        .harmony-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .chord-btn {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px 10px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .chord-btn:active, .chord-btn.playing {
+            background: var(--accent-color);
+            color: black;
+            transform: scale(0.95);
+            box-shadow: 0 0 20px var(--accent-color);
+        }
+
+        .section-title {
+            grid-column: span 4;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #555;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>GUITAR HARMONY</h1>
+    <div id="status" class="status">Haz clic en cualquier botón para activar el audio</div>
+
+    <div class="harmony-grid" id="grid">
+        <div class="section-title">Acordes Mayores</div>
+        </div>
+
+    <script>
+        // 1. Configuración del Sampler y Efectos
+        const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).toDestination();
+        const sampler = new Tone.Sampler({
+            urls: {
+                "E2": "E2.mp3",
+                "A2": "A2.mp3",
+                "D3": "D3.mp3",
+                "G3": "G3.mp3",
+                "B3": "B3.mp3",
+                "E4": "E4.mp3"
+            },
+            baseUrl: "./samples/", // Ruta relativa para GitHub Pages
+            onload: () => {
+                document.getElementById('status').innerText = "Sistema Listo - Samples Cargados";
+            }
+        }).connect(reverb);
+
+        // 2. Diccionario de Acordes (Tu Mapa Armónico)
+        const circuloArmonico = {
+            "C":  ["C3", "E3", "G3", "C4"], "G":  ["G2", "B2", "D3", "G3"],
+            "D":  ["D3", "F#3", "A3", "D4"], "A":  ["A2", "E3", "A3", "C#4"],
+            "E":  ["E2", "B2", "E3", "G#3"], "B":  ["B2", "D#3", "F#3", "B3"],
+            "Gb": ["F#2", "C#3", "F#3", "A#3"], "Db": ["C#3", "G#3", "C#4", "F4"],
+            "Ab": ["G#2", "Eb3", "G#3", "C4"], "Eb": ["Eb3", "G3", "Bb3", "Eb4"],
+            "Bb": ["Bb2", "F3", "Bb3", "D4"], "F":  ["F2", "C3", "F3", "A3"],
+            "separator": "Acordes Menores",
+            "Am": ["A2", "C3", "E3", "A3"], "Em": ["E2", "B2", "E3", "G3"],
+            "Bm": ["B2", "D3", "F#3", "B3"], "F#m":["F#2", "C#3", "F#3", "A3"],
+            "C#m":["C#3", "E3", "G#3", "C#4"], "G#m":["G#2", "D#3", "G#3", "B3"],
+            "D#m":["D#2", "A#2", "D#3", "F#3"], "Bbm":["Bb2", "Db3", "F3", "Bb3"],
+            "Fm": ["F2", "C3", "Ab3", "F3"], "Cm": ["C3", "Eb3", "G3", "C4"],
+            "Gm": ["G2", "D3", "G3", "Bb3"], "Dm": ["D3", "A3", "D4", "F4"]
+        };
+
+        // 3. Generar la Interfaz Dinámicamente
+        const grid = document.getElementById('grid');
+        
+        Object.keys(circuloArmonico).forEach(acorde => {
+            if(acorde === "separator") {
+                const title = document.createElement('div');
+                title.className = 'section-title';
+                title.innerText = circuloArmonico[acorde];
+                grid.appendChild(title);
+                return;
+            }
+
+            const btn = document.createElement('button');
+            btn.className = 'chord-btn';
+            btn.innerText = acorde;
+            
+            // Evento para tocar
+            btn.addEventListener('mousedown', async () => {
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                }
+                tocarArpegio(acorde);
+                btn.classList.add('playing');
+                setTimeout(() => btn.classList.remove('playing'), 500);
+            });
+
+            grid.appendChild(btn);
+        });
+
+        // 4. Lógica de Arpegio (Rasgueo)
+        function tocarArpegio(nombreAcorde) {
+            const notas = circuloArmonico[nombreAcorde];
+            const ahora = Tone.now();
+            const rasgueo = 0.12; 
+
+            notas.forEach((nota, i) => {
+                sampler.triggerAttackRelease(nota, "2n", ahora + (i * rasgueo));
+            });
+        }
+    </script>
+</body>
+  </html>
+  
