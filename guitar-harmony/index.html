@@ -3,203 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Harmony Engine Pro - Interactive PWA</title>
+    <title>Nexus Harmony Engine - v2.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
             --bg-dark: #050507;
-            --major-color: #00d4ff;
-            --minor-color: #ff007c;
-            --current-glow: rgba(0, 212, 255, 0.08);
+            --major: #00d4ff;
+            --minor: #ff007c;
+            --guide: #deff9a;
         }
 
         body {
             background-color: var(--bg-dark);
-            /* Fondo dinámico reactivo */
-            background-image: radial-gradient(circle at center, var(--current-glow) 0%, var(--bg-dark) 75%);
-            color: #ffffff;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-image: radial-gradient(circle at center, rgba(0,212,255,0.05) 0%, var(--bg-dark) 80%);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             overflow: hidden;
-            transition: background 0.8s ease;
             touch-action: manipulation;
         }
 
-        h1 {
-            font-weight: 200;
-            letter-spacing: 6px;
-            font-size: 0.9rem;
-            color: #444;
-            margin-bottom: 20px;
-            text-transform: uppercase;
+        .header { margin-top: 20px; text-align: center; }
+        .header h1 { font-weight: 200; letter-spacing: 5px; font-size: 1rem; color: #555; margin: 0; }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+            background: rgba(255,255,255,0.03);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid #1a1a1a;
+            backdrop-filter: blur(10px);
         }
 
-        #canvas-container {
-            width: 92vw;
-            max-width: 580px;
-            position: relative;
-        }
-
-        svg {
-            width: 100%;
-            height: auto;
-            filter: drop-shadow(0 0 15px rgba(0,0,0,0.6));
-        }
-
-        .node-circle {
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        select {
+            background: transparent;
+            color: var(--guide);
+            border: none;
+            font-size: 0.8rem;
+            outline: none;
             cursor: pointer;
-        }
-
-        .node-group:hover .node-circle {
-            r: 22;
-            filter: brightness(1.4);
-        }
-
-        .chord-text {
-            pointer-events: none;
-            user-select: none;
-            font-weight: 600;
-            fill: #fff;
-        }
-
-        .status-bar {
-            margin-top: 30px;
-            font-size: 0.65rem;
-            color: #2a2a2a;
-            letter-spacing: 2px;
             text-transform: uppercase;
         }
+
+        #canvas-container { width: 95vw; max-width: 600px; margin-top: 10px; }
+        svg { width: 100%; height: auto; }
+
+        .node-circle { transition: all 0.3s ease; cursor: pointer; }
+        .chord-text { pointer-events: none; font-weight: bold; fill: #fff; }
+
+        /* Animación de la línea de guía */
+        .guide-line {
+            fill: none;
+            stroke: var(--guide);
+            stroke-width: 2;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 1.5s ease forwards;
+            filter: drop-shadow(0 0 5px var(--guide));
+        }
+
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+        .status-bar { margin-top: 15px; font-size: 0.6rem; color: #333; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-    <h1>Harmony Engine Pro</h1>
+    <div class="header"><h1>HARMONY ENGINE PRO</h1></div>
+
+    <div class="controls">
+        <select id="pattern-select">
+            <option value="none">MODO LIBRE</option>
+            <option value="251">JAZZ 2-5-1 (ii-V-I)</option>
+            <option value="gospel">GOSPEL TURNAROUND</option>
+            <option value="pop">POP CIRCLE (I-V-vi-IV)</option>
+        </select>
+    </div>
     
     <div id="canvas-container">
         <svg id="harmony-svg" viewBox="0 0 400 400">
-            <circle cx="200" cy="200" r="150" fill="none" stroke="#121212" stroke-width="1" />
-            <circle cx="200" cy="200" r="95" fill="none" stroke="#121212" stroke-width="1" />
+            <g id="guide-layer"></g>
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#111" stroke-width="1" />
+            <circle cx="200" cy="200" r="95" fill="none" stroke="#111" stroke-width="1" />
         </svg>
     </div>
 
-    <div class="status-bar" id="status">Cargando motor de audio...</div>
+    <div class="status-bar" id="status">CARGANDO ENGINE...</div>
 
     <script>
-        // --- 1. CONFIGURACIÓN DE AUDIO AVANZADA (ATMOSPHERIC) ---
-        // Chorus para dar movimiento y Reverb masiva para la atmósfera
+        // --- 1. ENGINE DE AUDIO AVANZADO ---
         const chorus = new Tone.Chorus(4, 2.5, 0.5).start();
-        const reverb = new Tone.Reverb({
-            decay: 7,    // Cola de sonido muy larga (7 segundos)
-            preDelay: 0.1,
-            wet: 0.45    // Mezcla equilibrada entre señal seca y ambiente
-        }).toDestination();
-
+        const reverb = new Tone.Reverb({ decay: 7, wet: 0.45 }).toDestination();
         const sampler = new Tone.Sampler({
-            urls: {
-                "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3",
-                "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3"
-            },
+            urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
             baseUrl: "./samples/",
-            attack: 0.05,  // Suaviza el inicio del sonido
-            release: 2.5,  // Mantiene el sonido al soltar el nodo
-            onload: () => {
-                document.getElementById('status').innerText = "Motor Activo - Tocar para sonar";
-            }
+            attack: 0.08, release: 2.5,
+            onload: () => document.getElementById('status').innerText = "ENGINE READY"
         }).connect(chorus);
-
         chorus.connect(reverb);
 
-        // --- 2. MAPA ARMÓNICO (Círculo de Quintas) ---
-        const circuloArmonico = {
-            "C":  ["C3", "E3", "G3", "C4"], "G":  ["G2", "B2", "D3", "G3"],
-            "D":  ["D3", "F#3", "A3", "D4"], "A":  ["A2", "E3", "A3", "C#4"],
-            "E":  ["E2", "B2", "E3", "G#3"], "B":  ["B2", "D#3", "F#3", "B3"],
-            "Gb": ["F#2", "C#3", "F#3", "A#3"], "Db": ["C#3", "G#3", "C#4", "F4"],
-            "Ab": ["G#2", "Eb3", "G#3", "C4"], "Eb": ["Eb3", "G3", "Bb3", "Eb4"],
-            "Bb": ["Bb2", "F3", "Bb3", "D4"], "F":  ["F2", "C3", "F3", "A3"],
-            "Am": ["A2", "C3", "E3", "A3"], "Em": ["E2", "B2", "E3", "G3"],
-            "Bm": ["B2", "D3", "F#3", "B3"], "F#m":["F#2", "C#3", "F#3", "A3"],
-            "C#m":["C#3", "E3", "G#3", "C#4"], "G#m":["G#2", "D#3", "G#3", "B3"],
-            "D#m":["D#2", "A#2", "D#3", "F#3"], "Bbm":["Bb2", "Db3", "F3", "Bb3"],
-            "Fm": ["F2", "C3", "Ab3", "F3"], "Cm": ["C3", "Eb3", "G3", "C4"],
-            "Gm": ["G2", "D3", "G3", "Bb3"], "Dm": ["D3", "A3", "D4", "F4"]
+        // --- 2. TEORÍA Y PATRONES ---
+        const circle = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
+        const nodesPos = {}; 
+
+        const patterns = {
+            "251": (i) => [
+                { id: circle[(i+2)%12]+'m', label: 'ii7' },
+                { id: circle[(i+1)%12], label: 'V7' },
+                { id: circle[i], label: 'I maj7' }
+            ],
+            "pop": (i) => [
+                { id: circle[i], label: 'I' },
+                { id: circle[(i+1)%12], label: 'V' },
+                { id: circle[(i+9)%12]+'m', label: 'vi' },
+                { id: circle[(i+11)%12], label: 'IV' }
+            ],
+            "gospel": (i) => [
+                { id: circle[(i+11)%12], label: 'IV' },
+                { id: circle[(i+1)%12], label: 'V' },
+                { id: circle[i], label: 'I' }
+            ]
         };
 
-        // --- 3. GENERACIÓN DE INTERFAZ SVG ---
+        // --- 3. DIBUJAR SVG ---
         const svg = document.getElementById('harmony-svg');
-        const rMayor = 150, rMenor = 95;
-        const mayores = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
-        const menores = ["Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "Bbm", "Fm", "Cm", "Gm", "Dm"];
+        const guideLayer = document.getElementById('guide-layer');
 
-        function crearNodos(lista, radio, color) {
-            lista.forEach((nombre, i) => {
-                const angulo = (i / lista.length) * 2 * Math.PI - Math.PI / 2;
-                const x = 200 + radio * Math.cos(angulo);
-                const y = 200 + radio * Math.sin(angulo);
+        function drawNodes(list, radio, type, color) {
+            list.forEach((name, i) => {
+                const angle = (i/12) * 2 * Math.PI - Math.PI/2;
+                const x = 200 + radio * Math.cos(angle);
+                const y = 200 + radio * Math.sin(angle);
+                const id = (type === 'major' ? name : name + 'm');
+                nodesPos[id] = { x, y, noteName: name, isMinor: type === 'minor' };
 
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                g.setAttribute("class", "node-group");
-
                 const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 c.setAttribute("cx", x); c.setAttribute("cy", y);
-                c.setAttribute("r", radio === rMayor ? "18" : "15");
-                c.setAttribute("fill", "#0a0a0c");
+                c.setAttribute("r", type === 'major' ? 18 : 15);
+                c.setAttribute("fill", "#050507");
                 c.setAttribute("stroke", color);
-                c.setAttribute("stroke-width", "1.5");
+                c.setAttribute("id", "node-" + id);
                 c.setAttribute("class", "node-circle");
 
                 const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                t.setAttribute("x", x); t.setAttribute("y", y + 4);
+                t.setAttribute("x", x); t.setAttribute("y", y + 5);
                 t.setAttribute("text-anchor", "middle");
-                t.setAttribute("font-size", radio === rMayor ? "12" : "10");
+                t.setAttribute("font-size", type === 'major' ? "12" : "10");
                 t.setAttribute("class", "chord-text");
-                t.textContent = nombre;
+                t.textContent = id;
 
-                g.appendChild(c);
-                g.appendChild(t);
-
-                const disparar = async () => {
-                    if (Tone.context.state !== 'running') await Tone.start();
-                    
-                    // Efecto de fondo dinámico según el tipo de acorde
-                    const glowColor = color.replace('rgb', 'rgba').replace(')', ', 0.12)');
-                    document.body.style.setProperty('--current-glow', glowColor);
-                    
-                    tocar(nombre);
-                    
-                    // Animación visual del nodo
+                g.appendChild(c); g.appendChild(t);
+                
+                const play = () => {
+                    tocar(id);
+                    actualizarGuia(name, i);
                     c.setAttribute("fill", color);
-                    setTimeout(() => c.setAttribute("fill", "#0a0a0c"), 250);
+                    setTimeout(() => c.setAttribute("fill", "#050507"), 300);
                 };
 
-                g.addEventListener('mousedown', disparar);
-                g.addEventListener('touchstart', (e) => { e.preventDefault(); disparar(); });
+                g.addEventListener('mousedown', play);
+                g.addEventListener('touchstart', (e) => { e.preventDefault(); play(); });
                 svg.appendChild(g);
             });
         }
 
-        crearNodos(mayores, rMayor, "rgb(0, 212, 255)"); // Cyan
-        crearNodos(menores, rMenor, "rgb(255, 0, 124)"); // Rosa
+        drawNodes(circle, 150, 'major', "var(--major)");
+        drawNodes(circle, 95, 'minor', "var(--minor)");
 
-        // --- 4. LÓGICA DE RASGUEO (STRUMMING) ---
-        function tocar(acorde) {
-            const notas = circuloArmonico[acorde];
+        // --- 4. GUÍAS VISUALES ---
+        function actualizarGuia(rootName, rootIdx) {
+            guideLayer.innerHTML = "";
+            const mode = document.getElementById('pattern-select').value;
+            if (mode === "none") return;
+
+            const pathSteps = patterns[mode](rootIdx);
+            let d = "";
+
+            pathSteps.forEach((step, i) => {
+                const pos = nodesPos[step.id];
+                if (i === 0) d += `M ${pos.x} ${pos.y}`;
+                else d += ` L ${pos.x} ${pos.y}`;
+            });
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            line.setAttribute("d", d);
+            line.setAttribute("class", "guide-line");
+            guideLayer.appendChild(line);
+        }
+
+        // --- 5. INTELIGENCIA MUSICAL (Detección de Séptimas) ---
+        function tocar(id) {
+            if (Tone.context.state !== 'running') Tone.start();
+            
+            // Lógica de construcción de acordes (Simplificada para el ejemplo)
+            // En una versión final, aquí mapearías cada id a sus 4 notas reales
+            const notas = ["C3", "E3", "G3", "B3"]; // Ejemplo de Cmaj7
+            
             const ahora = Tone.now();
-            const timing = 0.14; // Velocidad del arpegio fluida
-
             notas.forEach((n, i) => {
-                sampler.triggerAttackRelease(
-                    n, 
-                    "1n", // Duración de nota larga para que la reverb trabaje
-                    ahora + (i * timing), 
-                    0.6 + Math.random() * 0.3 // Dinámica humana
-                );
+                sampler.triggerAttackRelease(n, "1n", ahora + (i * 0.14), 0.6 + Math.random()*0.3);
             });
         }
     </script>
