@@ -3,102 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Guitar Harmony - PWA</title>
+    <title>Harmony Engine Pro - Interactive</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
-            --bg-color: #0a0a0c;
-            --accent-color: #00d4ff;
-            --card-bg: #1a1a1d;
+            --bg-dark: #070709;
+            --major-color: #00d4ff;
+            --minor-color: #ff007c;
+            --current-glow: rgba(0, 212, 255, 0.1);
         }
 
         body {
-            background-color: var(--bg-color);
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            /* El fondo ahora es un gradiente que cambiaremos por JS */
+            background-image: radial-gradient(circle at center, var(--current-glow) 0%, var(--bg-dark) 70%);
+            color: #ffffff;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            transition: background 0.8s ease; /* Suaviza el cambio de color de fondo */
         }
 
-        h1 { font-weight: 300; letter-spacing: 2px; color: var(--accent-color); }
-
-        .status {
-            font-size: 0.8rem;
+        h1 {
+            font-weight: 200;
+            letter-spacing: 5px;
+            font-size: 1rem;
+            color: #444;
             margin-bottom: 20px;
-            color: #888;
         }
 
-        /* Contenedor del Círculo */
-        .harmony-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            max-width: 500px;
-            width: 100%;
+        #canvas-container {
+            width: 90vw;
+            max-width: 550px;
         }
 
-        .chord-btn {
-            background: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 25px 10px;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
+        svg { width: 100%; height: auto; }
+
+        .node-circle {
+            transition: all 0.3s ease;
             cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
         }
 
-        .chord-btn:active, .chord-btn.playing {
-            background: var(--accent-color);
-            color: black;
-            transform: scale(0.95);
-            box-shadow: 0 0 20px var(--accent-color);
+        .node-group:hover .node-circle {
+            r: 20;
+            filter: brightness(1.3);
         }
 
-        .section-title {
-            grid-column: span 4;
-            margin-top: 20px;
-            font-size: 0.9rem;
+        .chord-text {
+            pointer-events: none;
+            user-select: none;
+            font-weight: bold;
+        }
+
+        .status-bar {
+            margin-top: 30px;
+            font-size: 0.6rem;
+            color: #333;
             text-transform: uppercase;
-            color: #555;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
         }
     </style>
 </head>
 <body>
 
-    <h1>GUITAR HARMONY</h1>
-    <div id="status" class="status">Haz clic en cualquier botón para activar el audio</div>
+    <h1>Harmony Engine</h1>
+    
+    <div id="canvas-container">
+        <svg id="harmony-svg" viewBox="0 0 400 400">
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#151515" />
+            <circle cx="200" cy="200" r="95" fill="none" stroke="#151515" />
+        </svg>
+    </div>
 
-    <div class="harmony-grid" id="grid">
-        <div class="section-title">Acordes Mayores</div>
-        </div>
+    <div class="status-bar" id="status">Iniciando motor de audio...</div>
 
     <script>
-        // 1. Configuración del Sampler y Efectos
-        const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).toDestination();
+        // 1. AUDIO SETUP
+        const reverb = new Tone.Reverb({ decay: 6, wet: 0.5 }).toDestination();
         const sampler = new Tone.Sampler({
-            urls: {
-                "E2": "E2.mp3",
-                "A2": "A2.mp3",
-                "D3": "D3.mp3",
-                "G3": "G3.mp3",
-                "B3": "B3.mp3",
-                "E4": "E4.mp3"
-            },
-            baseUrl: "./samples/", // Ruta relativa para GitHub Pages
-            onload: () => {
-                document.getElementById('status').innerText = "Sistema Listo - Samples Cargados";
-            }
+            urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
+            baseUrl: "./samples/",
+            onload: () => document.getElementById('status').innerText = "Sistema Listo"
         }).connect(reverb);
 
-        // 2. Diccionario de Acordes (Tu Mapa Armónico)
+        // 2. DATA
         const circuloArmonico = {
             "C":  ["C3", "E3", "G3", "C4"], "G":  ["G2", "B2", "D3", "G3"],
             "D":  ["D3", "F#3", "A3", "D4"], "A":  ["A2", "E3", "A3", "C#4"],
@@ -106,7 +98,6 @@
             "Gb": ["F#2", "C#3", "F#3", "A#3"], "Db": ["C#3", "G#3", "C#4", "F4"],
             "Ab": ["G#2", "Eb3", "G#3", "C4"], "Eb": ["Eb3", "G3", "Bb3", "Eb4"],
             "Bb": ["Bb2", "F3", "Bb3", "D4"], "F":  ["F2", "C3", "F3", "A3"],
-            "separator": "Acordes Menores",
             "Am": ["A2", "C3", "E3", "A3"], "Em": ["E2", "B2", "E3", "G3"],
             "Bm": ["B2", "D3", "F#3", "B3"], "F#m":["F#2", "C#3", "F#3", "A3"],
             "C#m":["C#3", "E3", "G#3", "C#4"], "G#m":["G#2", "D#3", "G#3", "B3"],
@@ -115,46 +106,70 @@
             "Gm": ["G2", "D3", "G3", "Bb3"], "Dm": ["D3", "A3", "D4", "F4"]
         };
 
-        // 3. Generar la Interfaz Dinámicamente
-        const grid = document.getElementById('grid');
-        
-        Object.keys(circuloArmonico).forEach(acorde => {
-            if(acorde === "separator") {
-                const title = document.createElement('div');
-                title.className = 'section-title';
-                title.innerText = circuloArmonico[acorde];
-                grid.appendChild(title);
-                return;
-            }
+        // 3. UI GENERATION
+        const svg = document.getElementById('harmony-svg');
+        const rMayor = 150, rMenor = 95;
+        const mayores = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
+        const menores = ["Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "Bbm", "Fm", "Cm", "Gm", "Dm"];
 
-            const btn = document.createElement('button');
-            btn.className = 'chord-btn';
-            btn.innerText = acorde;
-            
-            // Evento para tocar
-            btn.addEventListener('mousedown', async () => {
-                if (Tone.context.state !== 'running') {
-                    await Tone.start();
-                }
-                tocarArpegio(acorde);
-                btn.classList.add('playing');
-                setTimeout(() => btn.classList.remove('playing'), 500);
+        function crearNodos(lista, radio, color) {
+            lista.forEach((nombre, i) => {
+                const angulo = (i / lista.length) * 2 * Math.PI - Math.PI / 2;
+                const x = 200 + radio * Math.cos(angulo);
+                const y = 200 + radio * Math.sin(angulo);
+
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "node-group");
+
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                c.setAttribute("cx", x); c.setAttribute("cy", y);
+                c.setAttribute("r", radio === rMayor ? "17" : "14");
+                c.setAttribute("fill", "#111");
+                c.setAttribute("stroke", color);
+                c.setAttribute("stroke-width", "1.5");
+                c.setAttribute("class", "node-circle");
+
+                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                t.setAttribute("x", x); t.setAttribute("y", y + 4);
+                t.setAttribute("text-anchor", "middle");
+                t.setAttribute("fill", "white");
+                t.setAttribute("font-size", radio === rMayor ? "11" : "9");
+                t.setAttribute("class", "chord-text");
+                t.textContent = nombre;
+
+                g.appendChild(c);
+                g.appendChild(t);
+
+                const trigger = async () => {
+                    if (Tone.context.state !== 'running') await Tone.start();
+                    
+                    // Efecto de fondo dinámico
+                    document.body.style.setProperty('--current-glow', color.replace(')', ', 0.15)').replace('rgb', 'rgba'));
+                    
+                    // Sonido
+                    tocar(nombre);
+                    
+                    // Animación visual
+                    c.setAttribute("fill", color);
+                    setTimeout(() => c.setAttribute("fill", "#111"), 250);
+                };
+
+                g.addEventListener('mousedown', trigger);
+                g.addEventListener('touchstart', (e) => { e.preventDefault(); trigger(); });
+                svg.appendChild(g);
             });
+        }
 
-            grid.appendChild(btn);
-        });
+        crearNodos(mayores, rMayor, "rgb(0, 212, 255)"); // Cyan
+        crearNodos(menores, rMenor, "rgb(255, 0, 124)"); // Rosa
 
-        // 4. Lógica de Arpegio (Rasgueo)
-        function tocarArpegio(nombreAcorde) {
-            const notas = circuloArmonico[nombreAcorde];
+        function tocar(acorde) {
+            const notas = circuloArmonico[acorde];
             const ahora = Tone.now();
-            const rasgueo = 0.12; 
-
-            notas.forEach((nota, i) => {
-                sampler.triggerAttackRelease(nota, "2n", ahora + (i * rasgueo));
+            notas.forEach((n, i) => {
+                sampler.triggerAttackRelease(n, "2n", ahora + (i * 0.12));
             });
         }
     </script>
 </body>
-  </html>
-  
+</html>
