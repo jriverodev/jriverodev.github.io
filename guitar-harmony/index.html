@@ -3,158 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Guitar Harmony - PWA</title>
+    <title>Nexus Harmony Pro - High Definition Audio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
-            --bg-color: #0a0a0c;
-            --accent-color: #00d4ff;
-            --card-bg: #1a1a1d;
+            --bg: #030305;
+            --cyan: #00d4ff;
+            --pink: #ff007c;
+            --guide: #deff9a;
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at center, rgba(0, 212, 255, 0.03) 0%, var(--bg) 80%);
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
         }
 
-        h1 { font-weight: 300; letter-spacing: 2px; color: var(--accent-color); }
+        .header h1 { font-weight: 200; letter-spacing: 5px; font-size: 0.8rem; color: #333; margin: 25px 0; }
 
-        .status {
-            font-size: 0.8rem;
-            margin-bottom: 20px;
-            color: #888;
+        .controls {
+            display: flex; gap: 15px; background: rgba(255,255,255,0.02);
+            padding: 10px 25px; border-radius: 30px; border: 1px solid #151515;
+            backdrop-filter: blur(15px); z-index: 100;
         }
 
-        /* Contenedor del Círculo */
-        .harmony-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            max-width: 500px;
-            width: 100%;
+        select { background: transparent; color: var(--guide); border: none; font-size: 0.8rem; cursor: pointer; outline: none; font-weight: bold; }
+
+        #canvas-container { width: 95vw; max-width: 550px; margin-top: 20px; }
+        svg { width: 100%; height: auto; }
+
+        .node-circle { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .chord-text { pointer-events: none; font-weight: bold; fill: #fff; user-select: none; letter-spacing: -0.5px; }
+
+        .guide-line {
+            fill: none; stroke: var(--guide); stroke-width: 1.5;
+            stroke-dasharray: 1000; stroke-dashoffset: 1000;
+            animation: drawLine 1.2s ease forwards;
+            filter: drop-shadow(0 0 8px var(--guide));
+            opacity: 0.6;
         }
 
-        .chord-btn {
-            background: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 25px 10px;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .chord-btn:active, .chord-btn.playing {
-            background: var(--accent-color);
-            color: black;
-            transform: scale(0.95);
-            box-shadow: 0 0 20px var(--accent-color);
-        }
-
-        .section-title {
-            grid-column: span 4;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            color: #555;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-        }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        .status-bar { margin-top: 20px; font-size: 0.5rem; color: #222; letter-spacing: 3px; }
     </style>
 </head>
 <body>
 
-    <h1>GUITAR HARMONY</h1>
-    <div id="status" class="status">Haz clic en cualquier botón para activar el audio</div>
+    <div class="header"><h1>NEXUS HARMONY ENGINE</h1></div>
 
-    <div class="harmony-grid" id="grid">
-        <div class="section-title">Acordes Mayores</div>
-        </div>
+    <div class="controls">
+        <select id="pattern-select">
+            <option value="none">LIBRE</option>
+            <option value="251">JAZZ 2-5-1</option>
+            <option value="gospel">GOSPEL 4-5-1</option>
+            <option value="pop">POP 1-5-6-4</option>
+        </select>
+    </div>
+    
+    <div id="canvas-container">
+        <svg id="harmony-svg" viewBox="0 0 400 400">
+            <g id="guide-layer"></g>
+            <circle cx="200" cy="200" r="155" fill="none" stroke="#111" stroke-width="0.5" />
+            <circle cx="200" cy="200" r="95" fill="none" stroke="#111" stroke-width="0.5" />
+        </svg>
+    </div>
+
+    <div class="status-bar" id="status">INITIALIZING SAMPLES...</div>
 
     <script>
-        // 1. Configuración del Sampler y Efectos
-        const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).toDestination();
-        const sampler = new Tone.Sampler({
-            urls: {
-                "E2": "E2.mp3",
-                "A2": "A2.mp3",
-                "D3": "D3.mp3",
-                "G3": "G3.mp3",
-                "B3": "B3.mp3",
-                "E4": "E4.mp3"
-            },
-            baseUrl: "./samples/", // Ruta relativa para GitHub Pages
-            onload: () => {
-                document.getElementById('status').innerText = "Sistema Listo - Samples Cargados";
-            }
-        }).connect(reverb);
-
-        // 2. Diccionario de Acordes (Tu Mapa Armónico)
-        const circuloArmonico = {
-            "C":  ["C3", "E3", "G3", "C4"], "G":  ["G2", "B2", "D3", "G3"],
-            "D":  ["D3", "F#3", "A3", "D4"], "A":  ["A2", "E3", "A3", "C#4"],
-            "E":  ["E2", "B2", "E3", "G#3"], "B":  ["B2", "D#3", "F#3", "B3"],
-            "Gb": ["F#2", "C#3", "F#3", "A#3"], "Db": ["C#3", "G#3", "C#4", "F4"],
-            "Ab": ["G#2", "Eb3", "G#3", "C4"], "Eb": ["Eb3", "G3", "Bb3", "Eb4"],
-            "Bb": ["Bb2", "F3", "Bb3", "D4"], "F":  ["F2", "C3", "F3", "A3"],
-            "separator": "Acordes Menores",
-            "Am": ["A2", "C3", "E3", "A3"], "Em": ["E2", "B2", "E3", "G3"],
-            "Bm": ["B2", "D3", "F#3", "B3"], "F#m":["F#2", "C#3", "F#3", "A3"],
-            "C#m":["C#3", "E3", "G#3", "C#4"], "G#m":["G#2", "D#3", "G#3", "B3"],
-            "D#m":["D#2", "A#2", "D#3", "F#3"], "Bbm":["Bb2", "Db3", "F3", "Bb3"],
-            "Fm": ["F2", "C3", "Ab3", "F3"], "Cm": ["C3", "Eb3", "G3", "C4"],
-            "Gm": ["G2", "D3", "G3", "Bb3"], "Dm": ["D3", "A3", "D4", "F4"]
+        // --- 1. DICCIONARIO MAESTRO (Octavas Agudas y Voicings Abiertos) ---
+        // Se subieron las octavas (3 y 4) para evitar que suene "muddy" o grave.
+        const arpegios = {
+            // MAYORES (Anillo Exterior)
+            "C":  ["C3", "G3", "C4", "E4"],   "G":  ["G3", "D4", "G4", "B4"],
+            "D":  ["D3", "A3", "D4", "F#4"],  "A":  ["A3", "E4", "A4", "C#5"],
+            "E":  ["E3", "B3", "E4", "G#4"],  "B":  ["B2", "F#3", "B3", "D#4"],
+            "Gb": ["Gb3", "Db4", "Gb4", "Bb4"],"Db": ["Db3", "Ab3", "Db4", "F4"],
+            "Ab": ["Ab3", "Eb4", "Ab4", "C5"], "Eb": ["Eb3", "Bb3", "Eb4", "G4"],
+            "Bb": ["Bb3", "F4", "Bb4", "D5"],  "F":  ["F3", "C4", "F4", "A4"],
+            // MENORES (Anillo Interior)
+            "Am": ["A3", "E4", "A4", "C5"],   "Em": ["E3", "B3", "E4", "G4"],
+            "Bm": ["B2", "F#3", "D4", "A4"],  "F#m":["F#3", "C#4", "F#4", "A4"],
+            "C#m":["C#3", "G#3", "E4", "B4"], "G#m":["G#3", "D#4", "B4", "F#5"],
+            "D#m":["Eb3", "Bb3", "Gb4", "Db5"],"Bbm":["Bb2", "F3", "Db4", "Ab4"],
+            "Fm": ["F3", "C4", "Ab4", "Eb5"],  "Cm": ["C3", "G3", "Eb4", "Bb4"],
+            "Gm": ["G3", "D4", "Bb4", "F5"],   "Dm": ["D3", "A3", "F4", "C5"]
         };
 
-        // 3. Generar la Interfaz Dinámicamente
-        const grid = document.getElementById('grid');
+        // --- 2. AUDIO SETUP (Ambient Chain) ---
+        const filter = new Tone.Filter(2000, "lowpass").toDestination();
+        const reverb = new Tone.Reverb({ decay: 8, wet: 0.5 }).connect(filter);
+        const delay = new Tone.FeedbackDelay("8n", 0.3).connect(reverb);
         
-        Object.keys(circuloArmonico).forEach(acorde => {
-            if(acorde === "separator") {
-                const title = document.createElement('div');
-                title.className = 'section-title';
-                title.innerText = circuloArmonico[acorde];
-                grid.appendChild(title);
-                return;
-            }
+        const sampler = new Tone.Sampler({
+            urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
+            baseUrl: "./samples/",
+            curve: "exponential",
+            attack: 0.1,
+            release: 3,
+            onload: () => document.getElementById('status').innerText = "SYSTEM ONLINE"
+        }).connect(delay);
 
-            const btn = document.createElement('button');
-            btn.className = 'chord-btn';
-            btn.innerText = acorde;
-            
-            // Evento para tocar
-            btn.addEventListener('mousedown', async () => {
-                if (Tone.context.state !== 'running') {
-                    await Tone.start();
-                }
-                tocarArpegio(acorde);
-                btn.classList.add('playing');
-                setTimeout(() => btn.classList.remove('playing'), 500);
+        // --- 3. UI & LOGIC ---
+        const circle = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
+        const nodesPos = {};
+        const svg = document.getElementById('harmony-svg');
+        const guideLayer = document.getElementById('guide-layer');
+
+        function createNodes(list, radio, type, color) {
+            list.forEach((name, i) => {
+                const angle = (i/12) * 2 * Math.PI - Math.PI/2;
+                const x = 200 + radio * Math.cos(angle);
+                const y = 200 + radio * Math.sin(angle);
+                const id = type === 'major' ? name : name + 'm';
+                nodesPos[id] = { x, y };
+
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                c.setAttribute("cx", x); c.setAttribute("cy", y);
+                c.setAttribute("r", type === 'major' ? 17 : 14);
+                c.setAttribute("fill", "#08080a");
+                c.setAttribute("stroke", color);
+                c.setAttribute("id", "node-" + id);
+                c.setAttribute("class", "node-circle");
+
+                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                t.setAttribute("x", x); t.setAttribute("y", y + 4);
+                t.setAttribute("text-anchor", "middle");
+                t.setAttribute("class", "chord-text");
+                t.setAttribute("font-size", type === 'major' ? "11" : "9");
+                t.textContent = id;
+
+                g.appendChild(c); g.appendChild(t);
+                
+                const trigger = async () => {
+                    if (Tone.context.state !== 'running') await Tone.start();
+                    tocar(id);
+                    drawGuide(name, i);
+                    c.setAttribute("fill", color);
+                    setTimeout(() => c.setAttribute("fill", "#08080a"), 250);
+                };
+
+                g.addEventListener('mousedown', trigger);
+                g.addEventListener('touchstart', (e) => { e.preventDefault(); trigger(); });
+                svg.appendChild(g);
             });
+        }
 
-            grid.appendChild(btn);
-        });
+        createNodes(circle, 155, 'major', "var(--cyan)");
+        createNodes(circle, 95, 'minor', "var(--pink)");
 
-        // 4. Lógica de Arpegio (Rasgueo)
-        function tocarArpegio(nombreAcorde) {
-            const notas = circuloArmonico[nombreAcorde];
+        function tocar(id) {
+            const notas = arpegios[id];
+            if (!notas) return;
             const ahora = Tone.now();
-            const rasgueo = 0.12; 
-
-            notas.forEach((nota, i) => {
-                sampler.triggerAttackRelease(nota, "2n", ahora + (i * rasgueo));
+            notas.forEach((n, i) => {
+                // Arpegio ascendente con sutil variación de tiempo para sonar natural
+                sampler.triggerAttackRelease(n, "1n", ahora + (i * 0.15), 0.4 + (i * 0.1));
             });
+        }
+
+        function drawGuide(rootName, rootIdx) {
+            guideLayer.innerHTML = "";
+            const mode = document.getElementById('pattern-select').value;
+            if (mode === "none") return;
+
+            const patterns = {
+                "251": [circle[(rootIdx+2)%12]+'m', circle[(rootIdx+1)%12], circle[rootIdx]],
+                "pop": [circle[rootIdx], circle[(rootIdx+1)%12], circle[(rootIdx+9)%12]+'m', circle[(rootIdx+11)%12]],
+                "gospel": [circle[(rootIdx+11)%12], circle[(rootIdx+1)%12], circle[rootIdx]]
+            };
+
+            const steps = patterns[mode];
+            let d = "";
+            steps.forEach((stepId, i) => {
+                const pos = nodesPos[stepId];
+                if (i === 0) d += `M ${pos.x} ${pos.y}`;
+                else d += ` L ${pos.x} ${pos.y}`;
+            });
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            line.setAttribute("d", d);
+            line.setAttribute("class", "guide-line");
+            guideLayer.appendChild(line);
         }
     </script>
 </body>
-  </html>
-  
+</html>
