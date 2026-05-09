@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Harmony - Flow Engine</title>
+    <title>Nexus Harmony Engine - Full Visuals</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
@@ -11,29 +11,29 @@
             --major: #00d4ff;
             --minor: #ff007c;
             --guide: #deff9a;
-            --path: rgba(222, 255, 154, 0.15);
+            --path-ghost: rgba(222, 255, 154, 0.1);
         }
 
         body {
             background: var(--bg);
             color: white;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow: hidden;
             touch-action: manipulation;
         }
 
         .controls {
             margin-top: 20px;
-            display: flex;
-            gap: 15px;
+            z-index: 100;
             background: rgba(255,255,255,0.05);
-            padding: 10px 25px;
-            border-radius: 40px;
-            border: 1px solid #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid #222;
             backdrop-filter: blur(10px);
         }
 
@@ -41,39 +41,45 @@
             background: transparent;
             color: var(--guide);
             border: none;
-            font-size: 0.8rem;
-            cursor: pointer;
-            outline: none;
+            font-size: 0.9rem;
             font-weight: bold;
+            outline: none;
+            cursor: pointer;
         }
 
-        #canvas-container { width: 95vw; max-width: 550px; margin-top: 20px; }
-        svg { width: 100%; height: auto; }
+        #canvas-container {
+            width: 95vw;
+            max-width: 550px;
+            height: 550px; /* Altura fija para asegurar visibilidad */
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+        }
 
-        .node-circle { transition: all 0.4s ease; cursor: pointer; }
-        .chord-text { pointer-events: none; font-size: 10px; fill: white; font-weight: bold; }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
 
-        /* Líneas de caminos posibles (Ghost Paths) */
+        .node-circle { transition: all 0.3s ease; cursor: pointer; }
+        .chord-text { pointer-events: none; fill: white; font-weight: bold; font-size: 11px; user-select: none; }
+
         .ghost-path {
             fill: none;
-            stroke: var(--path);
+            stroke: var(--path-ghost);
             stroke-width: 1;
             stroke-dasharray: 4,4;
-            transition: all 0.5s ease;
         }
 
-        /* Línea activa de ejecución */
         .active-path {
             fill: none;
             stroke: var(--guide);
-            stroke-width: 2.5;
+            stroke-width: 3;
             filter: drop-shadow(0 0 8px var(--guide));
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            animation: flow 1.5s linear forwards;
+            stroke-linecap: round;
         }
 
-        @keyframes flow { to { stroke-dashoffset: 0; } }
+        .status-bar { margin-top: 10px; font-size: 0.6rem; color: #444; letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -81,8 +87,8 @@
     <div class="controls">
         <select id="style-select">
             <option value="jazz">ESTILO: JAZZ (2-5-1)</option>
-            <option value="gospel">ESTILO: GOSPEL (VAMP)</option>
-            <option value="pop">ESTILO: POP (CIRCLE)</option>
+            <option value="gospel">ESTILO: GOSPEL (4-5-1)</option>
+            <option value="pop">ESTILO: POP (1-5-6-4)</option>
         </select>
     </div>
     
@@ -90,45 +96,52 @@
         <svg id="harmony-svg" viewBox="0 0 400 400">
             <g id="ghost-layer"></g>
             <g id="active-layer"></g>
+            <g id="nodes-layer"></g>
         </svg>
     </div>
 
+    <div class="status-bar" id="status">INICIALIZANDO AUDIO...</div>
+
     <script>
-        // --- 1. ENGINE DE AUDIO POLIFÓNICO ---
-        const reverb = new Tone.Reverb({ decay: 10, wet: 0.5 }).toDestination();
-        const delay = new Tone.FeedbackDelay("4n", 0.3).connect(reverb);
-        
-        // El sampler ahora tiene un release largo para que las notas se mezclen
+        // --- 1. DICCIONARIO DE ARPEGIOS (Brillantes y Agudos) ---
+        const arpegios = {
+            "C": ["C3","G3","C4","E4"], "G": ["G3","D4","G4","B4"], "D": ["D3","A3","D4","F#4"],
+            "A": ["A3","E4","A4","C#5"], "E": ["E3","B3","E4","G#4"], "B": ["B2","F#3","B3","D#4"],
+            "Gb":["Gb3","Db4","Gb4","Bb4"], "Db":["Db3","Ab3","Db4","F4"], "Ab":["Ab3","Eb4","Ab4","C5"],
+            "Eb":["Eb3","Bb3","Eb4","G4"], "Bb":["Bb3","F4","Bb4","D5"], "F":["F3","C4","F4","A4"],
+            "Am":["A3","E4","A4","C5"], "Em":["E3","B3","E4","G4"], "Bm":["B2","F#3","D4","A4"],
+            "F#m":["F#3","C#4","F#4","A4"], "C#m":["C#3","G#3","E4","B4"], "G#m":["G#3","D#4","B4","F#5"],
+            "D#m":["Eb3","Bb3","Gb4","Db5"], "Bbm":["Bb2","F3","Db4","Ab4"], "Fm":["F3","C4","Ab4","Eb5"],
+            "Cm":["C3","G3","Eb4","Bb4"], "Gm":["G3","D4","Bb4","F5"], "Dm":["D3","A3","F4","C5"]
+        };
+
+        // --- 2. ENGINE DE AUDIO (Sin cortes) ---
+        const reverb = new Tone.Reverb({ decay: 8, wet: 0.5 }).toDestination();
+        const delay = new Tone.FeedbackDelay("8n", 0.3).connect(reverb);
         const sampler = new Tone.Sampler({
             urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
             baseUrl: "./samples/",
-            volume: -5,
-            release: 4, // Crucial: mantiene el sonido del acorde anterior
-            onload: () => console.log("Engine Ready")
+            release: 4, // El sonido sigue después de soltar
+            onload: () => document.getElementById('status').innerText = "ENGINE ONLINE"
         }).connect(delay);
 
-        // --- 2. MAPA DE NOTAS Y RELACIONES ---
+        // --- 3. LÓGICA VISUAL ---
         const circle = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
         const nodesPos = {};
-        const activeLayer = document.getElementById('active-layer');
         const ghostLayer = document.getElementById('ghost-layer');
-        
-        // Definimos los intervalos de los caminos según el estilo
-        const styleRules = {
-            "jazz": [2, 1, 0], // ii -> V -> I (índices relativos en el círculo)
-            "pop": [0, 1, 9, 11], // I -> V -> vi -> IV
-            "gospel": [11, 1, 0] // IV -> V -> I
-        };
+        const activeLayer = document.getElementById('active-layer');
+        const nodesLayer = document.getElementById('nodes-layer');
+        let lastNode = null;
 
-        // --- 3. DIBUJAR INTERFAZ ---
         function init() {
-            const svg = document.getElementById('harmony-svg');
-            
-            // Crear Nodos
-            drawRing(circle, 150, 'major', "var(--major)");
-            drawRing(circle, 95, 'minor', "var(--minor)");
+            // Dibujar círculos guía de fondo
+            const bgCircle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            bgCircle1.setAttribute("cx", 200); bgCircle1.setAttribute("cy", 200); bgCircle1.setAttribute("r", 155);
+            bgCircle1.setAttribute("fill", "none"); bgCircle1.setAttribute("stroke", "#151515");
+            nodesLayer.appendChild(bgCircle1);
 
-            // Dibujar Caminos Iniciales
+            drawRing(circle, 155, 'major', "var(--major)");
+            drawRing(circle, 95, 'minor', "var(--minor)");
             updateGhostPaths();
         }
 
@@ -138,84 +151,77 @@
                 const x = 200 + radio * Math.cos(angle);
                 const y = 200 + radio * Math.sin(angle);
                 const id = type === 'major' ? name : name + 'm';
-                nodesPos[id] = { x, y, rootIdx: i, type };
+                nodesPos[id] = { x, y, idx: i, type };
 
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                c.setAttribute("cx", x); c.setAttribute("cy", y);
-                c.setAttribute("r", type === 'major' ? 18 : 14);
-                c.setAttribute("fill", "#0a0a0c");
-                c.setAttribute("stroke", color);
-                c.setAttribute("id", "node-" + id);
+                c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", type === 'major' ? 18 : 14);
+                c.setAttribute("fill", "#050508"); c.setAttribute("stroke", color);
+                c.setAttribute("stroke-width", "1.5");
                 c.setAttribute("class", "node-circle");
+                c.setAttribute("id", "circle-" + id);
 
                 const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 t.setAttribute("x", x); t.setAttribute("y", y + 4);
-                t.setAttribute("text-anchor", "middle");
-                t.setAttribute("class", "chord-text");
+                t.setAttribute("text-anchor", "middle"); t.setAttribute("class", "chord-text");
                 t.textContent = id;
 
                 g.appendChild(c); g.appendChild(t);
                 
-                g.addEventListener('pointerdown', (e) => {
-                    playChord(id);
-                    drawActiveFlow(id);
-                });
-                svg.appendChild(g);
+                const play = async () => {
+                    if (Tone.context.state !== 'running') await Tone.start();
+                    tocar(id);
+                    animarCamino(id);
+                    c.setAttribute("fill", color);
+                    setTimeout(() => c.setAttribute("fill", "#050508"), 300);
+                };
+
+                g.addEventListener('pointerdown', play);
+                nodesLayer.appendChild(g);
             });
         }
 
-        // --- 4. LÓGICA DE CAMINOS (GHOST PATHS) ---
         function updateGhostPaths() {
             ghostLayer.innerHTML = "";
             const style = document.getElementById('style-select').value;
-            const rules = styleRules[style];
-
-            // Dibujamos todas las conexiones posibles en el círculo para ese estilo
+            
             circle.forEach((name, i) => {
+                let targets = [];
+                if(style === "jazz") targets = [circle[(i+2)%12]+'m', circle[(i+1)%12], circle[i]];
+                if(style === "gospel") targets = [circle[(i+11)%12], circle[(i+1)%12], circle[i]];
+                if(style === "pop") targets = [circle[i], circle[(i+1)%12], circle[(i+9)%12]+'m', circle[(i+11)%12]];
+
                 let d = "";
-                rules.forEach((offset, step) => {
-                    const targetIdx = (i + offset) % 12;
-                    const targetName = (style === "jazz" && step === 0) ? circle[targetIdx] + 'm' : circle[targetIdx];
-                    const pos = nodesPos[targetName];
-                    if (pos) {
-                        if (step === 0) d += `M ${pos.x} ${pos.y}`;
-                        else d += ` L ${pos.x} ${pos.y}`;
-                    }
+                targets.forEach((tid, ti) => {
+                    const p = nodesPos[tid];
+                    if(ti === 0) d += `M ${p.x} ${p.y}`;
+                    else d += ` L ${p.x} ${p.y}`;
                 });
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", d);
-                path.setAttribute("class", "ghost-path");
+                path.setAttribute("d", d); path.setAttribute("class", "ghost-path");
                 ghostLayer.appendChild(path);
             });
         }
 
-        // --- 5. FLUJO ACTIVO Y AUDIO ---
-        let lastChordPos = null;
-
-        function drawActiveFlow(id) {
-            const currentPos = nodesPos[id];
-            if (lastChordPos) {
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                line.setAttribute("d", `M ${lastChordPos.x} ${lastChordPos.y} L ${currentPos.x} ${currentPos.y}`);
+        function animarCamino(id) {
+            const current = nodesPos[id];
+            if (lastNode) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", lastNode.x); line.setAttribute("y1", lastNode.y);
+                line.setAttribute("x2", current.x); line.setAttribute("y2", current.y);
                 line.setAttribute("class", "active-path");
                 activeLayer.appendChild(line);
                 
-                // Limpiar líneas viejas para no saturar el SVG
-                if (activeLayer.children.length > 5) activeLayer.removeChild(activeLayer.firstChild);
+                // Desvanecer línea activa
+                setTimeout(() => { line.style.opacity = "0"; setTimeout(() => line.remove(), 1000); }, 1500);
             }
-            lastChordPos = currentPos;
+            lastNode = current;
         }
 
-        function playChord(id) {
-            if (Tone.context.state !== 'running') Tone.start();
-            
-            // Simulación de arpegio (puedes usar tu diccionario de notas aquí)
+        function tocar(id) {
+            const notas = arpegios[id];
             const now = Tone.now();
-            const notes = ["C4", "E4", "G4", "B4"]; // Ejemplo
-            
-            notes.forEach((n, i) => {
-                // triggerAttack sin Release inmediato para que el sonido fluya
+            notas.forEach((n, i) => {
                 sampler.triggerAttackRelease(n, "2n", now + (i * 0.12));
             });
         }
