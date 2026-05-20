@@ -92,9 +92,11 @@
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx7HtmRjp0gtxu3WVf--Ca9Fy8NJ6CKFGMioPYgRnxl_c_bOekAj_i6cnxZ70jNt0L9mg/exec";
     
     // ⚠️ REEMPLAZA CON TU API KEY DE IA (O configúrala mediante un backend/input por seguridad)
-    const API_KEY_IA = "AIzaSyBYE7E3wAUHtudCsgfHF_U3c8zL3FZ5ufE"; 
-    const URL_IA = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY_IA}`;
-
+    
+    // Configuración para usar Groq (Gratis y Ultra Rápido)
+const API_KEY_IA = "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"; 
+const URL_IA = "https://api.groq.com/openai/v1/chat/completions";
+    
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     const dropZone = document.getElementById('dropZone');
@@ -179,37 +181,54 @@
           "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
         }`;
 
-        try {
-            // 1. Llamada a la API de IA
-            const responseIA = await fetch(URL_IA, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `${promptSistema}\n\nTexto del PDF:\n${textoExtraidoPDF}` }] }]
-                })
-            });
+       try {
+    // 1. Llamada a la API de Groq
+    const responseIA = await fetch(URL_IA, {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY_IA}` // Autorización estándar
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-specdec", // Modelo gratuito de alto rendimiento
+            response_format: { "type": "json_object" }, // Forzamos a que responda solo JSON
+            messages: [
+                {
+                    role: "system",
+                    content: promptSistema // Aquí va el mismo prompt de reglas de negocio que ya armamos
+                },
+                {
+                    role: "user",
+                    content: `Texto extraído del PDF:\n${textoExtraidoPDF}`
+                }
+            ],
+            temperature: 0.1 // Baja temperatura para que sea estricto y exacto con los datos
+        })
+    });
 
-            const jsonIA = await responseIA.json();
-            const textoJSON = jsonIA.candidates[0].content.parts[0].text.trim();
-            const datosEstructurados = JSON.parse(textoJSON);
+    const jsonIA = await responseIA.json();
+    
+    // Groq devuelve la respuesta en un formato de chat estructurado
+    const textoJSON = jsonIA.choices[0].message.content.trim();
+    const datosEstructurados = JSON.parse(textoJSON);
 
-            mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
+    mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
 
-            // 2. Envío de datos al Backend de Google Sheets
-            const responseSheets = await fetch(URL_APPS_SCRIPT, {
-                method: "POST",
-                mode: "no-cors", // Requerido para llamadas directas a Apps Script Web Apps sin problemas de redirección
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosEstructurados)
-            });
+    // 2. Envío de datos al Backend de Google Sheets (Esta parte queda exactamente igual)
+    const responseSheets = await fetch(URL_APPS_SCRIPT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosEstructurados)
+    });
 
-            mostrarStatus(`¡Procesado con éxito! Los datos del documento (${datosEstructurados.numero_documento || 'Oficio'}) fueron enviados a tu Google Sheet.`, "success");
-            fileNameSpan.innerText = "";
-            textoExtraidoPDF = "";
-        } catch (error) {
-            mostrarStatus("Error en el procesamiento: " + error.message, "error");
-            btnProcesar.disabled = false;
-        }
+    mostrarStatus(`¡Procesado con éxito! Documento (${datosEstructurados.numero_documento || 'Oficio'}) guardado en Google Sheet.`, "success");
+    fileNameSpan.innerText = "";
+    textoExtraidoPDF = "";
+} catch (error) {
+    mostrarStatus("Error en el procesamiento: " + error.message, "error");
+    btnProcesar.disabled = false;
+}
     });
 
     function mostrarStatus(mensaje, tipo) {
