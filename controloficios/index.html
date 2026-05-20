@@ -2,176 +2,229 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NEXUS OFICIOS - PDVSA</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { pdvsa: { red: '#ed1c24', blue: '#1e40af', dark: '#0f172a' } },
-                    borderRadius: { 'xl-mobile': '1.25rem', '2xl-mobile': '1.75rem' }
-                }
-            }
-        }
-    </script>
-    
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Extractor PDF - Requerimientos</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0056b3">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
-        [v-cloak] { display: none; }
-        .input-mobile { @apply w-full p-4 bg-white rounded-xl-mobile border border-slate-100 text-sm focus:ring-2 focus:ring-pdvsa-blue outline-none transition-all shadow-sm; }
-        .label-mobile { @apply text-[11px] font-bold uppercase text-slate-400 ml-3 mb-1 block tracking-widest; }
-        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #1e40af; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .fab-ia { @apply absolute bottom-4 right-4 flex items-center gap-2 bg-pdvsa-blue text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all z-10; }
+        :root {
+            --primary-color: #0056b3;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            padding: 40px 20px;
+            border-radius: 8px;
+            background: #f0f4f9;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover { background: #e2ecf7; }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; display: block !important; }
+        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
+        .loading { background-color: #fff3cd; color: #856404; display: block !important; }
     </style>
 </head>
-<body class="text-slate-900">
-    <div id="app" v-cloak class="min-h-screen flex flex-col pb-32">
-        
-        <header class="p-6 flex justify-between items-center bg-f8fafc/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100">
-            <div>
-                <h1 class="text-2xl font-black text-pdvsa-blue tracking-tighter">NEXUS <span class="text-slate-300">OFICIOS</span></h1>
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Control de Correspondencia</p>
-            </div>
-            <button @click="menuConfig = true" class="bg-white shadow-sm text-slate-500 p-3 rounded-2xl border border-slate-100 active:scale-90 transition-all text-xl">⚙️</button>
-        </header>
+<body>
 
-        <main class="p-5 space-y-6 flex-grow">
-            <section class="space-y-4">
-                <div><label class="label-mobile">Fecha Recepción</label><input v-model="form.fechaRecepcion" type="date" class="input-mobile"></div>
-                <div><label class="label-mobile">Organización Remitente</label><input v-model="form.organizacion" type="text" placeholder="Ej. Gerencia de Transporte" class="input-mobile"></div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="label-mobile">N° Documento</label><input v-model="form.numDocumento" type="text" placeholder="OFI-000" class="input-mobile"></div>
-                    <div><label class="label-mobile">Estatus</label>
-                        <select v-model="form.estatus" class="input-mobile font-bold appearance-none bg-white">
-                            <option value="Pendiente">🟡 PENDIENTE</option>
-                            <option value="Aprobado">🟢 APROBADO</option>
-                            <option value="Denegado">🔴 DENEGADO</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="relative bg-white p-4 rounded-xl-mobile shadow-sm border border-slate-100">
-                    <label class="label-mobile !ml-0 mb-3 text-pdvsa-blue flex items-center gap-2"><span>📄</span><span>Descripción del Asunto</span></label>
-                    <textarea v-model="form.descripcion" rows="12" class="w-full bg-transparent border-none text-sm focus:ring-0 outline-none resize-none" :placeholder="isScanning ? 'La IA está leyendo el documento...' : 'Use el botón para escanear con IA'"></textarea>
-                    
-                    <label class="fab-ia" :class="{'opacity-50 cursor-not-allowed': isScanning}">
-                        <span v-if="isScanning" class="loader"></span>
-                        <span v-else>📷</span>
-                        <span>{{ isScanning ? 'LEYENDO' : 'IA SCAN' }}</span>
-                        <input type="file" class="hidden" accept="image/*" @change="escanearDocumento" :disabled="isScanning">
-                    </label>
-                </div>
-            </section>
-        </main>
-
-        <div class="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-f8fafc via-f8fafc to-transparent z-30">
-            <button @click="enviarOficio" :disabled="isSyncing || isScanning" class="w-full bg-slate-950 text-white py-4.5 rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-3">
-                <span v-if="isSyncing" class="loader border-t-white border-white/20"></span>
-                <span class="uppercase tracking-widest text-xs font-bold">{{ isSyncing ? 'Enviando...' : 'Registrar en Excel' }}</span>
-            </button>
-        </div>
-
-        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 backdrop-blur-sm" @click.self="menuConfig = false">
-            <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl space-y-6">
-                <h3 class="text-xl font-black text-center text-pdvsa-blue">Ajustes del Sistema</h3>
-                <div class="space-y-4">
-                    <div><label class="label-mobile">URL de Google Script</label><input v-model="config.url" type="text" class="input-mobile text-[10px] font-mono"></div>
-                    <div><label class="label-mobile">Token de Hugging Face</label><input v-model="config.hfToken" type="password" class="input-mobile text-[10px] font-mono"></div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button @click="guardarConfig" class="flex-1 bg-pdvsa-blue text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">Guardar</button>
-                    <button @click="menuConfig = false" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold">Cerrar</button>
-                </div>
-            </div>
-        </div>
+<div class="container">
+    <h1>Nexus Extractor PDF</h1>
+    <p>Automatización de Requerimientos de Transporte Terrestre</p>
+    
+    <div class="drop-zone" id="dropZone">
+        <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
+        <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
     </div>
 
-    <script type="module">
-        const { createApp } = Vue;
+    <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
+    
+    <div id="status"></div>
+</div>
 
-        createApp({
-            data() {
-                return {
-                    isSyncing: false, isScanning: false, menuConfig: false,
-                    config: JSON.parse(localStorage.getItem('nexus_oficios_cfg') || '{ "url": "", "hfToken": "" }'),
-                    form: this.getEmptyForm()
-                }
-            },
-            methods: {
-                getEmptyForm() {
-                    return {
-                        fechaRecepcion: new Date().toISOString().split('T')[0],
-                        recibidoPor: 'Jesús Rivero', organizacion: '', estatus: 'Pendiente', 
-                        numDocumento: '', contacto: '', telefono: '', descripcion: ''
+<script>
+    // Configuración de Endpoints
+    // ⚠️ REEMPLAZA ESTA URL CON TU LINK REAL DE GOOGLE APPS SCRIPT
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx7HtmRjp0gtxu3WVf--Ca9Fy8NJ6CKFGMioPYgRnxl_c_bOekAj_i6cnxZ70jNt0L9mg/exec";
+    
+    // ⚠️ REEMPLAZA CON TU API KEY DE IA (O configúrala mediante un backend/input por seguridad)
+    const API_KEY_IA = "AIzaSyBYE7E3wAUHtudCsgfHF_U3c8zL3FZ5ufE"; 
+    const URL_IA = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY_IA}`;
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const btnProcesar = document.getElementById('btnProcesar');
+    const statusDiv = document.getElementById('status');
+    const fileNameSpan = document.getElementById('fileName');
+    
+    let textoExtraidoPDF = "";
+
+    // Eventos del Drag & Drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
+    
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#e2ecf7'; });
+    dropZone.addEventListener('dragleave', () => dropZone.style.background = '#f0f4f9');
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.background = '#f0f4f9';
+        manejarArchivo(e.dataTransfer.files[0]);
+    });
+
+    async function manejarArchivo(file) {
+        if (!file || file.type !== "application/pdf") {
+            mostrarStatus("Por favor, selecciona un archivo PDF válido.", "error");
+            return;
+        }
+        fileNameSpan.innerText = file.name;
+        mostrarStatus("Leyendo contenido del PDF...", "loading");
+        
+        try {
+            textoExtraidoPDF = await extraerTextoPDF(file);
+            mostrarStatus("PDF cargado exitosamente. Listo para procesar.", "success");
+            btnProcesar.disabled = false;
+        } catch (error) {
+            mostrarStatus("Error al leer el PDF: " + error.message, "error");
+        }
+    }
+
+    function extraerTextoPDF(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let numPages = pdf.numPages;
+                    let fullText = "";
+                    
+                    for (let i = 1; i <= numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n";
                     }
-                },
-                async escanearDocumento(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    if (!this.config.hfToken) return Swal.fire('Atención', 'Configura tu Token de HF.', 'warning');
+                    resolve(fullText);
+                } catch (err) { reject(err); }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
 
-                    this.isScanning = true;
-                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 15000 });
-                    Toast.fire({ icon: 'info', title: 'Conectando a tu Space...' });
+    btnProcesar.addEventListener('click', async () => {
+        if (!textoExtraidoPDF) return;
+        mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
+        btnProcesar.disabled = true;
 
-                    try {
-                        const gradioModule = await import("https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js");
-                        const { Client, handle_file } = gradioModule;
-                        
-                        const token = this.config.hfToken.trim();
-                        // Conectamos a TU nuevo Space
-                        const client = await Client.connect("jesusdaver86/registrooficio", {
-                            hf_token: token.startsWith('hf_') ? token : `hf_${token}`
-                        });
+        // Prompt estructurado bajo tus reglas de negocio exactas
+        const promptSistema = `Tu tarea es actuar como un extractor de datos analítico experto. Lee el texto de un oficio o solicitud dirigida a la gerencia de transporte y mapea los datos estrictamente al siguiente objeto JSON.
+        Reglas de Categorías Obligatorias:
+        - clase_requerimiento: Solo puede ser uno de estos: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
+        - tipo_apoyo: Solo puede ser uno de estos: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
+        
+        Reglas de Subcategorías Condicionales:
+        - detalle_movilizacion: Si el apoyo requiere transporte de personal o carga, evalúa e identifica si es 'Bus', 'Camión Cava', 'Brazo Articulado', 'Grúa' o 'Montacarga'. Si no aplica coloca 'N/A'.
+        - detalle_suministro: Si piden insumos, identifica si es 'Gasolina', 'Diesel', 'Aceite', 'Caucho', 'Batería' o 'Otro'. Si no aplica coloca 'N/A'.
+        - detalle_mantenimiento: Si es reparación o revisión mecánica, clasifica si es 'Preventivo' o 'Correctivo'. Si no aplica coloca 'N/A'.
+        - detalle_agua_achique: Si se asocia a fluidos o contingencias, evalúa si es 'Achiques' o 'Suministro de Agua Potable'. Si no aplica coloca 'N/A'.
 
-                        // Enviamos el archivo usando handle_file para asegurar compatibilidad
-                        const result = await client.predict(0, [
-                            handle_file(file), 
-                            "format"
-                        ]);
+        Responde ÚNICAMENTE con el objeto JSON plano, sin formato Markdown (sin \`\`\`json), respetando estas llaves:
+        {
+          "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
+        }`;
 
-                        console.log("📥 Resultado de TU Space:", result);
+        try {
+            // 1. Llamada a la API de IA
+            const responseIA = await fetch(URL_IA, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `${promptSistema}\n\nTexto del PDF:\n${textoExtraidoPDF}` }] }]
+                })
+            });
 
-                        if (result && result.data && result.data[0]) {
-                            this.form.descripcion = result.data[0].trim();
-                            Toast.fire({ icon: 'success', title: 'Texto procesado', timer: 2000 });
-                        } else {
-                            throw new Error("El modelo no devolvió texto. Asegúrate de que el Space esté 'Running'.");
-                        }
-                    } catch (error) {
-                        console.error("❌ ERROR:", error);
-                        Swal.fire('Error', `Fallo en jesusdaver86/registrooficio: ${error.message}`, 'error');
-                    } finally {
-                        this.isScanning = false;
-                        event.target.value = '';
-                    }
-                },
-                guardarConfig() {
-                    localStorage.setItem('nexus_oficios_cfg', JSON.stringify(this.config));
-                    this.menuConfig = false;
-                    Swal.fire({ icon: 'success', title: 'Configuración Guardada', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
-                },
-                async enviarOficio() {
-                    if(!this.config.url) return Swal.fire('Error', 'Falta URL de Google Script', 'warning');
-                    this.isSyncing = true;
-                    try {
-                        await fetch(this.config.url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'nuevo_oficio', data: this.form }) });
-                        Swal.fire('¡Éxito!', 'Registrado en la base de datos.', 'success');
-                        this.form = this.getEmptyForm();
-                    } catch (e) {
-                        Swal.fire('Error', 'Fallo de red.', 'error');
-                    } finally { this.isSyncing = false; }
-                }
-            }
-        }).mount('#app')
-    </script>
+            const jsonIA = await responseIA.json();
+            const textoJSON = jsonIA.candidates[0].content.parts[0].text.trim();
+            const datosEstructurados = JSON.parse(textoJSON);
+
+            mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
+
+            // 2. Envío de datos al Backend de Google Sheets
+            const responseSheets = await fetch(URL_APPS_SCRIPT, {
+                method: "POST",
+                mode: "no-cors", // Requerido para llamadas directas a Apps Script Web Apps sin problemas de redirección
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosEstructurados)
+            });
+
+            mostrarStatus(`¡Procesado con éxito! Los datos del documento (${datosEstructurados.numero_documento || 'Oficio'}) fueron enviados a tu Google Sheet.`, "success");
+            fileNameSpan.innerText = "";
+            textoExtraidoPDF = "";
+        } catch (error) {
+            mostrarStatus("Error en el procesamiento: " + error.message, "error");
+            btnProcesar.disabled = false;
+        }
+    });
+
+    function mostrarStatus(mensaje, tipo) {
+        statusDiv.innerText = mensaje;
+        statusDiv.className = tipo;
+    }
+
+    // Registro del Service Worker para soporte PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrado con éxito.', reg))
+                .catch(err => console.error('Error al registrar Service Worker.', err));
+        });
+    }
+</script>
 </body>
 </html>
