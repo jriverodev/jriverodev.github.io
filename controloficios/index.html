@@ -189,7 +189,7 @@
                 "Authorization": `Bearer ${API_KEY_IA}`
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-specdec",
+                model: "llama-3.3-70b-versatile",
                 response_format: { "type": "json_object" }, // Groq exige que el prompt pida JSON explícitamente arriba
                 messages: [
                     { role: "system", content: promptSistema },
