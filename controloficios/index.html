@@ -163,14 +163,19 @@
         btnProcesar.disabled = true;
 
         try {
-            // Sanitización básica del texto para remover saltos extraños antes del transporte
             const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
 
-            // Transmisión directa hacia Google Apps Script (Sin no-cors para poder validar la respuesta)
+            // Usamos URLSearchParams para emular el envío de un formulario estándar.
+            // Esto evita que el navegador dispare la validación OPTIONS de CORS.
+            const cuerpoFormulario = new URLSearchParams();
+            cuerpoFormulario.append("textoPDF", textoLimpio);
+
             const respuestaServidor = await fetch(URL_APPS_SCRIPT, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-                body: JSON.stringify({ "textoPDF": textoLimpio })
+                headers: { 
+                    "Content-Type": "application/x-www-form-urlencoded" 
+                }, 
+                body: cuerpoFormulario.toString()
             });
 
             const resultado = await respuestaServidor.json();
@@ -188,11 +193,6 @@
             btnProcesar.disabled = false;
         }
     });
-
-    function mostrarStatus(mensaje, tipo) {
-        statusDiv.innerText = mensaje;
-        statusDiv.className = tipo;
-    }
 
     // Registro del Service Worker
     if ('serviceWorker' in navigator) {
