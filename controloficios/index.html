@@ -1,257 +1,251 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Extractor PDF - Requerimientos</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0056b3">
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9496/9496555.png">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #0056b3;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #333;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        h1 { color: var(--primary-color); margin-bottom: 5px; }
-        p { color: #666; margin-top: 0; }
-        .drop-zone {
-            border: 2px dashed var(--primary-color);
-            padding: 40px 20px;
-            border-radius: 8px;
-            background: #f0f4f9;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin: 20px 0;
-        }
-        .drop-zone:hover { background: #e2ecf7; }
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-        }
-        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 6px;
-            display: none;
-        }
-        .success { background-color: #d4edda; color: #155724; display: block !important; }
-        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
-        .loading { background-color: #fff3cd; color: #856404; display: block !important; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Extractor PDF - Requerimientos</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0056b3">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9496/9496555.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            padding: 40px 20px;
+            border-radius: 8px;
+            background: #f0f4f9;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover { background: #e2ecf7; }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; display: block !important; }
+        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
+        .loading { background-color: #fff3cd; color: #856404; display: block !important; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Nexus Extractor PDF</h1>
-    <p>Automatización de Requerimientos de Transporte Terrestre</p>
-    
-    <div class="drop-zone" id="dropZone">
-        <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
-        <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
-        <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
-    </div>
+    <h1>Nexus Extractor PDF</h1>
+    <p>Automatización de Requerimientos de Transporte Terrestre</p>
+    
+    <div class="drop-zone" id="dropZone">
+        <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
+        <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
+    </div>
 
-    <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
-    
-    <div id="status"></div>
+    <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
+    
+    <div id="status"></div>
 </div>
 
 <script>
-    // Configuración de Endpoints Autorizados
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx7HtmRjp0gtxu3WVf--Ca9Fy8NJ6CKFGMioPYgRnxl_c_bOekAj_i6cnxZ70jNt0L9mg/exec";
-    const API_KEY_IA = "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"; 
-    const URL_IA = "https://api.groq.com/openai/v1/chat/completions";
-    
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    // Configuración de Endpoints Autorizados
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx7HtmRjp0gtxu3WVf--Ca9Fy8NJ6CKFGMioPYgRnxl_c_bOekAj_i6cnxZ70jNt0L9mg/exec";
+    const API_KEY_IA = "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"; 
+    const URL_IA = "https://api.groq.com/openai/v1/chat/completions";
+    
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const btnProcesar = document.getElementById('btnProcesar');
-    const statusDiv = document.getElementById('status');
-    const fileNameSpan = document.getElementById('fileName');
-    
-    let textoExtraidoPDF = "";
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const btnProcesar = document.getElementById('btnProcesar');
+    const statusDiv = document.getElementById('status');
+    const fileNameSpan = document.getElementById('fileName');
+    
+    let textoExtraidoPDF = "";
 
-    // Eventos de la Zona de Arrastre (Drag & Drop)
-    dropZone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
-    
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#e2ecf7'; });
-    dropZone.addEventListener('dragleave', () => dropZone.style.background = '#f0f4f9');
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.background = '#f0f4f9';
-        manejarArchivo(e.dataTransfer.files[0]);
-    });
+    // Eventos de la Zona de Arrastre (Drag & Drop)
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
+    
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#e2ecf7'; });
+    dropZone.addEventListener('dragleave', () => dropZone.style.background = '#f0f4f9');
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.background = '#f0f4f9';
+        manejarArchivo(e.dataTransfer.files[0]);
+    });
 
-    async function manejarArchivo(file) {
-        if (!file || file.type !== "application/pdf") {
-            mostrarStatus("Por favor, selecciona un archivo PDF válido.", "error");
-            return;
-        }
-        fileNameSpan.innerText = file.name;
-        mostrarStatus("Leyendo contenido del PDF...", "loading");
-        
-        try {
-            textoExtraidoPDF = await extraerTextoPDF(file);
-            mostrarStatus("PDF cargado exitosamente. Listo para procesar.", "success");
-            btnProcesar.disabled = false;
-        } catch (error) {
-            mostrarStatus("Error al leer el PDF: " + error.message, "error");
-        }
-    }
+    async function manejarArchivo(file) {
+        if (!file || file.type !== "application/pdf") {
+            mostrarStatus("Por favor, selecciona un archivo PDF válido.", "error");
+            return;
+        }
+        fileNameSpan.innerText = file.name;
+        mostrarStatus("Leyendo contenido del PDF...", "loading");
+        
+        try {
+            textoExtraidoPDF = await extraerTextoPDF(file);
+            mostrarStatus("PDF cargado exitosamente. Listo para procesar.", "success");
+            btnProcesar.disabled = false;
+        } catch (error) {
+            mostrarStatus("Error al leer el PDF: " + error.message, "error");
+        }
+    }
 
-    function extraerTextoPDF(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = async function() {
-                try {
-                    const typedarray = new Uint8Array(this.result);
-                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                    let numPages = pdf.numPages;
-                    let fullText = "";
-                    
-                    for (let i = 1; i <= numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(" ");
-                        fullText += pageText + "\n";
-                    }
-                    resolve(fullText);
-                } catch (err) { reject(err); }
-            };
-            reader.readAsArrayBuffer(file);
-        });
-    }
+    function extraerTextoPDF(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let numPages = pdf.numPages;
+                    let fullText = "";
+                    
+                    for (let i = 1; i <= numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n";
+                    }
+                    resolve(fullText);
+                } catch (err) { reject(err); }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
 
-    btnProcesar.addEventListener('click', async () => {
-        if (!textoExtraidoPDF) return;
-        mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
-        btnProcesar.disabled = true;
+    btnProcesar.addEventListener('click', async () => {
+    if (!textoExtraidoPDF) return;
+    mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
+    btnProcesar.disabled = true;
 
-        const promptSistema = `Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido acorde a la estructura solicitada.
-        Reglas de Categorías Maestras:
-        - clase_requerimiento: Debe ser exactamente uno de estos valores: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
-        - tipo_apoyo: Debe ser exactamente uno de estos valores: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
-        - descripcion: Debe contener todo el cuerpo, con sus parrafos hasta el final, no redactes.
-        
-        Reglas de Subcategorías Condicionales:
-        - detalle_movilizacion: Si aplica, identifica si es 'Bus', 'Camión Cava', 'Brazo Articulado', 'Grúa' o 'Montacarga'. Si no, usa 'N/A'.
-        - detalle_suministro: Si aplica, identifica si es 'Gasolina', 'Diesel', 'Aceite', 'Caucho', 'Batería' o 'Otro'. Si no, usa 'N/A'.
-        - detalle_mantenimiento: Si aplica, mapea si es 'Preventivo' o 'Correctivo'. Si no, usa 'N/A'.
-        - detalle_agua_achique: Si aplica, mapea si es 'Achiques' o 'Suministro de Agua Potable'. Si no, usa 'N/A'.
+    // Prompt optimizado y simplificado para evitar el Error 400 en Groq
+    const promptSistema = `Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido. No uses formato markdown en la respuesta.
+        Reglas de Categorías Maestras:
+        - clase_requerimiento: Debe ser exactamente uno de estos valores: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
+        - tipo_apoyo: Debe ser exactamente uno de estos valores: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
+        - descripcion: Debe contener todo el cuerpo, con sus parrafos hasta el final, no redactes.
+        
+        Reglas de Subcategorías Condicionales:
+        - detalle_movilizacion: Si aplica, identifica si es 'Bus', 'Camión Cava', 'Brazo Articulado', 'Grúa' o 'Montacarga'. Si no, usa 'N/A'.
+        - detalle_suministro: Si aplica, identifica si es 'Gasolina', 'Diesel', 'Aceite', 'Caucho', 'Batería' o 'Otro'. Si no, usa 'N/A'.
+        - detalle_mantenimiento: Si aplica, mapea si es 'Preventivo' o 'Correctivo'. Si no, usa 'N/A'.
+        - detalle_agua_achique: Si aplica, mapea si es 'Achiques' o 'Suministro de Agua Potable'. Si no, usa 'N/A'.
 
-        Estructura obligatoria del JSON:
-        {
-          "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
-        }`;
+        Estructura obligatoria del JSON (llaves limpias sin comillas internas en los valores):
+        {
+          "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
+        }`;
 
-        try {
-            // Reemplazar saltos de línea pesados y tabuladores para evitar dañar la estructura del payload JSON
-            const textoLimpio = textoExtraidoPDF.replace(/[\r\t\n]+/g, " ").trim();
+        try {
+        // Limpiamos el texto del PDF de caracteres de control extraños antes de mandarlo
+        const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
 
-            // 1. Consumo de la API de Groq
-            const responseIA = await fetch(URL_IA, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": Bearer ${API_KEY_IA}
-                },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    response_format: { "type": "json_object" }, 
-                    messages: [
-                        { role: "system", content: promptSistema },
-                        { role: "user", content: A continuación el Texto del PDF:\n${textoLimpio} }
-                    ],
-                    temperature: 0.1
-                })
-            });
+        // 1. Consumo de la API de Groq
+        const responseIA = await fetch(URL_IA, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY_IA}`
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                response_format: { "type": "json_object" }, // Groq exige que el prompt pida JSON explícitamente arriba
+                messages: [
+                    { role: "system", content: promptSistema },
+                    { role: "user", content: `A continuación el Texto del PDF:\n${textoLimpio}` }
+                ],
+                temperature: 0.1
+            })
+        });
 
-            if (!responseIA.ok) {
-                const errorData = await responseIA.json();
-                throw new Error(Groq API Error ${responseIA.status}: ${errorData.error?.message || 'Bad Request'});
-            }
+        // Verificación de error HTTP antes de parsear
+        if (!responseIA.ok) {
+            const errorData = await responseIA.json();
+            throw new Error(`Groq API Error ${responseIA.status}: ${errorData.error?.message || 'Bad Request'}`);
+        }
 
-            const jsonIA = await responseIA.json();
-            let textoJSON = jsonIA.choices[0].message.content.trim();
-            
-            // PROTECCIÓN CRÍTICA: Limpiar envolturas Markdown si el modelo las incluye por error
-            if (textoJSON.startsWith("```")) {
-                textoJSON = textoJSON.replace(/^```json\s*/i, "").replace(/
-```$/, "").trim();
-            }
+        const jsonIA = await responseIA.json();
+        const textoJSON = jsonIA.choices[0].message.content.trim();
+        const datosEstructurados = JSON.parse(textoJSON);
 
-            const datosEstructurados = JSON.parse(textoJSON);
+        mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
 
-            mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
+        // 2. Transmisión segura a Google Sheets
+        await fetch(URL_APPS_SCRIPT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datosEstructurados)
+        });
 
-            // 2. Transmisión a Google Sheets
-            // Nota: mode 'no-cors' no te dejará leer la respuesta del servidor, pero sí enviará los datos perfectamente.
-            await fetch(URL_APPS_SCRIPT, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosEstructurados)
-            });
+        mostrarStatus(`¡Procesado con éxito! El documento Nro: ${datosEstructurados.numero_documento || 'Detectado'} ha sido registrado.`, "success");
+        fileNameSpan.innerText = "";
+        textoExtraidoPDF = "";
+    } catch (error) {
+        mostrarStatus("Error: " + error.message, "error");
+        btnProcesar.disabled = false;
+    }
+});
 
-            mostrarStatus(¡Procesado con éxito! El documento Nro: ${datosEstructurados.numero_documento || 'Detectado'} ha sido registrado., "success");
-            fileNameSpan.innerText = "";
-            textoExtraidoPDF = "";
-        } catch (error) {
-            mostrarStatus("Error: " + error.message, "error");
-            btnProcesar.disabled = false;
-        }
-    });
+    function mostrarStatus(mensaje, tipo) {
+        statusDiv.innerText = mensaje;
+        statusDiv.className = tipo;
+    }
 
-    function mostrarStatus(mensaje, tipo) {
-        statusDiv.innerText = mensaje;
-        statusDiv.className = tipo;
-    }
-
-    // Registro del Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => console.log('Nexus Service Worker activo con éxito:', reg.scope))
-                .catch(err => {
-                    if (err.name !== 'AbortError') {
-                        console.error('Falla crítica en el Service Worker:', err);
-                    }
-                });
-        });
-    }
+    // Registro seguro de ciclo de vida del Service Worker (Previene AbortErrors)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then(reg => console.log('Nexus Service Worker activo con éxito en el alcance:', reg.scope))
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        console.error('Falla crítica en el Service Worker:', err);
+                    }
+                });
+        });
+    }
 </script>
 </body>
 </html>
