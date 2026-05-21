@@ -1,5 +1,6 @@
 const CACHE_NAME = 'nexus-pdf-cache-v1';
 const ASSETS = [
+  './', // Agregado para cachear la raíz de forma segura en GitHub Pages
   'index.html',
   'manifest.json',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js',
@@ -32,7 +33,12 @@ self.addEventListener('activate', (e) => {
 
 // Estrategia de Cache: Cache First, luego Red
 self.addEventListener('fetch', (e) => {
-  // Solo manejar peticiones estándar de recursos de la app
+  // EXCLUSIÓN CRÍTICA: Si es un POST (como el envío a Sheets), ignorar por completo
+  if (e.request.method === 'POST') {
+    return; 
+  }
+
+  // Solo manejar peticiones estándar de recursos de la app (GET)
   if (e.request.url.includes('http')) {
     e.respondWith(
       caches.match(e.request).then((cachedResponse) => {
