@@ -47,3 +47,21 @@ self.addEventListener('fetch', (e) => {
     );
   }
 });
+
+// Dentro de tu sw.js (GitHub Pages)
+self.addEventListener('fetch', (event) => {
+  // REGLA CRÍTICA: Ignorar la API de Google Apps Script y peticiones POST
+  if (event.request.url.includes('script.google.com') || event.request.method === 'POST') {
+    // Esto le dice al Service Worker: "No te metas aquí, deja que vaya directo a internet"
+    return; 
+  }
+
+  // Tu lógica actual para las demás peticiones (imágenes, diseño, etc.)
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    }).catch(() => {
+      // Manejo de fallback offline si aplica
+    })
+  );
+});
