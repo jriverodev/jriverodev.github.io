@@ -1,94 +1,95 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Extractor PDF - Requerimientos</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0056b3">
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9496/9496555.png">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #0056b3;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #333;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        h1 { color: var(--primary-color); margin-bottom: 5px; }
-        p { color: #666; margin-top: 0; }
-        .drop-zone {
-            border: 2px dashed var(--primary-color);
-            padding: 40px 20px;
-            border-radius: 8px;
-            background: #f0f4f9;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin: 20px 0;
-        }
-        .drop-zone:hover { background: #e2ecf7; }
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-        }
-        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 6px;
-            display: none;
-        }
-        .success { background-color: #d4edda; color: #155724; display: block !important; }
-        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
-        .loading { background-color: #fff3cd; color: #856404; display: block !important; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Extractor PDF - Requerimientos</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0056b3">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9496/9496555.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            padding: 40px 20px;
+            border-radius: 8px;
+            background: #f0f4f9;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover { background: #e2ecf7; }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; display: block !important; }
+        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
+        .loading { background-color: #fff3cd; color: #856404; display: block !important; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Nexus Extractor PDF</h1>
-    <p>Automatización de Requerimientos de Transporte Terrestre</p>
-    
-    <div class="drop-zone" id="dropZone">
-        <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
-        <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
-        <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
-    </div>
+    <h1>Nexus Extractor PDF</h1>
+    <p>Automatización de Requerimientos de Transporte Terrestre</p>
+    
+    <div class="drop-zone" id="dropZone">
+        <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
+        <!-- Agregado br para mejor separación visual cuando el archivo se monte -->
+        <br>
+        <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
+    </div>
 
-    <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
-    
-    <div id="status"></div>
+    <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
+    
+    <div id="status"></div>
 </div>
 
 <script>
-    // Configuración del Endpoint Único y Seguro de Apps Script
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwFSjQg_n3SbKLNkbFe7AW95bfXomuXqJiLsiCyR4YT0N0P7OEIfmxv7Zc4kISwCGaOgg/exec";
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -101,7 +102,11 @@
     
     let textoExtraidoPDF = "";
 
-    // Eventos de la Zona de Arrastre (Drag & Drop)
+    function mostrarStatus(mensaje, tipo) {
+        statusDiv.innerText = mensaje;
+        statusDiv.className = tipo;
+    }
+
     dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
     
@@ -130,6 +135,7 @@
             btnProcesar.disabled = false;
         } catch (error) {
             mostrarStatus("Error al leer el PDF: " + error.message, "error");
+            btnProcesar.disabled = true;
         }
     }
 
@@ -165,8 +171,6 @@
         try {
             const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
 
-            // Usamos URLSearchParams para emular el envío de un formulario estándar.
-            // Esto evita que el navegador dispare la validación OPTIONS de CORS.
             const cuerpoFormulario = new URLSearchParams();
             cuerpoFormulario.append("textoPDF", textoLimpio);
 
@@ -184,6 +188,8 @@
                 mostrarStatus(`¡Procesado con éxito! El documento Nro: ${resultado.doc || 'Detectado'} ha sido registrado (${resultado.action}).`, "success");
                 fileNameSpan.innerText = "";
                 textoExtraidoPDF = "";
+                // CORRECCIÓN: Volvemos a deshabilitar el botón para esperar un nuevo archivo
+                btnProcesar.disabled = true;
             } else {
                 throw new Error(resultado.message || "Error desconocido en el servidor.");
             }
@@ -194,7 +200,6 @@
         }
     });
 
-    // Registro del Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js', { scope: './' })
