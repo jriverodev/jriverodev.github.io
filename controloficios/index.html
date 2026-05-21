@@ -160,7 +160,7 @@
         mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
         btnProcesar.disabled = true;
 
-        const promptSistema = Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido acorde a la estructura solicitada.
+        const promptSistema = `Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido acorde a la estructura solicitada.
         Reglas de Categorías Maestras:
         - clase_requerimiento: Debe ser exactamente uno de estos valores: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
         - tipo_apoyo: Debe ser exactamente uno de estos valores: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
@@ -175,7 +175,7 @@
         Estructura obligatoria del JSON:
         {
           "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
-        };
+        }`;
 
         try {
             // Reemplazar saltos de línea pesados y tabuladores para evitar dañar la estructura del payload JSON
