@@ -156,12 +156,11 @@
     }
 
     btnProcesar.addEventListener('click', async () => {
-    if (!textoExtraidoPDF) return;
-    mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
-    btnProcesar.disabled = true;
+        if (!textoExtraidoPDF) return;
+        mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
+        btnProcesar.disabled = true;
 
-    // Prompt optimizado y simplificado para evitar el Error 400 en Groq
-    const promptSistema = `Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido. No uses formato markdown en la respuesta.
+        const promptSistema = Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido acorde a la estructura solicitada.
         Reglas de Categorías Maestras:
         - clase_requerimiento: Debe ser exactamente uno de estos valores: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
         - tipo_apoyo: Debe ser exactamente uno de estos valores: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
@@ -173,72 +172,79 @@
         - detalle_mantenimiento: Si aplica, mapea si es 'Preventivo' o 'Correctivo'. Si no, usa 'N/A'.
         - detalle_agua_achique: Si aplica, mapea si es 'Achiques' o 'Suministro de Agua Potable'. Si no, usa 'N/A'.
 
-        Estructura obligatoria del JSON (llaves limpias sin comillas internas en los valores):
+        Estructura obligatoria del JSON:
         {
           "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
-        }`;
+        };
 
         try {
-        // Limpiamos el texto del PDF de caracteres de control extraños antes de mandarlo
-        const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
+            // Reemplazar saltos de línea pesados y tabuladores para evitar dañar la estructura del payload JSON
+            const textoLimpio = textoExtraidoPDF.replace(/[\r\t\n]+/g, " ").trim();
 
-        // 1. Consumo de la API de Groq
-        const responseIA = await fetch(URL_IA, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY_IA}`
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                response_format: { "type": "json_object" }, // Groq exige que el prompt pida JSON explícitamente arriba
-                messages: [
-                    { role: "system", content: promptSistema },
-                    { role: "user", content: `A continuación el Texto del PDF:\n${textoLimpio}` }
-                ],
-                temperature: 0.1
-            })
-        });
+            // 1. Consumo de la API de Groq
+            const responseIA = await fetch(URL_IA, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": Bearer ${API_KEY_IA}
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    response_format: { "type": "json_object" }, 
+                    messages: [
+                        { role: "system", content: promptSistema },
+                        { role: "user", content: A continuación el Texto del PDF:\n${textoLimpio} }
+                    ],
+                    temperature: 0.1
+                })
+            });
 
-        // Verificación de error HTTP antes de parsear
-        if (!responseIA.ok) {
-            const errorData = await responseIA.json();
-            throw new Error(`Groq API Error ${responseIA.status}: ${errorData.error?.message || 'Bad Request'}`);
+            if (!responseIA.ok) {
+                const errorData = await responseIA.json();
+                throw new Error(Groq API Error ${responseIA.status}: ${errorData.error?.message || 'Bad Request'});
+            }
+
+            const jsonIA = await responseIA.json();
+            let textoJSON = jsonIA.choices[0].message.content.trim();
+            
+            // PROTECCIÓN CRÍTICA: Limpiar envolturas Markdown si el modelo las incluye por error
+            if (textoJSON.startsWith("```")) {
+                textoJSON = textoJSON.replace(/^```json\s*/i, "").replace(/
+```$/, "").trim();
+            }
+
+            const datosEstructurados = JSON.parse(textoJSON);
+
+            mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
+
+            // 2. Transmisión a Google Sheets
+            // Nota: mode 'no-cors' no te dejará leer la respuesta del servidor, pero sí enviará los datos perfectamente.
+            await fetch(URL_APPS_SCRIPT, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosEstructurados)
+            });
+
+            mostrarStatus(¡Procesado con éxito! El documento Nro: ${datosEstructurados.numero_documento || 'Detectado'} ha sido registrado., "success");
+            fileNameSpan.innerText = "";
+            textoExtraidoPDF = "";
+        } catch (error) {
+            mostrarStatus("Error: " + error.message, "error");
+            btnProcesar.disabled = false;
         }
-
-        const jsonIA = await responseIA.json();
-        const textoJSON = jsonIA.choices[0].message.content.trim();
-        const datosEstructurados = JSON.parse(textoJSON);
-
-        mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
-
-        // 2. Transmisión segura a Google Sheets
-        await fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datosEstructurados)
-        });
-
-        mostrarStatus(`¡Procesado con éxito! El documento Nro: ${datosEstructurados.numero_documento || 'Detectado'} ha sido registrado.`, "success");
-        fileNameSpan.innerText = "";
-        textoExtraidoPDF = "";
-    } catch (error) {
-        mostrarStatus("Error: " + error.message, "error");
-        btnProcesar.disabled = false;
-    }
-});
+    });
 
     function mostrarStatus(mensaje, tipo) {
         statusDiv.innerText = mensaje;
         statusDiv.className = tipo;
     }
 
-    // Registro seguro de ciclo de vida del Service Worker (Previene AbortErrors)
+    // Registro del Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => console.log('Nexus Service Worker activo con éxito en el alcance:', reg.scope))
+                .then(reg => console.log('Nexus Service Worker activo con éxito:', reg.scope))
                 .catch(err => {
                     if (err.name !== 'AbortError') {
                         console.error('Falla crítica en el Service Worker:', err);
