@@ -3,183 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Harmony - Impro Engine</title>
+    <title>Nexus Harmony - Generative Impro Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --bg: #030305; --major: #00d4ff; --minor: #ff007c; --aug: #ffcc00; --guide: #deff9a; }
-        body { background: var(--bg); color: white; font-family: system-ui; margin: 0; overflow: hidden; touch-action: none; }
-        .controls { margin-top: 20px; z-index: 100; background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; backdrop-filter: blur(10px); }
-        select { background: transparent; color: var(--guide); border: none; font-weight: bold; outline: none; cursor: pointer; }
-        #canvas-container { width: 100vw; height: 80vh; display: flex; justify-content: center; align-items: center; }
+        :root { --bg: #030305; --major: #00d4ff; --minor: #ff007c; --accent: #deff9a; }
+        body { background: var(--bg); color: white; font-family: system-ui; margin: 0; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+        .controls { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; backdrop-filter: blur(10px); pointer-events: auto; }
+        select { background: transparent; color: var(--accent); border: none; font-weight: bold; outline: none; cursor: pointer; font-size: 14px; }
+        #canvas-container { width: 100vw; height: 100vh; }
         svg { width: 100%; height: 100%; }
-        .node-circle { transition: r 0.2s, fill 0.3s; cursor: pointer; }
-        .chord-text { pointer-events: none; fill: white; font-weight: bold; font-size: 10px; }
-        .active-path { fill: none; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px white); }
+        .node { cursor: pointer; pointer-events: all; }
+        .node-circle { transition: r 0.3s, fill 0.3s; stroke-width: 2; }
+        .chord-text { pointer-events: none; fill: white; font-weight: bold; font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+        .connection-line { fill: none; stroke-width: 2; stroke-dasharray: 4 4; opacity: 0.4; transition: all 0.5s; }
+        #instructions { position: absolute; bottom: 30px; width: 100%; text-align: center; color: #555; font-size: 14px; pointer-events: none; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <div class="controls">
         <select id="style-select">
-            <option value="jazz">ESTILO: JAZZ GUITAR</option>
-            <option value="gospel">ESTILO: GOSPEL SHIMMER</option>
-            <option value="pop">ESTILO: POP ARPS</option>
+            <option value="pop">ESTILO: POP GENERATIVE</option>
+            <option value="jazz">ESTILO: AMBIENT JAZZ</option>
+            <option value="gospel">ESTILO: SHIMMER GOSPEL</option>
         </select>
     </div>
+
+    <div id="instructions">TOCA EN CUALQUIER LUGAR PARA GENERAR ARMONÍA</div>
     
     <div id="canvas-container">
-        <svg id="harmony-svg" viewBox="0 0 500 500">
-            <g id="active-layer"></g>
-            <g id="nodes-layer"></g>
+        <svg id="harmony-svg">
+            <g id="links-group"></g>
+            <g id="nodes-group"></g>
         </svg>
     </div>
 
     <script>
-        // --- 1. CONFIGURACIÓN DE AUDIO PROFESIONAL ---
-        const reverb = new Tone.Reverb({ decay: 8, wet: 0.5 }).toDestination();
-        const delay = new Tone.FeedbackDelay("8n", 0.4).connect(reverb);
-        const compressor = new Tone.Compressor(-20, 3).connect(delay);
+        // --- 1. CONFIGURACIÓN DE AUDIO POLIFÓNICO ---
+        const reverb = new Tone.Reverb({ decay: 6, wet: 0.45 }).toDestination();
+        const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(reverb);
+        const compressor = new Tone.Compressor(-15, 4).connect(delay);
 
-        const sampler = new Tone.Sampler({
-            urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
-            baseUrl: "./samples/",
-            release: 3,
-            volume: -5
+        const sampler = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.04, decay: 0.1, sustain: 0.8, release: 1.8 }
         }).connect(compressor);
 
-        // --- 2. BASE DE DATOS DE FRASES (Licks) ---
-        // Aquí definimos qué notas suenan para cada acorde
-        const chordData = {
+        const guitarSamples = new Tone.Sampler({
+            urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
+            baseUrl: "./samples/",
+            release: 2,
+            volume: -2,
+            onload: () => sampler.set({ synth: Tone.Sampler })
+        });
+
+        // --- 2. DICCIONARIO DE AUDIO ---
+        const chordNotes = {
             "C": ["C3","E3","G3","C4"], "G": ["G2","B2","D3","G3"], "D": ["D3","F#3","A3","D4"],
             "A": ["A2","C#3","E3","A3"], "E": ["E2","G#2","B2","E3"], "B": ["B2","D#3","F#3","B3"],
-            "Gb":["Gb2","Bb2","Db3","Gb3"], "Db":["Db3","F3","Ab3","Db4"], "Ab":["Ab2","C3","Eb3","Ab3"],
+            "F#":["F#2","A#2","C#3","F#3"], "C#":["C#3","E#3","G#3","C#4"], "Ab":["Ab2","C3","Eb3","Ab3"],
             "Eb":["Eb3","G3","Bb3","Eb4"], "Bb":["Bb2","D3","F3","Bb3"], "F":["F2","A2","C3","F3"],
             "Am":["A2","C3","E3","G3"], "Em":["E2","G3","B3","D4"], "Bm":["B2","D3","F#3","A3"],
             "F#m":["F#2","A2","C#3","E3"], "C#m":["C#3","E3","G#3","B3"], "G#m":["G#2","B2","D#3","F#3"],
             "D#m":["Eb3","Gb3","Bb3","Db4"], "Bbm":["Bb2","Db3","F3","Ab3"], "Fm":["F2","Ab2","C3","Eb3"],
-            "Cm":["C3","Eb3","G3","Bb3"], "Gm":["G2","Bb2","D3","F3"], "Dm":["D3","F3","A3","C4"],
-            "Caug":["C3","E3","G#3","C4"], "Gaug":["G2","B2","D#3","G3"], "Daug":["D3","F#3","A#3","D4"]
+            "Cm":["C3","Eb3","G3","Bb3"], "Gm":["G2","Bb2","D3","F3"], "Dm":["D3","F3","A3","C4"]
         };
 
-        // --- 3. MOTOR DE IMPROVISACIÓN ---
-        function playImprovisation(id) {
-            const style = document.getElementById('style-select').value;
-            const notes = chordData[id] || chordData[id.replace("aug", "")]; 
-            const now = Tone.now();
+        // Reglas de la matriz armónica: ¿Qué brota de cada acorde? (Vecinos directos)
+        const harmonyGraph = {
+            "C":  ["F", "G", "Am", "Dm"],  "G":  ["C", "D", "Em", "Bm"],  "D":  ["G", "A", "Bm", "F#m"],
+            "A":  ["D", "E", "F#m","C#m"], "E":  ["A", "B", "C#m","G#m"], "B":  ["E", "F#", "G#m","D#m"],
+            "F#": ["B", "C#","D#m","Bbm"], "C#": ["F#","Ab","Bbm","Fm"],  "Ab": ["C#","Eb","Fm", "Cm"],
+            "Eb": ["Ab","Bb","Cm", "Gm"],  "Bb": ["Eb","F", "Gm", "Dm"],  "F":  ["Bb","C", "Dm", "Am"],
+            "Am": ["Dm","Em","C",  "F"],   "Em": ["Am","Bm","G",  "C"],   "Bm": ["Em","F#m","D", "G"],
+            "F#m":["Bm","C#m","A", "D"],   "C#m":["F#m","G#m","E","A"],   "G#m":["C#m","D#m","B","E"],
+            "D#m":["G#m","Bbm","F#","B"],  "Bbm":["D#m","Fm","C#", "F#"], "Fm": ["Bbm","Cm","Ab", "C#"],
+            "Cm": ["Fm","Gm","Eb", "Ab"],  "Gm": ["Cm","Dm","Bb", "Eb"],  "Dm": ["Gm","Am","F",  "Bb"]
+        };
 
-            if (style === "jazz") {
-                // Estilo Jazz: Notas más espaciadas y con "swing"
-                // Toca 1, 3, 5, 7
-                sampler.triggerAttackRelease(notes[0], "4n", now);
-                sampler.triggerAttackRelease(notes[2], "8n", now + 0.15);
-                sampler.triggerAttackRelease(notes[1], "8n", now + 0.3);
-                sampler.triggerAttackRelease(notes[3], "2n", now + 0.45);
-            } else if (style === "gospel") {
-                // Estilo Gospel: Acorde rápido ascendente con mucho sustain
-                notes.forEach((n, i) => {
-                    sampler.triggerAttackRelease(n, "1n", now + (i * 0.03));
-                });
-            } else {
-                // Estilo Pop: Arpegio clásico rítmico
-                sampler.triggerAttackRelease(notes[0], "8n", now);
-                sampler.triggerAttackRelease(notes[1], "8n", now + 0.1);
-                sampler.triggerAttackRelease(notes[2], "8n", now + 0.2);
-                sampler.triggerAttackRelease(notes[3], "8n", now + 0.3);
-            }
-        }
+        // --- 3. MOTOR DE INTERFÁZ GENERATIVA ---
+        const svg = document.getElementById('harmony-svg');
+        const nodesGroup = document.getElementById('nodes-group');
+        const linksGroup = document.getElementById('links-group');
+        const instructions = document.getElementById('instructions');
 
-        // --- 4. INTERFAZ Y EVENTOS ---
-        const circle = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"];
-        const nodesPos = {};
-        let lastNodeId = null;
-        let lastPos = null;
+        let nodes = {}; // Guarda la información de los nodos activos en pantalla
 
-        function init() {
-            drawRing(circle, 215, 'aug', "var(--aug)");
-            drawRing(circle, 155, 'major', "var(--major)");
-            drawRing(circle, 95, 'minor', "var(--minor)");
-
-            const svg = document.getElementById('harmony-svg');
-
-            const handleInteraction = (e) => {
-                const x = e.clientX || (e.touches && e.touches[0].clientX);
-                const y = e.clientY || (e.touches && e.touches[0].clientY);
-                const target = document.elementFromPoint(x, y);
-
-                if (target && target.classList.contains('node-circle')) {
-                    const id = target.getAttribute('data-id');
-                    if (id !== lastNodeId) {
-                        if (Tone.context.state !== 'running') Tone.start();
-                        lastNodeId = id;
-                        
-                        playImprovisation(id);
-                        animateNode(id, target);
-                    }
-                }
-            };
-
-            svg.addEventListener('pointermove', handleInteraction);
-            svg.addEventListener('pointerdown', handleInteraction);
-            svg.addEventListener('pointerup', () => { lastNodeId = null; lastPos = null; });
-        }
-
-        function animateNode(id, el) {
-            const pos = nodesPos[id];
-            const color = el.getAttribute("stroke");
+        svg.addEventListener('pointerdown', (e) => {
+            if (Tone.context.state !== 'running') Tone.start();
             
-            // Efecto de pulso
-            el.setAttribute("fill", color);
-            el.setAttribute("r", parseFloat(el.getAttribute("data-orig-r")) + 5);
-            setTimeout(() => {
-                el.setAttribute("fill", "#050508");
-                el.setAttribute("r", el.getAttribute("data-orig-r"));
-            }, 250);
-
-            // Dibujar línea de conexión
-            if (lastPos) {
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                line.setAttribute("x1", lastPos.x); line.setAttribute("y1", lastPos.y);
-                line.setAttribute("x2", pos.x); line.setAttribute("y2", pos.y);
-                line.setAttribute("class", "active-path");
-                line.style.stroke = color;
-                document.getElementById('active-layer').appendChild(line);
-                setTimeout(() => {
-                    line.style.transition = "opacity 1.5s, stroke-width 1.5s";
-                    line.style.opacity = "0";
-                    line.style.strokeWidth = "0";
-                    setTimeout(() => line.remove(), 1600);
-                }, 50);
+            // Si tocamos el fondo vacío, inicializamos en Do mayor o donde se hizo el clic
+            if (e.target === svg || e.target === linksGroup) {
+                const rect = svg.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                instructions.style.opacity = "0";
+                generateHarmonicUniverse("C", x, y);
             }
-            lastPos = pos;
+        });
+
+        function generateHarmonicUniverse(centerId, centerX, centerY) {
+            // Limpiar lo viejo de forma limpia con una transición lógica
+            nodesGroup.innerHTML = "";
+            linksGroup.innerHTML = "";
+            nodes = {};
+
+            // 1. Crear Nodo Central (El Sol Armónico)
+            createNode(centerId, centerX, centerY, true);
+
+            // 2. Obtener sus "planetas" o nodos hijos según el grafo de quintas/relativas
+            const children = harmonyGraph[centerId] || ["F", "G", "Am", "Dm"];
+            const radius = 110; // Distancia orbital
+
+            children.forEach((childId, index) => {
+                // Distribución geométrica angular alrededor del centro
+                const angle = (index / children.length) * 2 * Math.PI - Math.PI / 2;
+                const childX = centerX + radius * Math.cos(angle);
+                const childY = centerY + radius * Math.sin(angle);
+
+                // Crear enlace visual primero (para que quede detrás del nodo)
+                createLink(centerX, centerY, childX, childY, childId);
+                // Crear nodo hijo
+                createNode(childId, childX, childY, false);
+            });
+
+            // Disparar audio del nuevo centro armónico
+            triggerAudio(centerId);
         }
 
-        function drawRing(list, radio, type, color) {
-            list.forEach((name, i) => {
-                const angle = (i/12) * 2 * Math.PI - Math.PI/2;
-                const x = 250 + radio * Math.cos(angle);
-                const y = 250 + radio * Math.sin(angle);
-                let id = type === 'aug' ? name + "aug" : (type === 'minor' ? name + "m" : name);
-                nodesPos[id] = { x, y };
+        function createNode(id, x, y, isCenter) {
+            const isMinor = id.includes('m');
+            const color = isMinor ? "var(--minor)" : "var(--major)";
+            const radius = isCenter ? 24 : 18;
 
-                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                const r = type === 'major' ? 18 : 14;
-                c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", r);
-                c.setAttribute("data-orig-r", r); c.setAttribute("data-id", id);
-                c.setAttribute("fill", "#050508"); c.setAttribute("stroke", color);
-                c.setAttribute("stroke-width", "2"); c.setAttribute("class", "node-circle");
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", "node");
+            g.setAttribute("transform", `translate(${x}, ${y})`);
 
-                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                t.setAttribute("x", x); t.setAttribute("y", y + 4);
-                t.setAttribute("text-anchor", "middle"); t.setAttribute("class", "chord-text");
-                t.textContent = type === 'aug' ? "+" : id;
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("class", "node-circle");
+            circle.setAttribute("r", 0); // Empieza en 0 para animación de nacimiento
+            circle.setAttribute("fill", "#050508");
+            circle.setAttribute("stroke", color);
+            nodesGroup.appendChild(g);
 
-                g.appendChild(c); g.appendChild(t);
-                document.getElementById('nodes-layer').appendChild(g);
+            // Transición de spawn orgánico
+            requestAnimationFrame(() => {
+                circle.setAttribute("r", radius);
+            });
+
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("class", "chord-text");
+            text.textContent = id;
+
+            g.appendChild(circle);
+            g.appendChild(text);
+
+            // Eventos del nodo
+            g.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                // Al tocar un nodo, este muta al centro de la pantalla o a su propia posición regenerando el ecosistema
+                generateHarmonicUniverse(id, x, y);
+            });
+
+            nodes[id] = { element: g, circle: circle, x, y, color };
+        }
+
+        function createLink(x1, y1, x2, y2, childId) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            const isMinor = childId.includes('m');
+            
+            line.setAttribute("class", "connection-line");
+            line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+            line.setAttribute("x2", x1); line.setAttribute("y2", y1); // Inicia en el centro
+            line.setAttribute("stroke", isMinor ? "var(--minor)" : "var(--major)");
+            
+            linksGroup.appendChild(line);
+
+            // Animación de expansión de la línea hacia afuera
+            requestAnimationFrame(() => {
+                line.setAttribute("x2", x2);
+                line.setAttribute("y2", y2);
             });
         }
 
-        init();
+        // --- 4. MOTOR DE AUDIO SELECCIONABLE ---
+        function triggerAudio(id) {
+            const notes = chordNotes[id];
+            if (!notes) return;
+
+            const style = document.getElementById('style-select').value;
+            const now = Tone.now();
+
+            if (style === "jazz") {
+                sampler.triggerAttackRelease(notes[0], "2n", now);
+                sampler.triggerAttackRelease(notes[2], "4n", now + 0.15);
+                sampler.triggerAttackRelease(notes[1], "4n", now + 0.3);
+                sampler.triggerAttackRelease(notes[3], "1n", now + 0.45);
+            } else if (style === "gospel") {
+                notes.forEach((n, i) => {
+                    sampler.triggerAttackRelease(n, "1n", now + (i * 0.05));
+                });
+            } else { // Pop Arps
+                sampler.triggerAttackRelease(notes[0], "8n", now);
+                sampler.triggerAttackRelease(notes[1], "8n", now + 0.1);
+                sampler.triggerAttackRelease(notes[2], "8n", now + 0.2);
+                sampler.triggerAttackRelease(notes[3], "4n", now + 0.3);
+            }
+
+            // Pulso visual en el nodo recién activado
+            if (nodes[id]) {
+                const el = nodes[id].circle;
+                const origR = parseFloat(el.getAttribute("r"));
+                el.setAttribute("fill", nodes[id].color);
+                el.setAttribute("r", origR + 6);
+                setTimeout(() => {
+                    el.setAttribute("fill", "#050508");
+                    el.setAttribute("r", origR);
+                }, 250);
+            }
+        }
     </script>
 </body>
 </html>
