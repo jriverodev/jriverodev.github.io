@@ -3,171 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Harmony - Groq Cognitive Engine</title>
+    <title>Nexus Harmony - Full Circle System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Urbanist:wght@500;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #030306; 
-            --major: #00d4ff; 
-            --minor: #ff007c; 
-            --accent: #deff9a; 
-            --glow-major: drop-shadow(0 0 8px rgba(0, 212, 255, 0.6));
-            --glow-minor: drop-shadow(0 0 8px rgba(255, 0, 124, 0.6));
+            --bg-base: #040408;
+            --major-color: #00d4ff;
+            --minor-color: #ff007c;
+            --seventh-color: #deff9a;
+            --dim-color: #ffaa00;
+            --glow-m: drop-shadow(0 0 10px rgba(0, 212, 255, 0.6));
+            --glow-min: drop-shadow(0 0 10px rgba(255, 0, 124, 0.6));
         }
+        
+        * { box-sizing: border-box; }
         body { 
-            background: var(--bg); 
-            color: white; 
-            font-family: system-ui, -apple-system, sans-serif; 
+            background: var(--bg-base); 
+            color: #fff; 
+            font-family: 'Urbanist', sans-serif; 
             margin: 0; 
             overflow: hidden; 
             touch-action: none; 
             -webkit-user-select: none; 
-            user-select: none; 
+            user-select: none;
             transition: background 0.8s ease;
         }
-        /* Orbes de luz atmosféricos de fondo */
-        .ambient-glow {
-            position: absolute; width: 300px; height: 300px;
-            background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 0; filter: blur(40px);
-            transition: background 0.5s ease;
+
+        /* Capa de atmósfera reactiva */
+        #ambient-layer {
+            position: absolute;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 50% 50%, rgba(0,212,255,0.04) 0%, transparent 70%);
+            z-index: 0; pointer-events: none;
+            transition: background 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
-        .controls { 
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
-            z-index: 100; background: rgba(255,255,255,0.03); padding: 6px 12px; 
-            border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); 
-            backdrop-filter: blur(15px); pointer-events: auto; display: flex; gap: 8px;
+
+        /* Controles Premium */
+        .dashboard-ui { 
+            position: absolute; top: 25px; left: 50%; transform: translateX(-50%); 
+            z-index: 10; background: rgba(10, 10, 15, 0.4); padding: 8px 16px; 
+            border-radius: 40px; border: 1px solid rgba(255,255,255,0.08); 
+            backdrop-filter: blur(25px); display: flex; align-items: center; gap: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        select, input { 
-            background: transparent; color: var(--accent); border: none; 
-            font-weight: bold; outline: none; cursor: pointer; font-size: 13px; 
+        
+        .brand-title {
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px;
+            letter-spacing: 1.5px; background: linear-gradient(45deg, #00d4ff, #deff9a);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1);
         }
-        input[type="text"] { color: #fff; width: 120px; border-bottom: 1px solid #333; padding: 2px; font-weight: normal;}
-        input[type="text"]::placeholder { color: #555; }
-        #canvas-container { width: 100vw; height: 100vh; position: relative; z-index: 1; }
+
+        select { 
+            background: transparent; color: #fff; border: none; font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700; outline: none; cursor: pointer; font-size: 13px; letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+        select:hover { color: var(--major-color); }
+        select option { background: #0c0c12; color: #fff; }
+
+        .key-wrapper { position: relative; display: flex; align-items: center; }
+        .key-wrapper i { position: absolute; left: 10px; color: #555; font-size: 12px; pointer-events: none; }
+        
+        input[type="password"] { 
+            background: rgba(255,255,255,0.03); color: #fff; border: 1px solid rgba(255,255,255,0.08); 
+            border-radius: 20px; padding: 6px 12px 6px 28px; width: 160px; font-size: 12px;
+            outline: none; transition: all 0.3s; font-family: monospace;
+        }
+        input[type="password"]:focus { 
+            border-color: var(--major-color); background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 8px rgba(0,212,255,0.2);
+        }
+
+        /* Lienzo interactivo principal */
+        #canvas-wrapper { width: 100vw; height: 100vh; position: relative; z-index: 1; }
         svg { width: 100%; height: 100%; }
+        
+        /* Estilos de Nodos */
         .node { cursor: pointer; pointer-events: all; }
-        .node-circle { transition: fill 0.3s, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); stroke-width: 2.5; }
-        .chord-text { pointer-events: none; fill: white; font-weight: 800; font-size: 11px; text-anchor: middle; dominant-baseline: central; letter-spacing: 0.5px; }
-        .connection-line { fill: none; stroke-width: 2; stroke-dasharray: 5 4; opacity: 0.3; transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); }
-        #instructions { position: absolute; bottom: 30px; width: 100%; text-align: center; color: #444; font-size: 12px; pointer-events: none; letter-spacing: 2px; font-weight: bold; }
+        .node-circle { 
+            fill: #06060c; stroke-width: 2.5;
+            transition: stroke-width 0.2s, r 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .node:hover .node-circle { stroke-width: 4; }
+        
+        .chord-label { 
+            pointer-events: none; fill: #ffffff; font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700; font-size: 12px; text-anchor: middle; dominant-baseline: central; 
+        }
+        .degree-label {
+            pointer-events: none; fill: rgba(255,255,255,0.35); font-size: 8px;
+            font-weight: 500; text-anchor: middle; transition: fill 0.3s;
+        }
+        
+        /* Enlaces */
+        .link-line { fill: none; stroke-width: 1.5; opacity: 0.15; transition: all 0.5s ease; }
+        .link-line.active-route { opacity: 0.7; stroke-width: 2.5; stroke-dasharray: none; }
+        
+        /* Indicadores flotantes de estado */
+        #status-guide { 
+            position: absolute; bottom: 25px; width: 100%; text-align: center; 
+            color: rgba(255,255,255,0.25); font-size: 11px; pointer-events: none; 
+            letter-spacing: 2px; font-weight: bold; font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+        }
+
+        /* Icono FontAwesome inyectado por CSS simple para no depender de redes lentas */
+        .key-wrapper::before {
+            content: "🔑"; position: absolute; left: 8px; z-index: 2; font-size: 11px; opacity: 0.6;
+        }
     </style>
 </head>
 <body>
 
-    <div class="ambient-glow" id="ambient-bg"></div>
+    <div id="ambient-layer"></div>
 
-    <div class="controls">
-        <select id="style-select">
-            <option value="jazz_251">ESTILO: JAZZ (2-5-1)</option>
-            <option value="pop">ESTILO: POP PROGRESSIVE</option>
-            <option value="funk">ESTILO: FUNK GROOVE</option>
-            <option value="gospel">ESTILO: GOSPEL SHIMMER</option>
+    <div class="dashboard-ui">
+        <div class="brand-title">NEXUS HARMONY</div>
+        <select id="style-selector">
+            <option value="pop">POP PROGRESSIVE</option>
+            <option value="jazz_251">JAZZ (2-5-1 ENGINE)</option>
+            <option value="funk">FUNK GROOVE LAYER</option>
+            <option value="gospel">GOSPEL SHIMMER FLUID</option>
         </select>
-        <input type="text" id="api-key-input" placeholder="Introduce Groq API Key..." />
+        <div class="key-wrapper">
+            <input type="password" id="grok-token" placeholder="xAI Grok API Key...">
+        </div>
     </div>
 
-    <div id="instructions">TOCA LA PANTALLA PARA ASIGNAR LA TÓNICA IA</div>
+    <div id="status-guide">Toca cualquier nodo armónico para mapear el círculo</div>
     
-    <div id="canvas-container">
-        <svg id="harmony-svg">
-            <g id="links-group"></g>
-            <g id="nodes-group"></g>
+    <div id="canvas-wrapper">
+        <svg id="viewport">
+            <g id="links-layer"></g>
+            <g id="nodes-layer"></g>
         </svg>
     </div>
 
     <script>
-        // --- 1. PROCESAMIENTO DE AUDIO POLIFÓNICO PROFESIONAL ---
-        const reverb = new Tone.Reverb({ decay: 5, wet: 0.4 }).toDestination();
-        const delay = new Tone.FeedbackDelay("8n.", 0.25).connect(reverb);
-        const compressor = new Tone.Compressor(-14, 4).connect(delay);
+        // --- MOTOR DE AUDIO (Tone.js Polifónico) ---
+        const reverb = new Tone.Reverb({ decay: 5.5, wet: 0.42 }).toDestination();
+        const delay = new Tone.FeedbackDelay("8n.", 0.28).connect(reverb);
+        const autoFilter = new Tone.AutoFilter("4n", 200, 1200).connect(delay).start();
+        const outputChain = new Tone.Compressor(-12, 4).connect(autoFilter);
 
-        const sampler = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "triangle" },
-            envelope: { attack: 0.03, decay: 0.08, sustain: 0.7, release: 1.5 }
-        }).connect(compressor);
+        // Sintetizador polifónico emulador de cuerdas/pads cálidos
+        const synthEngine = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.05, decay: 0.1, sustain: 0.85, release: 1.6 }
+        }).connect(outputChain);
 
-        // Fallback local instantáneo si falla la API
-        const fallbackChords = {
-            "C": ["C3","E3","G3","C4"], "G": ["G2","B2","D3","G3"], "D": ["D3","F#3","A3","D4"],
-            "A": ["A2","C#3","E3","A3"], "E": ["E2","G#2","B2","E3"], "B": ["B2","D#3","F#3","B3"],
-            "F#":["F#2","A#2","C#3","F#3"], "C#":["C#3","E#3","G#3","C#4"], "Ab":["Ab2","C3","Eb3","Ab3"],
-            "Eb":["Eb3","G3","Bb3","Eb4"], "Bb":["Bb2","D3","F3","Bb3"], "F":["F2","A2","C3","F3"],
+        // Mapeo armónico completo y extendido (Círculo de Armonía de Quintas y Modulaciones directas)
+        const fullHarmonyModel = {
+            "C":   { type: "major", label: "C",   deg: "I",   neighbors: ["F","G","Am","Dm","Em","Bb"] },
+            "G":   { type: "major", label: "G",   deg: "V",   neighbors: ["C","D","Em","Am","Bm","F"] },
+            "D":   { type: "major", label: "D",   deg: "II",  neighbors: ["G","A","Bm","Em","F#m","C"] },
+            "A":   { type: "major", label: "A",   deg: "VI",  neighbors: ["D","E","F#m","Bm","C#m","G"] },
+            "E":   { type: "major", label: "E",   deg: "III", neighbors: ["A","B","C#m","F#m","G#m","D"] },
+            "B":   { type: "major", label: "B",   deg: "VII", neighbors: ["E","F#","G#m","C#m","D#m","A"] },
+            "F#":  { type: "major", label: "F#",  deg: "IV#", neighbors: ["B","C#","D#m","G#m","Bbm","E"] },
+            "C#":  { type: "major", label: "C#",  deg: "I#",  neighbors: ["F#","Ab","Bbm","D#m","Fm","B"] },
+            "Ab":  { type: "major", label: "A♭",  deg: "VI♭", neighbors: ["C#","Eb","Fm","Bbm","Cm","F#"] },
+            "Eb":  { type: "major", label: "E♭",  deg: "III♭",neighbors: ["Ab","Bb","Cm","Fm","Gm","C#"] },
+            "Bb":  { type: "major", label: "B♭",  deg: "VII♭",neighbors: ["Eb","F","Gm","Cm","Dm","Ab"] },
+            "F":   { type: "major", label: "F",   deg: "IV",  neighbors: ["Bb","C","Dm","Gm","Am","Eb"] },
+            
+            "Am":  { type: "minor", label: "Am",  deg: "vi",  neighbors: ["C","Dm","Em","F","G","E7"] },
+            "Dm":  { type: "minor", label: "Dm",  deg: "ii",  neighbors: ["F","Gm","Am","Bb","C","A7"] },
+            "Gm":  { type: "minor", label: "Gm",  deg: "v",   neighbors: ["Bb","Cm","Dm","Eb","F","D7"] },
+            "Cm":  { type: "minor", label: "Cm",  deg: "iii", neighbors: ["Eb","Fm","Gm","Ab","Bb","G7"] },
+            "Fm":  { type: "minor", label: "Fm",  deg: "vii", neighbors: ["Ab","Bbm","Cm","Db","Eb","C7"] },
+            "Bbm": { type: "minor", label: "Bbm", deg: "iv#", neighbors: ["C#","D#m","Fm","F#","Ab","F7"] },
+            "D#m": { type: "minor", label: "D#m", deg: "i#",  neighbors: ["F#","G#m","Bbm","B","C#","A#7"] },
+            "G#m": { type: "minor", label: "G#m", deg: "v#",  neighbors: ["B","C#m","D#m","E","F#","D#7"] },
+            "C#m": { type: "minor", label: "C#m", deg: "iii#",neighbors: ["E","F#m","G#m","A","B","G#7"] },
+            "F#m": { type: "minor", label: "F#m", deg: "vii#",neighbors: ["A","Bm","C#m","D","E","C#7"] },
+            "Bm":  { type: "minor", label: "Bm",  deg: "iv",  neighbors: ["G","Am","Bm","C","D","B7"] },
+            "Em":  { type: "minor", label: "Em",  deg: "i",   neighbors: ["G","Am","Bm","C","D","B7"] },
+
+            "E7":  { type: "seventh", label: "E7", deg: "V/vi", neighbors: ["Am","C","G"] },
+            "A7":  { type: "seventh", label: "A7", deg: "V/ii", neighbors: ["Dm","F","C"] },
+            "D7":  { type: "seventh", label: "D7", deg: "V/v",  neighbors: ["Gm","Bb","F"] },
+            "G7":  { type: "seventh", label: "G7", deg: "V/iii",neighbors: ["Cm","Eb","Bb"] },
+            "C7":  { type: "seventh", label: "C7", deg: "V/vii",neighbors: ["Fm","Ab","Eb"] },
+            "F7":  { type: "seventh", label: "F7", deg: "V/iv#",neighbors: ["Bbm","C#","Ab"] },
+            "A#7": { type: "seventh", label: "A#7",deg: "V/i#", neighbors: ["D#m","F#","C#"] },
+            "D#7": { type: "seventh", label: "D#7",deg: "V/v#", neighbors: ["G#m","B","F#"] },
+            "G#7": { type: "seventh", label: "G#7",deg: "V/iii#",neighbors: ["C#m","E","B"] },
+            "C#7": { type: "seventh", label: "C#7",deg: "V/vii#",neighbors: ["F#m","A","E"] },
+            "B7":  { type: "seventh", label: "B7", deg: "V/iv", neighbors: ["Em","G","D"] }
+        };
+
+        const pitchDictionary = {
+            "C": ["C3","E3","G3","B3"], "G": ["G2","B2","D3","F#3"], "D": ["D3","F#3","A3","C#4"],
+            "A": ["A2","C#3","E3","G#3"], "E": ["E2","G#2","B2","D#3"], "B": ["B2","D#3","F#3","A#3"],
+            "F#":["F#2","A#2","C#3","E#3"], "C#":["C#3","E#3","G#3","B3"], "Ab":["Ab2","C3","Eb3","G3"],
+            "Eb":["Eb3","G3","Bb3","D4"], "Bb":["Bb2","D3","F3","A3"], "F":["F2","A2","C3","E3"],
             "Am":["A2","C3","E3","G3"], "Em":["E2","G3","B3","D4"], "Bm":["B2","D3","F#3","A3"],
             "F#m":["F#2","A2","C#3","E3"], "C#m":["C#3","E3","G#3","B3"], "G#m":["G#2","B2","D#3","F#3"],
-            "Dm":["D3","F3","A3","C4"], "Gm":["G2","Bb2","D3","F3"], "Cm":["C3","Eb3","G3","Bb3"]
+            "D#m":["Eb3","Gb3","Bb3","Db4"], "Bbm":["Bb2","Db3","F3","Ab3"], "Fm":["F2","Ab2","C3","Eb3"],
+            "Cm":["C3","Eb3","G3","Bb3"], "Gm":["G2","Bb2","D3","F3"], "Dm":["D3","F3","A3","C4"],
+            "E7":["E2","G#2","D3","E3"], "A7":["A2","C#3","G3","A3"], "D7":["D3","F#3","C4","D4"],
+            "G7":["G2","B2","F3","G3"], "C7":["C3","E3","Bb3","C4"]
         };
 
-        // Grafo de adyacencia armónica (Círculo de quintas y relativas directas)
-        const harmonyGraph = {
-            "C":  ["F", "G", "Am", "Dm"],  "G":  ["C", "D", "Em", "Bm"],  "D":  ["G", "A", "Bm", "F#m"],
-            "A":  ["D", "E", "F#m","C#m"], "E":  ["A", "B", "C#m","G#m"], "B":  ["E", "F#", "G#m","D#m"],
-            "F#": ["B", "C#","D#m","Bbm"], "C#": ["F#","Ab","Bbm","Fm"],  "Ab": ["C#","Eb","Fm", "Cm"],
-            "Eb": ["Ab","Bb","Cm", "Gm"],  "Bb": ["Eb","F", "Gm", "Dm"],  "F":  ["Bb","C", "Dm", "Am"],
-            "Am": ["Dm","Em","C",  "F"],   "Em": ["Am","Bm","G",  "C"],   "Bm": ["Em","F#m","D", "G"],
-            "F#m":["Bm","C#m","A", "D"],   "C#m":["F#m","G#m","E","A"],   "G#m":["C#m","D#m","B","E"],
-            "Dm": ["Gm","Am","F",  "Bb"],  "Gm": ["Cm","Dm","Bb", "Eb"],  "Cm": ["Fm","Gm","Eb", "Ab"]
-        };
+        // --- SISTEMA DE RENDERIZADO VISUAL CON ENFOQUE DE CÍRCULO COMPLETO ---
+        const svgElement = document.getElementById('viewport');
+        const nodesLayer = document.getElementById('nodes-layer');
+        const linksLayer = document.getElementById('links-layer');
+        const ambientLayer = document.getElementById('ambient-layer');
+        const styleSelector = document.getElementById('style-selector');
+        
+        let currentNodesData = {};
 
-        // --- 2. CONFIGURACIÓN DE ELEMENTOS VISUALES Y LIENZO ---
-        const svg = document.getElementById('harmony-svg');
-        const nodesGroup = document.getElementById('nodes-group');
-        const linksGroup = document.getElementById('links-group');
-        const instructions = document.getElementById('instructions');
-        const ambientBg = document.getElementById('ambient-bg');
+        // Inicializar el espacio con un nodo raíz céntrico
+        window.addEventListener('DOMContentLoaded', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            triggerHarmonicExpansion("C", width / 2, height / 2);
+        });
 
-        let nodes = {};
-
-        svg.addEventListener('pointerdown', (e) => {
-            if (Tone.context.state !== 'running') Tone.start();
-            if (e.target === svg || e.target === linksGroup) {
-                const rect = svg.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                instructions.style.opacity = "0";
-                generateDynamicUniverse("C", x, y);
+        styleSelector.addEventListener('change', () => {
+            // Re-disparar el centro activo para cambiar dinámicamente el estilo en Grok instantáneamente
+            const activeCenter = Object.keys(currentNodesData).find(key => currentNodesData[key].isCenter);
+            if (activeCenter) {
+                const nodeObj = currentNodesData[activeCenter];
+                triggerHarmonicExpansion(activeCenter, nodeObj.x, nodeObj.y);
             }
         });
 
-        function generateDynamicUniverse(centerId, centerX, centerY) {
-            nodesGroup.innerHTML = "";
-            linksGroup.innerHTML = "";
-            nodes = {};
+        function triggerHarmonicExpansion(centerId, targetX, targetY) {
+            nodesLayer.innerHTML = "";
+            linksLayer.innerHTML = "";
+            currentNodesData = {};
 
-            // Vibración Háptica (si está disponible en el dispositivo móvil)
-            if (navigator.vibrate) navigator.vibrate(15);
+            if (navigator.vibrate) navigator.vibrate(12);
 
-            // Cambiar atmósfera de fondo de acuerdo a la polaridad del acorde
-            const isMinor = centerId.includes('m');
-            ambientBg.style.background = isMinor 
-                ? "radial-gradient(circle, rgba(255,0,124,0.15) 0%, transparent 70%)"
-                : "radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)";
+            const activeStyle = styleSelector.value;
+            const metadata = fullHarmonyModel[centerId] || fullHarmonyModel["C"];
 
-            // 1. Crear Eje central
-            createDynamicNode(centerId, centerX, centerY, true);
+            // Renderizar fondo reactivo basado en el estilo y el modo armónico
+            updateAtmosphere(metadata.type, activeStyle);
 
-            // 2. Desplegar satélites armónicos con distancias elásticas
-            const children = harmonyGraph[centerId] || ["F", "G", "Am", "Dm"];
-            const radius = 120;
+            // 1. Crear el nodo Sol (Centro Armónico Actual)
+            createNodeElement(centerId, targetX, targetY, true, metadata.deg);
 
-            children.forEach((childId, index) => {
-                const angle = (index / children.length) * 2 * Math.PI - Math.PI / 2;
-                const childX = centerX + radius * Math.cos(angle);
-                const childY = centerY + radius * Math.sin(angle);
+            // 2. Mapear los satélites (Estructura de círculo adaptativo basado en el estilo)
+            const neighbors = metadata.neighbors;
+            
+            // Reajustar radios de órbita y dispersión geométrica dependiendo del estilo seleccionado
+            let orbitRadius = 135;
+            if (activeStyle === "jazz_251") orbitRadius = 155; 
+            if (activeStyle === "funk") orbitRadius = 115;
 
-                createDynamicLink(centerX, centerY, childX, childY, childId);
-                createDynamicNode(childId, childX, childY, false);
+            neighbors.forEach((neighborId, idx) => {
+                const neighborMeta = fullHarmonyModel[neighborId] || { deg: "?" };
+                
+                // Distribución geométrica radial limpia en base dorada
+                const baseAngle = (idx / neighbors.length) * 2 * Math.PI - Math.PI / 2;
+                const nodeX = targetX + orbitRadius * Math.cos(baseAngle);
+                const nodeY = targetY + orbitRadius * Math.sin(baseAngle);
+
+                createLinkElement(targetX, targetY, nodeX, nodeY, neighborId);
+                createNodeElement(neighborId, nodeX, nodeY, false, neighborMeta.deg);
             });
 
-            // Disparar la lógica cognitiva de Groq
-            consultGroqCognitiveIA(centerId);
+            // Despachar lógica a la IA Cognitiva o Fallback
+            executeCognitivePipeline(centerId, activeStyle);
         }
 
-        function createDynamicNode(id, x, y, isCenter) {
-            const isMinor = id.includes('m');
-            const color = isMinor ? "var(--minor)" : "var(--major)";
-            const targetRadius = isCenter ? 26 : 18;
+        function createNodeElement(id, x, y, isCenter, degree) {
+            const meta = fullHarmonyModel[id] || { type: "major", label: id };
+            let strokeColor = "var(--major-color)";
+            if (meta.type === "minor") strokeColor = "var(--minor-color)";
+            if (meta.type === "seventh") strokeColor = "var(--seventh-color)";
+            
+            const radius = isCenter ? 28 : 20;
 
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
             g.setAttribute("class", "node");
@@ -175,43 +289,53 @@
 
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("class", "node-circle");
-            circle.setAttribute("r", 0); // Empieza en cero para gatillar la animación de muelle
-            circle.setAttribute("fill", "#040407");
-            circle.setAttribute("stroke", color);
-            circle.style.filter = isMinor ? "var(--glow-minor)" : "var(--glow-major)";
+            circle.setAttribute("r", 0);
+            circle.setAttribute("stroke", strokeColor);
+            circle.style.filter = meta.type === "minor" ? "var(--glow-min)" : "var(--glow-m)";
 
-            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("class", "chord-text");
-            text.textContent = id;
+            const chordText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            chordText.setAttribute("class", "chord-label");
+            chordText.setAttribute("y", "-2");
+            chordText.textContent = meta.label;
+
+            const degreeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            degreeText.setAttribute("class", "degree-label");
+            degreeText.setAttribute("y", "10");
+            degreeText.textContent = degree;
 
             g.appendChild(circle);
-            g.appendChild(text);
-            nodesGroup.appendChild(g);
+            g.appendChild(chordText);
+            g.appendChild(degreeText);
+            nodesLayer.appendChild(g);
 
-            // Fuerza elástica de escalado en CSS
+            // Fuerza muelle de entrada fluida (Elastic Spawn)
             requestAnimationFrame(() => {
-                circle.style.transform = "scale(1)";
-                circle.setAttribute("r", targetRadius);
+                circle.setAttribute("r", radius);
             });
 
             g.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
-                generateDynamicUniverse(id, x, y);
+                if (Tone.context.state !== 'running') Tone.start();
+                triggerHarmonicExpansion(id, x, y);
             });
 
-            nodes[id] = { circle, color, x, y };
+            currentNodesData[id] = { x, y, circle, strokeColor, isCenter };
         }
 
-        function createDynamicLink(x1, y1, x2, y2, childId) {
+        function createLinkElement(x1, y1, x2, y2, targetId) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            const isMinor = childId.includes('m');
+            const meta = fullHarmonyModel[targetId] || { type: "major" };
             
-            line.setAttribute("class", "connection-line");
+            let strokeColor = "var(--major-color)";
+            if (meta.type === "minor") strokeColor = "var(--minor-color)";
+            if (meta.type === "seventh") strokeColor = "var(--seventh-color)";
+
+            line.setAttribute("class", "link-line");
             line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-            line.setAttribute("x2", x1); line.setAttribute("y2", y1); // Brota del origen
-            line.setAttribute("stroke", isMinor ? "var(--minor)" : "var(--major)");
-            
-            linksGroup.appendChild(line);
+            line.setAttribute("x2", x1); line.setAttribute("y2", y1);
+            line.setAttribute("stroke", strokeColor);
+
+            linksLayer.appendChild(line);
 
             requestAnimationFrame(() => {
                 line.setAttribute("x2", x2);
@@ -219,117 +343,122 @@
             });
         }
 
-        // --- 3. CONEXIÓN DIRECTA CON LA IA COGNITIVA DE GROQ ---
-        async function consultGroqCognitiveIA(chordId) {
-            const apiKey = document.getElementById('api-key-input').value.trim();
-            const style = document.getElementById('style-select').value;
+        function updateAtmosphere(modeType, style) {
+            let color1 = "rgba(0, 212, 255, 0.05)";
+            if (modeType === "minor") color1 = "rgba(255, 0, 124, 0.06)";
+            if (style === "jazz_251") color1 = "rgba(222, 255, 154, 0.06)";
+            if (style === "funk") color1 = "rgba(255, 170, 0, 0.06)";
 
-            // Iluminar visualmente el nodo en reproducción instantánea
-            triggerVisualPulse(chordId);
+            ambientLayer.style.background = `radial-gradient(circle at 50% 50%, ${color1} 0%, #030306 75%)`;
+        }
 
-            // Si el usuario no ha ingresado API Key, usamos el motor matemático matemático local por defecto
-            if (!apiKey) {
-                playLocalFallback(chordId, style);
+        // --- PIPELINE DE CONEXIÓN CON xAI GROK API ---
+        async function executeCognitivePipeline(chordId, style) {
+            const token = document.getElementById('grok-token').value.trim();
+            
+            // Retroalimentación visual inmediata en el pulso local
+            executeVisualPulse(chordId);
+
+            if (!token) {
+                executeFallbackAudio(chordId, style);
                 return;
             }
 
             try {
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                // LLamada al endpoint oficial y actual de la API de Grok (xAI)
+                const response = await fetch("https://api.x.ai/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${apiKey}`,
+                        "Authorization": `Bearer ${token}`,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "llama3-8b-8192",
+                        model: "grok-4.3", 
                         messages: [
                             {
                                 role: "system",
-                                content: `Eres un motor analítico de improvisación en guitarra. Responde ESTRICTAMENTE con un objeto JSON sin introducciones ni markdown.
-                                El estilo musical actual dictará cómo estructurar las dinámicas:
-                                - "jazz_251": Licks usando tensiones de novenas, oncenas o acordes alterados, swing rítmico.
-                                - "pop": Arpegios limpios, estables, melódicos.
-                                - "funk": Notas cortas, sincopadas, rítmicas, ataques rápidos y staccato.
-                                - "gospel": Bloques armónicos ascendentes rápidos con amplio sustain y extensiones.
-                                
-                                Formato de salida requerido:
-                                {
-                                  "lick": [
-                                    {"note": "C3", "time": 0.0, "duration": "4n"},
-                                    {"note": "E3", "time": 0.15, "duration": "8n"},
-                                    {"note": "G3", "time": 0.3, "duration": "8n"},
-                                    {"note": "B3", "time": 0.45, "duration": "2n"}
-                                  ]
-                                }`
+                                content: `Eres el motor analítico de improvisación de Nexus Harmony. Tu salida debe ser estrictamente un objeto JSON limpio y válido. Sin markdown, sin explicaciones.
+                                Diseña un lick melódico de 4 notas optimizado para guitarra según estos estilos:
+                                - 'pop': Líneas directas, arpegios fluidos y melódicos.
+                                - 'jazz_251': Estructuras con extensiones (9na, 11na), tensiones rítmicas sutiles.
+                                - 'funk': Notas staccato ultra cortas, ritmos sincopados y ágiles.
+                                - 'gospel': Arpegios ascendentes masivos con amplio espacio melódico.
+
+                                Estructura requerida:
+                                { "lick": [ {"note": "A3", "time": 0.0, "duration": "8n"}, ... ] }`
                             },
                             {
                                 role: "user",
-                                content: `Genera una frase de guitarra óptima de 4 notas para el acorde ${chordId} en el estilo ${style}. Usa notación científica anglosajona estándar.`
+                                content: `Genera una frase de guitarra de alta calidad para el acorde ${chordId} en estilo ${style}. Usa notación científica (ej: C4, F#3, Eb3).`
                             }
                         ],
                         response_format: { type: "json_object" },
-                        temperature: 0.65,
-                        max_tokens: 180
+                        temperature: 0.68,
+                        max_tokens: 200
                     })
                 });
 
-                const data = await response.json();
-                const generatedMusic = JSON.parse(data.choices[0].message.content);
-                executeGroqLick(generatedMusic.lick);
+                if (!response.ok) throw new Error(`Status: ${response.status}`);
 
-            } catch (error) {
-                console.warn("Groq API error, recurriendo a motor local:", error);
-                playLocalFallback(chordId, style);
+                const rawData = await response.json();
+                const cleanJson = JSON.parse(rawData.choices[0].message.content);
+                
+                playGenerativeLick(cleanJson.lick);
+
+            } catch (err) {
+                console.warn("Grok API Error o Desconexión, usando fallback algorítmico local:", err);
+                executeFallbackAudio(chordId, style);
             }
         }
 
-        // --- 4. MOTOR DE INTERPRETACIÓN MUSICAL (TONE.JS) ---
-        function executeGroqLick(lickArray) {
-            const now = Tone.now();
-            lickArray.forEach(step => {
-                sampler.triggerAttackRelease(step.note, step.duration, now + parseFloat(step.time));
+        function playGenerativeLick(lick) {
+            const timeline = Tone.now();
+            lick.forEach(step => {
+                synthEngine.triggerAttackRelease(step.note, step.duration, timeline + parseFloat(step.time));
             });
         }
 
-        function playLocalFallback(chordId, style) {
-            const notes = fallbackChords[chordId] || ["C3","E3","G3","C4"];
-            const now = Tone.now();
+        function executeFallbackAudio(chordId, style) {
+            const corePitches = pitchDictionary[chordId] || ["C3", "E3", "G3", "B3"];
+            const timeline = Tone.now();
 
             if (style === "jazz_251") {
-                sampler.triggerAttackRelease(notes[0], "4n", now);
-                sampler.triggerAttackRelease(notes[2], "8n", now + 0.15);
-                sampler.triggerAttackRelease(notes[1], "8n", now + 0.3);
-                sampler.triggerAttackRelease(notes[3], "2n", now + 0.45);
+                synthEngine.triggerAttackRelease(corePitches[0], "4n", timeline);
+                synthEngine.triggerAttackRelease(corePitches[2], "8n", timeline + 0.2);
+                synthEngine.triggerAttackRelease(corePitches[1], "8n", timeline + 0.35);
+                synthEngine.triggerAttackRelease(corePitches[3], "2n", timeline + 0.5);
             } else if (style === "funk") {
-                sampler.triggerAttackRelease(notes[0], "16n", now);
-                sampler.triggerAttackRelease(notes[1], "16n", now + 0.08);
-                sampler.triggerAttackRelease(notes[2], "16n", now + 0.16);
-                sampler.triggerAttackRelease(notes[0], "8n", now + 0.24);
+                synthEngine.triggerAttackRelease(corePitches[0], "16n", timeline);
+                synthEngine.triggerAttackRelease(corePitches[1], "16n", timeline + 0.1);
+                synthEngine.triggerAttackRelease(corePitches[2], "16n", timeline + 0.2);
+                synthEngine.triggerAttackRelease(corePitches[0], "8n", timeline + 0.3);
             } else if (style === "gospel") {
-                notes.forEach((n, i) => {
-                    sampler.triggerAttackRelease(n, "1n", now + (i * 0.05));
+                corePitches.forEach((pitch, i) => {
+                    synthEngine.triggerAttackRelease(pitch, "1n", timeline + (i * 0.06));
                 });
-            } else { // Pop
-                sampler.triggerAttackRelease(notes[0], "8n", now);
-                sampler.triggerAttackRelease(notes[1], "8n", now + 0.1);
-                sampler.triggerAttackRelease(notes[2], "8n", now + 0.2);
-                sampler.triggerAttackRelease(notes[3], "4n", now + 0.3);
+            } else { // Pop Progressive
+                synthEngine.triggerAttackRelease(corePitches[0], "8n", timeline);
+                synthEngine.triggerAttackRelease(corePitches[1], "8n", timeline + 0.12);
+                synthEngine.triggerAttackRelease(corePitches[2], "8n", timeline + 0.24);
+                synthEngine.triggerAttackRelease(corePitches[3], "4n", timeline + 0.36);
             }
         }
 
-        function triggerVisualPulse(id) {
-            if (!nodes[id]) return;
-            const targetCircle = nodes[id].circle;
-            const originalRadius = parseFloat(targetCircle.getAttribute("r"));
+        function executeVisualPulse(id) {
+            if (!currentNodesData[id]) return;
+            const target = currentNodesData[id].circle;
+            const originalR = parseFloat(target.getAttribute("r"));
 
-            targetCircle.setAttribute("fill", nodes[id].color);
-            targetCircle.setAttribute("r", originalRadius + 5);
+            target.setAttribute("fill", currentNodesData[id].strokeColor);
+            target.setAttribute("r", originalR + 6);
 
             setTimeout(() => {
-                targetCircle.setAttribute("fill", "#040407");
-                targetCircle.setAttribute("r", originalRadius);
-            }, 250);
+                target.setAttribute("fill", "#06060c");
+                target.setAttribute("r", originalR);
+            }, 280);
         }
     </script>
 </body>
 </html>
+
+
