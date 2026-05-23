@@ -1,0 +1,16 @@
+{
+  "short_name": "ValetonToneAI",
+  "name": "Valeton Tone AI - Isolator & Mapper",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3659/3659899.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0c0c0e",
+  "theme-color": "#121214",
+  "display": "standalone",
+  "orientation": "landscape"
+}
