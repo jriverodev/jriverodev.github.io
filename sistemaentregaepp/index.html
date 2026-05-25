@@ -153,16 +153,16 @@
                     ]
                 }
             },
-         //   computed: {
-           //     filtrados() {
-           //         const s = this.searchQuery.toLowerCase();
-            //        return this.trabajadores.filter(t => 
-            //            t.nombre.toLowerCase().includes(s) || 
-            //            t.cedula.toString().includes(s)
-            //        );
-            //    }
-           // },
             computed: {
+                filtrados() {
+                    const s = this.searchQuery.toLowerCase();
+                    return this.trabajadores.filter(t => 
+                        t.nombre.toLowerCase().includes(s) || 
+                        t.cedula.toString().includes(s)
+                    );
+                }
+            },
+         /*   computed: {
     filtrados() {
         const s = this.searchQuery.toLowerCase();
         return this.trabajadores.filter(t => {
@@ -175,7 +175,7 @@
             return coincideNombre || coincideCedula;
         });
     }
-},
+},*/
             
             methods: {
                 seleccionarTrabajador(t) {
