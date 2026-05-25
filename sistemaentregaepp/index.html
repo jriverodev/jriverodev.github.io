@@ -153,15 +153,30 @@
                     ]
                 }
             },
+         //   computed: {
+           //     filtrados() {
+           //         const s = this.searchQuery.toLowerCase();
+            //        return this.trabajadores.filter(t => 
+            //            t.nombre.toLowerCase().includes(s) || 
+            //            t.cedula.toString().includes(s)
+            //        );
+            //    }
+           // },
             computed: {
-                filtrados() {
-                    const s = this.searchQuery.toLowerCase();
-                    return this.trabajadores.filter(t => 
-                        t.nombre.toLowerCase().includes(s) || 
-                        t.cedula.toString().includes(s)
-                    );
-                }
-            },
+    filtrados() {
+        const s = this.searchQuery.toLowerCase();
+        return this.trabajadores.filter(t => {
+            // Validamos que 'nombre' exista antes de usar toLowerCase()
+            const coincideNombre = t.nombre ? t.nombre.toLowerCase().includes(s) : false;
+            
+            // Validamos que 'cedula' exista (no sea null ni undefined) antes de usar toString()
+            const coincideCedula = (t.cedula !== undefined && t.cedula !== null) ? t.cedula.toString().includes(s) : false;
+            
+            return coincideNombre || coincideCedula;
+        });
+    }
+},
+            
             methods: {
                 seleccionarTrabajador(t) {
                     this.trabajadorSeleccionado = t;
