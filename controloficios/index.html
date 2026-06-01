@@ -87,7 +87,6 @@
     <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
     
     <div id="status"></div>
-
     <hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0 20px 0;">
     
     <p style="font-size: 14px; color: #666; margin-bottom: 10px;">¿Necesitas revisar el historial?</p>
@@ -169,7 +168,7 @@
         });
     }
 
- /*   btnProcesar.addEventListener('click', async () => {
+    btnProcesar.addEventListener('click', async () => {
         if (!textoExtraidoPDF) return;
         
         mostrarStatus("Procesando documento con IA y registrando en Sheets...", "loading");
@@ -194,9 +193,9 @@
             if (resultado.status === "SUCCESS") {
                 mostrarStatus(`¡Procesado con éxito! El documento Nro: ${resultado.doc || 'Detectado'} ha sido registrado (${resultado.action}).`, "success");
                 fileNameSpan.innerText = "";
-                textoExtraidoPDF = ""; */
+                textoExtraidoPDF = "";
                 // CORRECCIÓN: Volvemos a deshabilitar el botón para esperar un nuevo archivo
-          /*      btnProcesar.disabled = true;
+                btnProcesar.disabled = true;
             } else {
                 throw new Error(resultado.message || "Error desconocido en el servidor.");
             }
@@ -205,48 +204,7 @@
             mostrarStatus("Error de procesamiento: " + error.message, "error");
             btnProcesar.disabled = false;
         }
-    });*/
-
-    btnProcesar.addEventListener('click', async () => {
-    if (!textoExtraidoPDF) return;
-    
-    mostrarStatus("Procesando documento con IA y registrando en Sheets...", "loading");
-    btnProcesar.disabled = true;
-
-    try {
-        const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
-
-        // CAMBIO: Creamos un objeto plano en lugar de URLSearchParams
-        const datosEnviar = {
-            textoPDF: textoLimpio
-        };
-
-        const respuestaServidor = await fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { 
-                // CAMBIO: Cambiamos el tipo de contenido a JSON
-                "Content-Type": "text/plain;charset=utf-8" 
-            }, 
-            body: JSON.stringify(datosEnviar) // Convertimos el objeto a texto JSON
-        });
-
-        const resultado = await respuestaServidor.json();
-
-        if (resultado.status === "SUCCESS") {
-            mostrarStatus(`¡Procesado con éxito! El documento Nro: ${resultado.doc || 'Detectado'} ha sido registrado (${resultado.action}).`, "success");
-            fileNameSpan.innerText = "";
-            textoExtraidoPDF = "";
-            btnProcesar.disabled = true;
-        } else {
-            throw new Error(resultado.message || "Error desconocido en el servidor.");
-        }
-
-    } catch (error) {
-        mostrarStatus("Error de procesamiento: " + error.message, "error");
-        btnProcesar.disabled = false;
-    }
-});
-
+    });
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
