@@ -64,7 +64,6 @@
             padding: 10px;
             border-radius: 6px;
             display: none;
-            word-wrap: break-word;
         }
         .success { background-color: #d4edda; color: #155724; display: block !important; }
         .error { background-color: #f8d7da; color: #721c24; display: block !important; }
@@ -80,19 +79,25 @@
     <div class="drop-zone" id="dropZone">
         <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
         <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
+        <!-- Agregado br para mejor separación visual cuando el archivo se monte -->
+        <br>
         <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
     </div>
 
     <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
     
     <div id="status"></div>
+
+    <hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0 20px 0;">
+    
+    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">¿Necesitas revisar el historial?</p>
+    <a href="https://docs.google.com/spreadsheets/d/TU_ID_DE_HOJA_DE_CALCULO/export?format=xlsx" target="_blank" style="text-decoration: none;">
+        <button class="btn" style="background-color: #107c41;">Descargar Historial Completo (Excel)</button>
+    </a>
 </div>
 
 <script>
-    // Enlaces de Endpoints Autorizados
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx7HtmRjp0gtxu3WVf--Ca9Fy8NJ6CKFGMioPYgRnxl_c_bOekAj_i6cnxZ70jNt0L9mg/exec";
-    const API_KEY_IA = "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"; 
-    const URL_IA = "https://api.groq.com/openai/v1/chat/completions";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwNJpxBDkBSr1DZXZdjZIn41n-ekPiNzZA2c3ZlHTlFauvxE-uaRJI7N3mGPKOYJw9a5Q/exec";
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -104,11 +109,18 @@
     
     let textoExtraidoPDF = "";
 
-    // Eventos del Drag & Drop (Arrastrar y Soltar)
+    function mostrarStatus(mensaje, tipo) {
+        statusDiv.innerText = mensaje;
+        statusDiv.className = tipo;
+    }
+
     dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
     
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#e2ecf7'; });
+    dropZone.addEventListener('dragover', (e) => { 
+        e.preventDefault(); 
+        dropZone.style.background = '#e2ecf7'; 
+    });
     dropZone.addEventListener('dragleave', () => dropZone.style.background = '#f0f4f9');
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
@@ -121,7 +133,7 @@
             mostrarStatus("Por favor, selecciona un archivo PDF válido.", "error");
             return;
         }
-        fileNameSpan.innerText = file.name;
+        fileNameSpan.innerText = `Archivo cargado: ${file.name}`;
         mostrarStatus("Leyendo contenido del PDF...", "loading");
         
         try {
@@ -130,6 +142,7 @@
             btnProcesar.disabled = false;
         } catch (error) {
             mostrarStatus("Error al leer el PDF: " + error.message, "error");
+            btnProcesar.disabled = true;
         }
     }
 
@@ -158,105 +171,49 @@
 
     btnProcesar.addEventListener('click', async () => {
         if (!textoExtraidoPDF) return;
-        mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
+        
+        mostrarStatus("Procesando documento con IA y registrando en Sheets...", "loading");
         btnProcesar.disabled = true;
 
-        // Prompt estructurado adaptado al validador estricto de JSON de Groq
-        const promptSistema = `Eres un asistente analítico para la gerencia de transporte. Tu única tarea es extraer la información del texto provisto y devolverla estrictamente como un objeto JSON.
-    
-        Reglas de valores permitidos:
-        - clase_requerimiento: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
-        - tipo_apoyo: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
-        - detalle_movilizacion: 'Bus', 'Camión Cava', 'Brazo Articulado', 'Grúa', 'Montacarga' o 'N/A'.
-        - detalle_suministro: 'Gasolina', 'Diesel', 'Aceite', 'Caucho', 'Batería', 'Otro' o 'N/A'.
-        - detalle_mantenimiento: 'Preventivo', 'Correctivo' o 'N/A'.
-        - detalle_agua_achique: 'Achiques', 'Suministro de Agua Potable' o 'N/A'.
-
-        Devuelve OBLIGATORIAMENTE un JSON plano con esta estructura exacta:
-        {
-          "organizacion_remitente": "",
-          "dirigido_a": "",
-          "descripcion": "",
-          "clase_requerimiento": "",
-          "tipo_apoyo": "",
-          "fecha_requerimiento": "",
-          "numero_documento": "",
-          "persona_contacto": "",
-          "telefono": "",
-          "tipo_equipo_material": "",
-          "cantidad": "",
-          "observacion": "",
-          "anexos": "",
-          "detalle_movilizacion": "",
-          "detalle_suministro": "",
-          "detalle_mantenimiento": "",
-          "detalle_agua_achique": ""
-        }`;
-
         try {
-            // Limpieza preventiva de saltos y tabulaciones que rompen el formato JSON
             const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
 
-            // 1. Consumo de la API de Groq con el nuevo modelo soportado
-            const responseIA = await fetch(URL_IA, {
+            const cuerpoFormulario = new URLSearchParams();
+            cuerpoFormulario.append("textoPDF", textoLimpio);
+
+            const respuestaServidor = await fetch(URL_APPS_SCRIPT, {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${API_KEY_IA}`
-                },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    response_format: { "type": "json_object" }, 
-                    messages: [
-                        { role: "system", content: promptSistema },
-                        { role: "user", content: `A continuación el Texto del PDF:\n${textoLimpio}` }
-                    ],
-                    temperature: 0.1
-                })
+                    "Content-Type": "application/x-www-form-urlencoded" 
+                }, 
+                body: cuerpoFormulario.toString()
             });
 
-            // Control de captura de errores HTTP de la API
-            if (!responseIA.ok) {
-                const errorData = await responseIA.json();
-                throw new Error(`Groq API Error ${responseIA.status}: ${errorData.error?.message || 'Bad Request'}`);
+            const resultado = await respuestaServidor.json();
+
+            if (resultado.status === "SUCCESS") {
+                mostrarStatus(`¡Procesado con éxito! El documento Nro: ${resultado.doc || 'Detectado'} ha sido registrado (${resultado.action}).`, "success");
+                fileNameSpan.innerText = "";
+                textoExtraidoPDF = "";
+                // CORRECCIÓN: Volvemos a deshabilitar el botón para esperar un nuevo archivo
+                btnProcesar.disabled = true;
+            } else {
+                throw new Error(resultado.message || "Error desconocido en el servidor.");
             }
 
-            const jsonIA = await responseIA.json();
-            const textoJSON = jsonIA.choices[0].message.content.trim();
-            const datosEstructurados = JSON.parse(textoJSON);
-
-            mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
-
-            // 2. Transmisión de datos al Backend de Google Sheets
-            await fetch(URL_APPS_SCRIPT, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosEstructurados)
-            });
-
-            mostrarStatus(`¡Procesado con éxito! El documento Nro: ${datosEstructurados.numero_documento || 'Detectado'} ha sido registrado en tu Google Sheet.`, "success");
-            fileNameSpan.innerText = "";
-            textoExtraidoPDF = "";
         } catch (error) {
-            mostrarStatus("Error: " + error.message, "error");
+            mostrarStatus("Error de procesamiento: " + error.message, "error");
             btnProcesar.disabled = false;
         }
     });
 
-    function mostrarStatus(mensaje, tipo) {
-        statusDiv.innerText = mensaje;
-        statusDiv.className = tipo;
-    }
-
-    // Registro controlado del ciclo de vida del Service Worker (Evita AbortError)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => console.log('Nexus Service Worker activo con alcance:', reg.scope))
+                .then(reg => console.log('Nexus Service Worker activo alcance:', reg.scope))
                 .catch(err => {
                     if (err.name !== 'AbortError') {
-                        console.error('Error crítico del Service Worker:', err);
+                        console.error('Falla en el Service Worker:', err);
                     }
                 });
         });
