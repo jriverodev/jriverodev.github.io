@@ -79,8 +79,6 @@
     <div class="drop-zone" id="dropZone">
         <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
         <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
-        <!-- Agregado br para mejor separación visual cuando el archivo se monte -->
-        <br>
         <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
     </div>
 
@@ -90,7 +88,10 @@
 </div>
 
 <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwFSjQg_n3SbKLNkbFe7AW95bfXomuXqJiLsiCyR4YT0N0P7OEIfmxv7Zc4kISwCGaOgg/exec";
+    // Configuración de Endpoints Autorizados
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx7HtmRjp0gtxu3WVf--Ca9Fy8NJ6CKFGMioPYgRnxl_c_bOekAj_i6cnxZ70jNt0L9mg/exec";
+    const API_KEY_IA = "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"; 
+    const URL_IA = "https://api.groq.com/openai/v1/chat/completions";
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -102,18 +103,11 @@
     
     let textoExtraidoPDF = "";
 
-    function mostrarStatus(mensaje, tipo) {
-        statusDiv.innerText = mensaje;
-        statusDiv.className = tipo;
-    }
-
+    // Eventos de la Zona de Arrastre (Drag & Drop)
     dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
     
-    dropZone.addEventListener('dragover', (e) => { 
-        e.preventDefault(); 
-        dropZone.style.background = '#e2ecf7'; 
-    });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#e2ecf7'; });
     dropZone.addEventListener('dragleave', () => dropZone.style.background = '#f0f4f9');
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
@@ -126,7 +120,7 @@
             mostrarStatus("Por favor, selecciona un archivo PDF válido.", "error");
             return;
         }
-        fileNameSpan.innerText = `Archivo cargado: ${file.name}`;
+        fileNameSpan.innerText = file.name;
         mostrarStatus("Leyendo contenido del PDF...", "loading");
         
         try {
@@ -135,7 +129,6 @@
             btnProcesar.disabled = false;
         } catch (error) {
             mostrarStatus("Error al leer el PDF: " + error.message, "error");
-            btnProcesar.disabled = true;
         }
     }
 
@@ -163,50 +156,91 @@
     }
 
     btnProcesar.addEventListener('click', async () => {
-        if (!textoExtraidoPDF) return;
+    if (!textoExtraidoPDF) return;
+    mostrarStatus("Analizando documento con Inteligencia Artificial...", "loading");
+    btnProcesar.disabled = true;
+
+    // Prompt optimizado y simplificado para evitar el Error 400 en Groq
+    const promptSistema = `Actúa como un extractor analítico para la gerencia de transporte. Analiza el texto provisto y genera exclusivamente un objeto JSON válido. No uses formato markdown en la respuesta.
+        Reglas de Categorías Maestras:
+        - clase_requerimiento: Debe ser exactamente uno de estos valores: 'Mantenimiento', 'Operaciones', 'Combustible', 'Materiales' u 'Otros'.
+        - tipo_apoyo: Debe ser exactamente uno de estos valores: 'Interinstitucional', 'Deportivo', 'Religioso', 'Cultural', 'Social', 'Personal' o 'Suministros de Materiales y Combustible'.
         
-        mostrarStatus("Procesando documento con IA y registrando en Sheets...", "loading");
-        btnProcesar.disabled = true;
+        Reglas de Subcategorías Condicionales:
+        - detalle_movilizacion: Si aplica, identifica si es 'Bus', 'Camión Cava', 'Brazo Articulado', 'Grúa' o 'Montacarga'. Si no, usa 'N/A'.
+        - detalle_suministro: Si aplica, identifica si es 'Gasolina', 'Diesel', 'Aceite', 'Caucho', 'Batería' o 'Otro'. Si no, usa 'N/A'.
+        - detalle_mantenimiento: Si aplica, mapea si es 'Preventivo' o 'Correctivo'. Si no, usa 'N/A'.
+        - detalle_agua_achique: Si aplica, mapea si es 'Achiques' o 'Suministro de Agua Potable'. Si no, usa 'N/A'.
+
+        Estructura obligatoria del JSON (llaves limpias sin comillas internas en los valores):
+        {
+          "organizacion_remitente": "", "dirigido_a": "", "descripcion": "", "clase_requerimiento": "", "tipo_apoyo": "", "fecha_requerimiento": "", "numero_documento": "", "persona_contacto": "", "telefono": "", "tipo_equipo_material": "", "cantidad": "", "observacion": "", "anexos": "", "detalle_movilizacion": "", "detalle_suministro": "", "detalle_mantenimiento": "", "detalle_agua_achique": ""
+        }`;
 
         try {
-            const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
+        // Limpiamos el texto del PDF de caracteres de control extraños antes de mandarlo
+        const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
 
-            const cuerpoFormulario = new URLSearchParams();
-            cuerpoFormulario.append("textoPDF", textoLimpio);
+        // 1. Consumo de la API de Groq
+        const responseIA = await fetch(URL_IA, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY_IA}`
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                response_format: { "type": "json_object" }, // Groq exige que el prompt pida JSON explícitamente arriba
+                messages: [
+                    { role: "system", content: promptSistema },
+                    { role: "user", content: `A continuación el Texto del PDF:\n${textoLimpio}` }
+                ],
+                temperature: 0.1
+            })
+        });
 
-            const respuestaServidor = await fetch(URL_APPS_SCRIPT, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/x-www-form-urlencoded" 
-                }, 
-                body: cuerpoFormulario.toString()
-            });
-
-            const resultado = await respuestaServidor.json();
-
-            if (resultado.status === "SUCCESS") {
-                mostrarStatus(`¡Procesado con éxito! El documento Nro: ${resultado.doc || 'Detectado'} ha sido registrado (${resultado.action}).`, "success");
-                fileNameSpan.innerText = "";
-                textoExtraidoPDF = "";
-                // CORRECCIÓN: Volvemos a deshabilitar el botón para esperar un nuevo archivo
-                btnProcesar.disabled = true;
-            } else {
-                throw new Error(resultado.message || "Error desconocido en el servidor.");
-            }
-
-        } catch (error) {
-            mostrarStatus("Error de procesamiento: " + error.message, "error");
-            btnProcesar.disabled = false;
+        // Verificación de error HTTP antes de parsear
+        if (!responseIA.ok) {
+            const errorData = await responseIA.json();
+            throw new Error(`Groq API Error ${responseIA.status}: ${errorData.error?.message || 'Bad Request'}`);
         }
-    });
 
+        const jsonIA = await responseIA.json();
+        const textoJSON = jsonIA.choices[0].message.content.trim();
+        const datosEstructurados = JSON.parse(textoJSON);
+
+        mostrarStatus("Enviando datos estructurados a Google Sheets...", "loading");
+
+        // 2. Transmisión segura a Google Sheets
+        await fetch(URL_APPS_SCRIPT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datosEstructurados)
+        });
+
+        mostrarStatus(`¡Procesado con éxito! El documento Nro: ${datosEstructurados.numero_documento || 'Detectado'} ha sido registrado.`, "success");
+        fileNameSpan.innerText = "";
+        textoExtraidoPDF = "";
+    } catch (error) {
+        mostrarStatus("Error: " + error.message, "error");
+        btnProcesar.disabled = false;
+    }
+});
+
+    function mostrarStatus(mensaje, tipo) {
+        statusDiv.innerText = mensaje;
+        statusDiv.className = tipo;
+    }
+
+    // Registro seguro de ciclo de vida del Service Worker (Previene AbortErrors)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => console.log('Nexus Service Worker activo alcance:', reg.scope))
+                .then(reg => console.log('Nexus Service Worker activo con éxito en el alcance:', reg.scope))
                 .catch(err => {
                     if (err.name !== 'AbortError') {
-                        console.error('Falla en el Service Worker:', err);
+                        console.error('Falla crítica en el Service Worker:', err);
                     }
                 });
         });
