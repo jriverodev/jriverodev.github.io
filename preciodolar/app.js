@@ -6,7 +6,7 @@ const offlineMsg = document.getElementById('offline-message');
 
 // URL del BCV y el Proxy CORS gratuito para poder leerla desde el navegador
 const BCV_URL = 'https://www.bcv.org.ve/';
-const PROXY_URL = 'https://api.allorigins.win/get?url=' + encodeURIComponent(BCV_URL);
+const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(BCV_URL);
 
 // 1. Registro del Service Worker para soporte PWA
 if ('serviceWorker' in navigator) {
