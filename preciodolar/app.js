@@ -4,11 +4,11 @@ const loadingEl = document.getElementById('loading');
 const refreshBtn = document.getElementById('refresh-btn');
 const offlineMsg = document.getElementById('offline-message');
 
-// URL del BCV y el Proxy CORS gratuito para poder leerla desde el navegador
+// URL oficial del BCV y el proxy CORS que entrega el HTML como texto plano
 const BCV_URL = 'https://www.bcv.org.ve/';
 const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(BCV_URL);
 
-// 1. Registro del Service Worker para soporte PWA
+// 1. Registro del Service Worker para soporte PWA (Modo Offline)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -19,7 +19,7 @@ if ('serviceWorker' in navigator) {
 
 // 2. Función de Scraping directo en el Frontend
 async function scrapingBCV() {
-  // Mostrar estado de carga
+  // Mostrar estado de carga en la interfaz
   priceEl.classList.add('hidden');
   loadingEl.style.display = 'block';
   
@@ -28,28 +28,30 @@ async function scrapingBCV() {
     const response = await fetch(PROXY_URL);
     if (!response.ok) throw new Error('Error al conectar con el servidor proxy');
     
-    const wrapper = await response.json();
-    const htmlContenido = wrapper.contents; // Aquí está el HTML completo del BCV
+    // Leemos la respuesta como TEXTO (HTML puro), evitando el error de JSON
+    const htmlContenido = await response.text(); 
 
-    // Creamos un clon virtual del HTML para poder leerlo con selectores de JavaScript
+    // Creamos un DOM virtual para poder analizar el HTML del BCV usando selectores comunes
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContenido, 'text/html');
 
     // --- AQUÍ OCURRE EL SCRAPING ---
-    // Buscamos el contenedor específico del dólar en el diseño del BCV
+    // Buscamos el contenedor específico del dólar en el HTML del BCV (#dolar)
     const dolarContainer = doc.querySelector('#dolar');
     
     if (!dolarContainer) throw new Error('No se encontró la estructura del dólar en el HTML');
 
-    // Extraemos el precio (normalmente dentro de una etiqueta 'strong')
+    // Extraemos el texto del precio (generalmente dentro de la etiqueta 'strong')
     const precioRaw = dolarContainer.querySelector('strong').textContent.trim();
     
-    // Extraemos la fecha valor que publica el BCV
+    // Extraemos la fecha valor del BCV si está disponible, sino usamos la del dispositivo
     const fechaContainer = doc.querySelector('.date-display-single');
     const fecha = fechaContainer ? fechaContainer.textContent.trim() : new Date().toLocaleDateString();
 
-    // Guardamos los datos limpios en la interfaz y en almacenamiento local (Offline)
+    // Actualizamos la interfaz con los datos reales recopilados
     updateUI(precioRaw, fecha);
+
+    // Guardamos las strings en LocalStorage para soporte Offline instantáneo
     localStorage.setItem('last_price', precioRaw);
     localStorage.setItem('last_date', fecha);
     
@@ -57,19 +59,22 @@ async function scrapingBCV() {
 
   } catch (error) {
     console.error('Error haciendo scraping al BCV:', error);
-    // Si falla el scraping o la red, cargamos el último dato guardado
+    // Si la red falla o el proxy cae, se recurre inmediatamente al respaldo local
     loadLocalData();
   } finally {
+    // Ocultar estado de carga
     loadingEl.style.display = 'none';
     priceEl.classList.remove('hidden');
   }
 }
 
+// Función auxiliar para pintar los datos en pantalla
 function updateUI(price, date) {
   priceEl.textContent = price;
   dateEl.textContent = date;
 }
 
+// Función para cargar los últimos datos guardados en caso de estar offline o error
 function loadLocalData() {
   const localPrice = localStorage.getItem('last_price');
   const localDate = localStorage.getItem('last_date');
@@ -85,10 +90,14 @@ function loadLocalData() {
   }
 }
 
-// 3. Eventos
+// 3. Controladores de Eventos (Listeners)
 refreshBtn.addEventListener('click', scrapingBCV);
 
-// Carga inicial al abrir la app
+// Escuchar si el dispositivo pierde o recupera conexión a internet
+window.addEventListener('online', () => offlineMsg.classList.add('hidden'));
+window.addEventListener('offline', () => offlineMsg.classList.remove('hidden'));
+
+// Ejecución inicial automática al abrir o recargar la aplicación
 if (navigator.onLine) {
   scrapingBCV();
 } else {
