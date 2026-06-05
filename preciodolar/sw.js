@@ -1,5 +1,6 @@
 const CACHE_NAME = 'bcv-tasa-cache-v1';
 
+// Lista limpia y estricta de archivos existentes
 const ASSETS_TO_CACHE = [
   '/preciodolar/',
   '/preciodolar/index.html',
@@ -14,14 +15,14 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Abriendo cache y guardando assets estáticos');
+      console.log('Guardando assets estáticos en caché');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
   self.skipWaiting();
 });
 
-// Activar y limpiar cachés antiguas si las hubiera
+// Activar y limpiar cachés antiguas
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -40,8 +41,8 @@ self.addEventListener('activate', (event) => {
 
 // Interceptar peticiones para servir desde el caché si está offline
 self.addEventListener('fetch', (event) => {
-  // No cachear la petición de la API en el Service Worker (de eso ya se encarga el localStorage de app.js)
-  if (event.request.url.includes('pydolarve.org')) {
+  // Ignoramos la petición del proxy/bcv para que no interfiera aquí
+  if (event.request.url.includes('corsproxy.io') || event.request.url.includes('bcv.org.ve')) {
     return;
   }
 
