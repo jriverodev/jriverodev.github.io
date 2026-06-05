@@ -1,14 +1,13 @@
 const CACHE_NAME = 'bcv-tasa-cache-v1';
 
-// Archivos estáticos indispensables para que la app abra offline
 const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  '/preciodolar/',
+  '/preciodolar/index.html',
+  '/preciodolar/style.css',
+  '/preciodolar/app.js',
+  '/preciodolar/manifest.json',
+  '/preciodolar/icons/icon-192.png',
+  '/preciodolar/icons/icon-512.png'
 ];
 
 // Instalar Service Worker y cachear recursos
