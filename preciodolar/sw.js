@@ -1,14 +1,13 @@
 const CACHE_NAME = 'bcv-tasa-cache-v1';
 
-// Lista limpia y estricta de archivos existentes
 const ASSETS_TO_CACHE = [
-  '/preciodolar/',
-  '/preciodolar/index.html',
-  '/preciodolar/style.css',
-  '/preciodolar/app.js',
-  '/preciodolar/manifest.json',
-  '/preciodolar/icons/icon-192.png',
-  '/preciodolar/icons/icon-512.png'
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // Instalar Service Worker y cachear recursos
