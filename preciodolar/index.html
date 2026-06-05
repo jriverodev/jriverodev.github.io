@@ -3,19 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tasa Oficial BCV</title>
+  <title>Tasa Oficial BCV + Calculadora</title>
+  
   <link rel="manifest" href="./manifest.json">
+  
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Tasa BCV">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <link rel="shortcut icon" href="./icons/favicon.ico" type="image/x-icon">
   <link rel="icon" href="./icons/favicon.ico" type="image/x-icon">
+  
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
   <div class="app-container">
+    
     <header>
       <h1>Tasa Oficial BCV</h1>
       <p class="subtitle">Banco Central de Venezuela</p>
@@ -37,6 +42,28 @@
         <p>Fecha Valor: <span id="update-date">--/--/----</span></p>
       </div>
     </main>
+
+    <section class="card calculator-card">
+      <h3>Calculadora de Conversión</h3>
+      
+      <div class="input-group">
+        <label for="input-usd">Dólares (USD)</label>
+        <div class="input-wrapper">
+          <span class="input-addon">$</span>
+          <input type="number" id="input-usd" placeholder="0.00" step="any" inputmode="decimal">
+        </div>
+      </div>
+
+      <div class="conversion-arrow">⇅</div>
+
+      <div class="input-group">
+        <label for="input-bs">Bolívares (Bs.)</label>
+        <div class="input-wrapper">
+          <span class="input-addon">Bs</span>
+          <input type="number" id="input-bs" placeholder="0.00" step="any" inputmode="decimal">
+        </div>
+      </div>
+    </section>
 
     <button id="refresh-btn" class="refresh-btn">
       Actualizar Precio
