@@ -11,8 +11,7 @@ const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(BCV_URL);
 // 1. Registro del Service Worker para soporte PWA (Modo Offline)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Forzamos la ruta absoluta y definimos el scope exacto del proyecto
-    navigator.serviceWorker.register('/preciodolar/sw.js', { scope: '/preciodolar/' })
+    navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('¡Service Worker registrado con éxito!', reg.scope))
       .catch(err => console.error('Error al registrar el Service Worker:', err));
   });
