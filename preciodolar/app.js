@@ -4,8 +4,9 @@ const loadingEl = document.getElementById('loading');
 const refreshBtn = document.getElementById('refresh-btn');
 const offlineMsg = document.getElementById('offline-message');
 
-// API libre y estable para consultar tasas de Venezuela
-const API_URL = 'https://pydolarve.org/api/v1/dollar?page=bcv';
+// URL del BCV y el Proxy CORS gratuito para poder leerla desde el navegador
+const BCV_URL = 'https://www.bcv.org.ve/';
+const PROXY_URL = 'https://api.allorigins.win/get?url=' + encodeURIComponent(BCV_URL);
 
 // 1. Registro del Service Worker para soporte PWA
 if ('serviceWorker' in navigator) {
@@ -16,33 +17,47 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// 2. Función para obtener los datos
-async function fetchTasaBCV() {
+// 2. Función de Scraping directo en el Frontend
+async function scrapingBCV() {
   // Mostrar estado de carga
   priceEl.classList.add('hidden');
   loadingEl.style.display = 'block';
   
   try {
-    const response = await fetch(API_URL);
-    if (!response.ok) throw new Error('Error en la respuesta de la red');
+    // Consultamos al proxy para evadir el bloqueo de CORS del navegador
+    const response = await fetch(PROXY_URL);
+    if (!response.ok) throw new Error('Error al conectar con el servidor proxy');
     
-    const data = await response.json();
-    
-    // Extraemos el valor del dólar oficial
-    const dolarData = data.monitors.usd;
-    const precio = dolarData.price;
-    const fecha = data.datetime.date;
+    const wrapper = await response.json();
+    const htmlContenido = wrapper.contents; // Aquí está el HTML completo del BCV
 
-    // Actualizar interfaz
-    updateUI(precio, fecha);
+    // Creamos un clon virtual del HTML para poder leerlo con selectores de JavaScript
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContenido, 'text/html');
+
+    // --- AQUÍ OCURRE EL SCRAPING ---
+    // Buscamos el contenedor específico del dólar en el diseño del BCV
+    const dolarContainer = doc.querySelector('#dolar');
     
-    // Guardar en LocalStorage para soporte Offline instantáneo
-    localStorage.setItem('last_price', precio);
+    if (!dolarContainer) throw new Error('No se encontró la estructura del dólar en el HTML');
+
+    // Extraemos el precio (normalmente dentro de una etiqueta 'strong')
+    const precioRaw = dolarContainer.querySelector('strong').textContent.trim();
+    
+    // Extraemos la fecha valor que publica el BCV
+    const fechaContainer = doc.querySelector('.date-display-single');
+    const fecha = fechaContainer ? fechaContainer.textContent.trim() : new Date().toLocaleDateString();
+
+    // Guardamos los datos limpios en la interfaz y en almacenamiento local (Offline)
+    updateUI(precioRaw, fecha);
+    localStorage.setItem('last_price', precioRaw);
     localStorage.setItem('last_date', fecha);
     
     offlineMsg.classList.add('hidden');
+
   } catch (error) {
-    console.log('No se pudo refrescar en vivo, usando respaldo local:', error);
+    console.error('Error haciendo scraping al BCV:', error);
+    // Si falla el scraping o la red, cargamos el último dato guardado
     loadLocalData();
   } finally {
     loadingEl.style.display = 'none';
@@ -51,8 +66,7 @@ async function fetchTasaBCV() {
 }
 
 function updateUI(price, date) {
-  // Formateamos para asegurar que muestre decimales con coma si se prefiere, o directo del string
-  priceEl.textContent = typeof price === 'number' ? price.toFixed(2).replace('.', ',') : price;
+  priceEl.textContent = price;
   dateEl.textContent = date;
 }
 
@@ -66,21 +80,17 @@ function loadLocalData() {
       offlineMsg.classList.remove('hidden');
     }
   } else {
-    priceEl.textContent = "0.00";
+    priceEl.textContent = "--,--";
     dateEl.textContent = "No disponible";
   }
 }
 
 // 3. Eventos
-refreshBtn.addEventListener('click', fetchTasaBCV);
-
-// Escuchar cambios de conexión
-window.addEventListener('online', () => offlineMsg.add('hidden'));
-window.addEventListener('offline', () => offlineMsg.remove('hidden'));
+refreshBtn.addEventListener('click', scrapingBCV);
 
 // Carga inicial al abrir la app
 if (navigator.onLine) {
-  fetchTasaBCV();
+  scrapingBCV();
 } else {
   loadLocalData();
 }
