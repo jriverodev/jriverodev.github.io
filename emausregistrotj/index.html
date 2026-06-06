@@ -72,10 +72,10 @@
                 <div class="space-y-6">
                     <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
                         <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">1. Datos Personales</h3>
-                        <input v-model="form.nombre" type="text" placeholder="Nombres y Apellidos" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                        <input v-model="form.nombre" type="text" placeholder="Nombres y Apellidos *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         
                         <div class="grid grid-cols-3 gap-2">
-                            <input v-model="form.edad" type="number" placeholder="Edad" class="col-span-1 p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.edad" type="number" placeholder="Edad *" class="col-span-1 p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                             <div class="col-span-2 relative">
                                 <label class="text-[8px] font-bold text-slate-400 absolute top-1 left-3 uppercase">F. Nacimiento</label>
                                 <input v-model="form.fechaNacimiento" type="date" class="w-full pt-4 pb-2 px-3 bg-white rounded-xl text-sm border-none shadow-sm text-slate-700">
@@ -95,20 +95,20 @@
                         </select>
 
                         <div v-if="form.estadoCivil === 'Casado(a)' || form.estadoCivil === 'Concubino(a)'" class="grid grid-cols-2 gap-2 animate-in fade-in duration-150">
-                            <input v-model="form.esposoNombre" type="text" placeholder="Nombre Esposo(a)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                            <input v-model="form.esposoTelefono" type="text" placeholder="Teléf. Esposo(a)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.esposoNombre" type="text" placeholder="Nombre Esposo(a) *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.esposoTelefono" type="text" placeholder="Teléf. Esposo(a) *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         </div>
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
                         <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">2. Ubicación y Contacto</h3>
-                        <input v-model="form.direccion" type="text" placeholder="Dirección de Habitación" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                        <input v-model="form.direccion" type="text" placeholder="Dirección de Habitación *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         <input v-model="form.ciudadEstado" type="text" placeholder="Estado y Ciudad (Ej: Zulia, Tía Juana)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         <div class="grid grid-cols-2 gap-2">
                             <input v-model="form.telCasa" type="text" placeholder="Teléfono Casa" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                            <input v-model="form.telCelular" type="text" placeholder="Celular" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.telCelular" type="text" placeholder="Celular *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         </div>
-                        <input v-model="form.correo" type="email" placeholder="Correo Electrónico" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                        <input v-model="form.correo" type="email" placeholder="Correo Electrónico (Opcional)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
@@ -148,14 +148,14 @@
                         <textarea v-model="form.salud" placeholder="Necesidades especiales de salud / Medicación" rows="2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm"></textarea>
                         <textarea v-model="form.alimentos" placeholder="Necesidades alimenticias (Alergias)" rows="2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm"></textarea>
                         
-                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-2 ml-1">Contactos Familiares de Emergencia</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-2 ml-1">Contactos Familiares de Emergencia *</p>
                         <div class="grid grid-cols-2 gap-2">
-                            <input v-model="form.emergencia1Nombre" type="text" placeholder="Contacto 1" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                            <input v-model="form.emergencia1Tel" type="text" placeholder="Teléfono 1" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.emergencia1Nombre" type="text" placeholder="Contacto 1 *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.emergencia1Tel" type="text" placeholder="Teléfono 1 *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <input v-model="form.emergencia2Nombre" type="text" placeholder="Contacto 2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                            <input v-model="form.emergencia2Tel" type="text" placeholder="Teléfono 2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.emergencia2Nombre" type="text" placeholder="Contacto 2 (Opcional)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <input v-model="form.emergencia2Tel" type="text" placeholder="Teléfono 2 (Opcional)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         </div>
                     </div>
 
@@ -168,19 +168,17 @@
                         * Este retiro está diseñado para hombres/mujeres mayores de 21 años. Comienza el día pautado a las 4:00 PM y concluirá el domingo en la Parroquia Nuestra Señora de Lourdes.
                     </p>
 
-                    <button @click="procesarInscripcion" :disabled="isSyncing || !form.nombre" 
+                    <button @click="procesarInscripcion" :disabled="isSyncing" 
                             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[1.8rem] font-black shadow-lg active:scale-95 transition-all disabled:bg-slate-200">
-                        COMPLETAR REGISTRO
+                        {{ isSyncing ? 'PROCESANDO...' : 'COMPLETAR REGISTRO' }}
                     </button>
                 </div>
             </section>
         </main>
 
         <nav v-if="!mostrarFormulario" class="fixed bottom-6 left-6 right-6 flex gap-2">
-            <button @click="menuConfig = true" class="bg-white text-slate-400 p-5 rounded-3xl shadow-xl flex-1 text-xl active:scale-95 transition-all">⚙️</button>
-            
             <button @click="exportarExcel" :disabled="caminantes.length === 0"
-                    class="bg-emerald-600 text-white p-5 rounded-3xl shadow-xl flex-[4] font-bold text-xs uppercase tracking-wider text-center active:scale-95 transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:scale-100 flex items-center justify-center gap-2">
+                    class="w-full bg-emerald-600 text-white p-5 rounded-3xl shadow-xl font-bold text-xs uppercase tracking-wider text-center active:scale-95 transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:scale-100 flex items-center justify-center gap-2">
                 📥 Exportar Excel ({{ caminantes.length }})
             </button>
         </nav>
@@ -202,7 +200,6 @@
             data() {
                 return {
                     caminantes: JSON.parse(localStorage.getItem('emaus_caminantes') || '[]'),
-                    // URL de producción ya incrustada por defecto
                     config: JSON.parse(localStorage.getItem('emaus_cfg') || '{ "googleSheetUrl": "https://script.google.com/macros/s/AKfycbxxF6-q4OtZZRaHqiLWwWBbQfJTFrPNCLcd-skvHlhkFJmfUC4SFs5NkXACZK9-1Vh7kA/exec" }'),
                     searchQuery: '',
                     mostrarFormulario: false,
@@ -234,7 +231,6 @@
                     this.mostrarFormulario = true;
                 },
                 confirmarSalir() {
-                    // SweetAlert2 de confirmación para evitar cierres accidentales
                     Swal.fire({
                         title: '¿Cerrar planilla?',
                         text: 'Si sales ahora, perderás todos los cambios que hayas ingresado en este formulario.',
@@ -251,18 +247,99 @@
                     });
                 },
                 async procesarInscripcion() {
-                    if(!this.form.nombre) {
+                    // 1. VALIDACIÓN: Nombres y Apellidos completos
+                    if (!this.form.nombre || this.form.nombre.trim().length < 4) {
                         return Swal.fire({
-                            title: 'Campo Obligatorio',
-                            text: 'El nombre y apellido del caminante es requerido para el registro.',
+                            title: 'Nombre Obligatorio',
+                            text: 'Por favor, introduce el nombre y apellido completo del caminante.',
                             icon: 'error',
                             confirmButtonColor: '#ef4444'
                         });
                     }
 
+                    // 2. VALIDACIÓN: Edad coherente y restricción litúrgica de la Parroquia (> 21 años)
+                    if (!this.form.edad || this.form.edad <= 0) {
+                        return Swal.fire({
+                            title: 'Edad Inválida',
+                            text: 'Por favor, ingresa un número de edad válido.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } else if (this.form.edad < 21) {
+                        return Swal.fire({
+                            title: 'Restricción de Edad',
+                            text: 'Recuerda que este retiro está diseñado exclusivamente por la parroquia para personas mayores de 21 años.',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b'
+                        });
+                    }
+
+                    // 3. VALIDACIÓN CONDICIONAL: Cónyuge según su Estado Civil
+                    if (this.form.estadoCivil === 'Casado(a)' || this.form.estadoCivil === 'Concubino(a)') {
+                        if (!this.form.esposoNombre || this.form.esposoNombre.trim().length < 4) {
+                            return Swal.fire({
+                                title: 'Datos de Cónyuge',
+                                text: 'Al seleccionar Casado(a) o Concubino(a), debes detallar el nombre de tu esposo(a).',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                        if (!this.form.esposoTelefono || this.form.esposoTelefono.trim().length < 7) {
+                            return Swal.fire({
+                                title: 'Teléfono de Cónyuge',
+                                text: 'Por favor, añade un número de contacto válido de tu esposo(a).',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    }
+
+                    // 4. VALIDACIÓN: Dirección detallada
+                    if (!this.form.direccion || this.form.direccion.trim().length < 6) {
+                        return Swal.fire({
+                            title: 'Dirección Incompleta',
+                            text: 'Por favor, detalla con más precisión la dirección de habitación.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // 5. VALIDACIÓN: Teléfono Celular del Caminante
+                    if (!this.form.telCelular || this.form.telCelular.trim().length < 7) {
+                        return Swal.fire({
+                            title: 'Celular Obligatorio',
+                            text: 'Necesitamos un número celular de contacto para la coordinación del retiro.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // 6. VALIDACIÓN: Formato de Correo Electrónico (Solo si deciden rellenarlo)
+                    if (this.form.correo && this.form.correo.trim() !== '') {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(this.form.correo)) {
+                            return Swal.fire({
+                                title: 'Formato de Correo',
+                                text: 'El correo electrónico ingresado no tiene un formato válido (Ej: nombre@dominio.com).',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    }
+
+                    // 7. VALIDACIÓN: Primer contacto familiar de emergencia obligatorio
+                    if (!this.form.emergencia1Nombre || this.form.emergencia1Nombre.trim().length < 4 || !this.form.emergencia1Tel) {
+                        return Swal.fire({
+                            title: 'Contacto de Emergencia',
+                            text: 'Por motivos de seguridad, es obligatorio registrar al menos el primer contacto familiar de emergencia con su respectivo teléfono.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // --- SI PASA TODAS LAS REGLAS DE CONTROL, SE PROCESA EL ENVÍO ---
                     this.isSyncing = true;
 
-                    // Loader visual interactivo mientras procesa la red
                     Swal.fire({
                         title: 'Sincronizando...',
                         text: 'Guardando de inmediato en el dispositivo y enviando a Google Sheets.',
@@ -272,11 +349,11 @@
                         }
                     });
 
-                    // 1. Enfoque Offline-First: Guardar localmente de inmediato
+                    // 1. Enfoque Offline-First: Respaldar localmente al instante en caché local
                     this.caminantes.unshift({...this.form});
                     localStorage.setItem('emaus_caminantes', JSON.stringify(this.caminantes));
 
-                    // 2. Transmitir a la Web App en la nube si hay URL
+                    // 2. Transmitir a la Web App en la nube
                     if(this.config.googleSheetUrl) {
                         try {
                             const respuesta = await fetch(this.config.googleSheetUrl, {
@@ -299,7 +376,6 @@
                                 throw new Error(resultado.error);
                             }
                         } catch(e) {
-                            // Alerta si hay fallos de red en el lugar del retiro
                             Swal.fire({
                                 title: 'Guardado Localmente',
                                 text: 'No se pudo conectar con la nube por problemas de señal, pero la planilla quedó segura en la memoria de este teléfono.',
@@ -324,7 +400,6 @@
                 exportarExcel() {
                     if(this.caminantes.length === 0) return;
 
-                    // Mapeo dinámico traduciendo variables técnicas a etiquetas limpias
                     const datosMapeados = this.caminantes.map((c, i) => ({
                         'N°': i + 1,
                         'Nombres y Apellidos': c.nombre,
