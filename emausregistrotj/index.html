@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EMAÚS - Registro de Retiros</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#312e81">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
@@ -57,7 +63,7 @@
             </section>
 
             <section v-if="mostrarFormulario" class="bg-white rounded-[2.5rem] p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-                <button @click="mostrarFormulario = false" class="mb-6 text-slate-400 font-bold text-sm flex items-center">
+                <button @click="confirmarSalir" class="mb-6 text-slate-400 font-bold text-sm flex items-center active:scale-95 transition-all">
                     <span class="mr-2">←</span> Cancelar y volver
                 </button>
                 
@@ -67,10 +73,16 @@
                     <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
                         <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">1. Datos Personales</h3>
                         <input v-model="form.nombre" type="text" placeholder="Nombres y Apellidos" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input v-model="form.edad" type="number" placeholder="Edad" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                            <input v-model="form.fechaNacimiento" type="date" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                        
+                        <div class="grid grid-cols-3 gap-2">
+                            <input v-model="form.edad" type="number" placeholder="Edad" class="col-span-1 p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                            <div class="col-span-2 relative">
+                                <label class="text-[8px] font-bold text-slate-400 absolute top-1 left-3 uppercase">F. Nacimiento</label>
+                                <input v-model="form.fechaNacimiento" type="date" class="w-full pt-4 pb-2 px-3 bg-white rounded-xl text-sm border-none shadow-sm text-slate-700">
+                            </div>
                         </div>
+
+                        <input v-model="form.lugarNacimiento" type="text" placeholder="Lugar de Nacimiento" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         <input v-model="form.ocupacion" type="text" placeholder="Ocupación" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         
                         <select v-model="form.estadoCivil" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm text-slate-500">
@@ -91,7 +103,7 @@
                     <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
                         <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">2. Ubicación y Contacto</h3>
                         <input v-model="form.direccion" type="text" placeholder="Dirección de Habitación" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
-                        <input v-model="form.ciudadEstado" type="text" placeholder="Estado y Ciudad (Ej: Zulia, Maracaibo)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
+                        <input v-model="form.ciudadEstado" type="text" placeholder="Estado y Ciudad (Ej: Zulia, Tía Juana)" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                         <div class="grid grid-cols-2 gap-2">
                             <input v-model="form.telCasa" type="text" placeholder="Teléfono Casa" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
                             <input v-model="form.telCelular" type="text" placeholder="Celular" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm">
@@ -152,9 +164,13 @@
                         <textarea v-model="form.observaciones" placeholder="Observaciones adicionales..." rows="3" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm"></textarea>
                     </div>
 
+                    <p class="text-[10px] text-slate-400 text-center italic px-4">
+                        * Este retiro está diseñado para hombres/mujeres mayores de 21 años. Comienza el día pautado a las 4:00 PM y concluirá el domingo en la Parroquia Nuestra Señora de Lourdes.
+                    </p>
+
                     <button @click="procesarInscripcion" :disabled="isSyncing || !form.nombre" 
                             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[1.8rem] font-black shadow-lg active:scale-95 transition-all disabled:bg-slate-200">
-                        {{ isSyncing ? 'ENVIANDO A LA NUBE...' : 'COMPLETAR REGISTRO' }}
+                        COMPLETAR REGISTRO
                     </button>
                 </div>
             </section>
@@ -186,7 +202,8 @@
             data() {
                 return {
                     caminantes: JSON.parse(localStorage.getItem('emaus_caminantes') || '[]'),
-                    config: JSON.parse(localStorage.getItem('emaus_cfg') || '{ "googleSheetUrl": "" }'),
+                    // URL de producción ya incrustada por defecto
+                    config: JSON.parse(localStorage.getItem('emaus_cfg') || '{ "googleSheetUrl": "https://script.google.com/macros/s/AKfycbxxF6-q4OtZZRaHqiLWwWBbQfJTFrPNCLcd-skvHlhkFJmfUC4SFs5NkXACZK9-1Vh7kA/exec" }'),
                     searchQuery: '',
                     mostrarFormulario: false,
                     menuConfig: false,
@@ -203,7 +220,7 @@
             methods: {
                 getBlankForm() {
                     return {
-                        nombre: '', edad: '', fechaNacimiento: '', ocupacion: '', estadoCivil: '',
+                        nombre: '', edad: '', fechaNacimiento: '', lugarNacimiento: '', ocupacion: '', estadoCivil: '',
                         esposoNombre: '', esposoTelefono: '', direccion: '', ciudadEstado: '',
                         telCasa: '', telCelular: '', correo: '', hizoEmaus: 'No', parroquia: '',
                         tallaCamisa: 'M', musico: false, invitadoPor: '', telInvitado: '',
@@ -216,18 +233,50 @@
                     this.form = this.getBlankForm();
                     this.mostrarFormulario = true;
                 },
+                confirmarSalir() {
+                    // SweetAlert2 de confirmación para evitar cierres accidentales
+                    Swal.fire({
+                        title: '¿Cerrar planilla?',
+                        text: 'Si sales ahora, perderás todos los cambios que hayas ingresado en este formulario.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#4f46e5',
+                        cancelButtonColor: '#cbd5e1',
+                        confirmButtonText: 'Sí, salir',
+                        cancelButtonText: 'Permanecer aquí'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.mostrarFormulario = false;
+                        }
+                    });
+                },
                 async procesarInscripcion() {
                     if(!this.form.nombre) {
-                        return Swal.fire('Error', 'El nombre del caminante es obligatorio', 'error');
+                        return Swal.fire({
+                            title: 'Campo Obligatorio',
+                            text: 'El nombre y apellido del caminante es requerido para el registro.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
                     }
 
                     this.isSyncing = true;
 
-                    // 1. Guardar localmente de inmediato (Offline first)
+                    // Loader visual interactivo mientras procesa la red
+                    Swal.fire({
+                        title: 'Sincronizando...',
+                        text: 'Guardando de inmediato en el dispositivo y enviando a Google Sheets.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // 1. Enfoque Offline-First: Guardar localmente de inmediato
                     this.caminantes.unshift({...this.form});
                     localStorage.setItem('emaus_caminantes', JSON.stringify(this.caminantes));
 
-                    // 2. Enviar a Google Sheets
+                    // 2. Transmitir a la Web App en la nube si hay URL
                     if(this.config.googleSheetUrl) {
                         try {
                             const respuesta = await fetch(this.config.googleSheetUrl, {
@@ -250,31 +299,38 @@
                                 throw new Error(resultado.error);
                             }
                         } catch(e) {
+                            // Alerta si hay fallos de red en el lugar del retiro
                             Swal.fire({
                                 title: 'Guardado Localmente',
-                                text: 'No se pudo conectar con la nube, pero quedó respaldado en el dispositivo.',
+                                text: 'No se pudo conectar con la nube por problemas de señal, pero la planilla quedó segura en la memoria de este teléfono.',
                                 icon: 'warning',
                                 confirmButtonColor: '#f59e0b'
-                              });
-                              this.mostrarFormulario = false;
+                            });
+                            this.mostrarFormulario = false;
                         } finally {
                             this.isSyncing = false;
                         }
                     } else {
                         this.isSyncing = false;
                         this.mostrarFormulario = false;
-                        Swal.fire('Guardado', 'Planilla guardada localmente.', 'info');
+                        Swal.fire({
+                            title: 'Guardado en el Dispositivo',
+                            text: 'Planilla almacenada localmente de manera correcta.',
+                            icon: 'info',
+                            confirmButtonColor: '#3b82f6'
+                        });
                     }
                 },
                 exportarExcel() {
                     if(this.caminantes.length === 0) return;
 
-                    // Mapeamos los datos locales a un formato de columnas limpio para el usuario final
+                    // Mapeo dinámico traduciendo variables técnicas a etiquetas limpias
                     const datosMapeados = this.caminantes.map((c, i) => ({
                         'N°': i + 1,
                         'Nombres y Apellidos': c.nombre,
                         'Edad': c.edad,
                         'Fecha Nacimiento': c.fechaNacimiento,
+                        'Lugar de Nacimiento': c.lugarNacimiento,
                         'Ocupación': c.ocupacion,
                         'Estado Civil': c.estadoCivil,
                         'Cónyuge': c.esposoNombre || 'N/A',
@@ -300,23 +356,41 @@
                         'Observaciones': c.observaciones
                     }));
 
-                    // Crear el libro de trabajo de SheetJS
                     const hoja = XLSX.utils.json_to_sheet(datosMapeados);
                     const libro = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(libro, hoja, "Caminantes Inscritos");
 
-                    // Generar la descarga del archivo binario
                     XLSX.writeFile(libro, `Emaus_Lourdes_Inscritos_${new Date().toISOString().split('T')[0]}.xlsx`);
                     
-                    Swal.fire('¡Exportado!', 'El archivo Excel se ha descargado correctamente.', 'success');
+                    Swal.fire({
+                        title: '¡Exportación Exitosa!',
+                        text: 'El archivo Excel con todos los registros se ha descargado de forma correcta.',
+                        icon: 'success',
+                        confirmButtonColor: '#10b981'
+                    });
                 },
                 guardarConfig() {
                     localStorage.setItem('emaus_cfg', JSON.stringify(this.config));
                     this.menuConfig = false;
-                    Swal.fire('Guardado', 'Enlace con Google Sheets actualizado.', 'success');
+                    Swal.fire({
+                        title: 'Configuración Guardada',
+                        text: 'El enlace con la Web App de Google Apps Script ha sido actualizado correctamente.',
+                        icon: 'success',
+                        confirmButtonColor: '#4f46e5'
+                    });
                 }
             }
         }).mount('#app')
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+                    .catch(err => console.error('Error al registrar el Service Worker:', err));
+            });
+        }
     </script>
 </body>
 </html>
