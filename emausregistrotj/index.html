@@ -172,15 +172,23 @@
                             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[1.8rem] font-black shadow-lg active:scale-95 transition-all disabled:bg-slate-200">
                         {{ isSyncing ? 'PROCESANDO...' : 'COMPLETAR REGISTRO' }}
                     </button>
+                    
+                    <div class="text-center pt-2 text-[10px] font-semibold text-slate-400 tracking-tight">
+                        Desarrollado por jesus.rivero86@gmail.com
+                    </div>
                 </div>
             </section>
         </main>
 
-        <nav v-if="!mostrarFormulario" class="fixed bottom-6 left-6 right-6 flex gap-2">
+        <nav v-if="!mostrarFormulario" class="fixed bottom-6 left-6 right-6 flex flex-col gap-3">
             <button @click="exportarExcel" :disabled="caminantes.length === 0"
                     class="w-full bg-emerald-600 text-white p-5 rounded-3xl shadow-xl font-bold text-xs uppercase tracking-wider text-center active:scale-95 transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:scale-100 flex items-center justify-center gap-2">
                 📥 Exportar Excel ({{ caminantes.length }})
             </button>
+            
+            <div class="text-center text-[10px] font-semibold text-slate-400 tracking-tight">
+                Desarrollado por jesus.rivero86@gmail.com
+            </div>
         </nav>
 
         <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
