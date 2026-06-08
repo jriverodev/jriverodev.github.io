@@ -15,7 +15,17 @@ self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Cacheando recursos principales');
-      return cache.addAll(ASSETS_TO_CACHE);
+      
+      // Convertimos los strings a objetos Request configurando CORS para los externos
+      const requests = ASSETS_TO_CACHE.map(url => {
+        if (url.startsWith('http')) {
+          // Las CDNs y Google Fonts requieren modo no-cors para ser cacheadas así
+          return new Request(url, { mode: 'no-cors' });
+        }
+        return new Request(url);
+      });
+
+      return cache.addAll(requests);
     }).then(() => self.skipWaiting())
   );
 });
@@ -44,15 +54,18 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Si el recurso proviene de las CDNs de Vue/Tailwind/SweetAlert, se sirve de inmediato desde la caché
+        // Si el recurso proviene de las CDNs, se sirve de inmediato desde la caché
         if (e.request.url.includes('cdn') || e.request.url.includes('unpkg') || e.request.url.includes('fonts')) {
           return cachedResponse;
         }
       }
 
-      // Para los archivos locales que pueden variar (como el index.html), intentamos red primero, si falla va a caché
+      // Para los archivos locales que pueden variar, intentamos red primero, si falla va a caché
       return fetch(e.request).then((networkResponse) => {
-        if (networkResponse.status === 200) {
+        // NOTA: Las peticiones 'no-cors' devuelven un status 0 (respuestas opacas).
+        // Para evitar que rompa al intentar actualizar la caché de las CDNs en el fetch,
+        // validamos si es un estado exitoso (200) o una respuesta opaca válida (0).
+        if (networkResponse.status === 200 || networkResponse.status === 0) {
           return caches.open(CACHE_NAME).then((cache) => {
             cache.put(e.request, networkResponse.clone());
             return networkResponse;
@@ -65,4 +78,3 @@ self.addEventListener('fetch', (e) => {
     })
   );
 });
-
