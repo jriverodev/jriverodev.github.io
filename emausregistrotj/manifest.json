@@ -2,7 +2,7 @@
   "name": "Emaús Lourdes - Registro de Retiros",
   "short_name": "Emaús Lourdes",
   "description": "Aplicación para el registro offline y online de planillas de inscripción para los Retiros de Emaús.",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#312e81",
