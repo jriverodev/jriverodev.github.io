@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EMAÚS - Registro de Retiros</title>
+    <title>EMAÚS - Registro de Retiros TJ</title>
     
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#312e81">
@@ -174,7 +174,7 @@
                     </button>
                     
                     <div class="text-center pt-2 text-[10px] font-semibold text-slate-400 tracking-tight">
-                        Desarrollado por jesus.rivero86@gmail.com
+                        By jesus.rivero86@gmail.com
                     </div>
                 </div>
             </section>
@@ -187,7 +187,7 @@
             </button>
             
             <div class="text-center text-[10px] font-semibold text-slate-400 tracking-tight">
-                Desarrollado por jesus.rivero86@gmail.com
+                By jesus.rivero86@gmail.com
             </div>
         </nav>
 
@@ -350,7 +350,7 @@
 
                     Swal.fire({
                         title: 'Sincronizando...',
-                        text: 'Guardando de inmediato en el dispositivo y enviando a Google Sheets.',
+                        text: 'Guardando de inmediato en el dispositivo y enviando a GS.',
                         allowOutsideClick: false,
                         didOpen: () => {
                             Swal.showLoading();
@@ -375,7 +375,7 @@
                             if (resultado.result === 'success') {
                                 Swal.fire({
                                     title: '¡Guardado en la Nube!',
-                                    text: 'La planilla se registró correctamente en Google Sheets.',
+                                    text: 'La planilla se registró correctamente.',
                                     icon: 'success',
                                     confirmButtonColor: '#4f46e5'
                                 });
