@@ -5,7 +5,7 @@ import shutil
 import telebot
 
 # Configura aquí el Token que te dio el BotFather de Telegram
-TOKEN = 'TU_TELEGRAM_BOT_TOKEN_AQUI'
+TOKEN = '8679558881:AAHkM3p2L9WrOAQb8f56BOU8lksw4E-k024'
 bot = telebot.TeleBot(TOKEN)
 
 # Directorio temporal de trabajo
