@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-sync').addEventListener('click', async () => {
     Swal.fire({
       title: 'Sincronizando...',
-      text: 'Descargando datos del taller desde la nube.',
+      text: 'Descargando datos del censo desde la nube.',
       allowOutsideClick: false,
       didOpen: () => { Swal.showLoading(); }
     });
@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         text: `Se han almacenado ${resultado.conteo} caminantes en tu dispositivo para uso offline.`,
         confirmButtonColor: '#4f46e5'
       });
-      // Refrescar las vistas por si hay datos nuevos
       if (!document.getElementById('view-cocina').classList.contains('hidden')) renderCocina();
       if (!document.getElementById('view-salud').classList.contains('hidden')) renderSalud();
     } else {
@@ -62,7 +61,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // Validación estricta de la contraseña
         if (result.value === CLAVE_ACCESO_ADMIN) {
           
           Swal.fire({
@@ -72,7 +70,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             didOpen: () => { Swal.showLoading(); }
           });
 
-          // Forzamos la actualización de la base de datos local
           const resultado = await sincronizarDatos();
 
           if (resultado.exito) {
@@ -95,7 +92,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
 
         } else {
-          // Contraseña errónea
           Swal.fire({
             icon: 'error',
             title: 'Acceso Denegado',
@@ -133,10 +129,8 @@ export async function renderCocina() {
   const soloAlertas = document.getElementById('chk-solo-alertas').checked;
   lista.innerHTML = '<p class="text-gray-400 text-center text-sm py-4">Cargando menú...</p>';
 
-  // 1. Obtener todos los registros desde IndexedDB
   const caminantes = await db.caminantes.toArray();
 
-  // 2. Calcular estadísticas en tiempo real para el Jefe de Cocina
   let estandar = 0;
   let hiposodica = 0;
   caminantes.forEach(c => {
@@ -149,7 +143,6 @@ export async function renderCocina() {
   document.getElementById('stat-estandar').innerText = estandar;
   document.getElementById('stat-hiposodica').innerText = hiposodica;
 
-  // 3. Limpiar contenedor y aplicar filtros
   lista.innerHTML = '';
   const filtrados = soloAlertas ? caminantes.filter(c => c.cocina && c.cocina.requiere_atencion) : caminantes;
 
@@ -158,14 +151,11 @@ export async function renderCocina() {
     return;
   }
 
-  // 4. Renderizar las tarjetas de cocina
   filtrados.forEach(c => {
     const card = document.createElement('div');
-    // Si requiere atención médica en la comida, se pinta con un borde naranja de advertencia
     const requiereAtencion = c.cocina && c.cocina.requiere_atencion;
     card.className = `p-4 rounded-xl shadow-sm border bg-white ${requiereAtencion ? 'border-l-4 border-l-orange-500 border-gray-200' : 'border-gray-200'}`;
     
-    // Armar el bloque visual de alertas críticas si existen (Hipertensión, Canela, Diabetes, etc.)
     let alertasHtml = '';
     if (requiereAtencion && c.cocina.alertas && c.cocina.alertas.length > 0) {
       alertasHtml = `<div class="mt-2 bg-red-50 p-2 rounded-lg border border-red-200 space-y-1">`;
@@ -177,7 +167,6 @@ export async function renderCocina() {
       alertasHtml += `</div>`;
     }
 
-    // Nota original copiada desde la planilla física
     const observaciones = c.cocina && c.cocina.observaciones_origen ? c.cocina.observaciones_origen : '';
     const tipoDieta = c.cocina && c.cocina.tipo_dieta ? c.cocina.tipo_dieta : 'Estándar';
 
@@ -209,7 +198,6 @@ export async function renderSalud() {
 
   let caminantes = await db.caminantes.toArray();
 
-  // Filtrar en tiempo real si el usuario escribe en el buscador (Nombre o Número de Planilla)
   if (query !== '') {
     caminantes = caminantes.filter(c => 
       c.nombre_completo.toLowerCase().includes(query) || 
@@ -222,12 +210,10 @@ export async function renderSalud() {
     return;
   }
 
-  // Renderizar las tarjetas del personal médico
   caminantes.forEach(c => {
     const card = document.createElement('div');
     card.className = "p-4 rounded-xl shadow-sm border border-gray-200 bg-white space-y-3";
 
-    // Validar si el paciente está bajo algún tratamiento médico continuo
     let tratamientosHtml = '';
     const tieneTratamiento = c.salud && c.salud.bajo_tratamiento;
     
@@ -237,7 +223,6 @@ export async function renderSalud() {
           <span class="material-icons text-sm">schedule</span> Horarios de Medicación:
         </p>`;
       
-      // Mapear cada dosis emparejada con su respectiva alarma horaria
       c.salud.tratamientos.forEach(t => {
         tratamientosHtml += `
           <div class="flex justify-between items-center text-xs border-b border-teal-100/50 pb-1 last:border-0 last:pb-0">
@@ -247,14 +232,12 @@ export async function renderSalud() {
       });
       tratamientosHtml += `</div>`;
     } else {
-      // Mensaje pasivo si está sano o sin tratamientos declarados
       tratamientosHtml = `
         <p class="text-xs text-gray-400 flex items-center gap-1">
           <span class="material-icons text-sm text-gray-300">check_circle</span> No declara tratamientos asignados.
         </p>`;
     }
 
-    // Alergias farmacéuticas (Alerta máxima para el médico en el retiro)
     let alergiaMedHtml = '';
     if (c.salud && c.salud.alergico_medicina) {
       alergiaMedHtml = `
@@ -263,7 +246,6 @@ export async function renderSalud() {
         </div>`;
     }
 
-    // Botonera de llamadas de emergencia telefónica directa
     let contactosHtml = '<div class="grid grid-cols-2 gap-2 mt-2">';
     if (c.salud && c.salud.contactos_emergencia) {
       c.salud.contactos_emergencia.forEach(con => {
@@ -305,6 +287,65 @@ export async function renderSalud() {
   });
 }
 
-// Hacer globales las funciones de renderizado para acoplarlas a las pestañas dinámicas del HTML
+
+// =======================================================
+// 📄 GENERADOR AUTOMÁTICO DE PLANTILLA DE EJEMPLO (CSV)
+// =======================================================
+export function descargarPlantillaEjemplo() {
+  const encabezados = [
+    "Planilla N°", "Nombres y Apellidos", "C.I.", "Celular", "Talla Camisa", 
+    "Condición Especial / Salud", "Alergico a Medicina (SI/NO)", "Detalle Alergia Medicina", 
+    "Alergico a Comida (SI/NO)", "Detalle Alergia Comida", "Tiene Tratamiento Actual (SI/NO)", 
+    "Medicamento 1", "Horario 1", "Medicamento 2", "Horario 2", 
+    "Contacto Emergencia 1 Nombre", "Parentesco 1", "Telefono 1", 
+    "Contacto Emergencia 2 Nombre", "Parentesco 2", "Telefono 2", "Observaciones Generales"
+  ];
+
+  const registroEjemplo1 = [
+    "01", "Carlos José Mendoza Pérez", "V-14.234.567", "0414-1234567", "L", 
+    "Hipertensión arterial", "SI", "Penicilina", "NO", "", "SI", 
+    "Losartán Potassium 50mg", "08:00 AM", "", "", 
+    "María Mendoza", "Esposa", "0424-7654321", "Pedro Mendoza", "Hermano", "0412-9876543", 
+    "Requiere dieta hiposódica estricta (sin sal)."
+  ];
+
+  const registroEjemplo2 = [
+    "02", "Juan Alberto Rodríguez Gómez", "V-18.987.654", "0416-7654321", "XL", 
+    "Ninguna", "NO", "", "SI", "Canela", "NO", 
+    "", "", "", "", 
+    "Ana de Rodríguez", "Madre", "0426-1112233", "", "", "", 
+    "Alerta crítica en cocina con postres que contengan canela."
+  ];
+
+  // Separador ';' para compatibilidad nativa directa con Excel en español
+  const filas = [
+    encabezados.join(";"),
+    registroEjemplo1.join(";"),
+    registroEjemplo2.join(";")
+  ];
+  
+  // Inyección del prefijo BOM UTF-8 (\uFEFF) para forzar a Excel a leer acentos y caracteres especiales correctamente
+  const csvContent = "\uFEFF" + filas.join("\n");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "Plantilla_Censo_Emaus_EJEMPLO.csv");
+  document.body.appendChild(link);
+  
+  link.click();
+  document.body.removeChild(link);
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Plantilla de Ejemplo Descargada',
+    text: 'Se descargó "Plantilla_Censo_Emaus_EJEMPLO.csv". Contiene los dos registros de guía. Rellena las filas siguientes, cópialas y pégalas en tu Google Sheets.',
+    confirmButtonColor: '#4f46e5'
+  });
+}
+
+// Vinculación al objeto global Window para su consumo en la interfaz SPA
 window.renderCocina = renderCocina;
 window.renderSalud = renderSalud;
+window.descargarPlantillaEjemplo = descargarPlantillaEjemplo;
