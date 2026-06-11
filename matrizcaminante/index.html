@@ -47,10 +47,10 @@
         <p class="text-xs text-gray-500 mb-4">Acciones de administración global para el inicio del retiro.</p>
         
         <div class="grid grid-cols-2 gap-2">
-          <a href="https://docs.google.com/spreadsheets/d/1HlmT10B_TFT-VHtygIsmUW59Uxdddi08NO0EuLtgXS0/export?format=xlsx" download="Censo_Emaus_Hombres.xlsx" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-gray-200">
+          <button onclick="descargarPlantillaEjemplo()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-gray-200">
             <span class="material-icons text-gray-600">download</span>
             Descargar Plantilla
-          </a>
+          </button>
           
           <button id="btn-admin-upload" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-amber-200">
             <span class="material-icons text-amber-600">publish</span>
@@ -75,7 +75,7 @@
 
       <div class="grid grid-cols-2 gap-2" id="cocina-stats">
         <div class="bg-white p-3 rounded-xl border-l-4 border-gray-400 shadow-sm">
-          <p class="text-xs text-gray-500 font-medium">Dieta Estándar</p>
+          <p class="text-xs text-gray-500 font-medium">Dieta Estandar</p>
           <p class="text-xl font-bold" id="stat-estandar">0</p>
         </div>
         <div class="bg-white p-3 rounded-xl border-l-4 border-red-500 shadow-sm">
@@ -127,17 +127,13 @@
   </nav>
 
   <script>
-    // Cambiador de pantallas del lado del cliente (SPA)
     function switchView(viewName) {
-      // Ocultar todos los páneles de contenido
       document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
       
-      // Restablecer estilos visuales pasivos en la barra de navegación
       document.getElementById('nav-sync').className = "w-full py-3 text-gray-400 flex flex-col items-center justify-center gap-1";
       document.getElementById('nav-cocina').className = "w-full py-3 text-gray-400 flex flex-col items-center justify-center gap-1";
       document.getElementById('nav-salud').className = "w-full py-3 text-gray-400 flex flex-col items-center justify-center gap-1";
 
-      // Encender el panel seleccionado y activar su respectivo botón con su color del servicio
       if(viewName === 'sync') {
         document.getElementById('view-sync').classList.remove('hidden');
         document.getElementById('nav-sync').classList.add('text-indigo-600', 'font-semibold');
@@ -152,7 +148,6 @@
       }
     }
 
-    // Monitoreo nativo de las antenas del dispositivo móvil (Online / Offline)
     window.addEventListener('online', actualizarEstadoRed);
     window.addEventListener('offline', actualizarEstadoRed);
 
@@ -166,7 +161,7 @@
         badge.innerHTML = `<span class="material-icons text-sm">wifi_off</span> Modo Offline`;
       }
     }
-    actualizarEstadoRed(); // Inicialización de red
+    actualizarEstadoRed();
   </script>
 
   <script type="module" src="./app.js"></script>
