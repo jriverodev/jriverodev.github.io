@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Emaús - Control de Cocina y Salud</title>
   <link rel="manifest" href="./manifest.json">
+  
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen pb-20">
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen pb-24">
 
   <header class="bg-indigo-700 text-white shadow-md p-4 sticky top-0 z-50 flex justify-between items-center">
     <div>
@@ -28,18 +32,37 @@
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center">
         <span class="material-icons text-6xl text-indigo-600 animate-pulse">cloud_sync</span>
         <h2 class="text-lg font-bold mt-2">Sincronización del Taller</h2>
-        <p class="text-sm text-gray-500 my-2">Descarga los datos de los caminantes antes de entrar a zonas sin señal.</p>
+        <p class="text-sm text-gray-500 my-2">Descarga los datos de los caminantes en tu dispositivo para trabajar sin internet.</p>
         
         <button id="btn-sync" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2">
           <span class="material-icons">sync</span> Descargar Datos del Sheets
         </button>
-        <p id="sync-status" class="text-xs text-gray-400 mt-2">Última sincronización: No registrada</p>
+        <p id="sync-status" class="text-xs text-gray-400 mt-2">Última sincronización local guardada.</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+        <h3 class="font-bold text-sm text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+          <span class="material-icons text-base text-amber-500">lock</span> Panel de Coordinación
+        </h3>
+        <p class="text-xs text-gray-500 mb-4">Acciones de administración global para el inicio del retiro.</p>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <a href="https://docs.google.com/spreadsheets/d/TU_ID_DE_SPREADSHEET/export?format=xlsx" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-gray-200">
+            <span class="material-icons text-gray-600">download</span>
+            Descargar Plantilla
+          </a>
+          
+          <button id="btn-admin-upload" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-amber-200">
+            <span class="material-icons text-amber-600">publish</span>
+            Procesar Matriz
+          </button>
+        </div>
       </div>
 
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
         <h3 class="font-bold text-sm text-gray-600 uppercase tracking-wider mb-2">Base de Datos Local</h3>
         <div class="flex justify-between items-center">
-          <span class="text-gray-700">Caminantes cargados:</span>
+          <span class="text-gray-700">Caminantes cargados en el tlf:</span>
           <span id="local-count" class="font-bold text-lg text-indigo-700">0</span>
         </div>
       </div>
@@ -47,7 +70,7 @@
 
     <section id="view-cocina" class="view-panel space-y-4 hidden">
       <h2 class="text-xl font-bold flex items-center gap-2 text-orange-700">
-        <span class="material-icons">restaurant_menu</span> Menú y Alertas Diéticas
+        <span class="material-icons">restaurant_menu</span> Menú y Alertas Dietéticas
       </h2>
 
       <div class="grid grid-cols-2 gap-2" id="cocina-stats">
@@ -63,7 +86,7 @@
 
       <div class="flex items-center justify-between bg-orange-50 p-3 rounded-xl border border-orange-200">
         <span class="text-sm font-medium text-orange-800">Mostrar solo casos de atención especial</span>
-        <input type="checkbox" id="chk-solo-alertas" class="w-5 h-5 accent-orange-600">
+        <input type="checkbox" id="chk-solo-alertas" class="w-5 h-5 accent-orange-600 rounded">
       </div>
 
       <div id="lista-cocina" class="space-y-3">
@@ -79,7 +102,7 @@
         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
           <span class="material-icons">search</span>
         </span>
-        <input type="text" id="search-salud" placeholder="Buscar caminante por nombre..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        <input type="text" id="search-salud" placeholder="Buscar caminante por nombre o planilla..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
       </div>
 
       <div id="lista-salud" class="space-y-3">
@@ -89,31 +112,32 @@
   </main>
 
   <nav class="bg-white border-t border-gray-200 fixed bottom-0 inset-x-0 z-50 shadow-lg flex justify-around">
-    <button onclick="switchView('sync')" id="nav-sync" class="w-full py-3 text-indigo-600 font-medium flex flex-col items-center justify-center gap-1 transition-colors">
+    <button onclick="switchView('sync')" id="nav-sync" class="w-full py-3 text-indigo-600 font-semibold flex flex-col items-center justify-center gap-1 transition-colors">
       <span class="material-icons">cloud_sync</span>
       <span class="text-xs">Sincronizar</span>
     </button>
-    <button onclick="switchView('cocina')" id="nav-cocina" class="w-full py-3 text-gray-400 hover:text-orange-600 font-medium flex flex-col items-center justify-center gap-1 transition-colors">
+    <button onclick="switchView('cocina')" id="nav-cocina" class="w-full py-3 text-gray-400 hover:text-orange-600 flex flex-col items-center justify-center gap-1 transition-colors">
       <span class="material-icons">restaurant</span>
       <span class="text-xs">Cocina</span>
     </button>
-    <button onclick="switchView('salud')" id="nav-salud" class="w-full py-3 text-gray-400 hover:text-teal-600 font-medium flex flex-col items-center justify-center gap-1 transition-colors">
+    <button onclick="switchView('salud')" id="nav-salud" class="w-full py-3 text-gray-400 hover:text-teal-600 flex flex-col items-center justify-center gap-1 transition-colors">
       <span class="material-icons">healing</span>
       <span class="text-xs">Salud</span>
     </button>
   </nav>
 
   <script>
-    // Sistema básico de SPA para intercambiar paneles
+    // Cambiador de pantallas del lado del cliente
     function switchView(viewName) {
-      // Ocultar todos los paneles
+      // Ocultar todos los páneles de contenido
       document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
-      // Desactivar todos los estilos de botones de navegación
+      
+      // Restablecer estilos visuales pasivos en la barra de navegación
       document.getElementById('nav-sync').className = "w-full py-3 text-gray-400 flex flex-col items-center justify-center gap-1";
       document.getElementById('nav-cocina').className = "w-full py-3 text-gray-400 flex flex-col items-center justify-center gap-1";
       document.getElementById('nav-salud').className = "w-full py-3 text-gray-400 flex flex-col items-center justify-center gap-1";
 
-      // Activar el seleccionado
+      // Encender el panel seleccionado y activar su respectivo botón con su color del servicio
       if(viewName === 'sync') {
         document.getElementById('view-sync').classList.remove('hidden');
         document.getElementById('nav-sync').classList.add('text-indigo-600', 'font-semibold');
@@ -128,7 +152,7 @@
       }
     }
 
-    // Monitoreo nativo de conexión para alertar a los servidores del taller
+    // Monitoreo nativo de las antenas del dispositivo móvil (Online / Offline)
     window.addEventListener('online', actualizarEstadoRed);
     window.addEventListener('offline', actualizarEstadoRed);
 
@@ -142,7 +166,7 @@
         badge.innerHTML = `<span class="material-icons text-sm">wifi_off</span> Modo Offline`;
       }
     }
-    actualizarEstadoRed(); // Ejecución inicial
+    actualizarEstadoRed(); // Inicialización de red
   </script>
 
   <script type="module" src="./app.js"></script>
