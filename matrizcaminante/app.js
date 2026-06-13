@@ -181,7 +181,7 @@ export async function renderCocina() {
         </span>
       </div>
       ${alertasHtml}
-      ${observaciones ? `<p class="text-xs italic text-gray-500 mt-2 bg-gray-50 p-1.5 rounded">Nota planilla: ${observaciones}</p>` : ''}
+      ${observations ? `<p class="text-xs italic text-gray-500 mt-2 bg-gray-50 p-1.5 rounded">Nota planilla: ${observaciones}</p>` : ''}
     `;
     lista.appendChild(card);
   });
@@ -317,14 +317,12 @@ export function descargarPlantillaEjemplo() {
     "Alerta crítica en cocina con postres que contengan canela."
   ];
 
-  // Separador ';' para compatibilidad nativa directa con Excel en español
   const filas = [
     encabezados.join(";"),
     registroEjemplo1.join(";"),
     registroEjemplo2.join(";")
   ];
   
-  // Inyección del prefijo BOM UTF-8 (\uFEFF) para forzar a Excel a leer acentos y caracteres especiales correctamente
   const csvContent = "\uFEFF" + filas.join("\n");
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -345,7 +343,7 @@ export function descargarPlantillaEjemplo() {
   });
 }
 
-// Vinculación al objeto global Window para su consumo en la interfaz SPA
+// Vinculación explícita al objeto global Window
 window.renderCocina = renderCocina;
 window.renderSalud = renderSalud;
 window.descargarPlantillaEjemplo = descargarPlantillaEjemplo;
