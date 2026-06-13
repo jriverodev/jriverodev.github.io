@@ -19,7 +19,7 @@
       <h1 class="text-xl font-bold flex items-center gap-2">
         <span class="material-icons">local_activity</span> Emaús Logística
       </h1>
-      <p class="text-xs text-indigo-200">Control Offline de Services</p>
+      <p class="text-xs text-indigo-200">Control Offline de Servicios</p>
     </div>
     <div id="network-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white flex items-center gap-1">
       <span class="material-icons text-sm">wifi</span> Conectado
@@ -29,6 +29,7 @@
   <main class="container mx-auto p-4 max-w-md">
 
     <section id="view-sync" class="view-panel space-y-4">
+      
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center">
         <span class="material-icons text-6xl text-indigo-600 animate-pulse">cloud_sync</span>
         <h2 class="text-lg font-bold mt-2">Sincronización del Taller</h2>
@@ -40,10 +41,21 @@
         <p id="sync-status" class="text-xs text-gray-400 mt-2">Última sincronización local guardada.</p>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-        <h3 class="font-bold text-sm text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
-          <span class="material-icons text-base text-amber-500">lock</span> Panel de Coordinación
-        </h3>
+      <div id="block-auth-admin" class="p-2 text-center">
+        <button id="btn-trigger-auth" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-indigo-600 bg-gray-200/60 hover:bg-indigo-50 px-4 py-2 rounded-xl transition border border-transparent hover:border-indigo-100">
+          <span class="material-icons text-sm">lock</span> Administración Segura
+        </button>
+      </div>
+
+      <div id="panel-coordinacion" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 hidden transition-all duration-300">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-sm text-amber-800 uppercase tracking-wider flex items-center gap-1">
+            <span class="material-icons text-base text-amber-500">lock_open</span> Panel de Coordinación
+          </h3>
+          <button id="btn-lock-admin" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+            <span class="material-icons text-sm">visibility_off</span>
+          </button>
+        </div>
         <p class="text-xs text-gray-500 mb-4">Acciones de administración global para el inicio del retiro.</p>
         
         <div class="grid grid-cols-2 gap-2">
@@ -52,10 +64,11 @@
             Descargar Plantilla
           </button>
           
-          <button id="btn-admin-upload" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-amber-200">
+          <button id="btn-admin-upload-trigger" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 transition border border-amber-200">
             <span class="material-icons text-amber-600">publish</span>
             Procesar Matriz
           </button>
+          <input type="file" id="csv-file-input" accept=".csv" class="hidden">
         </div>
       </div>
 
@@ -75,7 +88,7 @@
 
       <div class="grid grid-cols-2 gap-2" id="cocina-stats">
         <div class="bg-white p-3 rounded-xl border-l-4 border-gray-400 shadow-sm">
-          <p class="text-xs text-gray-500 font-medium">Dieta Estandar</p>
+          <p class="text-xs text-gray-500 font-medium">Dieta Estándar</p>
           <p class="text-xl font-bold" id="stat-estandar">0</p>
         </div>
         <div class="bg-white p-3 rounded-xl border-l-4 border-red-500 shadow-sm">
