@@ -1,15 +1,61 @@
 import { db } from './db.js';
-import { sincronizarDatos } from './sync.js';
+import { sincronizarDatos, subirAlSheetsCentral } from './sync.js';
 
-// Contraseña de seguridad para el Panel de Coordinación
 const CLAVE_ACCESO_ADMIN = "Emaus2026";
 
 // --- INICIALIZACIÓN DE EVENTOS AL CARGAR LA APP ---
 document.addEventListener('DOMContentLoaded', async () => {
-  // Mostrar la cantidad de registros guardados en el almacenamiento del teléfono
   await actualizarConteoLocal();
 
-  // 1. Botón de Sincronización Estándar (Para todos los servidores en las mesas)
+  // --- CONTROL DE ACCESO SEGURO ---
+  const btnTriggerAuth = document.getElementById('btn-trigger-auth');
+  const btnLockAdmin = document.getElementById('btn-lock-admin');
+  const panelCoordinacion = document.getElementById('panel-coordinacion');
+  const blockAuthAdmin = document.getElementById('block-auth-admin');
+
+  btnTriggerAuth.addEventListener('click', () => {
+    Swal.fire({
+      title: 'Acceso Restringido',
+      text: 'Ingrese la clave de coordinación para habilitar las herramientas de administración:',
+      input: 'password',
+      inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+      showCancelButton: true,
+      confirmButtonText: 'Desbloquear',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4f46e5',
+      inputValidator: (value) => {
+        if (!value) return '¡Debes ingresar una contraseña!';
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (result.value === CLAVE_ACCESO_ADMIN) {
+          panelCoordinacion.classList.remove('hidden');
+          blockAuthAdmin.classList.add('hidden');
+          Swal.fire({
+            icon: 'success',
+            title: 'Acceso Concedido',
+            text: 'Panel de Administración habilitado.',
+            timer: 1300,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Acceso Denegado',
+            text: 'Contraseña incorrecta.',
+            confirmButtonColor: '#ef4444'
+          });
+        }
+      }
+    });
+  });
+
+  btnLockAdmin.addEventListener('click', () => {
+    panelCoordinacion.classList.add('hidden');
+    blockAuthAdmin.classList.remove('hidden');
+  });
+
+  // --- SINC DESCARGA CENTRAL ---
   document.getElementById('btn-sync').addEventListener('click', async () => {
     Swal.fire({
       title: 'Sincronizando...',
@@ -34,96 +80,192 @@ document.addEventListener('DOMContentLoaded', async () => {
       Swal.fire({
         icon: 'error',
         title: 'Error de Conexión',
-        text: 'No se pudo descargar la data. La PWA seguirá usando la última base de datos guardada en este teléfono.',
+        text: 'No se pudo descargar la data. Se usará la última base de datos guardada.',
         confirmButtonColor: '#ef4444'
       });
     }
   });
 
-  // 2. Botón de Procesamiento Administrativo (Solicita Clave de Coordinación)
-  document.getElementById('btn-admin-upload').addEventListener('click', () => {
+  // --- CARGA Y PROCESAMIENTO DEL ARCHIVO CSV REAL ---
+  const btnAdminUploadTrigger = document.getElementById('btn-admin-upload-trigger');
+  const csvFileInput = document.getElementById('csv-file-input');
+
+  btnAdminUploadTrigger.addEventListener('click', () => {
+    csvFileInput.click();
+  });
+
+  csvFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     Swal.fire({
-      title: 'Acceso Restringido',
-      text: 'Ingrese la clave de coordinación para procesar y validar la lista matriz:',
-      input: 'password',
-      inputAttributes: {
-        autocapitalize: 'off',
-        autocorrect: 'off'
-      },
+      title: '¿Procesar y subir matriz?',
+      text: `Vas a cargar "${file.name}". Esto actualizará localmente la PWA y sobreescribirá la hoja central en la nube.`,
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Validar',
+      confirmButtonText: 'Sí, subir ahora',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d97706',
-      inputValidator: (value) => {
-        if (!value) {
-          return '¡Debes ingresar una contraseña!';
-        }
-      }
-    }).then(async (result) => {
+      confirmButtonColor: '#d97706'
+    }).then((result) => {
       if (result.isConfirmed) {
-        if (result.value === CLAVE_ACCESO_ADMIN) {
-          
-          Swal.fire({
-            title: 'Procesando Matriz...',
-            text: 'Verificando restricciones dietéticas, alertas de hipertensión y horarios médicos.',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-          });
-
-          const resultado = await sincronizarDatos();
-
-          if (resultado.exito) {
-            await actualizarConteoLocal();
-            Swal.fire({
-              icon: 'success',
-              title: '¡Matriz Validada!',
-              text: `La lista fue cargada con éxito. ${resultado.conteo} caminantes procesados y clasificados.`,
-              confirmButtonColor: '#d97706'
-            });
-            renderCocina();
-            renderSalud();
-          } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error al procesar',
-              text: 'Asegúrate de que la hoja de Google Sheets tenga datos válidos y no esté bloqueada.',
-              confirmButtonColor: '#ef4444'
-            });
-          }
-
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Acceso Denegado',
-            text: 'La contraseña ingresada es incorrecta. Acción cancelada por seguridad.',
-            confirmButtonColor: '#ef4444'
-          });
-        }
+        ejecutarProcesamientoCSV(file);
+      } else {
+        csvFileInput.value = '';
       }
     });
   });
 
-  // 3. Escuchar filtros dinámicos del módulo de Cocina
-  document.getElementById('chk-solo-alertas').addEventListener('change', () => {
-    renderCocina();
-  });
-
-  // 4. Escuchar barra de búsqueda en tiempo real de Salud
-  document.getElementById('search-salud').addEventListener('input', () => {
-    renderSalud();
-  });
+  // Filtros en tiempo real
+  document.getElementById('chk-solo-alertas').addEventListener('change', () => { renderCocina(); });
+  document.getElementById('search-salud').addEventListener('input', () => { renderSalud(); });
 });
 
-// Función auxiliar para refrescar el contador en pantalla
 async function actualizarConteoLocal() {
   const count = await db.caminantes.count();
   document.getElementById('local-count').innerText = count;
 }
 
+// Lógica para procesar la carga de la matriz rellenada
+async function ejecutarProcesamientoCSV(file) {
+  Swal.fire({
+    title: 'Procesando Matriz...',
+    text: 'Parseando registros e indexando restricciones de salud...',
+    allowOutsideClick: false,
+    didOpen: () => { Swal.showLoading(); }
+  });
 
-// =======================================================
-// 🍽️ LÓGICA DE CONTROL: SERVICIO DE COCINA
-// =======================================================
+  const reader = new FileReader();
+  
+  reader.onload = async (event) => {
+    try {
+      const contenido = event.target.result;
+      const lineas = contenido.split(/\r?\n/).filter(linea => linea.trim() !== '');
+      
+      if(lineas.length <= 1) {
+        throw new Error("Estructura vacía.");
+      }
+
+      const caminantesProcesados = [];
+      
+      for(let i = 1; i < lineas.length; i++) {
+        const columnas = lineas[i].split(';');
+        if (!columnas[0] || !columnas[1]) continue;
+
+        const id_planilla = columnas[0].replace(/[\uFEFF]/g, '').trim(); 
+        const nombre_completo = columnas[1].trim();
+        const cedula = columnas[2] ? columnas[2].trim() : '';
+        const celular = columnas[3] ? columnas[3].trim() : '';
+        const talla_camisa = columnas[4] ? columnas[4].trim() : 'M';
+        const condicion_salud = columnas[5] ? columnas[5].trim() : 'Ninguna';
+        const alergico_med = columnas[6] ? columnas[6].trim().toUpperCase() : 'NO';
+        const detalle_alergia_med = columnas[7] ? columnas[7].trim() : '';
+        const alergico_comida = columnas[8] ? columnas[8].trim().toUpperCase() : 'NO';
+        const detalle_alergia_comida = columnas[9] ? columnas[9].trim() : '';
+        const tiene_tratamiento = columnas[10] ? columnas[10].trim().toUpperCase() : 'NO';
+        
+        const med1 = columnas[11] ? columnas[11].trim() : '';
+        const hor1 = columnas[12] ? columnas[12].trim() : '';
+        const med2 = columnas[13] ? columnas[13].trim() : '';
+        const hor2 = columnas[14] ? columnas[14].trim() : '';
+        
+        const con1_nombre = columnas[15] ? columnas[15].trim() : '';
+        const con1_parentesco = columnas[16] ? columnas[16].trim() : '';
+        const con1_tlf = columnas[17] ? columnas[17].trim() : '';
+        
+        const observaciones_generales = columnas[21] ? columnas[21].trim() : '';
+
+        // --- SISTEMA INTEGREGADO DE REGLAS DE ATENCIÓN ESPECIAL ---
+        let tipo_dieta = "Estándar";
+        let requiere_atencion_cocina = false;
+        const alertas_cocina = [];
+
+        const condicionMin = condicion_salud.toLowerCase();
+        const obsMin = observaciones_generales.toLowerCase();
+
+        if (condicionMin.includes("hipert") || condicionMin.includes("tension") || obsMin.includes("hiposod") || obsMin.includes("sin sal")) {
+          tipo_dieta = "Hiposódica ⚠️";
+          requiere_atencion_cocina = true;
+          alertas_cocina.push("Dieta Hiposódica Obligatoria");
+        }
+
+        if (alergico_comida === "SI" || alergico_comida === "SÍ") {
+          requiere_atencion_cocina = true;
+          alertas_cocina.push(`Alergia alimentaria: ${detalle_alergia_comida}`);
+        }
+
+        const tratamientos = [];
+        if (med1 && hor1) tratamientos.push({ medicamento: med1, horario: hor1 });
+        if (med2 && hor2) tratamientos.push({ medicamento: med2, horario: hor2 });
+
+        caminantesProcesados.push({
+          id_planilla,
+          nombre_completo,
+          cedula,
+          edad: "N/A",
+          talla_camisa,
+          cocina: {
+            tipo_dieta,
+            requiere_atencion: requiere_atencion_cocina,
+            alertas: alertas_cocina,
+            observaciones_origen: observaciones_generales
+          },
+          salud: {
+            bajo_tratamiento: (tiene_tratamiento === "SI" || tiene_tratamiento === "SÍ"),
+            condicion_especial: condicion_salud !== "Ninguna" ? condicion_salud : "",
+            alergico_medicina: (alergico_med === "SI" || alergico_med === "SÍ"),
+            detalle_alergia_med,
+            tratamientos,
+            contactos_emergencia: [
+              { nombre: con1_nombre, parentesco: con1_parentesco, telefono: con1_tlf }
+            ]
+          }
+        });
+      }
+
+      // Guardar localmente de inmediato
+      await db.caminantes.clear();
+      await db.caminantes.bulkAdd(caminantesProcesados);
+      await actualizarConteoLocal();
+
+      // Transmitir al Google Sheets Central
+      const enviadoANube = await subirAlSheetsCentral(caminantesProcesados);
+
+      if (enviadoANube) {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Procesamiento Exitoso!',
+          text: `Se registraron ${caminantesProcesados.length} caminantes en local y en Google Sheets.`,
+          confirmButtonColor: '#d97706'
+        });
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Guardado Localmente ⚠️',
+          text: `Se cargaron ${caminantesProcesados.length} caminantes en el teléfono, pero la sincronización remota falló (revisa internet o tus credenciales).`,
+          confirmButtonColor: '#f59e0b'
+        });
+      }
+
+      // Renderizar cambios si las pestañas están activas
+      renderCocina();
+      renderSalud();
+
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de Estructura',
+        text: 'Asegúrate de no cambiar los encabezados y guardar como CSV (delimitado por punto y coma).',
+        confirmButtonColor: '#ef4444'
+      });
+    }
+    document.getElementById('csv-file-input').value = '';
+  };
+
+  reader.readAsText(file, "UTF-8");
+}
+
+// --- RENDERIZADO VISUAL DE COCINA ---
 export async function renderCocina() {
   const lista = document.getElementById('lista-cocina');
   const soloAlertas = document.getElementById('chk-solo-alertas').checked;
@@ -131,14 +273,10 @@ export async function renderCocina() {
 
   const caminantes = await db.caminantes.toArray();
 
-  let estandar = 0;
-  let hiposodica = 0;
+  let estandar = 0, hiposodica = 0;
   caminantes.forEach(c => {
-    if (c.cocina && c.cocina.tipo_dieta && c.cocina.tipo_dieta.includes("Hiposódica")) {
-      hiposodica++;
-    } else {
-      estandar++;
-    }
+    if (c.cocina && c.cocina.tipo_dieta && c.cocina.tipo_dieta.includes("Hiposódica")) hiposodica++;
+    else estandar++;
   });
   document.getElementById('stat-estandar').innerText = estandar;
   document.getElementById('stat-hiposodica').innerText = hiposodica;
@@ -147,7 +285,7 @@ export async function renderCocina() {
   const filtrados = soloAlertas ? caminantes.filter(c => c.cocina && c.cocina.requiere_atencion) : caminantes;
 
   if (filtrados.length === 0) {
-    lista.innerHTML = '<p class="text-gray-500 text-center text-sm py-4">No hay registros de cocina que coincidan.</p>';
+    lista.innerHTML = '<p class="text-gray-500 text-center text-sm py-4">Sin registros coincidentes.</p>';
     return;
   }
 
@@ -160,15 +298,13 @@ export async function renderCocina() {
     if (requiereAtencion && c.cocina.alertas && c.cocina.alertas.length > 0) {
       alertasHtml = `<div class="mt-2 bg-red-50 p-2 rounded-lg border border-red-200 space-y-1">`;
       c.cocina.alertas.forEach(alerta => {
-        alertasHtml += `<p class="text-xs text-red-700 flex items-center gap-1 font-medium">
-          <span class="material-icons text-xs">gavel</span> ${alerta}
-        </p>`;
+        alertasHtml += `<p class="text-xs text-red-700 flex items-center gap-1 font-medium"><span class="material-icons text-xs">gavel</span> ${alerta}</p>`;
       });
       alertasHtml += `</div>`;
     }
 
-    const observaciones = c.cocina && c.cocina.observaciones_origen ? c.cocina.observaciones_origen : '';
-    const tipoDieta = c.cocina && c.cocina.tipo_dieta ? c.cocina.tipo_dieta : 'Estándar';
+    const observaciones = c.cocina?.observaciones_origen || '';
+    const tipoDieta = c.cocina?.tipo_dieta || 'Estándar';
 
     card.innerHTML = `
       <div class="flex justify-between items-start">
@@ -176,21 +312,16 @@ export async function renderCocina() {
           <h3 class="font-bold text-gray-900">${c.nombre_completo}</h3>
           <p class="text-xs text-gray-400">Planilla N° ${c.id_planilla} • Talla: <span class="font-bold text-gray-700">${c.talla_camisa}</span></p>
         </div>
-        <span class="px-2 py-0.5 rounded text-xs font-semibold ${requiereAtencion ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}">
-          ${tipoDieta}
-        </span>
+        <span class="px-2 py-0.5 rounded text-xs font-semibold ${requiereAtencion ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}">${tipoDieta}</span>
       </div>
       ${alertasHtml}
-      ${observations ? `<p class="text-xs italic text-gray-500 mt-2 bg-gray-50 p-1.5 rounded">Nota planilla: ${observaciones}</p>` : ''}
+      ${observaciones ? `<p class="text-xs italic text-gray-500 mt-2 bg-gray-50 p-1.5 rounded">Nota: ${observaciones}</p>` : ''}
     `;
     lista.appendChild(card);
   });
 }
 
-
-// =======================================================
-// ⚕️ LÓGICA DE CONTROL: SERVICIO DE SALUD
-// =======================================================
+// --- RENDERIZADO VISUAL DE SALUD ---
 export async function renderSalud() {
   const lista = document.getElementById('lista-salud');
   const query = document.getElementById('search-salud').value.toLowerCase().trim();
@@ -200,13 +331,12 @@ export async function renderSalud() {
 
   if (query !== '') {
     caminantes = caminantes.filter(c => 
-      c.nombre_completo.toLowerCase().includes(query) || 
-      c.id_planilla.includes(query)
+      c.nombre_completo.toLowerCase().includes(query) || c.id_planilla.includes(query)
     );
   }
 
   if (caminantes.length === 0) {
-    lista.innerHTML = '<p class="text-gray-500 text-center text-sm py-4">No se encontraron caminantes en el registro.</p>';
+    lista.innerHTML = '<p class="text-gray-500 text-center text-sm py-4">No se encontraron caminantes.</p>';
     return;
   }
 
@@ -215,71 +345,50 @@ export async function renderSalud() {
     card.className = "p-4 rounded-xl shadow-sm border border-gray-200 bg-white space-y-3";
 
     let tratamientosHtml = '';
-    const tieneTratamiento = c.salud && c.salud.bajo_tratamiento;
-    
-    if (tieneTratamiento && c.salud.tratamientos && c.salud.tratamientos.length > 0) {
+    if (c.salud?.bajo_tratamiento && c.salud.tratamientos?.length > 0) {
       tratamientosHtml = `<div class="bg-teal-50 p-2.5 rounded-xl border border-teal-100 space-y-2">
-        <p class="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1">
-          <span class="material-icons text-sm">schedule</span> Horarios de Medicación:
-        </p>`;
-      
+        <p class="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1"><span class="material-icons text-sm">schedule</span> Horarios:</p>`;
       c.salud.tratamientos.forEach(t => {
         tratamientosHtml += `
           <div class="flex justify-between items-center text-xs border-b border-teal-100/50 pb-1 last:border-0 last:pb-0">
             <span class="text-gray-700 font-medium">💊 ${t.medicamento}</span>
-            <span class="bg-teal-600 text-white font-bold px-2 py-0.5 rounded-md shadow-sm">⏰ ${t.horario}</span>
+            <span class="bg-teal-600 text-white font-bold px-2 py-0.5 rounded-md">⏰ ${t.horario}</span>
           </div>`;
       });
       tratamientosHtml += `</div>`;
     } else {
-      tratamientosHtml = `
-        <p class="text-xs text-gray-400 flex items-center gap-1">
-          <span class="material-icons text-sm text-gray-300">check_circle</span> No declara tratamientos asignados.
-        </p>`;
+      tratamientosHtml = `<p class="text-xs text-gray-400 flex items-center gap-1"><span class="material-icons text-sm text-gray-300">check_circle</span> Sin tratamientos permanentes.</p>`;
     }
 
-    let alergiaMedHtml = '';
-    if (c.salud && c.salud.alergico_medicina) {
-      alergiaMedHtml = `
-        <div class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
-          <span class="material-icons text-sm">warning</span> ALÉRGICO A: ${c.salud.detalle_alergia_med}
-        </div>`;
-    }
+    let alergiaMedHtml = c.salud?.alergico_medicina ? `<div class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1"><span class="material-icons text-sm">warning</span> ALÉRGICO A: ${c.salud.detalle_alergia_med}</div>` : '';
 
     let contactosHtml = '<div class="grid grid-cols-2 gap-2 mt-2">';
-    if (c.salud && c.salud.contactos_emergencia) {
+    if (c.salud?.contactos_emergencia) {
       c.salud.contactos_emergencia.forEach(con => {
         if (con.nombre && con.telefono) {
           contactosHtml += `
             <a href="tel:${con.telefono}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg flex flex-col items-center justify-center text-center transition">
               <span class="text-[10px] font-bold text-gray-500 uppercase">${con.parentesco || 'Familiar'}</span>
               <span class="text-xs font-semibold truncate w-full">${con.nombre}</span>
-              <span class="text-[10px] text-indigo-600 flex items-center gap-0.5 mt-0.5 font-medium">
-                <span class="material-icons text-xs">phone</span> Llamar
-              </span>
+              <span class="text-[10px] text-indigo-600 font-medium mt-0.5">📞 Llamar</span>
             </a>`;
         }
       });
     }
     contactosHtml += '</div>';
 
-    const condicionEspecial = c.salud && c.salud.condicion_especial ? c.salud.condicion_especial : '';
+    const condicionEspecial = c.salud?.condicion_especial || '';
 
     card.innerHTML = `
-      <div class="flex justify-between items-start">
-        <div>
-          <h3 class="font-bold text-gray-900 text-base">${c.nombre_completo}</h3>
-          <p class="text-xs text-gray-400">Planilla: <span class="font-semibold text-gray-600">${c.id_planilla}</span> • C.I: ${c.cedula} • Edad: ${c.edad} años</p>
-        </div>
+      <div>
+        <h3 class="font-bold text-gray-900 text-base">${c.nombre_completo}</h3>
+        <p class="text-xs text-gray-400">Planilla: ${c.id_planilla} • C.I: ${c.cedula} • Edad: ${c.edad}</p>
       </div>
-      
       ${alergiaMedHtml}
       ${tratamientosHtml}
-      
       ${condicionEspecial ? `<p class="text-xs text-gray-600 bg-amber-50 border border-amber-200 p-2 rounded-lg"><strong>Condición:</strong> ${condicionEspecial}</p>` : ''}
-      
       <div class="border-t border-gray-100 pt-2">
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Contactos en caso de Emergencia</p>
+        <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Contactos de Emergencia</p>
         ${contactosHtml}
       </div>
     `;
@@ -287,63 +396,6 @@ export async function renderSalud() {
   });
 }
 
-
-// =======================================================
-// 📄 GENERADOR AUTOMÁTICO DE PLANTILLA DE EJEMPLO (CSV)
-// =======================================================
-export function descargarPlantillaEjemplo() {
-  const encabezados = [
-    "Planilla N°", "Nombres y Apellidos", "C.I.", "Celular", "Talla Camisa", 
-    "Condición Especial / Salud", "Alergico a Medicina (SI/NO)", "Detalle Alergia Medicina", 
-    "Alergico a Comida (SI/NO)", "Detalle Alergia Comida", "Tiene Tratamiento Actual (SI/NO)", 
-    "Medicamento 1", "Horario 1", "Medicamento 2", "Horario 2", 
-    "Contacto Emergencia 1 Nombre", "Parentesco 1", "Telefono 1", 
-    "Contacto Emergencia 2 Nombre", "Parentesco 2", "Telefono 2", "Observaciones Generales"
-  ];
-
-  const registroEjemplo1 = [
-    "01", "Carlos José Mendoza Pérez", "V-14.234.567", "0414-1234567", "L", 
-    "Hipertensión arterial", "SI", "Penicilina", "NO", "", "SI", 
-    "Losartán Potassium 50mg", "08:00 AM", "", "", 
-    "María Mendoza", "Esposa", "0424-7654321", "Pedro Mendoza", "Hermano", "0412-9876543", 
-    "Requiere dieta hiposódica estricta (sin sal)."
-  ];
-
-  const registroEjemplo2 = [
-    "02", "Juan Alberto Rodríguez Gómez", "V-18.987.654", "0416-7654321", "XL", 
-    "Ninguna", "NO", "", "SI", "Canela", "NO", 
-    "", "", "", "", 
-    "Ana de Rodríguez", "Madre", "0426-1112233", "", "", "", 
-    "Alerta crítica en cocina con postres que contengan canela."
-  ];
-
-  const filas = [
-    encabezados.join(";"),
-    registroEjemplo1.join(";"),
-    registroEjemplo2.join(";")
-  ];
-  
-  const csvContent = "\uFEFF" + filas.join("\n");
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "Plantilla_Censo_Emaus_EJEMPLO.csv");
-  document.body.appendChild(link);
-  
-  link.click();
-  document.body.removeChild(link);
-
-  Swal.fire({
-    icon: 'success',
-    title: 'Plantilla de Ejemplo Descargada',
-    text: 'Se descargó "Plantilla_Censo_Emaus_EJEMPLO.csv". Contiene los dos registros de guía. Rellena las filas siguientes, cópialas y pégalas en tu Google Sheets.',
-    confirmButtonColor: '#4f46e5'
-  });
-}
-
-// Vinculación explícita al objeto global Window
+// Registro global en objeto global window
 window.renderCocina = renderCocina;
 window.renderSalud = renderSalud;
-window.descargarPlantillaEjemplo = descargarPlantillaEjemplo;
