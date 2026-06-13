@@ -1,7 +1,7 @@
 import { db } from './db.js';
 
 // URL real de tu Web App de Google Apps Script (Nueva Implementación del Retiro)
-const URL_GOOGLE_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbw5uTgfk2SLfBkQltbpEl8kVrbRUE2N1XNU_jn2XhvOp5MzDQUVNRfdyXPIwcO7a1ao/exec";
+const URL_GOOGLE_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwYKYOEUXPmdo_1-Upd8jXche3oibQB0aSHQVxT7wnqg0b6meWNcaCRcrrGKXY7P198/exec";
 
 /**
  * 1. DESCARGA / CENTRALIZACIÓN DE DATOS (Desde la Nube hacia el Teléfono)
