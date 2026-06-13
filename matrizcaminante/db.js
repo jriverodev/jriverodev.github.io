@@ -1,4 +1,5 @@
-import Dexie from 'dexie';
+// db.js - Importación de Dexie compatible con navegadores y GitHub Pages
+import Dexie from 'https://unpkg.com/dexie@latest/dist/dexie.mjs';
 
 // Inicializar la base de datos de Emaús
 export const db = new Dexie('EmausDatabase');
