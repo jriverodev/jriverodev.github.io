@@ -248,7 +248,7 @@ const defaultDatabase = `09776933 ,DELGADO RICARDO,MTTO
 10080892 ,RUBIO RAFAEL ANGEL,TP
 15443428,SANTIAGO MARIN OSWALDO RAFAEL,GERENTE`;
 
-// Elementos del DOM
+// Captura de elementos de la interfaz (DOM)
 const txtData = document.getElementById('txtData');
 const compressedInput = document.getElementById('compressedInput');
 const processBtn = document.getElementById('processBtn');
@@ -257,13 +257,13 @@ const warningTxt = document.getElementById('warningTxt');
 
 let empleadosMap = new Map();
 
-// Consola visual en pantalla
+// Consola visual en la pantalla
 function log(message) {
     logOutput.textContent += message + "\n";
     logOutput.scrollTop = logOutput.scrollHeight;
 }
 
-// Convertir base de datos a mapa estructurado en memoria
+// Convertir base de datos de texto a mapa estructurado en memoria
 function parseEmpleados() {
     empleadosMap.clear();
     const lines = txtData.value.split('\n');
@@ -294,12 +294,12 @@ function parseEmpleados() {
     }
 }
 
-// Iniciar aplicación
+// Inicializar base de datos
 txtData.value = defaultDatabase;
 txtData.addEventListener('input', parseEmpleados);
 parseEmpleados();
 
-// Evento disparador del ordenamiento
+// Evento disparador para procesar y renombrar
 processBtn.addEventListener('click', async () => {
     const file = compressedInput.files[0];
     if (!file) {
@@ -311,7 +311,7 @@ processBtn.addEventListener('click', async () => {
     processBtn.disabled = true;
 
     try {
-        const nuevoZip = new JSZip(); // El empaquetado final siempre se entregará comprimido en .zip
+        const nuevoZip = new JSZip(); // El contenedor final descargado siempre será .zip
         const extension = file.name.split('.').pop().toLowerCase();
         let listaArchivos = []; 
 
@@ -322,9 +322,9 @@ processBtn.addEventListener('click', async () => {
             
             const promesas = [];
             loadedZip.forEach((relativeArrPath, zipEntry) => {
-                if (zipEntry.dir) return; // Descartar directorios vacíos estructurales
+                if (zipEntry.dir) return; // Omitir directorios puros
 
-                // Aislar solo el nombre base del PDF (omitiendo carpetas raíces previas)
+                // Extraer solo el nombre base del PDF (omitiendo carpetas antiguas)
                 const fullFileName = zipEntry.name.split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
@@ -336,33 +336,55 @@ processBtn.addEventListener('click', async () => {
             await Promise.all(promesas);
 
         } else if (extension === 'rar') {
-            log("📂 Formato RAR detectado. Buscando motor de descompresión...");
+            log("📂 Formato RAR detectado. Verificando motor de descompresión...");
             
-            const arrayBuffer = await file.arrayBuffer();
+            // INTENTO 1: Buscar si la librería ya existe cargada globalmente
+            let unrarModule = window.unrar || window["js-unrar-js"] || window["jsUnrarJs"];
+            let unrarLib = unrarModule && unrarModule.unrar ? unrarModule.unrar : unrarModule;
             
-            // BÚSQUEDA ROBUSTA MULTI-ENTORNO: Rastrea el descompresor donde sea que el navegador lo guarde
-            const unrarModule = window.unrar || window["js-unrar-js"] || window["jsUnrarJs"];
-            const unrarLib = unrarModule && unrarModule.unrar ? unrarModule.unrar : unrarModule;
-            
+            // INTENTO 2: Si no se encuentra (por bloqueos de caché del SW), la inyectamos en caliente
             if (!unrarLib || typeof unrarLib.createExtractorFromData !== 'function') {
-                throw new Error("Librería unrar no detectada. Si acabas de actualizar tus archivos, necesitas limpiar el Service Worker de tu navegador presionando Ctrl + F5.");
+                log("⚠️ Motor RAR no detectado en el HTML. Forzando descarga en caliente...");
+                
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    // Usamos un parámetro numérico aleatorio (?cachebust=...) para destrozar la caché del Service Worker
+                    script.src = "https://unpkg.com/js-unrar-js@0.11.1/dist/js-unrar.js?cachebust=" + Date.now();
+                    script.onload = () => {
+                        log("✔️ Motor RAR descargado e instalado con éxito.");
+                        resolve();
+                    };
+                    script.onerror = () => reject(new Error("No se pudo conectar con el servidor CDN de librerías RAR. Revisa tu conexión."));
+                    document.head.appendChild(script);
+                });
+
+                // Re-capturar tras la inyección exitosa
+                unrarModule = window.unrar || window["js-unrar-js"] || window["jsUnrarJs"];
+                unrarLib = unrarModule && unrarModule.unrar ? unrarModule.unrar : unrarModule;
             }
 
-            // Inicializar el extractor binario en memoria
+            if (!unrarLib || typeof unrarLib.createExtractorFromData !== 'function') {
+                throw new Error("Fallo crítico: El motor unrar no pudo inicializarse correctamente.");
+            }
+
+            const arrayBuffer = await file.arrayBuffer();
+            log("📦 Extrayendo paquetes internos del archivo RAR...");
+            
+            // Inicializar extractor binario en memoria
             const extractor = await unrarLib.createExtractorFromData(new Uint8Array(arrayBuffer));
             const extracted = extractor.extractAll();
             
-            // Normalizar la lista interna del RAR para la iteración segura
+            // Mapeo seguro de la lista interna devuelta por la librería
             const filesArray = extracted.files || [];
 
             filesArray.forEach(item => {
-                if (item.fileHeader.flags.directory) return; // Evitar registros de directorios
+                if (item.fileHeader.flags.directory) return; 
 
-                // Limpiar rutas cruzadas de Windows (\\) o Unix (/) para extraer el nombre limpio
+                // Limpiar barras cruzadas de Windows (\\) o Unix (/) para rescatar solo el nombre del PDF
                 const fullFileName = item.fileHeader.name.split('\\').pop().split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
-                // Extraer el flujo binario crudo del PDF
+                // Extraer el binario crudo del PDF
                 const fileData = item.extract ? item.extract[1] : null;
                 if (!fileData) return;
 
@@ -370,14 +392,15 @@ processBtn.addEventListener('click', async () => {
                 listaArchivos.push({ nombre: fullFileName, blob: blob });
             });
         } else {
-            throw new Error("Formato inválido. Por favor carga un archivo de tipo .zip o .rar");
+            throw new Error("Formato inválido. Sube únicamente archivos de tipo .zip o .rar");
         }
 
         log(`🔍 Analizando ${listaArchivos.length} PDFs extraídos...`);
         let procesadosOk = 0;
 
-        // Clasificación, renombrado y asignación de carpetas por expresiones regulares
+        // Bucle de clasificación e identificación mediante Expresiones Regulares
         listaArchivos.forEach(archivo => {
+            // Captura los números que estén justo después de 'T-' y antes de '.pdf'
             const match = archivo.nombre.match(/T-([\d\s]+)\.pdf$/i);
 
             if (match) {
@@ -391,13 +414,13 @@ processBtn.addEventListener('click', async () => {
                     nuevoZip.file(rutaDestino, archivo.blob);
                     procesadosOk++;
                 } else {
-                    // Control de excepciones: la cédula cumple la sintaxis pero no está en el TXT
+                    // El archivo tiene la nomenclatura correcta pero la cédula no existe en la base de datos
                     nuevoZip.file(`NO_ENCONTRADOS/${archivo.nombre}`, archivo.blob);
-                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en el TXT. Movido a carpeta 'NO_ENCONTRADOS'.`);
+                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en el listado. Movido a 'NO_ENCONTRADOS'.`);
                     procesadosOk++;
                 }
             } else {
-                log(`❌ Patrón omitido (Falta la nomenclatura T-...pdf): ${archivo.nombre}`);
+                log(`❌ Patrón omitido (Falta nomenclatura T-...pdf): ${archivo.nombre}`);
             }
         });
 
@@ -407,8 +430,8 @@ processBtn.addEventListener('click', async () => {
             return;
         }
 
-        // Empaquetar y despachar descarga
-        log("📦 Compilando la nueva estructura de directorios limpios...");
+        // Empaquetar y despachar descarga definitiva
+        log("📦 Compilando la nueva estructura de carpetas organizadas...");
         const blobFinal = await nuevoZip.generateAsync({ type: "blob" });
         
         const link = document.createElement("a");
