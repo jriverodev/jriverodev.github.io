@@ -3,28 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizador de PDFs para Trabajadores</title>
+    <title>Organizador de PDFs (ZIP y RAR) - PWA</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/unrar-js@0.2.1/dist/unrar.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6 text-gray-800">
+<body class="bg-slate-100 min-h-screen flex flex-col items-center p-6 text-slate-800">
 
     <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-2xl">
-        <h1 class="text-2xl font-bold text-blue-600 mb-6 text-center">Organizador PWA de PDFs</h1>
-        
-        <p class="text-sm text-gray-600 mb-4 font-medium text-center">
-            Paso 1: Carga o pega la lista de trabajadores. Paso 2: Sube el ZIP con los PDFs.
-        </p>
+        <h1 class="text-2xl font-bold text-blue-600 mb-2 text-center">Organizador de PDFs Multi-formato</h1>
+        <p class="text-xs text-slate-500 mb-6 text-center">Soporta archivos comprimidos de tipo .zip y .rar</p>
 
         <div class="mb-5">
-            <label class="block text-sm font-bold mb-2 text-gray-700">Lista de Trabajadores (Formato TXT / CSV):</label>
-            <textarea id="txtData" rows="6" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 text-xs font-mono" placeholder="cedula,nombres,proceso&#10;09776933 ,DELGADO RICARDO,MTTO..."></textarea>
+            <label class="block text-sm font-bold mb-2 text-slate-700">Lista de Trabajadores (Cédula, Nombres, Proceso):</label>
+            <textarea id="txtData" rows="6" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-400 text-xs font-mono bg-slate-50" placeholder="cedula,nombres,proceso..."></textarea>
         </div>
 
         <div class="mb-6">
-            <label class="block text-sm font-bold mb-2 text-gray-700">Subir Archivo ZIP con PDFs:</label>
-            <input type="file" id="zipInput" accept=".zip" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" disabled />
-            <p id="warningTxt" class="text-xs text-amber-600 mt-1">⚠️ Primero debes pegar o cargar los datos de los trabajadores.</p>
+            <label class="block text-sm font-bold mb-2 text-slate-700">Subir Archivo (.ZIP o .RAR):</label>
+            <input type="file" id="compressedInput" accept=".zip,.rar" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" disabled />
+            <p id="warningTxt" class="text-xs text-amber-600 mt-1">⚠️ Primero debes ingresar o validar la lista de trabajadores de arriba.</p>
         </div>
 
         <button id="processBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50" disabled>
@@ -32,13 +30,13 @@
         </button>
 
         <div class="mt-6">
-            <h3 class="text-sm font-bold text-gray-700 mb-2">Estado del proceso:</h3>
-            <div id="logOutput" class="w-full p-4 bg-gray-900 text-green-400 font-mono text-xs rounded-lg h-40 overflow-y-auto whitespace-pre-wrap">Esperando configuración...</div>
+            <h3 class="text-sm font-bold text-slate-700 mb-2">Historial de acciones:</h3>
+            <div id="logOutput" class="w-full p-4 bg-slate-900 text-green-400 font-mono text-xs rounded-lg h-48 overflow-y-auto whitespace-pre-wrap">Esperando base de datos...</div>
         </div>
     </div>
 
     <script>
-        // --- Pegamos tu base de datos por defecto para que no tengas que ponerla cada vez ---
+        // Tu base de datos por defecto
         const defaultDatabase = `09776933 ,DELGADO RICARDO,MTTO
 09735923 ,CONTRERAS WINSTON RAMON,TP
 09525019 ,ROMAY SALDIVIA PEDRO RAFAEL,TLA
@@ -288,14 +286,12 @@
 10080892 ,RUBIO RAFAEL ANGEL,TP
 15443428,SANTIAGO MARIN OSWALDO RAFAEL,GERENTE`;
 
-        // Elementos del DOM
         const txtData = document.getElementById('txtData');
-        const zipInput = document.getElementById('zipInput');
+        const compressedInput = document.getElementById('compressedInput');
         const processBtn = document.getElementById('processBtn');
         const logOutput = document.getElementById('logOutput');
         const warningTxt = document.getElementById('warningTxt');
 
-        // Inicializar datos del textarea
         txtData.value = defaultDatabase;
         let empleadosMap = new Map();
 
@@ -304,143 +300,152 @@
             logOutput.scrollTop = logOutput.scrollHeight;
         }
 
-        // Procesar el texto plano estructurándolo en un Map para búsquedas ultrarrápidas
         function parseEmpleados() {
             empleadosMap.clear();
             const lines = txtData.value.split('\n');
             let count = 0;
 
             lines.forEach(line => {
-                if (!line.trim() || line.startsWith('cedula')) return; // Saltar cabeceras o líneas vacías
-                
+                if (!line.trim() || line.startsWith('cedula')) return;
                 const partes = line.split(',');
                 if (partes.length >= 3) {
-                    // Limpiamos los espacios extras (como los de la cédula)
                     const cedula = partes[0].trim();
                     const nombre = partes[1].trim();
                     const proceso = partes[2].trim();
-
                     empleadosMap.set(cedula, { nombre, proceso });
                     count++;
                 }
             });
 
             if (count > 0) {
-                log(`✔️ Base de datos cargada: ${count} empleados detectados.`);
-                zipInput.disabled = false;
+                log(`✔️ Base de datos sincronizada: ${count} empleados cargados.`);
+                compressedInput.disabled = false;
                 processBtn.disabled = false;
                 warningTxt.classList.add('hidden');
             } else {
-                log(`❌ Error: No se detectaron datos válidos en el cuadro de texto.`);
-                zipInput.disabled = true;
+                log(`❌ Error: Verifica el formato del cuadro de texto.`);
+                compressedInput.disabled = true;
                 processBtn.disabled = true;
                 warningTxt.classList.remove('hidden');
             }
         }
 
-        // Listener para cambios en el texto
         txtData.addEventListener('input', parseEmpleados);
-        // Ejecutar al cargar la página
         parseEmpleados();
 
-        // Lógica principal de descompresión, renombrado y re-empaquetado
+        // Escuchador principal al hacer clic en Procesar
         processBtn.addEventListener('click', async () => {
-            const file = zipInput.files[0];
+            const file = compressedInput.files[0];
             if (!file) {
-                log("❌ Por favor, selecciona primero un archivo ZIP.");
+                log("❌ Por favor, selecciona un archivo .zip o .rar primero.");
                 return;
             }
 
-            log("🚀 Iniciando procesamiento del archivo ZIP...");
+            log(`🚀 Analizando archivo: ${file.name}`);
             processBtn.disabled = true;
 
             try {
-                const zip = new JSZip();
-                // Cargar el zip original
-                const loadedZip = await zip.loadAsync(file);
-                const nuevoZip = new JSZip();
+                const nuevoZip = new JSZip(); // El archivo resultante siempre será un ZIP limpio organizado
+                const extension = file.name.split('.').pop().toLowerCase();
+                
+                let listaArchivos = []; // Guardará objetos { nombreLimpio, contenidoBlob }
 
-                let archivosProcesados = 0;
-                let archivosIgnorados = 0;
+                if (extension === 'zip') {
+                    log("📂 Detectado formato ZIP. Extrayendo archivos...");
+                    const zip = new JSZip();
+                    const loadedZip = await zip.loadAsync(file);
+                    
+                    const promesas = [];
+                    loadedZip.forEach((relativeArrPath, zipEntry) => {
+                        if (zipEntry.dir) return; // Ignorar carpetas estructurales
 
-                // Promesas para procesar todos los archivos internos en paralelo
-                const promesas = [];
+                        // Extraer SOLO el nombre final eliminando cualquier carpeta contenedora raíz
+                        const fullFileName = zipEntry.name.split('/').pop();
+                        if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
-                loadedZip.forEach((relativeArrPath, zipEntry) => {
-                    // Ignorar si es una carpeta interna propia del zip original
-                    if (zipEntry.dir) return;
+                        const promesa = zipEntry.async("blob").then(content => {
+                            listaArchivos.push({ nombre: fullFileName, blob: content });
+                        });
+                        promesas.push(promesa);
+                    });
+                    await Promise.all(promesas);
 
-                    // Extraer solo el nombre del archivo sin la ruta si viene de carpetas internas
-                    const fullFileName = zipEntry.name.split('/').pop();
-                    if (!fullFileName.toLowerCase().endsWith('.pdf')) {
-                        archivosIgnorados++;
-                        return; 
+                } else if (extension === 'rar') {
+                    log("📂 Detectado formato RAR. Descomprimiendo en memoria...");
+                    
+                    // Leer el archivo .rar en formato ArrayBuffer para la librería unrar-js
+                    const arrayBuffer = await file.arrayBuffer();
+                    const extractor = unrar.createExtractorFromData(new Uint8Array(arrayBuffer));
+                    const [extractList, archiveFiles] = extractor.extractAll();
+                    
+                    if (archiveFiles && archiveFiles.files) {
+                        archiveFiles.files.forEach(item => {
+                            // Ignorar si es un directorio
+                            if (item.fileHeader.flags.directory) return;
+
+                            // Extraer SOLO el nombre final del PDF, ignorando la ruta de la carpeta contenedora
+                            const fullFileName = item.fileHeader.name.split('\\').pop().split('/').pop();
+                            if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
+
+                            // Obtener los datos binarios del archivo extraído
+                            const blob = new Blob([item.extract[1]], { type: "application/pdf" });
+                            listaArchivos.push({ nombre: fullFileName, blob: blob });
+                        });
                     }
+                } else {
+                    throw new Error("Formato de archivo no soportado. Debe ser .zip o .rar");
+                }
 
-                    // Expresión Regular para capturar lo que está después de "T-" hasta antes de ".pdf"
-                    // Maneja variaciones previas y limpia espacios.
-                    const match = fullFileName.match(/T-([\d\s]+)\.pdf$/i);
+                log(`🔍 Analizando ${listaArchivos.length} PDFs encontrados...`);
+                let procesadosOk = 0;
+
+                // Clasificar y Renombrar archivos en el nuevo ZIP estructurado
+                listaArchivos.forEach(archivo => {
+                    // Buscar patrón de cédula después de T-
+                    const match = archivo.nombre.match(/T-([\d\s]+)\.pdf$/i);
 
                     if (match) {
-                        const cedulaExtraida = match[1].trim(); // '.trim()' elimina los 2 espacios del final de la cédula
+                        const cedulaExtraida = match[1].trim();
 
-                        // Buscar si la cédula existe en la lista provista
                         if (empleadosMap.has(cedulaExtraida)) {
                             const datos = empleadosMap.get(cedulaExtraida);
+                            const nuevoNombre = `${cedulaExtraida} - ${datos.nombre}.pdf`;
+                            const rutaDestino = `${datos.proceso}/${nuevoNombre}`;
                             
-                            // Definimos el nuevo nombre completo: "CEDULA - NOMBRE.pdf"
-                            const nuevoNombreArchivo = `${cedulaExtraida} - ${datos.nombre}.pdf`;
-                            // Definimos la ruta de la carpeta basándonos en el PROCESO
-                            const rutaConCarpeta = `${datos.proceso}/${nuevoNombreArchivo}`;
-
-                            // Leer el contenido del archivo original en formato binario (Blob)
-                            const promesaArchivo = zipEntry.async("blob").then(content => {
-                                // Agregar al nuevo ZIP estructurado en subcarpetas automáticamente
-                                nuevoZip.file(rutaConCarpeta, content);
-                                archivosProcesados++;
-                            });
-                            promesas.push(promesaArchivo);
+                            nuevoZip.file(rutaDestino, archivo.blob);
+                            procesadosOk++;
                         } else {
-                            // Si la cédula no está en el listado de empleados, lo mete en una carpeta de "No encontrados"
-                            const promesaArchivo = zipEntry.async("blob").then(content => {
-                                nuevoZip.file(`NO_ENCONTRADOS/${fullFileName}`, content);
-                                archivosProcesados++;
-                                log(`⚠️ Cédula ${cedulaExtraida} no encontrada en la lista de trabajadores. Guardado en 'NO_ENCONTRADOS'.`);
-                            });
-                            promesas.push(promesaArchivo);
+                            // Si la cédula no se encuentra en el TXT
+                            nuevoZip.file(`NO_ENCONTRADOS/${archivo.nombre}`, archivo.blob);
+                            log(`⚠️ Cédula '${cedulaExtraida}' no mapeada en el TXT. Enviado a carpeta 'NO_ENCONTRADOS'.`);
+                            procesadosOk++;
                         }
                     } else {
-                        archivosIgnorados++;
-                        log(`❌ Archivo ignorado por formato incorrecto: ${fullFileName}`);
+                        log(`❌ Archivo ignorado por nombre inválido (Falta T-): ${archivo.nombre}`);
                     }
                 });
 
-                // Esperar que todos los archivos terminen de leerse
-                await Promise.all(promesas);
-
-                if (archivosProcesados === 0) {
-                    log("❌ No se encontraron PDFs válidos para renombrar dentro del ZIP.");
+                if (procesadosOk === 0) {
+                    log("❌ No se generaron archivos válidos. Verifica los nombres internos.");
                     processBtn.disabled = false;
                     return;
                 }
 
-                log(`📦 Generando nuevo archivo ZIP... (${archivosProcesados} PDFs organizados)`);
+                // Generar y descargar el paquete organizado
+                log("📦 Comprimiendo el nuevo paquete organizado por carpetas...");
+                const blobFinal = await nuevoZip.generateAsync({ type: "blob" });
                 
-                // Generar el nuevo archivo ZIP descargable
-                const blobGenerado = await nuevoZip.generateAsync({ type: "blob" });
-                
-                // Trigger de descarga automática en el navegador
                 const link = document.createElement("a");
-                link.href = URL.createObjectURL(blobGenerated);
-                link.download = "PDFs_Organizados_por_Proceso.zip";
+                link.href = URL.createObjectURL(blobFinal);
+                link.download = "Archivos_Organizados.zip";
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
-                log("✔️ ¡Éxito! El archivo ZIP ha sido descargado automáticamente.");
+                log("✔️ ¡Proceso completado con éxito! Revisa tus descargas.");
 
             } catch (error) {
-                log(`❌ Error crítico al procesar: ${error.message}`);
+                log(`❌ Error durante el procesamiento: ${error.message}`);
                 console.error(error);
             } finally {
                 processBtn.disabled = false;
