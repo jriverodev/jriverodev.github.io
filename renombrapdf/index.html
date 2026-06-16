@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizador de PDFs (ZIP y RAR) - PWA</title>
     
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/></svg>">
+
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/js-unrar-js@0.11.1/dist/js-unrar.umd.js"></script>
+    <script src="https://unpkg.com/js-unrar-js@0.11.1/dist/js-unrar.js"></script>
     
     <link rel="manifest" href="./manifest.json">
 </head>
@@ -43,10 +45,10 @@
     <script src="app.js"></script>
     
     <script>
-        // Registro del Service Worker para permitir el funcionamiento Offline (PWA)
+        // Registro del Service Worker adaptado a subcarpetas de GitHub Pages
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
                     .then(reg => console.log("Service Worker registrado con éxito", reg.scope))
                     .catch(err => console.log("Error al registrar el Service Worker", err));
             });
