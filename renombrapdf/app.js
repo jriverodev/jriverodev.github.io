@@ -248,7 +248,7 @@ const defaultDatabase = `09776933 ,DELGADO RICARDO,MTTO
 10080892 ,RUBIO RAFAEL ANGEL,TP
 15443428,SANTIAGO MARIN OSWALDO RAFAEL,GERENTE`;
 
-// Captura de elementos del DOM de la interfaz
+// Elementos del DOM
 const txtData = document.getElementById('txtData');
 const compressedInput = document.getElementById('compressedInput');
 const processBtn = document.getElementById('processBtn');
@@ -257,13 +257,13 @@ const warningTxt = document.getElementById('warningTxt');
 
 let empleadosMap = new Map();
 
-// Función auxiliar de logs en la consola de la pantalla
+// Consola visual en pantalla
 function log(message) {
     logOutput.textContent += message + "\n";
     logOutput.scrollTop = logOutput.scrollHeight;
 }
 
-// Estructurar la lista de trabajadores en memoria
+// Convertir base de datos a mapa estructurado en memoria
 function parseEmpleados() {
     empleadosMap.clear();
     const lines = txtData.value.split('\n');
@@ -294,12 +294,12 @@ function parseEmpleados() {
     }
 }
 
-// Inicializar la base de datos de texto
+// Iniciar aplicación
 txtData.value = defaultDatabase;
 txtData.addEventListener('input', parseEmpleados);
 parseEmpleados();
 
-// Evento de clic en procesar
+// Evento disparador del ordenamiento
 processBtn.addEventListener('click', async () => {
     const file = compressedInput.files[0];
     if (!file) {
@@ -311,7 +311,7 @@ processBtn.addEventListener('click', async () => {
     processBtn.disabled = true;
 
     try {
-        const nuevoZip = new JSZip(); // El contenedor final descargado siempre será un .zip
+        const nuevoZip = new JSZip(); // El empaquetado final siempre se entregará comprimido en .zip
         const extension = file.name.split('.').pop().toLowerCase();
         let listaArchivos = []; 
 
@@ -322,9 +322,9 @@ processBtn.addEventListener('click', async () => {
             
             const promesas = [];
             loadedZip.forEach((relativeArrPath, zipEntry) => {
-                if (zipEntry.dir) return; // Saltar carpetas estructurales
+                if (zipEntry.dir) return; // Descartar directorios vacíos estructurales
 
-                // Filtrar solo el nombre base del PDF (ignora carpetas contenedoras antiguas)
+                // Aislar solo el nombre base del PDF (omitiendo carpetas raíces previas)
                 const fullFileName = zipEntry.name.split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
@@ -336,34 +336,33 @@ processBtn.addEventListener('click', async () => {
             await Promise.all(promesas);
 
         } else if (extension === 'rar') {
-            log("📂 Formato RAR detectado. Procesando con Unrar nativo...");
+            log("📂 Formato RAR detectado. Buscando motor de descompresión...");
             
             const arrayBuffer = await file.arrayBuffer();
             
-            // CORRECCIÓN CRÍTICA: Captura segura de la librería js-unrar-js según su espacio de nombres UMD
-            const unrarModule = window["js-unrar-js"] || window.unrar;
-            const unrarLib = unrarModule ? unrarModule.unrar : null;
+            // BÚSQUEDA ROBUSTA MULTI-ENTORNO: Rastrea el descompresor donde sea que el navegador lo guarde
+            const unrarModule = window.unrar || window["js-unrar-js"] || window["jsUnrarJs"];
+            const unrarLib = unrarModule && unrarModule.unrar ? unrarModule.unrar : unrarModule;
             
-            if (!unrarLib) {
-                throw new Error("Librería unrar no detectada. Revisa la conexión a internet o el script del index.html.");
+            if (!unrarLib || typeof unrarLib.createExtractorFromData !== 'function') {
+                throw new Error("Librería unrar no detectada. Si acabas de actualizar tus archivos, necesitas limpiar el Service Worker de tu navegador presionando Ctrl + F5.");
             }
 
-            // Crear el extractor asincrónico para procesar el RAR en memoria
+            // Inicializar el extractor binario en memoria
             const extractor = await unrarLib.createExtractorFromData(new Uint8Array(arrayBuffer));
             const extracted = extractor.extractAll();
             
-            // Mapeo seguro de la lista interna devuelta por la versión 0.11
+            // Normalizar la lista interna del RAR para la iteración segura
             const filesArray = extracted.files || [];
 
             filesArray.forEach(item => {
-                // Saltar si es un directorio interno en lugar de un archivo
-                if (item.fileHeader.flags.directory) return;
+                if (item.fileHeader.flags.directory) return; // Evitar registros de directorios
 
-                // Limpiar barras cruzadas (Windows/Linux) para rescatar solo el nombre del PDF
+                // Limpiar rutas cruzadas de Windows (\\) o Unix (/) para extraer el nombre limpio
                 const fullFileName = item.fileHeader.name.split('\\').pop().split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
-                // Extraer binario crudo del archivo
+                // Extraer el flujo binario crudo del PDF
                 const fileData = item.extract ? item.extract[1] : null;
                 if (!fileData) return;
 
@@ -371,15 +370,14 @@ processBtn.addEventListener('click', async () => {
                 listaArchivos.push({ nombre: fullFileName, blob: blob });
             });
         } else {
-            throw new Error("Formato inválido. Sube únicamente archivos con extensión .zip o .rar");
+            throw new Error("Formato inválido. Por favor carga un archivo de tipo .zip o .rar");
         }
 
         log(`🔍 Analizando ${listaArchivos.length} PDFs extraídos...`);
         let procesadosOk = 0;
 
-        // Bucle de clasificación e identificación
+        // Clasificación, renombrado y asignación de carpetas por expresiones regulares
         listaArchivos.forEach(archivo => {
-            // Expresión regular para extraer lo que está después de 'T-' y antes de '.pdf'
             const match = archivo.nombre.match(/T-([\d\s]+)\.pdf$/i);
 
             if (match) {
@@ -393,24 +391,24 @@ processBtn.addEventListener('click', async () => {
                     nuevoZip.file(rutaDestino, archivo.blob);
                     procesadosOk++;
                 } else {
-                    // Si el archivo tiene cédula válida pero no se encuentra en el TXT de arriba
+                    // Control de excepciones: la cédula cumple la sintaxis pero no está en el TXT
                     nuevoZip.file(`NO_ENCONTRADOS/${archivo.nombre}`, archivo.blob);
-                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en la base de datos. Movido a 'NO_ENCONTRADOS'.`);
+                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en el TXT. Movido a carpeta 'NO_ENCONTRADOS'.`);
                     procesadosOk++;
                 }
             } else {
-                log(`❌ Patrón inválido (No coincide con T-...pdf): ${archivo.nombre}`);
+                log(`❌ Patrón omitido (Falta la nomenclatura T-...pdf): ${archivo.nombre}`);
             }
         });
 
         if (procesadosOk === 0) {
-            log("❌ Operación cancelada: No se hallaron PDFs procesables.");
+            log("❌ Proceso cancelado: Ningún archivo cumple con los requisitos del nombre.");
             processBtn.disabled = false;
             return;
         }
 
-        // Generar descarga final empaquetada
-        log("📦 Compilando estructura de directorios en el ZIP definitivo...");
+        // Empaquetar y despachar descarga
+        log("📦 Compilando la nueva estructura de directorios limpios...");
         const blobFinal = await nuevoZip.generateAsync({ type: "blob" });
         
         const link = document.createElement("a");
@@ -425,7 +423,7 @@ processBtn.addEventListener('click', async () => {
     } catch (error) {
         log(`❌ Error de procesamiento: ${error.message}`);
         console.error(error);
-    } {
+    } finally {
         processBtn.disabled = false;
     }
 });
