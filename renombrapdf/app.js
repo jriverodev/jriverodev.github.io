@@ -294,7 +294,7 @@ function parseEmpleados() {
     }
 }
 
-// Inicializar base de datos
+// Inicializar base de datos al arrancar
 txtData.value = defaultDatabase;
 txtData.addEventListener('input', parseEmpleados);
 parseEmpleados();
@@ -311,7 +311,7 @@ processBtn.addEventListener('click', async () => {
     processBtn.disabled = true;
 
     try {
-        const nuevoZip = new JSZip(); // El contenedor final entregado siempre será un .zip ordenado
+        const nuevoZip = new JSZip(); // El contenedor final descargado siempre será un .zip ordenado
         const extension = file.name.split('.').pop().toLowerCase();
         let listaArchivos = []; 
 
@@ -322,9 +322,9 @@ processBtn.addEventListener('click', async () => {
             
             const promesas = [];
             loadedZip.forEach((relativeArrPath, zipEntry) => {
-                if (zipEntry.dir) return; // Omitir carpetas vacías
+                if (zipEntry.dir) return; // Omitir directorios puros
 
-                // Aislar el nombre base del PDF (omitiendo directorios antiguos)
+                // Aislar el nombre base del PDF (omitiendo directorios internos antiguos)
                 const fullFileName = zipEntry.name.split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
@@ -338,32 +338,33 @@ processBtn.addEventListener('click', async () => {
         } else if (extension === 'rar') {
             log("📂 Formato RAR detectado. Verificando motor de descompresión...");
             
-            // Capturar de manera segura la librería que cargó el index.html globalmente
-            const libFinal = window.unrar || (window["js-unrar-js"] ? window["js-unrar-js"].unrar : null) || window["jsUnrarJs"];
-            const unrarNativo = libFinal && libFinal.unrar ? libFinal.unrar : libFinal;
+            // Esta librería específica (wcchoi) expone el constructor 'unrar' o 'Module.unrar' en window
+            const unrarConstructor = window.unrar || (window.Module && window.Module.unrar);
             
-            if (!unrarNativo || typeof unrarNativo.createExtractorFromData !== 'function') {
+            if (!unrarConstructor) {
                 throw new Error("Fallo crítico: El motor unrar no se encuentra activo en el entorno global de la ventana.");
             }
 
-            log("✔️ Motor RAR mapeado con éxito.");
+            log("✔️ Motor RAR (libunrar-js) detectado con éxito.");
             const arrayBuffer = await file.arrayBuffer();
             log("📦 Extrayendo paquetes internos del archivo RAR...");
             
-            // Inicializar el extractor binario en la memoria del navegador
-            const extractor = await unrarNativo.createExtractorFromData(new Uint8Array(arrayBuffer));
-            const extracted = extractor.extractAll();
-            const filesArray = extracted.files || [];
+            // Instanciar la clase pasándole el ArrayBuffer binario crudo del fichero
+            const extractor = new unrarConstructor(arrayBuffer);
+            
+            // El método de wcchoi para obtener los nombres completos de archivos internos es .list()
+            const filesList = extractor.list(); 
 
-            filesArray.forEach(item => {
-                if (item.fileHeader.flags.directory) return; 
+            filesList.forEach(fileName => {
+                // Si termina en barra, representa una carpeta interna; la omitimos
+                if (fileName.endsWith('/') || fileName.endsWith('\\')) return;
 
-                // Limpiar barras cruzadas de Windows (\\) o Unix (/) para rescatar solo el nombre del PDF
-                const fullFileName = item.fileHeader.name.split('\\').pop().split('/').pop();
+                // Extraer únicamente el nombre final del PDF, removiendo rutas relativas
+                const fullFileName = fileName.split('\\').pop().split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
-                // Extraer el binario crudo del PDF
-                const fileData = item.extract ? item.extract[1] : null;
+                // El método .extract(nombre) extrae los datos puros y devuelve un Uint8Array
+                const fileData = extractor.extract(fileName);
                 if (!fileData) return;
 
                 const blob = new Blob([fileData], { type: "application/pdf" });
@@ -376,9 +377,9 @@ processBtn.addEventListener('click', async () => {
         log(`🔍 Analizando ${listaArchivos.length} PDFs extraídos...`);
         let procesadosOk = 0;
 
-        // Bucle de clasificación por expresiones regulares
+        // Bucle de clasificación y renombrado por expresiones regulares
         listaArchivos.forEach(archivo => {
-            // Busca la secuencia numérica que se ubica exactamente después de 'T-' y antes de '.pdf'
+            // Captura la secuencia de números ubicada exactamente tras el prefijo 'T-' y antes del '.pdf'
             const match = archivo.nombre.match(/T-([\d\s]+)\.pdf$/i);
 
             if (match) {
@@ -392,9 +393,9 @@ processBtn.addEventListener('click', async () => {
                     nuevoZip.file(rutaDestino, archivo.blob);
                     procesadosOk++;
                 } else {
-                    // Control de anomalías: el PDF cumple la regla del nombre pero la cédula no está en el listado
+                    // Control de anomalías: el PDF cumple la nomenclatura pero la cédula no figura en la BD
                     nuevoZip.file(`NO_ENCONTRADOS/${archivo.nombre}`, archivo.blob);
-                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en la lista de trabajadores. Movido a 'NO_ENCONTRADOS'.`);
+                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en la base de datos. Movido a 'NO_ENCONTRADOS'.`);
                     procesadosOk++;
                 }
             } else {
@@ -408,7 +409,7 @@ processBtn.addEventListener('click', async () => {
             return;
         }
 
-        // Crear y disparar la descarga empaquetada final
+        // Empaquetar y disparar la descarga automatizada
         log("📦 Compilando la nueva estructura de carpetas organizadas...");
         const blobFinal = await nuevoZip.generateAsync({ type: "blob" });
         
