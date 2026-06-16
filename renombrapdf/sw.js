@@ -1,4 +1,4 @@
-const CACHE_NAME = 'renombra-pdf-cache-v3';
+const CACHE_NAME = 'renombra-pdf-cache-v4';
 
 // Listado de recursos críticos de la PWA para almacenamiento offline completo
 const urlsToCache = [
