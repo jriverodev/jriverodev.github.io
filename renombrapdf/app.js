@@ -248,7 +248,7 @@ const defaultDatabase = `09776933 ,DELGADO RICARDO,MTTO
 10080892 ,RUBIO RAFAEL ANGEL,TP
 15443428,SANTIAGO MARIN OSWALDO RAFAEL,GERENTE`;
 
-// Captura de elementos del DOM
+// Captura de elementos del DOM de la interfaz
 const txtData = document.getElementById('txtData');
 const compressedInput = document.getElementById('compressedInput');
 const processBtn = document.getElementById('processBtn');
@@ -257,13 +257,13 @@ const warningTxt = document.getElementById('warningTxt');
 
 let empleadosMap = new Map();
 
-// Función auxiliar de logs en la consola integrada de la app
+// Función auxiliar de logs en la consola de la pantalla
 function log(message) {
     logOutput.textContent += message + "\n";
     logOutput.scrollTop = logOutput.scrollHeight;
 }
 
-// Estructurar la información de los trabajadores en memoria para búsquedas instantáneas
+// Estructurar la lista de trabajadores en memoria
 function parseEmpleados() {
     empleadosMap.clear();
     const lines = txtData.value.split('\n');
@@ -294,12 +294,12 @@ function parseEmpleados() {
     }
 }
 
-// Iniciar base de datos interna al arrancar
+// Inicializar la base de datos de texto
 txtData.value = defaultDatabase;
 txtData.addEventListener('input', parseEmpleados);
 parseEmpleados();
 
-// Evento Principal al hacer Click en el botón de procesado
+// Evento de clic en procesar
 processBtn.addEventListener('click', async () => {
     const file = compressedInput.files[0];
     if (!file) {
@@ -311,7 +311,7 @@ processBtn.addEventListener('click', async () => {
     processBtn.disabled = true;
 
     try {
-        const nuevoZip = new JSZip(); // El contenedor final de descarga siempre será un ZIP ordenado
+        const nuevoZip = new JSZip(); // El contenedor final descargado siempre será un .zip
         const extension = file.name.split('.').pop().toLowerCase();
         let listaArchivos = []; 
 
@@ -322,9 +322,9 @@ processBtn.addEventListener('click', async () => {
             
             const promesas = [];
             loadedZip.forEach((relativeArrPath, zipEntry) => {
-                if (zipEntry.dir) return; // Ignorar registros de carpetas
+                if (zipEntry.dir) return; // Saltar carpetas estructurales
 
-                // Filtrar solo el nombre base del PDF eliminando carpetas raíz previas
+                // Filtrar solo el nombre base del PDF (ignora carpetas contenedoras antiguas)
                 const fullFileName = zipEntry.name.split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
@@ -340,28 +340,30 @@ processBtn.addEventListener('click', async () => {
             
             const arrayBuffer = await file.arrayBuffer();
             
-            // Acceso seguro al objeto unrar global de js-unrar-js
-            const unrarLib = window.unrar;
+            // CORRECCIÓN CRÍTICA: Captura segura de la librería js-unrar-js según su espacio de nombres UMD
+            const unrarModule = window["js-unrar-js"] || window.unrar;
+            const unrarLib = unrarModule ? unrarModule.unrar : null;
+            
             if (!unrarLib) {
-                throw new Error("Librería unrar global no detectada en la ventana (window.unrar).");
+                throw new Error("Librería unrar no detectada. Revisa la conexión a internet o el script del index.html.");
             }
 
-            // Crear el extractor y obtener datos
-            const extractor = unrarLib.createExtractorFromData(new Uint8Array(arrayBuffer));
+            // Crear el extractor asincrónico para procesar el RAR en memoria
+            const extractor = await unrarLib.createExtractorFromData(new Uint8Array(arrayBuffer));
             const extracted = extractor.extractAll();
             
-            // Mapeo seguro de la lista interna del RAR según estructura de la librería
+            // Mapeo seguro de la lista interna devuelta por la versión 0.11
             const filesArray = extracted.files || [];
 
             filesArray.forEach(item => {
-                // Saltar si es un directorio interno
+                // Saltar si es un directorio interno en lugar de un archivo
                 if (item.fileHeader.flags.directory) return;
 
-                // Limpiar barras invertidas de Windows o diagonales normales de Linux
+                // Limpiar barras cruzadas (Windows/Linux) para rescatar solo el nombre del PDF
                 const fullFileName = item.fileHeader.name.split('\\').pop().split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
-                // Extraer binario puro del archivo
+                // Extraer binario crudo del archivo
                 const fileData = item.extract ? item.extract[1] : null;
                 if (!fileData) return;
 
@@ -375,8 +377,9 @@ processBtn.addEventListener('click', async () => {
         log(`🔍 Analizando ${listaArchivos.length} PDFs extraídos...`);
         let procesadosOk = 0;
 
-        // Bucle de clasificación por Expresiones Regulares
+        // Bucle de clasificación e identificación
         listaArchivos.forEach(archivo => {
+            // Expresión regular para extraer lo que está después de 'T-' y antes de '.pdf'
             const match = archivo.nombre.match(/T-([\d\s]+)\.pdf$/i);
 
             if (match) {
@@ -390,9 +393,9 @@ processBtn.addEventListener('click', async () => {
                     nuevoZip.file(rutaDestino, archivo.blob);
                     procesadosOk++;
                 } else {
-                    // Si el trabajador no está registrado en el listado del área de texto
+                    // Si el archivo tiene cédula válida pero no se encuentra en el TXT de arriba
                     nuevoZip.file(`NO_ENCONTRADOS/${archivo.nombre}`, archivo.blob);
-                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en el TXT. Trasladado a 'NO_ENCONTRADOS'.`);
+                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en la base de datos. Movido a 'NO_ENCONTRADOS'.`);
                     procesadosOk++;
                 }
             } else {
@@ -401,13 +404,13 @@ processBtn.addEventListener('click', async () => {
         });
 
         if (procesadosOk === 0) {
-            log("❌ Operación abortada: No se encontraron PDFs válidos bajo la sintaxis requerida.");
+            log("❌ Operación cancelada: No se hallaron PDFs procesables.");
             processBtn.disabled = false;
             return;
         }
 
         // Generar descarga final empaquetada
-        log("📦 Compilando estructura de directorios en el ZIP final...");
+        log("📦 Compilando estructura de directorios en el ZIP definitivo...");
         const blobFinal = await nuevoZip.generateAsync({ type: "blob" });
         
         const link = document.createElement("a");
@@ -422,7 +425,7 @@ processBtn.addEventListener('click', async () => {
     } catch (error) {
         log(`❌ Error de procesamiento: ${error.message}`);
         console.error(error);
-    } finally {
+    } {
         processBtn.disabled = false;
     }
 });
