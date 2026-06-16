@@ -257,7 +257,7 @@ const warningTxt = document.getElementById('warningTxt');
 
 let empleadosMap = new Map();
 
-// Consola visual en la pantalla
+// Consola visual en pantalla
 function log(message) {
     logOutput.textContent += message + "\n";
     logOutput.scrollTop = logOutput.scrollHeight;
@@ -299,7 +299,7 @@ txtData.value = defaultDatabase;
 txtData.addEventListener('input', parseEmpleados);
 parseEmpleados();
 
-// Evento disparador para procesar y renombrar
+// Evento disparador para procesar y ordenar los documentos
 processBtn.addEventListener('click', async () => {
     const file = compressedInput.files[0];
     if (!file) {
@@ -311,7 +311,7 @@ processBtn.addEventListener('click', async () => {
     processBtn.disabled = true;
 
     try {
-        const nuevoZip = new JSZip(); // El contenedor final descargado siempre será .zip
+        const nuevoZip = new JSZip(); // El contenedor final entregado siempre será un .zip ordenado
         const extension = file.name.split('.').pop().toLowerCase();
         let listaArchivos = []; 
 
@@ -322,9 +322,9 @@ processBtn.addEventListener('click', async () => {
             
             const promesas = [];
             loadedZip.forEach((relativeArrPath, zipEntry) => {
-                if (zipEntry.dir) return; // Omitir directorios puros
+                if (zipEntry.dir) return; // Omitir carpetas vacías
 
-                // Extraer solo el nombre base del PDF (omitiendo carpetas antiguas)
+                // Aislar el nombre base del PDF (omitiendo directorios antiguos)
                 const fullFileName = zipEntry.name.split('/').pop();
                 if (!fullFileName.toLowerCase().endsWith('.pdf')) return;
 
@@ -338,43 +338,43 @@ processBtn.addEventListener('click', async () => {
         } else if (extension === 'rar') {
             log("📂 Formato RAR detectado. Verificando motor de descompresión...");
             
-            // INTENTO 1: Buscar si la librería ya existe cargada globalmente
+            // INTENTO 1: Buscar si la librería local ya fue cargada globalmente en la ventana
             let unrarModule = window.unrar || window["js-unrar-js"] || window["jsUnrarJs"];
             let unrarLib = unrarModule && unrarModule.unrar ? unrarModule.unrar : unrarModule;
             
-            // INTENTO 2: Si no se encuentra (por bloqueos de caché del SW), la inyectamos en caliente
+            // INTENTO 2: Si no se encuentra, inyectamos nuestro propio script local sin depender de internet
             if (!unrarLib || typeof unrarLib.createExtractorFromData !== 'function') {
-                log("⚠️ Motor RAR no detectado en el HTML. Forzando descarga en caliente...");
+                log("⚠️ Motor RAR no detectado. Vinculando archivo de manera local...");
                 
                 await new Promise((resolve, reject) => {
                     const script = document.createElement('script');
-                    // Usamos un parámetro numérico aleatorio (?cachebust=...) para destrozar la caché del Service Worker
-                    script.src = "https://unpkg.com/js-unrar-js@0.11.1/dist/js-unrar.js?cachebust=" + Date.now();
+                    // Llamamos a nuestro script propio para saltarnos bloqueos CORS del Service Worker
+                    script.src = "./js-unrar.js?v=" + Date.now();
                     script.onload = () => {
-                        log("✔️ Motor RAR descargado e instalado con éxito.");
+                        log("✔️ Motor RAR local enlazado con éxito.");
                         resolve();
                     };
-                    script.onerror = () => reject(new Error("No se pudo conectar con el servidor CDN de librerías RAR. Revisa tu conexión."));
+                    script.onerror = () => reject(new Error("No se pudo cargar el archivo './js-unrar.js'. Verifica que lo hayas subido correctamente a tu repositorio de GitHub."));
                     document.head.appendChild(script);
                 });
 
-                // Re-capturar tras la inyección exitosa
+                // Re-capturar tras la inyección exitosa del archivo local
                 unrarModule = window.unrar || window["js-unrar-js"] || window["jsUnrarJs"];
                 unrarLib = unrarModule && unrarModule.unrar ? unrarModule.unrar : unrarModule;
             }
 
             if (!unrarLib || typeof unrarLib.createExtractorFromData !== 'function') {
-                throw new Error("Fallo crítico: El motor unrar no pudo inicializarse correctamente.");
+                throw new Error("Fallo crítico: El motor unrar local no pudo inicializarse correctamente.");
             }
 
             const arrayBuffer = await file.arrayBuffer();
             log("📦 Extrayendo paquetes internos del archivo RAR...");
             
-            // Inicializar extractor binario en memoria
+            // Inicializar el extractor binario en la memoria del navegador
             const extractor = await unrarLib.createExtractorFromData(new Uint8Array(arrayBuffer));
             const extracted = extractor.extractAll();
             
-            // Mapeo seguro de la lista interna devuelta por la librería
+            // Mapeo seguro de la lista devuelta por el extractor
             const filesArray = extracted.files || [];
 
             filesArray.forEach(item => {
@@ -398,9 +398,9 @@ processBtn.addEventListener('click', async () => {
         log(`🔍 Analizando ${listaArchivos.length} PDFs extraídos...`);
         let procesadosOk = 0;
 
-        // Bucle de clasificación e identificación mediante Expresiones Regulares
+        // Bucle de clasificación por expresiones regulares
         listaArchivos.forEach(archivo => {
-            // Captura los números que estén justo después de 'T-' y antes de '.pdf'
+            // Busca la secuencia numérica que se ubica exactamente después de 'T-' y antes de '.pdf'
             const match = archivo.nombre.match(/T-([\d\s]+)\.pdf$/i);
 
             if (match) {
@@ -414,9 +414,9 @@ processBtn.addEventListener('click', async () => {
                     nuevoZip.file(rutaDestino, archivo.blob);
                     procesadosOk++;
                 } else {
-                    // El archivo tiene la nomenclatura correcta pero la cédula no existe en la base de datos
+                    // Control de anomalías: el PDF cumple la regla del nombre pero la cédula no está en el listado
                     nuevoZip.file(`NO_ENCONTRADOS/${archivo.nombre}`, archivo.blob);
-                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en el listado. Movido a 'NO_ENCONTRADOS'.`);
+                    log(`⚠️ Cédula '${cedulaExtraida}' no encontrada en la lista de trabajadores. Movido a 'NO_ENCONTRADOS'.`);
                     procesadosOk++;
                 }
             } else {
@@ -430,7 +430,7 @@ processBtn.addEventListener('click', async () => {
             return;
         }
 
-        // Empaquetar y despachar descarga definitiva
+        // Crear y disparar la descarga empaquetada final
         log("📦 Compilando la nueva estructura de carpetas organizadas...");
         const blobFinal = await nuevoZip.generateAsync({ type: "blob" });
         
