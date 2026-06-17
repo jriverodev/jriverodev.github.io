@@ -1,7 +1,7 @@
 // js/app.js - Lógica Global y Kernel de Seguridad
 
 const APP_CONFIG = {
-    URL_API: "https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXXXX/exec" // REEMPLAZAR CON TU URL DE APLICACIÓN WEB DE GAS
+    URL_API: "https://script.google.com/macros/s/AKfycbxm_o6lpKUvllwxWei5MMnyhLnFC9HLwzUVsld2hsyLMpOQdCX_U6NxRN-uiCDXlf6YgA/exec" // REEMPLAZAR CON TU URL DE APLICACIÓN WEB DE GAS
 };
 
 // Registrar Service Worker global de forma correcta en la raíz
