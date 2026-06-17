@@ -1,7 +1,8 @@
-// js/app.js - Lógica Global y Kernel de Seguridad (MODO DE PRUEBA LOCAL)
+// js/app.js - Lógica Global y Kernel de Seguridad (CON URL REAL DE PRODUCCIÓN)
 
 const APP_CONFIG = {
-    URL_API: "https://script.google.com/macros/s/AKfycbxm_o6lpKUvllwxWei5MMnyhLnFC9HLwzUVsld2hsyLMpOQdCX_U6NxRN-uiCDXlf6YgA/exec" // Puenteado temporalmente para pruebas locales
+    // Tu URL real de Google Apps Script vinculada a tu hoja de cálculo
+    URL_API: "https://script.google.com/macros/s/AKfycbxm_o6lpKUvllwxWei5MMnyhLnFC9HLwzUVsld2hsyLMpOQdCX_U6NxRN-uiCDXlf6YgA/exec"
 };
 
 // Registrar Service Worker global de forma correcta en la raíz
@@ -36,29 +37,31 @@ function validarAccesoPantalla(rolRequerido) {
     return true;
 }
 
-// Inicialización del Login - MODO DE PRUEBA LOCAL (Sin petición externa)
+// Inicialización del Login - MODO BYPASS BASADO EN TU SELECTOR DE ROL (Contraseña deshabilitada temporalmente)
 if (document.getElementById("formLogin")) {
-    // Eliminamos la validación obligatoria del HTML para permitir accesos directos en blanco
-    document.getElementById("txtPassword").removeAttribute("required");
+    // Eliminamos la obligación de rellenar la contraseña en el móvil para pruebas rápidas
+    const campoClave = document.getElementById("txtPassword");
+    if (campoClave) {
+        campoClave.removeAttribute("required");
+    }
 
     document.getElementById("formLogin").addEventListener("submit", (e) => {
         e.preventDefault();
         
-        const clave = document.getElementById("txtPassword").value.trim().toLowerCase();
+        // Capturamos el valor real de tu select de index.html: "CARGA" o "VISOR"
+        const rolSeleccionado = document.getElementById("selRol").value;
         
         Swal.fire({
-            title: 'Abriendo interfaz...',
-            timer: 600,
+            title: 'Conectando...',
+            timer: 500,
             showConfirmButton: false,
             didOpen: () => { Swal.showLoading(); }
         }).then(() => {
-            // MODO PUENTE TEMPORAL:
-            // 1. Escribe la palabra "gerente" para ir directo a la pantalla de gráficos (visor.html).
-            // 2. Si lo dejas vacío o escribes cualquier otra cosa, entras al Formulario de Carga (panel.html).
-            if (clave === "gerente") {
+            // Evaluamos la opción elegida en tu menú desplegable:
+            if (rolSeleccionado === "VISOR") {
                 sessionStorage.setItem("tto_sesion_rol", "GERENTE");
                 window.location.href = "visor.html";
-            } else {
+            } else if (rolSeleccionado === "CARGA") {
                 sessionStorage.setItem("tto_sesion_rol", "OPERADOR");
                 window.location.href = "panel.html";
             }
