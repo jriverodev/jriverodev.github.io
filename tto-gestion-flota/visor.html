@@ -1,1 +1,53 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Visor Gerencial - TTO</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header no-print">
+            <button id="btnCerrarVisor" class="btn-back">⬅ Salir</button>
+            <h1>Reporte Gerencial</h1>
+        </header>
+
+        <main class="app-main">
+            <section class="filtro-section no-print">
+                <label for="filtroTaller">Seleccionar Foco:</label>
+                <select id="filtroTaller">
+                    <option value="TODOS">Todos los Talleres</option>
+                    <option value="LA SALINA">La Salina</option>
+                    <option value="LAGUNILLAS">Lagunillas</option>
+                    <option value="LAGO MEDIO">Lago Medio</option>
+                    <option value="EXTERNO">Talleres Externos</option>
+                </select>
+            </section>
+
+            <section class="chart-section">
+                <h3>Distribución Actual de Estatus</h3>
+                <div class="chart-wrapper">
+                    <canvas id="canvasGrafico"></canvas>
+                </div>
+            </section>
+
+            <section class="report-section">
+                <h3>Unidades en Inspección</h3>
+                <div id="contenedorTarjetas" class="cards-list"></div>
+            </section>
+        </main>
+
+        <footer class="footer-acciones no-print">
+            <button id="btnExportarExcel" class="btn-action excel">Descargar Excel</button>
+            <button id="btnGenerarPDF" class="btn-action pdf">Vista Previa PDF</button>
+        </footer>
+    </div>
+    <script src="js/app.js"></script>
+    <script src="js/visor.js"></script>
+</body>
+</html>
