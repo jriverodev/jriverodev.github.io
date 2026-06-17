@@ -1,14 +1,13 @@
-
-// js/visor.js - Inteligencia Analítica Ejecutiva
-
+// js/visor.js - Inteligencia Analítica Ejecutiva (PRODUCCIÓN REAL)
 let datosUnidadesGlobal = [];
 let chartInstancia = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Seguridad: Bloquea la pantalla si no hay sesión activa
     if (!validarAccesoPantalla("GERENTE")) return;
     
     inicializarEventosVisor();
-    cargarDatosEjecutivos();
+    cargarDatosEjecutivosReales();
 });
 
 function inicializarEventosVisor() {
@@ -22,17 +21,44 @@ function inicializarEventosVisor() {
     });
 }
 
-async function cargarDatosEjecutivos() {
-    Swal.fire({ title: 'Descargando Hojas...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+// CONEXIÓN REAL CON EL BACKEND DE GOOGLE
+async function cargarDatosEjecutivosReales() {
+    Swal.fire({ 
+        title: 'Conectando con el Servidor...', 
+        text: 'Recuperando estatus de la flota en tiempo real...',
+        allowOutsideClick: false, 
+        didOpen: () => { Swal.showLoading(); }
+    });
     
     try {
-        const response = await fetch(APP_CONFIG.URL_API);
-        datosUnidadesGlobal = await response.json();
+        // Petición POST real al Google Apps Script configurado en app.js
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "leer" }) // Envía la acción de lectura al doPost
+        });
         
-        procesarFiltrosYGraficos();
-        Swal.close();
-    } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Error de Lectura', text: 'Imposible recuperar datos desde el servidor.' });
+        if (!response.ok) {
+            throw new Error("La API de Google respondió con un estatus de error");
+        }
+        
+        const data = await response.json();
+        
+        // Validamos que el backend responda con éxito y traiga datos
+        if (data.status === "SUCCESS" && (data.datos || data.unidades)) {
+            datosUnidadesGlobal = data.datos || data.unidades;
+            procesarFiltrosYGraficos();
+            Swal.close();
+        } else {
+            throw new Error("Estructura de respuesta inesperada o vacía");
+        }
+        
+    } catch (error) {
+        console.error("Error crítico de sincronización:", error);
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Error de Lectura', 
+            text: 'Imposible recuperar datos desde el servidor. Verifica los permisos de la API.' 
+        });
     }
 }
 
@@ -63,7 +89,7 @@ function renderizarTarjetas(lista) {
     
     lista.forEach(u => {
         const claseEstatus = u.Estatus.toLowerCase().replace(/\s+/g, '');
-        const tallerFinal = u.ID_Taller === "EXTERNO" ? `Externo (${u.Nombre_Taller_Ext})` : u.Nombre_Taller;
+        const tallerFinal = u.ID_Taller === "EXTERNO" ? `Externo (${u.Nombre_Taller_Ext || 'No especificado'})` : u.Nombre_Taller;
         
         const card = document.createElement("div");
         card.className = `card-tto border-${claseEstatus}`;
@@ -75,7 +101,7 @@ function renderizarTarjetas(lista) {
             <div class="card-body-tto">
                 <p><strong>Segmento:</strong> ${u.Tipo_Flota}</p>
                 <p><strong>Ubicación actual:</strong> ${tallerFinal}</p>
-                <p><strong>Notas de taller:</strong> ${u.Observaciones}</p>
+                <p><strong>Notas de taller:</strong> ${u.Observaciones || 'Sin novedades registradas'}</p>
             </div>
         `;
         contenedor.appendChild(card);
