@@ -1,10 +1,9 @@
-// js/visor.js - Inteligencia Analítica Ejecutiva (PRODUCCIÓN ULTRA-RESILIENTE)
+// js/visor.js - Inteligencia Analítica Ejecutiva (PRODUCCIÓN AUTO-ADAPTABLE)
 
 let datosUnidadesGlobal = [];
 let chartInstancia = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Seguridad: Bloquea la pantalla si no hay sesión activa
     if (!validarAccesoPantalla("GERENTE")) return;
     
     inicializarEventosVisor();
@@ -41,27 +40,42 @@ async function cargarDatosEjecutivosReales() {
             throw new Error(`Error de red: Código de estado ${response.status}`);
         }
         
-        const data = await response.json();
-        console.log("Datos brutos recibidos de Google:", data); // Diagnóstico en consola
+        const respuestaServidor = await response.json();
+        console.log("Datos brutos recibidos de Google:", respuestaServidor);
+        
+        // Extraer las filas crudas del objeto de respuesta
+        let filasCrudas = [];
+        if (Array.isArray(respuestaServidor)) {
+            filasCrudas = respuestaServidor;
+        } else if (respuestaServidor && respuestaServidor.status === "SUCCESS") {
+            filasCrudas = respuestaServidor.datos || respuestaServidor.unidades || [];
+        }
         
         // =====================================================================
-        // DETECTOR MULTI-FORMATO INTEGRADO
+        // NORMALIZADOR INTELIGENTE DE COLUMNAS (Mapeo tolerante)
         // =====================================================================
-        if (Array.isArray(data)) {
-            // Caso A: Si tu script antiguo/actual devuelve directamente el arreglo de filas
-            datosUnidadesGlobal = data;
-            procesarFiltrosYGraficos();
-            Swal.close();
-        } else if (data && data.status === "SUCCESS") {
-            // Caso B: Si responde el formato estructurado nuevo
-            datosUnidadesGlobal = data.datos || data.unidades || [];
-            procesarFiltrosYGraficos();
-            Swal.close();
-        } else {
-            // Caso C: Google devolvió un objeto de error (Capturamos el texto real del fallo)
-            const mensajeServidor = data.message || data.error || "Estructura de respuesta inesperada o vacía";
-            throw new Error(mensajeServidor);
-        }
+        datosUnidadesGlobal = filasCrudas.map(u => {
+            // Convertimos todas las llaves a mayúsculas y quitamos espacios/guiones para comparar
+            let normalized = {};
+            for (let key in u) {
+                let cleanKey = key.toUpperCase().replace(/_/g, "").replace(/\s/g, "");
+                normalized[cleanKey] = u[key];
+            }
+            
+            return {
+                ID_Registro: normalized["IDREGISTRO"] || normalized["REGISTRO"] || u["ID_Registro"] || "S/I",
+                ID_Unidad: normalized["IDUNIDAD"] || normalized["UNIDAD"] || u["ID_Unidad"] || "S/I",
+                Tipo_Flota: normalized["TIPOFLOTA"] || normalized["FLOTA"] || u["Tipo_Flota"] || "S/I",
+                ID_Taller: normalized["IDTALLER"] || u["ID_Taller"] || "",
+                Nombre_Taller: normalized["NOMBRETALLER"] || normalized["TALLER"] || u["Nombre_Taller"] || "No especificado",
+                Nombre_Taller_Ext: normalized["NOMBRETALLEREXT"] || normalized["TALLEREXTERNO"] || u["Nombre_Taller_Ext"] || "",
+                Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
+                Observaciones: normalized["OBSERVACIONES"] || normalized["DETALE"] || normalized["DETALLE"] || normalized["NOTAS"] || u["Observaciones"] || "Sin novedades registradas"
+            };
+        });
+        
+        procesarFiltrosYGraficos();
+        Swal.close();
         
     } catch (error) {
         console.error("Error crítico de sincronización:", error);
@@ -80,9 +94,9 @@ function procesarFiltrosYGraficos() {
     if (seleccion === "TODOS") {
         datosFiltrados = datosUnidadesGlobal;
     } else if (seleccion === "EXTERNO") {
-        datosFiltrados = datosUnidadesGlobal.filter(u => u.ID_Taller === "EXTERNO");
+        datosFiltrados = datosUnidadesGlobal.filter(u => u.ID_Taller === "EXTERNO" || u.Nombre_Taller.toUpperCase() === "EXTERNO");
     } else {
-        datosFiltrados = datosUnidadesGlobal.filter(u => u.Nombre_Taller === seleccion && u.ID_Taller !== "EXTERNO");
+        datosFiltrados = datosUnidadesGlobal.filter(u => u.Nombre_Taller.toUpperCase() === seleccion.toUpperCase());
     }
     
     renderizarTarjetas(datosFiltrados);
@@ -99,25 +113,22 @@ function renderizarTarjetas(lista) {
     }
     
     lista.forEach(u => {
-        // Validación de campos para evitar que rompa el renderizado si vienen nulos
-        const estatusOriginal = u.Estatus || "Por Atender";
-        const claseEstatus = estatusOriginal.toLowerCase().replace(/\s+/g, '');
-        const tallerFinal = u.ID_Taller === "EXTERNO" ? `Externo (${u.Nombre_Taller_Ext || 'No especificado'})` : (u.Nombre_Taller || 'No especificado');
-        const unidadNombre = u.ID_Unidad || "S/I";
-        const segmento = u.Tipo_Flota || "S/I";
-        const notas = u.Observaciones || 'Sin novedades registradas';
+        const claseEstatus = u.Estatus.toLowerCase().replace(/\s+/g, '');
+        const tallerFinal = (u.ID_Taller === "EXTERNO" || u.Nombre_Taller.toUpperCase() === "EXTERNO") 
+            ? `Externo (${u.Nombre_Taller_Ext || 'No especificado'})` 
+            : u.Nombre_Taller;
         
         const card = document.createElement("div");
         card.className = `card-tto border-${claseEstatus}`;
         card.innerHTML = `
             <div class="card-header-tto">
-                <span class="card-title-tto">${unidadNombre}</span>
-                <span class="badge-status status-${claseEstatus}">${estatusOriginal}</span>
+                <span class="card-title-tto">${u.ID_Unidad}</span>
+                <span class="badge-status status-${claseEstatus}">${u.Estatus}</span>
             </div>
             <div class="card-body-tto">
-                <p><strong>Segmento:</strong> ${segmento}</p>
+                <p><strong>Segmento:</strong> ${u.Tipo_Flota}</p>
                 <p><strong>Ubicación actual:</strong> ${tallerFinal}</p>
-                <p><strong>Notas de taller:</strong> ${notas}</p>
+                <p><strong>Notas de taller:</strong> ${u.Observaciones}</p>
             </div>
         `;
         contenedor.appendChild(card);
@@ -131,8 +142,10 @@ function actualizarEstructuraGrafica(lista) {
     
     if (lista && lista.length > 0) {
         lista.forEach(u => {
-            if (u.Estatus && conteo[u.Estatus] !== undefined) {
-                conteo[u.Estatus]++;
+            // Estandarizar nombres de estatus para el conteo de la gráfica
+            let estatusFormateado = u.Estatus.trim();
+            if (conteo[estatusFormateado] !== undefined) {
+                conteo[estatusFormateado]++;
             }
         });
     }
@@ -151,10 +164,7 @@ function actualizarEstructuraGrafica(lista) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 12 } } }
-            }
+            maintainAspectRatio: false // Corregido para evitar colapsos visuales en contenedores flex/grid
         }
     });
 }
