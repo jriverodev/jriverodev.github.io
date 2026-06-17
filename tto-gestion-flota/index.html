@@ -16,7 +16,12 @@
         
         <form id="formLogin">
             <div class="input-group">
-                <input type="password" id="txtPassword" placeholder="Contraseña Operativa" required>
+                <select id="selRol" class="login-select" required style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                    <option value="" disabled selected>Seleccione su Rol</option>
+                    <option value="CARGA">Personal de Taller (Carga)</option>
+                    <option value="VISOR">Gerencia (Reportes)</option>
+                </select>
+                <input type="password" id="txtPassword" placeholder="Contraseña de Acceso" required>
             </div>
             <button type="submit" class="btn-login">Validar Acceso</button>
         </form>
