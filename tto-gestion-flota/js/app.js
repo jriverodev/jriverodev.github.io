@@ -1,7 +1,7 @@
-// js/app.js - Lógica Global y Kernel de Seguridad
+// js/app.js - Lógica Global y Kernel de Seguridad (MODO DE PRUEBA LOCAL)
 
 const APP_CONFIG = {
-    URL_API: "https://script.google.com/macros/s/AKfycbxm_o6lpKUvllwxWei5MMnyhLnFC9HLwzUVsld2hsyLMpOQdCX_U6NxRN-uiCDXlf6YgA/exec" // REEMPLAZAR CON TU URL DE APLICACIÓN WEB DE GAS
+    URL_API: "https://script.google.com/macros/s/AKfycbxm_o6lpKUvllwxWei5MMnyhLnFC9HLwzUVsld2hsyLMpOQdCX_U6NxRN-uiCDXlf6YgA/exec" // Puenteado temporalmente para pruebas locales
 };
 
 // Registrar Service Worker global de forma correcta en la raíz
@@ -13,7 +13,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Algoritmo nativo de generación de Hash SHA-256
+// Algoritmo nativo de generación de Hash SHA-256 (Se conserva para uso futuro)
 async function generarHashCrypto(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
@@ -36,46 +36,32 @@ function validarAccesoPantalla(rolRequerido) {
     return true;
 }
 
-// Inicialización exclusiva de la interfaz del Login
+// Inicialización del Login - MODO DE PRUEBA LOCAL (Sin petición externa)
 if (document.getElementById("formLogin")) {
-    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+    // Eliminamos la validación obligatoria del HTML para permitir accesos directos en blanco
+    document.getElementById("txtPassword").removeAttribute("required");
+
+    document.getElementById("formLogin").addEventListener("submit", (e) => {
         e.preventDefault();
-        const clave = document.getElementById("txtPassword").value;
+        
+        const clave = document.getElementById("txtPassword").value.trim().toLowerCase();
         
         Swal.fire({
-            title: 'Autenticando...',
-            allowOutsideClick: false,
+            title: 'Abriendo interfaz...',
+            timer: 600,
+            showConfirmButton: false,
             didOpen: () => { Swal.showLoading(); }
-        });
-        
-        const hashGenerado = await generarHashCrypto(clave);
-        
-        try {
-            const response = await fetch(APP_CONFIG.URL_API, {
-                method: "POST",
-                body: JSON.stringify({ accion: "login", hash: hashGenerado })
-            });
-            const data = await response.json();
-            
-            if (data.status === "SUCCESS") {
-                sessionStorage.setItem("tto_sesion_rol", data.rol);
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Acceso Concedido',
-                    text: `Perfil: ${data.rol}`,
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    if (data.rol === "GERENTE") window.location.href = "visor.html";
-                    else window.location.href = "panel.html";
-                });
+        }).then(() => {
+            // MODO PUENTE TEMPORAL:
+            // 1. Escribe la palabra "gerente" para ir directo a la pantalla de gráficos (visor.html).
+            // 2. Si lo dejas vacío o escribes cualquier otra cosa, entras al Formulario de Carga (panel.html).
+            if (clave === "gerente") {
+                sessionStorage.setItem("tto_sesion_rol", "GERENTE");
+                window.location.href = "visor.html";
             } else {
-                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Contraseña inválida' });
+                sessionStorage.setItem("tto_sesion_rol", "OPERADOR");
+                window.location.href = "panel.html";
             }
-        } catch (error) {
-            Swal.fire({ icon: 'error', title: 'Error de Red', text: 'Imposible conectar con Google API' });
-        }
+        });
     });
 }
-
