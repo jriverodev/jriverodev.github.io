@@ -16,66 +16,70 @@
     <script src="js/app.js"></script>
     <script src="js/visor.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500/30">
 
-    <nav class="w-full bg-slate-950 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <i class="fa-solid fa-chart-pie text-blue-500 text-2xl"></i>
+    <nav class="w-full bg-slate-950 border-b border-slate-800 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+        <div class="flex items-center gap-2 md:gap-3">
+            <i class="fa-solid fa-chart-pie text-blue-500 text-xl md:text-2xl"></i>
             <div>
-                <h1 class="font-black text-white text-base tracking-wide uppercase leading-tight">Métricas de Control</h1>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Monitoreo Satelital de Talleres</p>
+                <h1 class="font-black text-white text-sm md:text-base tracking-wide uppercase leading-tight">Métricas de Control</h1>
+                <p class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest block">Monitoreo de Talleres</p>
             </div>
         </div>
         
-        <div class="flex items-center gap-2">
-            <button onclick="exportarAExcel()" class="bg-emerald-950/40 hover:bg-emerald-900 text-emerald-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer">
-                <i class="fa-solid fa-file-excel"></i> Excel
+        <div class="flex items-center gap-1.5 md:gap-2">
+            <button onclick="exportarAExcel()" title="Exportar a Excel" class="bg-emerald-950/40 hover:bg-emerald-900 text-emerald-400 font-bold p-2 md:px-3 md:py-2 rounded-xl text-xs transition-colors border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-file-excel text-sm md:text-xs"></i> 
+                <span class="hidden md:inline">Excel</span>
             </button>
             
-            <button onclick="exportarAPDF()" class="bg-rose-950/40 hover:bg-rose-900 text-rose-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-rose-500/30 flex items-center gap-1.5 cursor-pointer">
-                <i class="fa-solid fa-file-pdf"></i> PDF
+            <button onclick="exportarAPDF()" title="Exportar a PDF" class="bg-rose-950/40 hover:bg-rose-900 text-rose-400 font-bold p-2 md:px-3 md:py-2 rounded-xl text-xs transition-colors border border-rose-500/30 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-file-pdf text-sm md:text-xs"></i> 
+                <span class="hidden md:inline">PDF</span>
             </button>
 
-            <button onclick="cargarDatosAnaliticos()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer">
-                <i class="fa-solid fa-rotate"></i> Actualizar
+            <button onclick="cargarDatosAnaliticos()" title="Actualizar datos" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold p-2 md:px-3 md:py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-rotate text-sm md:text-xs"></i> 
+                <span class="hidden md:inline">Actualizar</span>
             </button>
-            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center justify-center">
-                <i class="fa-solid fa-house"></i>
+            
+            <a href="index.html" title="Regresar al Inicio" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold p-2 md:px-3 md:py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center justify-center">
+                <i class="fa-solid fa-house text-sm md:text-xs"></i>
             </a>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6 flex-grow">
+    <main class="max-w-7xl mx-auto w-full p-3 md:p-6 space-y-4 md:space-y-6 flex-grow">
         
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unidades Totales</span>
-                <span id="kpiTotal" class="text-2xl font-black text-white mt-1">0</span>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div class="bg-slate-950/40 border border-slate-800 p-3 md:p-4 rounded-xl flex flex-col justify-between">
+                <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unidades Totales</span>
+                <span id="kpiTotal" class="text-xl md:text-2xl font-black text-white mt-1">0</span>
             </div>
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-amber-500">
-                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Por Atender</span>
-                <span id="kpiEspera" class="text-2xl font-black text-white mt-1">0</span>
+            <div class="bg-slate-950/40 border border-slate-800 p-3 md:p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-amber-500">
+                <span class="text-[9px] md:text-[10px] font-bold text-amber-400 uppercase tracking-wider">Por Atender</span>
+                <span id="kpiEspera" class="text-xl md:text-2xl font-black text-white mt-1">0</span>
             </div>
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-blue-500">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">En Proceso</span>
-                <span id="kpiProceso" class="text-2xl font-black text-white mt-1">0</span>
+            <div class="bg-slate-950/40 border border-slate-800 p-3 md:p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-blue-500">
+                <span class="text-[9px] md:text-[10px] font-bold text-blue-400 uppercase tracking-wider">En Proceso</span>
+                <span id="kpiProceso" class="text-xl md:text-2xl font-black text-white mt-1">0</span>
             </div>
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-emerald-500">
-                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Disponibilidad %</span>
-                <span id="kpiDispo" class="text-2xl font-black text-white mt-1">0%</span>
+            <div class="bg-slate-950/40 border border-slate-800 p-3 md:p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-emerald-500">
+                <span class="text-[9px] md:text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Disponibilidad</span>
+                <span id="kpiDispo" class="text-xl md:text-2xl font-black text-white mt-1">0%</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[250px] flex flex-col justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-slate-500"></i> Distribución de Carga por Fosa</h3>
-                <div class="w-full max-h-48 flex justify-center">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[260px] md:min-h-[250px] flex flex-col justify-between">
+                <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-slate-500"></i> Distribución por Fosa</h3>
+                <div class="w-full h-48 relative flex justify-center items-center">
                     <canvas id="chartTalleres"></canvas>
                 </div>
             </div>
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[250px] flex flex-col justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-bar mr-1 text-slate-500"></i> Balance Crítico de Operación</h3>
-                <div class="w-full max-h-48 flex justify-center">
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[220px] md:min-h-[250px] flex flex-col justify-between">
+                <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-bar mr-1 text-slate-500"></i> Balance Crítico de Operación</h3>
+                <div class="w-full h-48 relative flex justify-center items-center">
                     <canvas id="chartEstatus"></canvas>
                 </div>
             </div>
@@ -83,11 +87,11 @@
 
         <div id="contenedorTablaReporte" class="bg-slate-950/40 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
             <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-white"><i class="fa-solid fa-list-check mr-1 text-slate-400"></i> Bitácora en Tiempo Real</h3>
-                <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono uppercase">Solo Lectura</span>
+                <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-white"><i class="fa-solid fa-list-check mr-1 text-slate-400"></i> Bitácora en Tiempo Real</h3>
+                <span class="text-[9px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono uppercase tracking-wider">Solo Lectura</span>
             </div>
-            <div class="overflow-x-auto w-full">
-                <table id="tablaLogistica" class="w-full text-left border-collapse">
+            <div class="overflow-x-auto w-full scrollbar-none antialiased generic-touch-scrolling">
+                <table id="tablaLogistica" class="w-full text-left border-collapse min-w-[700px]">
                     <thead>
                         <tr class="bg-slate-900 text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800 uppercase">
                             <th class="p-3">ID Registro</th>
@@ -109,8 +113,8 @@
         </div>
     </main>
 
-    <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60">
-        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">TTOCC Analytics Console — Gerencia de Logística Terrestre</p>
+    <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60 invisible sm:visible">
+        <p class="text-[9px] md:text-[10px] text-slate-500 uppercase tracking-widest font-semibold">TTOCC Analytics Console — Gerencia de Logística Terrestre</p>
     </footer>
 </body>
 </html>
