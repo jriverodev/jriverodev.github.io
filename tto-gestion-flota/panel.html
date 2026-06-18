@@ -11,7 +11,7 @@
 
     <script>
         const APP_CONFIG = {
-            URL_API: "https://script.google.com/macros/s/AKfycbzraxh6LC6CdFnNyOpc0WIwr4zJc-Bybuw6Ipfj_kjyefmSOlMyW_XSIdA7-CMR4LY4HQ/exec"
+            URL_API: "TU_URL_DE_EXEC_DE_GOOGLE_APPS_SCRIPT_AQUI"
         };
     </script>
 
@@ -39,7 +39,7 @@
             <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
                 <div>
                     <h2 class="text-xs uppercase tracking-wider font-black text-slate-300">Matriz Operativa en Tiempo Real</h2>
-                    <p class="text-[10px] text-slate-500">Edición directa sobre celdas o a través de formulario avanzado</p>
+                    <p class="text-[10px] text-slate-500">Edición directa sobre celdas o a través de planificación avanzada</p>
                 </div>
                 <button onclick="cargarTablaEditable()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer">
                     <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar Vista
@@ -137,10 +137,10 @@
     </div>
 
     <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
                 <h3 class="text-xs uppercase tracking-widest font-black text-emerald-400 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square"></i> Formulario de Edición Ampliado
+                    <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
                 </h3>
                 <button onclick="cerrarModalEditar()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -160,14 +160,51 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Bitácora de Observaciones / Novedades de Patio</label>
-                    <textarea id="edit-observa" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
+                    <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold">
+                        <option value="Por Atender">⚠️ Por Atender</option>
+                        <option value="En Proceso">⚙️ En Proceso</option>
+                        <option value="Listo">✅ Listo</option>
+                    </select>
+                </div>
+
+                <div class="mb-4 border border-slate-800 rounded-xl p-4 bg-slate-950/30">
+                    <label class="block text-[10px] uppercase tracking-wider font-black text-blue-400 mb-2">
+                        <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones (Plan vs Real)
+                    </label>
+                    
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros, Revisar frenos..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-xs">
+                        <button type="button" onclick="agregarTareaModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="edit-container-tareas" class="space-y-2 max-h-44 overflow-y-auto pr-1">
+                        </div>
+
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/60">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Avance Real Calculado:</span>
+                        <span id="edit-lbl-avance-calculado" class="font-mono text-xs font-black text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">0%</span>
+                    </div>
+                </div>
+
+                <div id="wrapper-foto-despues" class="mb-4 hidden p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-xl transition-all">
+                    <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
+                        <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
+                    </label>
+                    <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Bitácora de Observaciones / Novedades</label>
+                    <textarea id="edit-observa" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
                     <button type="button" onclick="cerrarModalEditar()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
                     <button type="submit" id="btn-editar-submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios Formulario
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
                     </button>
                 </div>
             </form>
