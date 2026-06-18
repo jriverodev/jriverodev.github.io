@@ -2,29 +2,65 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ingreso - Gestión TTO</title>
-    <link rel="stylesheet" href="css/estilos.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Transporte Terrestre - TTOCC</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/app.js" defer></script>
 </head>
-<body class="body-login">
-    <div class="login-container">
-        <div class="login-logo">⚙️</div>
-        <h2>Transporte Terrestre</h2>
-        <p>Ingrese su credencial de acceso</p>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-orange-500 selection:text-white">
+
+    <header class="w-full text-center py-8 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md">
+        <div class="flex justify-center items-center gap-3 mb-2">
+            <i class="fa-solid fa-truck-ramp-box text-orange-500 text-3xl"></i>
+            <h1 class="text-2xl font-black tracking-wider text-white">SISTEMA TTOCC</h1>
+        </div>
+        <p class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Control Operativo de Flota Pesada y Talleres</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full px-6 py-12 flex-grow flex flex-col justify-center">
+        <h2 class="text-center text-sm font-bold uppercase tracking-widest text-slate-500 mb-8">Seleccione su destino operativo</h2>
         
-        <form id="formLogin">
-            <div class="input-group">
-                <select id="selRol" class="login-select" required style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd;">
-                    <option value="" disabled selected>Seleccione su Rol</option>
-                    <option value="CARGA">Personal de Taller (Carga)</option>
-                    <option value="VISOR">Gerencia (Reportes)</option>
-                </select>
-                <input type="password" id="txtPassword" placeholder="Contraseña de Acceso" required>
-            </div>
-            <button type="submit" class="btn-login">Validar Acceso</button>
-        </form>
-    </div>
-    <script src="js/app.js"></script>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            
+            <a href="panel.html" class="group relative flex flex-col items-center justify-center p-8 bg-slate-800/50 border border-slate-700/60 rounded-2xl shadow-xl hover:shadow-orange-500/10 hover:border-orange-500 transition-all duration-300 transform hover:-translate-y-1 text-center min-h-[260px]">
+                <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                
+                <div class="w-20 h-20 bg-orange-500/10 text-orange-500 group-hover:bg-orange-500 group-hover:text-slate-950 rounded-2xl flex items-center justify-center text-3xl mb-5 transition-all duration-300 shadow-inner">
+                    <i class="fa-solid fa-file-pen"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-white mb-2 tracking-wide group-hover:text-orange-400 transition-colors">Formulario de Patio</h3>
+                <p class="text-sm text-slate-400 max-w-xs leading-relaxed">Carga de reportes en fosas, estatus de unidades y observaciones mecánicas (Soporta modo Offline).</p>
+                
+                <div class="mt-4 text-xs font-bold text-orange-500 tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Entrar al Panel <i class="fa-solid fa-arrow-right ml-1"></i>
+                </div>
+            </a>
+
+            <a href="visor.html" class="group relative flex flex-col items-center justify-center p-8 bg-slate-800/50 border border-slate-700/60 rounded-2xl shadow-xl hover:shadow-blue-500/10 hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 text-center min-h-[260px]">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                
+                <div class="w-20 h-20 bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-slate-950 rounded-2xl flex items-center justify-center text-3xl mb-5 transition-all duration-300 shadow-inner">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-white mb-2 tracking-wide group-hover:text-blue-400 transition-colors">Visor Gerencial</h3>
+                <p class="text-sm text-slate-400 max-w-xs leading-relaxed">Análisis métrico en tiempo real, gráficos de barras, porcentaje de disponibilidad y auditoría de la base de datos.</p>
+                
+                <div class="mt-4 text-xs font-bold text-blue-500 tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Ver Indicadores <i class="fa-solid fa-arrow-right ml-1"></i>
+                </div>
+            </a>
+
+        </div>
+    </main>
+
+    <footer class="w-full text-center py-4 border-t border-slate-800/80 bg-slate-950/30">
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-medium">
+            TTOCC ZULIA — División de Transporte Terrestre Interno
+        </p>
+    </footer>
+
 </body>
 </html>
