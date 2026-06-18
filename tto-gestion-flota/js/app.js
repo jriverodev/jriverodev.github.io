@@ -2,7 +2,7 @@
 
 const APP_CONFIG = {
     // Tu URL real de Google Apps Script vinculada a tu hoja de cálculo
-    URL_API: "https://script.google.com/macros/s/AKfycbwWiNg5h-YN8pVNfqHOecNrS5ivEBv-8ZlI3YgBqPRX3U_40j40K4B9CPAWyIdGTyRQfg/exec"
+    URL_API: "https://script.google.com/macros/s/AKfycbzpVKQ3KmUDa6F27H0cwgIOc13_F05f4aKgh03cOJzmiEgf6yQZ6xxGh2Nt7Cytq9-T5A/exec"
 };
 
 // Registrar Service Worker global de forma correcta en la raíz
