@@ -2,69 +2,95 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Carga - TTO</title>
-    <link rel="stylesheet" href="css/estilos.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Patio - TTOCC</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/app.js" defer></script>
+    <script src="js/panel.js" defer></script>
 </head>
-<body>
-    <div class="app-container">
-        <header class="app-header">
-            <button id="btnCerrarSesion" class="btn-back">⬅ Cerrar</button>
-            <h1>Panel de Carga</h1>
-            <div id="syncBadge" class="badge-sync synced">Sincronizado</div>
-        </header>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-        <main class="app-main">
-            <form id="formRegistro">
-                <div class="form-group">
-                    <label for="txtUnidad">ID / Placa de la Unidad</label>
-                    <input type="text" id="txtUnidad" placeholder="Ej: GTE-1024" required>
+    <nav class="w-full bg-slate-950 border-b border-slate-800 px-4 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-file-pen text-orange-500 text-xl"></i>
+            <span class="font-bold text-white text-sm tracking-wide uppercase">Registro de Fosa</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="badgePendientes" class="hidden text-xs font-black px-3 py-1.5 rounded-lg animate-pulse shadow-md"></span>
+            
+            <button id="btnCerrarPanel" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-1.5 rounded-lg transition-colors border border-slate-700/50">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Inicio
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4 max-w-lg mx-auto w-full">
+        <div class="bg-slate-950/40 border border-slate-800 p-6 rounded-2xl shadow-2xl w-full backdrop-blur-md">
+            
+            <form id="formRegistroFlota" class="space-y-5">
+                
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Código de Unidad / Chuto</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                            <i class="fa-solid fa-truck"></i>
+                        </span>
+                        <input type="text" id="txtUnidad" required placeholder="Ej: DDS123 o 344444" 
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 font-mono tracking-widest text-lg transition-colors">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="ddlFlota">Tipo de Flota</label>
-                    <select id="ddlFlota" required>
-                        <option value="PESADA">Pesada</option>
-                        <option value="LIVIANA">Liviana</option>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tipo de Flota</label>
+                    <select id="cmbFlota" required class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-orange-500 transition-colors">
+                        <option value="PESADA">PESADA (Cisternas / Chutos)</option>
+                        <option value="LIVIANA">LIVIANA (Comercial / Apoyo)</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="ddlTaller">Taller Asignado</label>
-                    <select id="ddlTaller" required>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Taller / Fosa Asignada</label>
+                    <select id="cmbTaller" required class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-orange-500 transition-colors">
                         <option value="LA SALINA">LA SALINA</option>
                         <option value="LAGUNILLAS">LAGUNILLAS</option>
-                        <option value="LAGO MEDIO">LAGO MEDIO</option>
-                        <option value="EXTERNO">TALLER EXTERNO</option>
+                        <option value="TIA JUANA">TIA JUANA</option>
+                        <option value="EXTERNO">TALLER EXTERNO (Terceros)</option>
                     </select>
                 </div>
 
-                <div class="form-group hidden" id="groupExterno">
-                    <label for="txtTallerExt">Nombre del Taller Externo</label>
-                    <input type="text" id="txtTallerExt" placeholder="Ej: Rectificadora Zulia C.A.">
+                <div id="divTallerExternoContainer" class="hidden animate-fadeIn">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-orange-400 mb-1.5">Especificar Taller Externo</label>
+                    <input type="text" id="txtTallerExt" placeholder="Nombre de la empresa externa" 
+                           class="w-full px-3 py-2.5 bg-slate-900 border border-orange-500/40 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors">
                 </div>
 
-                <div class="form-group">
-                    <label for="ddlEstatus">Estatus Operativo</label>
-                    <select id="ddlEstatus" required>
-                        <option value="Por Atender">Por Atender</option>
-                        <option value="En Proceso">En Proceso</option>
-                        <option value="Atendido">Atendido</option>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Estatus de Ingreso</label>
+                    <select id="cmbEstatus" required class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-orange-500 transition-colors">
+                        <option value="Por Atender">⚠️ Por Atender (En Espera)</option>
+                        <option value="En Proceso">🔧 En Proceso (Mantenimiento)</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="txtObservaciones">Observaciones / Diagnóstico</label>
-                    <textarea id="txtObservaciones" rows="4" placeholder="Detalle del mantenimiento técnico requerido o ejecutado..." required></textarea>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Falla Reportada / Observaciones</label>
+                    <textarea id="txtObservaciones" rows="3" required placeholder="Detalle técnico de la falla o rutina..." 
+                              class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors resize-none"></textarea>
                 </div>
 
-                <button type="submit" class="btn-submit">Guardar Registro</button>
+                <button type="submit" class="w-full py-3.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-slate-950 font-black tracking-wide uppercase rounded-xl transition-all shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 text-sm cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-base"></i> Registrar en Sistema
+                </button>
+
             </form>
-        </main>
-    </div>
-    <script src="js/app.js"></script>
-    <script src="js/panel.js"></script>
+        </div>
+    </main>
+
+    <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60">
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Carga de Datos Directa — Fosas Zulia</p>
+    </footer>
+
 </body>
 </html>
-
