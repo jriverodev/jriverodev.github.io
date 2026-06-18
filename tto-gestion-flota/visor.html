@@ -1,53 +1,232 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Visor Gerencial - TTO</title>
-    <link rel="stylesheet" href="css/estilos.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor Gerencial - TTOCC</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</head>
-<body>
-    <div class="app-container">
-        <header class="app-header no-print">
-            <button id="btnCerrarVisor" class="btn-back">⬅ Salir</button>
-            <h1>Reporte Gerencial</h1>
-        </header>
-
-        <main class="app-main">
-            <section class="filtro-section no-print">
-                <label for="filtroTaller">Seleccionar Foco:</label>
-                <select id="filtroTaller">
-                    <option value="TODOS">Todos los Talleres</option>
-                    <option value="LA SALINA">La Salina</option>
-                    <option value="LAGUNILLAS">Lagunillas</option>
-                    <option value="LAGO MEDIO">Lago Medio</option>
-                    <option value="EXTERNO">Talleres Externos</option>
-                </select>
-            </section>
-
-            <section class="chart-section">
-                <h3>Distribución Actual de Estatus</h3>
-                <div class="chart-wrapper">
-                    <canvas id="canvasGrafico"></canvas>
-                </div>
-            </section>
-
-            <section class="report-section">
-                <h3>Unidades en Inspección</h3>
-                <div id="contenedorTarjetas" class="cards-list"></div>
-            </section>
-        </main>
-
-        <footer class="footer-acciones no-print">
-            <button id="btnExportarExcel" class="btn-action excel">Descargar Excel</button>
-            <button id="btnGenerarPDF" class="btn-action pdf">Vista Previa PDF</button>
-        </footer>
-    </div>
     <script src="js/app.js"></script>
-    <script src="js/visor.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
+
+    <nav class="w-full bg-slate-950 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-chart-pie text-blue-500 text-2xl"></i>
+            <div>
+                <h1 class="font-black text-white text-base tracking-wide uppercase leading-tight">Métricas de Control</h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Monitoreo Satelital de Talleres</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="cargarDatosAnaliticos()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-rotate"></i> Actualizar
+            </button>
+            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center justify-center">
+                <i class="fa-solid fa-house"></i>
+            </a>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6 flex-grow">
+        
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unidades Totales</span>
+                <span id="kpiTotal" class="text-2xl font-black text-white mt-1">0</span>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-amber-500">
+                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Por Atender</span>
+                <span id="kpiEspera" class="text-2xl font-black text-white mt-1">0</span>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-blue-500">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">En Proceso</span>
+                <span id="kpiProceso" class="text-2xl font-black text-white mt-1">0</span>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl flex flex-col justify-between border-l-4 border-l-emerald-500">
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Disponibilidad %</span>
+                <span id="kpiDispo" class="text-2xl font-black text-white mt-1">0%</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[250px] flex flex-col justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-donut mr-1 text-slate-500"></i> Distribución de Carga por Fosa</h3>
+                <div class="w-full max-h-48 flex justify-center">
+                    <canvas id="chartTalleres"></canvas>
+                </div>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[250px] flex flex-col justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-bar mr-1 text-slate-500"></i> Balance Crítico de Operación</h3>
+                <div class="w-full max-h-48 flex justify-center">
+                    <canvas id="chartEstatus"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-950/40 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white"><i class="fa-solid fa-list-check mr-1 text-slate-400"></i> Bitácora en Tiempo Real</h3>
+                <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono uppercase">Solo Lectura</span>
+            </div>
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800 uppercase">
+                            <th class="p-3">ID Registro</th>
+                            <th class="p-3">Unidad</th>
+                            <th class="p-3">Flota</th>
+                            <th class="p-3">Ubicación Fosa</th>
+                            <th class="p-3">Estatus</th>
+                            <th class="p-3">Observaciones Técnicas</th>
+                            <th class="p-3 text-right">Fecha Ingreso</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo" class="divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
+                        <tr>
+                            <td colspan="7" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">Cargando base de datos central...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60">
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">TTOCC Analytics Console — Gerencia de Logística Terrestre</p>
+    </footer>
+
+    <script>
+        let instanciaChartTalleres = null;
+        let instanciaChartEstatus = null;
+
+        document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
+
+        async function cargarDatosAnaliticos() {
+            try {
+                const tbody = document.getElementById("tablaCuerpo");
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Extrayendo información de Google Sheets...</td></tr>`;
+
+                const response = await fetch(APP_CONFIG.URL_API, {
+                    method: "POST",
+                    body: JSON.stringify({ accion: "leer" })
+                });
+
+                if (!response.ok) throw new Error("Fallo en HTTP");
+                const res = await response.json();
+
+                if (res.status !== "SUCCESS") {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${res.message}</td></tr>`;
+                    return;
+                }
+
+                const registros = res.datos;
+                
+                // 1. PROCESAR CONTADORES KPIs
+                let total = registros.length;
+                let porAtender = registros.filter(r => r.Estatus === "Por Atender").length;
+                let enProceso = registros.filter(r => r.Estatus === "En Proceso").length;
+                let listos = total - (porAtender + enProceso); // Unidades fuera de taller o reparadas
+                let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100;
+
+                document.getElementById("kpiTotal").textContent = total;
+                document.getElementById("kpiEspera").textContent = porAtender;
+                document.getElementById("kpiProceso").textContent = enProceso;
+                document.getElementById("kpiDispo").textContent = `${porcDispo}%`;
+
+                // 2. CONSTRUIR LA TABLA DE DATOS
+                if (total === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros en la base de datos</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                let conteoTalleres = {};
+
+                // Renderizado inverso para ver lo más nuevo de primero en la pantalla gerencial
+                registros.reverse().forEach(reg => {
+                    // Agrupar para gráficos de talleres
+                    let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
+                    conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
+
+                    // Badge de estatus estilizado
+                    let badgeColor = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                    if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-500/10 text-blue-400 border border-blue-500/30";
+                    if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+
+                    let fila = `
+                        <tr class="hover:bg-slate-950/30 transition-colors">
+                            <td class="p-3 text-slate-500 font-mono text-[11px] font-bold">${reg.ID_Registro}</td>
+                            <td class="p-3 font-bold text-white tracking-wider font-mono">${reg.ID_Unidad}</td>
+                            <td class="p-3 text-slate-400 text-[10px] font-bold">${reg.Tipo_Flota}</td>
+                            <td class="p-3 text-slate-300 font-medium">${nombreTallerFinal}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${reg.Estatus}</span></td>
+                            <td class="p-3 text-slate-400 max-w-xs truncate" title="${reg.Observaciones}">${reg.Observaciones}</td>
+                            <td class="p-3 text-right font-mono text-slate-500 text-[11px]">${reg.Fecha_Registro || 'N/A'}</td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML("beforeend", fila);
+                });
+
+                // 3. RENDERIZACIÓN DE GRÁFICOS DINÁMICOS
+                renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("tablaCuerpo").innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con el repositorio de datos.</td></tr>`;
+            }
+        }
+
+        function renderizarGraficos(talleresData, espera, proceso, listos) {
+            const ctxTalleres = document.getElementById("chartTalleres").getContext("2m");
+            const ctxEstatus = document.getElementById("chartEstatus").getContext("2d");
+
+            // Destruir instancias viejas para evitar parpadeos visuales al actualizar
+            if (instanciaChartTalleres) instanciaChartTalleres.destroy();
+            if (instanciaChartEstatus) instanciaChartEstatus.destroy();
+
+            // Gráfico 1: Distribución por Talleres (Dona)
+            instanciaChartTalleres = new Chart(document.getElementById("chartTalleres"), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(talleresData),
+                    datasets: [{
+                        data: Object.values(talleresData),
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } }
+                }
+            });
+
+            // Gráfico 2: Balance Operativo (Barras)
+            instanciaChartEstatus = new Chart(document.getElementById("chartEstatus"), {
+                type: 'bar',
+                data: {
+                    labels: ['Por Atender', 'En Proceso', 'Disponibles'],
+                    datasets: [{
+                        label: 'Unidades',
+                        data: [espera, proceso, listos],
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
