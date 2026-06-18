@@ -18,7 +18,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500/30">
 
-    <nav class="w-full bg-slate-950 border-b border-slate-800 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+    <nav class="w-full bg-slate-950 border-b border-slate-800 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
         <div class="flex items-center gap-2 md:gap-3">
             <i class="fa-solid fa-chart-pie text-blue-500 text-xl md:text-2xl"></i>
             <div>
@@ -71,13 +71,13 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[260px] md:min-h-[250px] flex flex-col justify-between">
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[260px] flex flex-col justify-between">
                 <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-slate-500"></i> Distribución por Fosa</h3>
                 <div class="w-full h-48 relative flex justify-center items-center">
                     <canvas id="chartTalleres"></canvas>
                 </div>
             </div>
-            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[220px] md:min-h-[250px] flex flex-col justify-between">
+            <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[220px] flex flex-col justify-between">
                 <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-bar mr-1 text-slate-500"></i> Balance Crítico de Operación</h3>
                 <div class="w-full h-48 relative flex justify-center items-center">
                     <canvas id="chartEstatus"></canvas>
@@ -88,24 +88,26 @@
         <div id="contenedorTablaReporte" class="bg-slate-950/40 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
             <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-white"><i class="fa-solid fa-list-check mr-1 text-slate-400"></i> Bitácora en Tiempo Real</h3>
-                <span class="text-[9px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono uppercase tracking-wider">Solo Lectura</span>
+                <span class="text-[9px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono uppercase tracking-wider">Panel Interactivo</span>
             </div>
-            <div class="overflow-x-auto w-full scrollbar-none antialiased generic-touch-scrolling">
-                <table id="tablaLogistica" class="w-full text-left border-collapse min-w-[700px]">
+            <div class="overflow-x-auto w-full antialiased chunk-touch-scrolling">
+                <table id="tablaLogistica" class="w-full text-left border-collapse min-w-[950px]">
                     <thead>
                         <tr class="bg-slate-900 text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800 uppercase">
                             <th class="p-3">ID Registro</th>
                             <th class="p-3">Unidad</th>
                             <th class="p-3">Flota</th>
                             <th class="p-3">Ubicación Fosa</th>
+                            <th class="p-3">Avance</th>
                             <th class="p-3">Estatus</th>
                             <th class="p-3">Observaciones Técnicas</th>
-                            <th class="p-3 text-right">Fecha Ingreso</th>
+                            <th class="p-3">Fecha Ingreso</th>
+                            <th class="p-3 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCuerpo" class="divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
                         <tr>
-                            <td colspan="7" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">Cargando base de datos central...</td>
+                            <td colspan="9" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">Cargando base de datos central...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -113,8 +115,96 @@
         </div>
     </main>
 
-    <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60 invisible sm:visible">
+    <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60 hidden sm:block">
         <p class="text-[9px] md:text-[10px] text-slate-500 uppercase tracking-widest font-semibold">TTOCC Analytics Console — Gerencia de Logística Terrestre</p>
     </footer>
+
+    <div id="modalEdicion" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+            
+            <div class="px-5 py-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                <div>
+                    <h3 class="text-sm font-black text-white uppercase tracking-wide">Ficha de Control Operativo</h3>
+                    <p class="text-[10px] text-slate-400 font-mono">ID Registro: <span id="modalIdRegistro" class="text-blue-400 font-bold">0</span></p>
+                </div>
+                <button onclick="cerrarModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="formEdicionUnidad" onsubmit="guardarCambiosEdicion(event)" class="p-5 space-y-4 overflow-y-auto flex-grow text-xs">
+                
+                <div class="grid grid-cols-2 gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/60">
+                    <div>
+                        <span class="text-[9px] text-slate-500 uppercase font-bold block">Unidad</span>
+                        <span id="modalUnidadTexto" class="text-sm font-black text-white tracking-wider font-mono">--</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-slate-500 uppercase font-bold block">Estadía de Operación</span>
+                        <span id="modalDiasTexto" class="text-xs font-bold text-amber-400 font-mono block">0 días</span>
+                        <span id="modalFechaSalidaTexto" class="text-[9px] text-slate-400 font-mono hidden">Salida: --</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Marca de la Unidad</label>
+                        <input type="text" id="inputMarca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-medium" placeholder="Ej. Mack, Kenworth, Volvo...">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Estatus Operativo</label>
+                            <select id="selectEstatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 font-bold">
+                                <option value="Por Atender">Por Atender</option>
+                                <option value="En Proceso">En Proceso</option>
+                                <option value="Listo">Listo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ubicación / Fosa</label>
+                            <input type="text" id="inputTaller" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 opacity-60" readonly>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Porcentaje de Avance</label>
+                            <span id="txtAvanceValor" class="text-xs font-black text-blue-400 font-mono bg-blue-950/60 px-2 py-0.5 rounded border border-blue-500/20">0%</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-slate-950/30 p-2.5 rounded-xl border border-slate-800/60">
+                            <i class="fa-solid fa-list-progress text-slate-500 text-sm"></i>
+                            <input type="range" id="inputAvance" min="0" max="100" step="5" value="0" 
+                                   class="w-full accent-blue-500 bg-slate-950 h-2 rounded-lg cursor-pointer" 
+                                   oninput="document.getElementById('txtAvanceValor').textContent = this.value + '%'">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Observaciones Técnicas</label>
+                        <textarea id="txtObservaciones" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 resize-none font-medium"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto ANTES (URL)</label>
+                            <input type="url" id="inputFotoAntes" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-300 font-mono text-[11px] focus:outline-none focus:border-emerald-500" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto DESPUÉS (URL)</label>
+                            <input type="url" id="inputFotoDespues" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-300 font-mono text-[11px] focus:outline-none focus:border-blue-500" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800 flex justify-end gap-2">
+                    <button type="button" onclick="cerrarModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer">Cancelar</button>
+                    <button type="submit" id="btnGuardarModal" class="bg-blue-600 hover:bg-blue-500 text-white font-black px-5 py-2 rounded-xl transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-blue-600/20">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
