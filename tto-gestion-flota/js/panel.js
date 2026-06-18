@@ -1,4 +1,4 @@
-// js/panel.js - Controlador de Edición Inline para el Centro de Operación de Patio
+// js/panel.js - Controlador de Edición Inline y Modales para el Centro de Operación de Patio
 
 document.addEventListener("DOMContentLoaded", cargarTablaEditable);
 
@@ -53,7 +53,7 @@ async function cargarTablaEditable() {
         tbody.innerHTML = "";
         
         // Renderizar de más nuevo a más viejo
-        [...listaRegistrosPanel].reverse().forEach(reg => {
+         [...listaRegistrosPanel].reverse().forEach(reg => {
             let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
             
             let filaHtml = `
@@ -116,7 +116,6 @@ async function cargarTablaEditable() {
 // Interacción lógica inteligente al cambiar estatus inline
 function evaluarEstatusCambio(id, valor) {
     if (valor === "Listo") {
-        // Si el operador selecciona Listo, forzamos visualmente el slider al 100%
         document.getElementById(`inline-avance-${id}`).value = 100;
         document.getElementById(`lbl-avance-${id}`).textContent = "100%";
     }
@@ -131,7 +130,6 @@ async function guardarCambioFila(idRegistro) {
     let fechaSalidaStr = "";
     if (estatus === "Listo") {
         avance = "100";
-        // Helper para estampar la fecha de salida hoy
         const hoy = new Date();
         let dd = String(hoy.getDate()).padStart(2, '0');
         let mm = String(hoy.getMonth() + 1).padStart(2, '0');
@@ -163,7 +161,6 @@ async function guardarCambioFila(idRegistro) {
         const res = await response.json();
         
         if (res.status === "SUCCESS") {
-            // Animación de éxito momentánea en la fila
             const fila = document.getElementById(`fila-${idRegistro}`);
             fila.classList.add("bg-emerald-950/20");
             
@@ -191,4 +188,68 @@ function recargarBotonOriginal(btn) {
     btn.disabled = false;
     btn.className = "bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white p-2 rounded-xl border border-blue-500/20";
     btn.innerHTML = `<i class="fa-solid fa-floppy-disk text-xs"></i>`;
+}
+
+// ==========================================
+// NUEVAS FUNCIONES: CONTROL DE MODAL E INGRESO
+// ==========================================
+
+function abrirModalNuevo() {
+    document.getElementById("formNuevoRegistro").reset(); 
+    document.getElementById("wrapper-externo").classList.add("hidden"); 
+    document.getElementById("modalNuevoRegistro").classList.remove("hidden");
+}
+
+function cerrarModalNuevo() {
+    document.getElementById("modalNuevoRegistro").classList.add("hidden");
+}
+
+function alternarTallerExterno(valor) {
+    const wrapper = document.getElementById("wrapper-externo");
+    if (valor === "TALLER EXTERNO (Terceros)") {
+        wrapper.classList.remove("hidden");
+    } else {
+        wrapper.classList.add("hidden");
+    }
+}
+
+async function guardarNuevoRegistro(event) {
+    event.preventDefault();
+    const btn = document.getElementById("btn-crear-submit");
+    
+    const payload = {
+        accion: "crear",
+        unidad: document.getElementById("add-unidad").value.trim(),
+        marca: document.getElementById("add-marca").value.trim(),
+        flota: document.getElementById("add-flota").value,
+        nombre_taller: document.getElementById("add-taller").value,
+        nombre_taller_ext: document.getElementById("add-taller-ext").value.trim(),
+        observaciones: document.getElementById("add-observa").value.trim()
+    };
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Registrando...`;
+
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+
+        const res = await response.json();
+        
+        if (res.status === "SUCCESS") {
+            cerrarModalNuevo();
+            // Recargar la tabla dinámicamente para ver el nuevo ingreso arriba de todo
+            await cargarTablaEditable();
+        } else {
+            alert("Error al registrar: " + res.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de comunicación al intentar crear el registro.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
+    }
 }
