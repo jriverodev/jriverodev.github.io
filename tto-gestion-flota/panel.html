@@ -6,7 +6,9 @@
     <title>Panel Operativo - TTOCC</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="icon" href="data:,">
+    
     <script src="js/app.js"></script>
     <script src="js/panel.js"></script>
 </head>
@@ -22,9 +24,14 @@
         </div>
         
         <div class="flex items-center gap-2">
+            <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition-all shadow-lg shadow-blue-600/10 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-plus text-xs"></i> Nuevo Ingreso
+            </button>
+            
             <button onclick="cargarTablaEditable()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer">
                 <i class="fa-solid fa-rotate text-xs"></i> Recargar
             </button>
+            
             <a href="visor.html" class="bg-blue-950/40 hover:bg-blue-900 text-blue-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-blue-500/30 flex items-center gap-1.5">
                 <i class="fa-solid fa-chart-pie"></i> Ver Visor
             </a>
@@ -45,7 +52,7 @@
                         <tr class="bg-slate-900 text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800 uppercase">
                             <th class="p-3 w-20">ID Reg</th>
                             <th class="p-3 w-32">Unidad / Marca</th>
-                            <th class="p-3 w-36">Fosa / Taller</th>
+                            <th class="p-3 w-40">Ubicación Actual</th>
                             <th class="p-3 w-44">Porcentaje de Avance</th>
                             <th class="p-3 w-36">Estatus Operativo</th>
                             <th class="p-3">Observaciones Técnicas de Patio</th>
@@ -61,6 +68,68 @@
             </div>
         </div>
     </main>
+
+    <div id="modalNuevoRegistro" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div class="px-4 py-3.5 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-truck-ramp-box text-blue-500 text-sm"></i>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-white">Orden de Entrada / Patio</h3>
+                </div>
+                <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-slate-300 text-sm cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)" class="p-4 space-y-4 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Código de Unidad *</label>
+                        <input type="text" id="add-unidad" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-blue-500 uppercase font-bold" placeholder="Ej: V-102">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Marca del Vehículo</label>
+                        <input type="text" id="add-marca" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 uppercase" placeholder="Ej: Mack / Kenworth">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Segmento de Flota</label>
+                        <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 font-bold">
+                            <option value="Pesada">🚛 Flota Pesada</option>
+                            <option value="Liviana">🚗 Flota Liviana</option>
+                            <option value="Comercial">🚐 Flota Comercial</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ubicación / Taller Inicial</label>
+                        <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 font-bold">
+                            <option value="Taller Lagunillas">🏢 Taller Lagunillas</option>
+                            <option value="Taller La Salina">🏢 Taller La Salina</option>
+                            <option value="Taller Lago Medio">⚓ Taller Lago Medio</option>
+                            <option value="TALLER EXTERNO (Terceros)">⚠️ TALLER EXTERNO (Terceros)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="wrapper-externo" class="hidden">
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre del Contratista Externo</label>
+                    <input type="text" id="add-taller-ext" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 uppercase" placeholder="Ej: Talleres Mecánicos Maracaibo C.A.">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Diagnóstico / Observaciones de Entrada</label>
+                    <textarea id="add-observa" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500" placeholder="Detalle la falla reportada o plan de mantenimiento preventivo..."></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-800/60">
+                    <button type="button" onclick="cerrarModalNuevo()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl cursor-pointer">Cancelar</button>
+                    <button type="submit" id="btn-crear-submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-square-check"></i> Registrar Ingreso
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <footer class="w-full text-center py-2.5 bg-slate-950 border-t border-slate-800/60 text-[10px] text-slate-500 uppercase tracking-widest">
         Área de Control Operativo — Entrada Directa de Datos
