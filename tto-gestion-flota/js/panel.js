@@ -1,140 +1,113 @@
+// js/app.js - Núcleo de Configuración, Seguridad y PWA (COMPLETO)
 
-// js/panel.js - Controlador Operativo Offline-First
+// =========================================================================
+// CONFIGURACIÓN GLOBAL DEL SISTEMA
+// =========================================================================
+const APP_CONFIG = {
+    // REEMPLAZA ESTA URL CON EL LINK DE TU DESPLIEGUE EN GOOGLE APPS SCRIPT
+    URL_API: "https://script.google.com/macros/s/TU_ID_DE_DESPLIEGUE_AQUI/exec"
+};
 
+// Registro del Service Worker para soporte de PWA (Instalación en móviles)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('✔ Service Worker operativo en patio:', reg.scope))
+            .catch(err => console.error('❌ Error registrando el Service Worker:', err));
+    });
+}
+
+// =========================================================================
+// MÓDULO DE AUTENTICACIÓN (LOGIN)
+// =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
-    if (!validarAccesoPantalla("OPERADOR")) return;
-    
-    configurarEventosFormulario();
-    verificarColaDeSincronizacion();
+    const formLogin = document.getElementById("formLogin");
+    if (formLogin) {
+        formLogin.addEventListener("submit", ejecutarAutenticacionZulia);
+    }
 });
 
-function configurarEventosFormulario() {
-    const ddlTaller = document.getElementById("ddlTaller");
-    const groupExterno = document.getElementById("groupExterno");
-    const txtTallerExt = document.getElementById("txtTallerExt");
-    
-    // Conmutador del input de Talleres Externos
-    ddlTaller.addEventListener("change", (e) => {
-        if (e.target.value === "EXTERNO") {
-            groupExterno.classList.remove("hidden");
-            txtTallerExt.setAttribute("required", "required");
-        } else {
-            groupExterno.classList.add("hidden");
-            txtTallerExt.removeAttribute("required");
-            txtTallerExt.value = "";
-        }
-    });
-    
-    document.getElementById("btnCerrarSesion").addEventListener("click", () => {
-        sessionStorage.clear();
-        window.location.href = "index.html";
-    });
-    
-    document.getElementById("formRegistro").addEventListener("submit", manejarEnvioRegistro);
-}
-
-async function manejarEnvioRegistro(e) {
+async function ejecutarAutenticacionZulia(e) {
     e.preventDefault();
     
-    const registroPayload = {
-        accion: "registrar",
-        id_unidad: document.getElementById("txtUnidad").value,
-        tipo_flota: document.getElementById("ddlFlota").value,
-        id_taller: document.getElementById("ddlTaller").value,
-        nombre_taller_ext: document.getElementById("txtTallerExt").value || "N/A",
-        estatus: document.getElementById("ddlEstatus").value,
-        observaciones: document.getElementById("txtObservaciones").value
-    };
-
-    if (navigator.onLine) {
-        enviarAlServidorDirecto(registroPayload);
-    } else {
-        guardarEnColaOffline(registroPayload);
-    }
-}
-
-async function enviarAlServidorDirecto(payload) {
-    Swal.fire({ title: 'Enviando Reporte...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+    const inputClave = document.getElementById("txtClave");
+    if (!inputClave) return;
     
-    try {
-        const res = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        const r = await res.json();
-        
-        if (r.status === "SUCCESS") {
-            Swal.fire({ icon: 'success', title: 'Registrado', text: 'Datos guardados en Google Sheets', timer: 1500 });
-            document.getElementById("formFormulario").reset();
-            document.getElementById("groupExterno").classList.add("hidden");
-        } else {
-            throw new Error("Rechazo desde backend");
-        }
-    } catch (err) {
-        guardarEnColaOffline(payload);
-    }
-}
-
-function guardarEnColaOffline(payload) {
-    let cola = JSON.parse(localStorage.getItem("tto_cola_offline")) || [];
-    cola.push(payload);
-    localStorage.setItem("tto_cola_offline", JSON.stringify(cola));
+    const claveIngresada = inputClave.value.trim();
     
-    actualizarBadgeEstado(false);
-    
-    Swal.fire({
-        icon: 'warning',
-        title: 'Modo Local Activado',
-        text: 'Datos resguardados en memoria del móvil. Se subirán al recuperar cobertura en el taller.',
-        confirmButtonColor: '#f59e0b'
-    });
-    
-    document.getElementById("formRegistro").reset();
-    document.getElementById("groupExterno").classList.add("hidden");
-}
-
-function verificarColaDeSincronizacion() {
-    window.addEventListener('online', procesarColaSincronizacion);
-    if (navigator.onLine) {
-        procesarColaSincronizacion();
-    } else {
-        actualizarBadgeEstado(false);
-    }
-}
-
-async function procesarColaSincronizacion() {
-    let cola = JSON.parse(localStorage.getItem("tto_cola_offline")) || [];
-    if (cola.length === 0) {
-        actualizarBadgeEstado(true);
+    if (!claveIngresada) {
+        Swal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Por favor, ingrese su credencial de acceso.' });
         return;
     }
-    
-    actualizarBadgeEstado(false);
-    
-    for (let i = 0; i < cola.length; i++) {
-        try {
-            await fetch(APP_CONFIG.URL_API, {
-                method: "POST",
-                body: JSON.stringify(cola[i])
-            });
-        } catch (e) {
-            console.error("Fallo re-intento individual");
-            return; // Detener re-intentos si la red sigue inestable
+
+    Swal.fire({
+        title: 'Verificando Credenciales...',
+        text: 'Conectando con el servidor central...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "login", clave: claveIngresada })
+        });
+
+        if (!response.ok) throw new Error("Fallo de respuesta del servidor de Google");
+
+        const resultado = await response.json();
+        Swal.close();
+
+        if (resultado.status === "SUCCESS") {
+            // Guardar sesión en el almacenamiento temporal del navegador
+            sessionStorage.setItem("TTOCC_SESION_ROL", resultado.rol);
+            sessionStorage.setItem("TTOCC_SESION_ACTIVA", "TRUE");
+
+            // Redirección inteligente basada en el rol de seguridad devuelto por el script
+            if (resultado.rol === "GERENTE") {
+                window.location.href = "visor.html";
+            } else if (resultado.rol === "OPERADOR") {
+                window.location.href = "panel.html";
+            }
+        } else {
+            Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: resultado.message || 'Contraseña incorrecta.' });
         }
+
+    } catch (error) {
+        console.error("Error en módulo de login:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Fallo de Conexión',
+            text: 'No se pudo contactar al servidor. Compruebe su señal de datos.'
+        });
     }
-    
-    localStorage.removeItem("tto_cola_offline");
-    actualizarBadgeEstado(true);
-    Swal.fire({ icon: 'success', title: 'Sincronización Exitosa', text: 'Todos los datos retrasados fueron migrados a Google Sheets.' });
 }
 
-function actualizarBadgeEstado(isSynced) {
-    const b = document.getElementById("syncBadge");
-    if (isSynced) {
-        b.className = "badge-sync synced";
-        b.innerText = "Sincronizado";
-    } else {
-        b.className = "badge-sync offline";
-        b.innerText = "Offline Activo";
+// =========================================================================
+// GUARDIÁN DE SEGURIDAD (CONTROL DE ACCESO ENTRE PANTALLAS)
+// =========================================================================
+function validarAccesoPantalla(rolRequerido) {
+    const sesionActiva = sessionStorage.getItem("TTOCC_SESION_ACTIVA");
+    const rolActual = sessionStorage.getItem("TTOCC_SESION_ROL");
+
+    if (sesionActiva !== "TRUE" || !rolActual) {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+        return false;
     }
+
+    // Un Gerente puede auditar todo, un Operador solo puede estar en su formulario
+    if (rolRequerido === "GERENTE" && rolActual !== "GERENTE") {
+        Swal.fire({
+            icon: 'error',
+            title: 'Restricción de Nivel',
+            text: 'Su rol no tiene privilegios analíticos gerenciales.',
+            confirmButtonText: 'Volver'
+        }).then(() => {
+            window.location.href = "panel.html";
+        });
+        return false;
+    }
+    
+    return true;
 }
