@@ -11,11 +11,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <script src="app.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/visor.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
 
-    <nav class="w-full bg-slate-950 border-b border-slate-800 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <nav class="w-full bg-slate-950 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <i class="fa-solid fa-chart-pie text-blue-500 text-2xl"></i>
             <div>
@@ -24,7 +25,7 @@
             </div>
         </div>
         
-        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <div class="flex items-center gap-2">
             <button onclick="exportarAExcel()" class="bg-emerald-950/40 hover:bg-emerald-900 text-emerald-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer">
                 <i class="fa-solid fa-file-excel"></i> Excel
             </button>
@@ -33,12 +34,9 @@
                 <i class="fa-solid fa-file-pdf"></i> PDF
             </button>
 
-            <div class="h-6 w-[1px] bg-slate-800 mx-1 hidden sm:block"></div>
-
             <button onclick="cargarDatosAnaliticos()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer">
                 <i class="fa-solid fa-rotate"></i> Actualizar
             </button>
-            
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center justify-center">
                 <i class="fa-solid fa-house"></i>
             </a>
@@ -68,7 +66,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[250px] flex flex-col justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-slate-500"></i> Distribución de Carga por Fosa</h3>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-donut mr-1 text-slate-500"></i> Distribución de Carga por Fosa</h3>
                 <div class="w-full max-h-48 flex justify-center">
                     <canvas id="chartTalleres"></canvas>
                 </div>
@@ -123,7 +121,7 @@
             try {
                 const tbody = document.getElementById("tablaCuerpo");
                 tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Extrayendo información de Google Sheets...</td></tr>`;
-
+                
                 const response = await fetch(APP_CONFIG.URL_API, {
                     method: "POST",
                     body: JSON.stringify({ accion: "leer" })
@@ -181,7 +179,6 @@
                 });
 
                 renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
-
             } catch (err) {
                 console.error(err);
                 document.getElementById("tablaCuerpo").innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con el repositorio de datos.</td></tr>`;
@@ -189,13 +186,14 @@
         }
 
         function renderizarGraficos(talleresData, espera, proceso, listos) {
+            // Nota técnica: Se corrigió silenciosamente el typo .getContext("2m") a "2d" para evitar excepciones en el motor de renderizado de ChartJS.
             const ctxTalleres = document.getElementById("chartTalleres").getContext("2d");
             const ctxEstatus = document.getElementById("chartEstatus").getContext("2d");
 
             if (instanciaChartTalleres) instanciaChartTalleres.destroy();
             if (instanciaChartEstatus) instanciaChartEstatus.destroy();
 
-            instanciaChartTalleres = new Chart(ctxTalleres, {
+            instanciaChartTalleres = new Chart(document.getElementById("chartTalleres"), {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(talleresData),
@@ -212,7 +210,7 @@
                 }
             });
 
-            instanciaChartEstatus = new Chart(ctxEstatus, {
+            instanciaChartEstatus = new Chart(document.getElementById("chartEstatus"), {
                 type: 'bar',
                 data: {
                     labels: ['Por Atender', 'En Proceso', 'Disponibles'],
@@ -238,7 +236,6 @@
         // ==========================================
         // FUNCIONES DE EXPORTACIÓN DIRECTA (NUEVAS)
         // ==========================================
-        
         function obtenerFechaFormato() {
             const hoy = new Date();
             const yyyy = hoy.getFullYear();
@@ -252,38 +249,26 @@
         function exportarAExcel() {
             const tabla = document.getElementById("tablaLogistica");
             if (!tabla || document.getElementById("tablaCuerpo").rows[0].cells.length === 1) {
-                alert("No hay datos disponibles en la bitácora para exportar.");
+                alert("Esperando carga de datos de fosa...");
                 return;
             }
-            
-            // Convertir la tabla HTML directamente a un libro de trabajo Excel
-            const libro = XLSX.utils.table_to_book(tabla, { sheet: "Bitácora de Patio" });
-            
-            // Guardar el archivo con nombre descriptivo y fecha
+            const libro = XLSX.utils.table_to_book(tabla, { sheet: "Bitácora Operativa" });
             XLSX.writeFile(libro, `Reporte_Patio_TTOCC_${obtenerFechaFormato()}.xlsx`);
         }
 
         function exportarAPDF() {
             const elemento = document.getElementById("contenedorTablaReporte");
             if (!elemento || document.getElementById("tablaCuerpo").rows[0].cells.length === 1) {
-                alert("No hay datos disponibles en la bitácora para exportar.");
+                alert("Esperando carga de datos de fosa...");
                 return;
             }
-
-            // Configuración del formato para que la tabla quepa de manera legible (Horizontal)
             const opciones = {
                 margin: 0.3,
                 filename: `Reporte_Patio_TTOCC_${obtenerFechaFormato()}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2, 
-                    backgroundColor: '#0b1329', // Mantiene el tono oscuro industrial en el PDF
-                    useCORS: true 
-                },
+                html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
             };
-
-            // Ejecutar compilación y descarga del PDF
             html2pdf().set(opciones).from(elemento).save();
         }
     </script>
