@@ -1,8 +1,8 @@
 {
-  "name": "Control de Flota - Terrestre PDVSA",
+  "name": "Control de Flota - Transporte Terrestre PDVSA",
   "short_name": "TTO Flota",
-  "description": "Sistema unificado de gestión de flota pesada y liviana en talleres TTO",
-  "start_url": "index.html",
+  "description": "Sistema unificado de gestión de flota pesada y liviana en talleres de mantenimiento TTO",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1a365d",
   "theme_color": "#1a365d",
