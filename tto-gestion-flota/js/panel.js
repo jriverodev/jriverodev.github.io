@@ -1,8 +1,7 @@
-// js/panel.js - Controlador de Formulario de Patio, Cola Offline y Sincronización (COMPLETO)
+// js/panel.js - Controlador de Formulario de Patio, Cola Offline y Sincronización (CORREGIDO)
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Blindaje de seguridad: Solo operadores autenticados entran a este formulario
-    if (!validarAccesoPantalla("OPERADOR")) return;
+    // Se eliminó el blindaje de inicio de sesión para permitir acceso directo táctil
 
     const formulario = document.getElementById("formRegistroFlota");
     const selectTaller = document.getElementById("cmbTaller");
@@ -10,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (formulario) {
         formulario.addEventListener("submit", manejarEnvioFormulario);
+        console.log("✔ Manejador de formulario vinculado con éxito.");
     }
 
     // Control visual interactivo: Mostrar campo externo solo si seleccionan "EXTERNO"
@@ -17,10 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
         selectTaller.addEventListener("change", alternarCampoTallerExterno);
     }
 
-    // Salida segura de la aplicación
+    // Retorno rápido al menú principal de tarjetas
     if (btnCerrarPanel) {
         btnCerrarPanel.addEventListener("click", () => {
-            sessionStorage.clear();
             window.location.href = "index.html";
         });
     }
@@ -38,6 +37,8 @@ function alternarCampoTallerExterno() {
     const selectTaller = document.getElementById("cmbTaller");
     const contenedorExterno = document.getElementById("divTallerExternoContainer");
     const inputExterno = document.getElementById("txtTallerExt");
+
+    if (!selectTaller || !contenedorExterno) return;
 
     if (selectTaller.value === "EXTERNO") {
         contenedorExterno.style.display = "block";
@@ -57,7 +58,7 @@ async function manejarEnvioFormulario(e) {
 
     const selectTaller = document.getElementById("cmbTaller");
     
-    // Construcción del paquete JSON estructurado según requiere Codigo.gs
+    // Construcción del paquete JSON estructurado según requiere tu macro
     const datosRegistro = {
         accion: "guardar",
         idUnidad: document.getElementById("txtUnidad").value.trim().toUpperCase(),
@@ -97,6 +98,11 @@ async function manejarEnvioFormulario(e) {
 // LLAMADO AL BACKEND MEDIANTE FETCH API
 async function enviarAGoogleSheets(datos) {
     try {
+        if (typeof APP_CONFIG === 'undefined' || !APP_CONFIG.URL_API) {
+            console.error("Falta la configuración de URL_API en app.js");
+            return false;
+        }
+
         const response = await fetch(APP_CONFIG.URL_API, {
             method: "POST",
             body: JSON.stringify(datos)
