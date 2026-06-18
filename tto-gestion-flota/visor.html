@@ -7,12 +7,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/visor.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script src="app.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
 
-    <nav class="w-full bg-slate-950 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+    <nav class="w-full bg-slate-950 border-b border-slate-800 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-3">
             <i class="fa-solid fa-chart-pie text-blue-500 text-2xl"></i>
             <div>
@@ -20,10 +23,22 @@
                 <p class="text-[10px] text-slate-400 uppercase tracking-widest">Monitoreo Satelital de Talleres</p>
             </div>
         </div>
-        <div class="flex gap-2">
+        
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button onclick="exportarAExcel()" class="bg-emerald-950/40 hover:bg-emerald-900 text-emerald-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-file-excel"></i> Excel
+            </button>
+            
+            <button onclick="exportarAPDF()" class="bg-rose-950/40 hover:bg-rose-900 text-rose-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-rose-500/30 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-file-pdf"></i> PDF
+            </button>
+
+            <div class="h-6 w-[1px] bg-slate-800 mx-1 hidden sm:block"></div>
+
             <button onclick="cargarDatosAnaliticos()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer">
                 <i class="fa-solid fa-rotate"></i> Actualizar
             </button>
+            
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs transition-colors border border-slate-700 flex items-center justify-center">
                 <i class="fa-solid fa-house"></i>
             </a>
@@ -53,7 +68,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[250px] flex flex-col justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-donut mr-1 text-slate-500"></i> Distribución de Carga por Fosa</h3>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-slate-500"></i> Distribución de Carga por Fosa</h3>
                 <div class="w-full max-h-48 flex justify-center">
                     <canvas id="chartTalleres"></canvas>
                 </div>
@@ -66,13 +81,13 @@
             </div>
         </div>
 
-        <div class="bg-slate-950/40 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+        <div id="contenedorTablaReporte" class="bg-slate-950/40 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
             <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-white"><i class="fa-solid fa-list-check mr-1 text-slate-400"></i> Bitácora en Tiempo Real</h3>
                 <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono uppercase">Solo Lectura</span>
             </div>
             <div class="overflow-x-auto w-full">
-                <table class="w-full text-left border-collapse">
+                <table id="tablaLogistica" class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-900 text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800 uppercase">
                             <th class="p-3">ID Registro</th>
@@ -124,11 +139,10 @@
 
                 const registros = res.datos;
                 
-                // 1. PROCESAR CONTADORES KPIs
                 let total = registros.length;
                 let porAtender = registros.filter(r => r.Estatus === "Por Atender").length;
                 let enProceso = registros.filter(r => r.Estatus === "En Proceso").length;
-                let listos = total - (porAtender + enProceso); // Unidades fuera de taller o reparadas
+                let listos = total - (porAtender + enProceso); 
                 let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100;
 
                 document.getElementById("kpiTotal").textContent = total;
@@ -136,7 +150,6 @@
                 document.getElementById("kpiProceso").textContent = enProceso;
                 document.getElementById("kpiDispo").textContent = `${porcDispo}%`;
 
-                // 2. CONSTRUIR LA TABLA DE DATOS
                 if (total === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros en la base de datos</td></tr>`;
                     return;
@@ -145,13 +158,10 @@
                 tbody.innerHTML = "";
                 let conteoTalleres = {};
 
-                // Renderizado inverso para ver lo más nuevo de primero en la pantalla gerencial
                 registros.reverse().forEach(reg => {
-                    // Agrupar para gráficos de talleres
                     let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
                     conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
-                    // Badge de estatus estilizado
                     let badgeColor = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
                     if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-500/10 text-blue-400 border border-blue-500/30";
                     if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
@@ -170,7 +180,6 @@
                     tbody.insertAdjacentHTML("beforeend", fila);
                 });
 
-                // 3. RENDERIZACIÓN DE GRÁFICOS DINÁMICOS
                 renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
 
             } catch (err) {
@@ -180,15 +189,13 @@
         }
 
         function renderizarGraficos(talleresData, espera, proceso, listos) {
-            const ctxTalleres = document.getElementById("chartTalleres").getContext("2m");
+            const ctxTalleres = document.getElementById("chartTalleres").getContext("2d");
             const ctxEstatus = document.getElementById("chartEstatus").getContext("2d");
 
-            // Destruir instancias viejas para evitar parpadeos visuales al actualizar
             if (instanciaChartTalleres) instanciaChartTalleres.destroy();
             if (instanciaChartEstatus) instanciaChartEstatus.destroy();
 
-            // Gráfico 1: Distribución por Talleres (Dona)
-            instanciaChartTalleres = new Chart(document.getElementById("chartTalleres"), {
+            instanciaChartTalleres = new Chart(ctxTalleres, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(talleresData),
@@ -205,8 +212,7 @@
                 }
             });
 
-            // Gráfico 2: Balance Operativo (Barras)
-            instanciaChartEstatus = new Chart(document.getElementById("chartEstatus"), {
+            instanciaChartEstatus = new Chart(ctxEstatus, {
                 type: 'bar',
                 data: {
                     labels: ['Por Atender', 'En Proceso', 'Disponibles'],
@@ -227,6 +233,58 @@
                     plugins: { legend: { display: false } }
                 }
             });
+        }
+
+        // ==========================================
+        // FUNCIONES DE EXPORTACIÓN DIRECTA (NUEVAS)
+        // ==========================================
+        
+        function obtenerFechaFormato() {
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            let mm = hoy.getMonth() + 1;
+            let dd = hoy.getDate();
+            if (dd < 10) dd = '0' + dd;
+            if (mm < 10) mm = '0' + mm;
+            return `${dd}-${mm}-${yyyy}`;
+        }
+
+        function exportarAExcel() {
+            const tabla = document.getElementById("tablaLogistica");
+            if (!tabla || document.getElementById("tablaCuerpo").rows[0].cells.length === 1) {
+                alert("No hay datos disponibles en la bitácora para exportar.");
+                return;
+            }
+            
+            // Convertir la tabla HTML directamente a un libro de trabajo Excel
+            const libro = XLSX.utils.table_to_book(tabla, { sheet: "Bitácora de Patio" });
+            
+            // Guardar el archivo con nombre descriptivo y fecha
+            XLSX.writeFile(libro, `Reporte_Patio_TTOCC_${obtenerFechaFormato()}.xlsx`);
+        }
+
+        function exportarAPDF() {
+            const elemento = document.getElementById("contenedorTablaReporte");
+            if (!elemento || document.getElementById("tablaCuerpo").rows[0].cells.length === 1) {
+                alert("No hay datos disponibles en la bitácora para exportar.");
+                return;
+            }
+
+            // Configuración del formato para que la tabla quepa de manera legible (Horizontal)
+            const opciones = {
+                margin: 0.3,
+                filename: `Reporte_Patio_TTOCC_${obtenerFechaFormato()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2, 
+                    backgroundColor: '#0b1329', // Mantiene el tono oscuro industrial en el PDF
+                    useCORS: true 
+                },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            // Ejecutar compilación y descarga del PDF
+            html2pdf().set(opciones).from(elemento).save();
         }
     </script>
 </body>
