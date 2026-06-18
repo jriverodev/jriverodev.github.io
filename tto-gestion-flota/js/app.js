@@ -1,70 +1,113 @@
-// js/app.js - Lógica Global y Kernel de Seguridad (CON URL REAL DE PRODUCCIÓN)
+// js/app.js - Núcleo de Configuración, Seguridad y PWA (COMPLETO)
 
+// =========================================================================
+// CONFIGURACIÓN GLOBAL DEL SISTEMA
+// =========================================================================
 const APP_CONFIG = {
-    // Tu URL real de Google Apps Script vinculada a tu hoja de cálculo
+    // REEMPLAZA ESTA URL CON EL LINK DE TU DESPLIEGUE EN GOOGLE APPS SCRIPT
     URL_API: "https://script.google.com/macros/s/AKfycbzpVKQ3KmUDa6F27H0cwgIOc13_F05f4aKgh03cOJzmiEgf6yQZ6xxGh2Nt7Cytq9-T5A/exec"
 };
 
-// Registrar Service Worker global de forma correcta en la raíz
+// Registro del Service Worker para soporte de PWA (Instalación en móviles)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker Operativo bajo alcance: ', reg.scope))
-            .catch(err => console.error('Fallo en la carga del Service Worker: ', err));
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('✔ Service Worker operativo en patio:', reg.scope))
+            .catch(err => console.error('❌ Error registrando el Service Worker:', err));
     });
 }
 
-// Algoritmo nativo de generación de Hash SHA-256 (Se conserva para uso futuro)
-async function generarHashCrypto(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Verificación estructural de Sesiones Privadas
-function validarAccesoPantalla(rolRequerido) {
-    const rolActivo = sessionStorage.getItem("tto_sesion_rol");
-    if (!rolActivo) {
-        window.location.href = "index.html";
-        return false;
+// =========================================================================
+// MÓDULO DE AUTENTICACIÓN (LOGIN)
+// =========================================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const formLogin = document.getElementById("formLogin");
+    if (formLogin) {
+        formLogin.addEventListener("submit", ejecutarAutenticacionZulia);
     }
-    if (rolRequerido && rolActivo !== rolRequerido) {
-        window.location.href = "index.html";
-        return false;
-    }
-    return true;
-}
+});
 
-// Inicialización del Login - MODO BYPASS BASADO EN TU SELECTOR DE ROL (Contraseña deshabilitada temporalmente)
-if (document.getElementById("formLogin")) {
-    // Eliminamos la obligación de rellenar la contraseña en el móvil para pruebas rápidas
-    const campoClave = document.getElementById("txtPassword");
-    if (campoClave) {
-        campoClave.removeAttribute("required");
+async function ejecutarAutenticacionZulia(e) {
+    e.preventDefault();
+    
+    const inputClave = document.getElementById("txtClave");
+    if (!inputClave) return;
+    
+    const claveIngresada = inputClave.value.trim();
+    
+    if (!claveIngresada) {
+        Swal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Por favor, ingrese su credencial de acceso.' });
+        return;
     }
 
-    document.getElementById("formLogin").addEventListener("submit", (e) => {
-        e.preventDefault();
-        
-        // Capturamos el valor real de tu select de index.html: "CARGA" o "VISOR"
-        const rolSeleccionado = document.getElementById("selRol").value;
-        
-        Swal.fire({
-            title: 'Conectando...',
-            timer: 500,
-            showConfirmButton: false,
-            didOpen: () => { Swal.showLoading(); }
-        }).then(() => {
-            // Evaluamos la opción elegida en tu menú desplegable:
-            if (rolSeleccionado === "VISOR") {
-                sessionStorage.setItem("tto_sesion_rol", "GERENTE");
+    Swal.fire({
+        title: 'Verificando Credenciales...',
+        text: 'Conectando con el servidor central...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "login", clave: claveIngresada })
+        });
+
+        if (!response.ok) throw new Error("Fallo de respuesta del servidor de Google");
+
+        const resultado = await response.json();
+        Swal.close();
+
+        if (resultado.status === "SUCCESS") {
+            // Guardar sesión en el almacenamiento temporal del navegador
+            sessionStorage.setItem("TTOCC_SESION_ROL", resultado.rol);
+            sessionStorage.setItem("TTOCC_SESION_ACTIVA", "TRUE");
+
+            // Redirección inteligente basada en el rol de seguridad devuelto por el script
+            if (resultado.rol === "GERENTE") {
                 window.location.href = "visor.html";
-            } else if (rolSeleccionado === "CARGA") {
-                sessionStorage.setItem("tto_sesion_rol", "OPERADOR");
+            } else if (resultado.rol === "OPERADOR") {
                 window.location.href = "panel.html";
             }
+        } else {
+            Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: resultado.message || 'Contraseña incorrecta.' });
+        }
+
+    } catch (error) {
+        console.error("Error en módulo de login:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Fallo de Conexión',
+            text: 'No se pudo contactar al servidor. Compruebe su señal de datos.'
         });
-    });
+    }
+}
+
+// =========================================================================
+// GUARDIÁN DE SEGURIDAD (CONTROL DE ACCESO ENTRE PANTALLAS)
+// =========================================================================
+function validarAccesoPantalla(rolRequerido) {
+    const sesionActiva = sessionStorage.getItem("TTOCC_SESION_ACTIVA");
+    const rolActual = sessionStorage.getItem("TTOCC_SESION_ROL");
+
+    if (sesionActiva !== "TRUE" || !rolActual) {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+        return false;
+    }
+
+    // Un Gerente puede auditar todo, un Operador solo puede estar en su formulario
+    if (rolRequerido === "GERENTE" && rolActual !== "GERENTE") {
+        Swal.fire({
+            icon: 'error',
+            title: 'Restricción de Nivel',
+            text: 'Su rol no tiene privilegios analíticos gerenciales.',
+            confirmButtonText: 'Volver'
+        }).then(() => {
+            window.location.href = "panel.html";
+        });
+        return false;
+    }
+    
+    return true;
 }
