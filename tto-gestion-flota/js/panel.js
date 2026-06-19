@@ -256,7 +256,7 @@ function cerrarModalNuevo() {
     document.getElementById("modalNuevoRegistro").classList.add("hidden");
 }
 
-function alternarTallerExtern(valor) {
+function alternarTallerExterno(valor) {
     document.getElementById("wrapper-externo").classList.toggle("hidden", valor !== "TALLER EXTERNO (Terceros)");
 }
 
