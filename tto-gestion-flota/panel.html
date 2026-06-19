@@ -1,213 +1,234 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-950">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TTOCC System - Gestión de Flota</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-  </style>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
-
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center gap-3">
-          <div class="bg-blue-600 p-2 rounded-lg text-xl">🚚</div>
-          <div>
-            <span class="font-bold text-lg tracking-tight block">TTOCC System</span>
-            <span class="text-xs text-slate-400 block -mt-1">Sala de Operaciones</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <span class="hidden sm:inline text-xs bg-slate-800 text-slate-300 py-1 px-3 rounded-full border border-slate-700">
-            🟢 Conectado a Drive
-          </span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTOCC System - Panel de Control de Patio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Historial de Mantenimiento</h1>
-        <p class="text-sm text-slate-500 mt-1">Monitoreo de estado físico, ubicación en fosa, gerencia usuaria y reportes fotográficos.</p>
-      </div>
-      <div>
-        <button onclick="abrirModalCrear()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-          <span>➕</span> Registrar Unidad
-        </button>
-      </div>
-    </div>
+    <script>
+        const APP_CONFIG = {
+            URL_API: "TU_URL_DE_EXEC_DE_GOOGLE_APPS_SCRIPT_AQUI"
+        };
+    </script>
+</head>
+<body class="text-slate-200 font-sans antialiased min-h-full pb-12">
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-semibold uppercase tracking-wider">
-              <th class="px-6 py-4">ID</th>
-              <th class="px-6 py-4">Unidad</th>
-              <th class="px-6 py-4">Flota</th>
-              <th class="px-6 py-4">Ubicación / Fosa</th>
-              <th class="px-6 py-4">Gerencia Usuaria</th>
-              <th class="px-6 py-4">Chofer Responsable</th>
-              <th class="px-6 py-4">Progreso</th>
-              <th class="px-6 py-4">Estatus</th>
-              <th class="px-6 py-4 text-center">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tabla_historial" class="divide-y divide-slate-100 text-sm text-slate-700 font-medium">
-            <tr>
-              <td colspan="9" class="text-center py-12 text-slate-400 animate-pulse font-normal">
-                🔄 Sincronizando registros de flota desde la nube de Google...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <div id="modal_registro" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4 z-50 transition-all duration-300">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-100 transform transition-all duration-300 scale-100">
-      
-      <div class="bg-slate-900 p-5 text-white flex justify-between items-center rounded-t-2xl">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">📋</span>
-          <h3 id="modal_titulo" class="text-base sm:text-lg font-bold tracking-tight">Registrar Control de Unidad</h3>
-        </div>
-        <button onclick="cerrarModal()" class="text-slate-400 hover:text-white transition font-bold text-2xl h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-800">&times;</button>
-      </div>
-
-      <form id="form_unidad" onsubmit="procesarFormulario(event)" class="p-6 space-y-5">
-        <input type="hidden" id="id_registro">
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="unidad">Número de Unidad</label>
-            <input type="text" id="unidad" required placeholder="Ej. TTO-XX" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="flota">Tipo de Flota</label>
-            <input type="text" id="flota" placeholder="Ej. Pesada, Liviana" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="nombre_taller">Ubicación / Fosa</label>
-            <select id="nombre_taller" onchange="alternarTallerExterno()" required class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-              <option value="">-- Seleccione Ubicación --</option>
-              <option value="Fosa 1">Fosa 1</option>
-              <option value="Fosa 2">Fosa 2</option>
-              <option value="Lavadero">Lavadero</option>
-              <option value="Zona de Espera">Zona de Espera</option>
-              <option value="Taller Externo">Taller Externo</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="marca">Marca / Modelo</label>
-            <input type="text" id="marca" placeholder="Ej. Mack, Toyota, Ford" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-        </div>
-
-        <div id="contenedor_taller_ext" class="hidden bg-amber-50/60 p-4 border border-amber-200 rounded-xl space-y-1">
-          <label class="block text-amber-800 text-xs font-bold uppercase tracking-wider" for="nombre_taller_ext">Nombre de la Empresa Externa</label>
-          <input type="text" id="nombre_taller_ext" placeholder="Indique el nombre del taller aliado" class="w-full border border-amber-200 bg-white p-2.5 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition font-medium">
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="gerencia_usuaria">Gerencia Usuaria</label>
-            <select id="gerencia_usuaria" onchange="alternarOtraGerencia()" required class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-              <option value="">-- Seleccione Gerencia --</option>
-              <option value="Operaciones">Operaciones</option>
-              <option value="Logística">Logística / Transporte</option>
-              <option value="Mantenimiento">Mantenimiento</option>
-              <option value="Seguridad Integral / PCP">Seguridad Integral / PCP</option>
-              <option value="Servicios Logísticos">Servicios Logísticos</option>
-              <option value="Otra">Otra (Escribir manualmente)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="chofer_usuario">Chofer / Responsable</label>
-            <input type="text" id="chofer_usuario" placeholder="Nombre de quien entrega la unidad" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-        </div>
-
-        <div id="contenedor_otra_gerencia" class="hidden bg-blue-50/60 p-4 border border-blue-200 rounded-xl space-y-1">
-          <label class="block text-blue-800 text-xs font-bold uppercase tracking-wider" for="otra_gerencia">Escriba el nombre de la Gerencia</label>
-          <input type="text" id="otra_gerencia" placeholder="Ej. Recursos Humanos, Finanzas" class="w-full border border-blue-200 bg-white p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium">
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="estatus">Estatus Operativo</label>
-            <select id="estatus" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-              <option value="Por Atender">Por Atender</option>
-              <option value="En Diagnóstico">En Diagnóstico</option>
-              <option value="En Reparación">En Reparación</option>
-              <option value="Espera de Repuesto">Espera de Repuesto</option>
-              <option value="Listo">Listo</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="avance">Porcentaje de Avance (%)</label>
-            <input type="number" id="avance" min="0" max="100" placeholder="0-100" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="fecha_ingreso">Fecha Ingreso</label>
-            <input type="text" id="fecha_ingreso" placeholder="dd-mm-aaaa (Vacío = Hoy)" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-          <div>
-            <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="fecha_salida">Fecha Salida</label>
-            <input type="text" id="fecha_salida" placeholder="Automático al poner 'Listo'" class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5" for="observaciones">Observaciones / Falla Reportada</label>
-          <textarea id="observaciones" rows="2" placeholder="Detalle el reporte o diagnóstico de la unidad..." class="w-full border border-slate-200 bg-slate-50 p-2.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800"></textarea>
-        </div>
-
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-          <span class="text-xs font-bold text-slate-600 uppercase tracking-wider block">📷 Evidencia Fotográfica (Envío directo a Drive)</span>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-slate-500 text-xs mb-1" for="foto_antes">Foto Antes (Ingreso)</label>
-              <input type="file" id="foto_antes" accept="image/*" class="text-xs block w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-              <input type="hidden" id="foto_antes_url">
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-gauge-high text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-xs uppercase tracking-widest font-black text-white">TTOCC System</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Panel Operativo de Patio & Mantenimiento</p>
+                </div>
             </div>
-            <div>
-              <label class="block text-slate-500 text-xs mb-1" for="foto_despues">Foto Después (Egreso)</label>
-              <input type="file" id="foto_despues" accept="image/*" class="text-xs block w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-              <input type="hidden" id="foto_despues_url">
+            
+            <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-plus text-[10px]"></i> Registrar Ingreso
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
+                <div>
+                    <h2 class="text-xs uppercase tracking-wider font-black text-slate-300">Matriz Operativa en Tiempo Real</h2>
+                    <p class="text-[10px] text-slate-500">Edición directa sobre celdas o a través de planificación avanzada</p>
+                </div>
+                <button onclick="cargarTablaEditable()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar Vista
+                </button>
             </div>
-          </div>
-        </div>
 
-        <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-          <button type="button" onclick="cerrarModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2 px-5 rounded-xl transition text-sm">
-            Cancelar
-          </button>
-          <button type="submit" id="btn_guardar" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl shadow-md shadow-blue-600/10 transition text-sm">
-            Sincronizar
-          </button>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-950/40">
+                            <th class="p-3 w-12 font-mono">ID</th>
+                            <th class="p-3 w-48">Unidad / Marca</th>
+                            <th class="p-3 w-48">Fosa / Ubicación</th>
+                            <th class="p-3 w-44">Avance (%)</th>
+                            <th class="p-3 w-40">Estatus Operativo</th>
+                            <th class="p-3">Observaciones / Novedad</th>
+                            <th class="p-3 w-28 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEditableCuerpo" class="divide-y divide-slate-800/40">
+                        </tbody>
+                </table>
+            </div>
         </div>
-      </form>
+    </main>
+
+    <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                <h3 class="text-xs uppercase tracking-widest font-black text-blue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Patio
+                </h3>
+                <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">ID Unidad <span class="text-red-500">*</span></label>
+                        <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase font-mono tracking-wider">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca</label>
+                        <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Tipo de Flota</label>
+                        <div class="relative">
+                            <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer appearance-none">
+                                <option value="Liviana" class="bg-slate-900 text-slate-200">🚛 Liviana</option>
+                                <option value="Pesada" class="bg-slate-900 text-slate-200">🚜 Pesada</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-[10px]">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
+                        <div class="relative">
+                            <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer appearance-none">
+                                <option value="Taller Central" class="bg-slate-900 text-slate-200">🔧 Taller Central</option>
+                                <option value="Taller La Salina" class="bg-slate-900 text-slate-200">🔧 Taller La Salina</option>
+                                <option value="TALLER EXTERNO (Terceros)" class="bg-slate-900 text-slate-200">🏭 TALLER EXTERNO (Terceros)</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-[10px]">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wrapper-externo" class="mb-3 hidden">
+                    <label class="block text-[10px] uppercase font-bold text-yellow-500 mb-1"><i class="fa-solid fa-building-shield"></i> Nombre del Taller Aliado (Externo)</label>
+                    <input type="text" id="add-taller-ext" placeholder="Ej: Rectificadora Fénix C.A." class="w-full bg-slate-950 border border-yellow-600/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500 text-xs uppercase">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-calendar-day mr-1"></i> Fecha de Ingreso</label>
+                        <input type="date" id="add-fecha-ingreso" style="color-scheme: dark;" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-medium tracking-wide">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)</label>
+                        <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer file:mr-2 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Observaciones Iniciales / Diagnóstico Preliminar</label>
+                    <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
+                    <button type="button" onclick="cerrarModalNuevo()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
+                    <button type="submit" id="btn-crear-submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-square-check"></i> Registrar Ingreso
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <script src="js/panel.js"></script>
+    <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                <h3 class="text-xs uppercase tracking-widest font-black text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
+                </h3>
+                <button onclick="cerrarModalEditar()" class="text-slate-500 hover:text-white transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
+                <input type="hidden" id="edit-id-registro">
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">ID Unidad (Protegido)</label>
+                        <input type="text" id="edit-unidad" disabled class="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca del Vehículo</label>
+                        <input type="text" id="edit-marca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
+                    <div class="relative">
+                        <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold appearance-none">
+                            <option value="Por Atender" class="bg-slate-900 text-slate-200">⚠️ Por Atender</option>
+                            <option value="En Proceso" class="bg-slate-900 text-slate-200">⚙️ En Proceso</option>
+                            <option value="Listo" class="bg-slate-900 text-slate-200">✅ Listo</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-[10px]">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4 border border-slate-800 rounded-xl p-4 bg-slate-950/30">
+                    <label class="block text-[10px] uppercase tracking-wider font-black text-blue-400 mb-2">
+                        <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones (Plan vs Real)
+                    </label>
+                    
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros, Revisar frenos..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-xs">
+                        <button type="button" onclick="agregarTareaModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="edit-container-tareas" class="space-y-2 max-h-44 overflow-y-auto pr-1">
+                        </div>
+
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/60">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Avance Real Calculado:</span>
+                        <span id="edit-lbl-avance-calculado" class="font-mono text-xs font-black text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">0%</span>
+                    </div>
+                </div>
+
+                <div id="wrapper-foto-despues" class="mb-4 hidden p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-xl transition-all">
+                    <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
+                        <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
+                    </label>
+                    <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer file:mr-2 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Bitácora de Observaciones / Novedades</label>
+                    <textarea id="edit-observa" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
+                    <button type="button" onclick="cerrarModalEditar()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
+                    <button type="submit" id="btn-editar-submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/panel.js"></script>
 </body>
 </html>
