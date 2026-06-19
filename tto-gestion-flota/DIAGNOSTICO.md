@@ -8,6 +8,10 @@ El sistema es una **PWA (Progressive Web App)** que utiliza:
 
 ## 2. Hallazgos Críticos
 
+### ❌ Error de Referencia (JS)
+Se detectó un error `ReferenceError: alternarTallerExterno is not defined` en `panel.html`. Esto ocurría porque los scripts se cargaban al final del `body`, pero los controladores de eventos en línea (`onchange`) intentaban acceder a las funciones antes de que el script fuera procesado o debido a problemas de orden de carga.
+- **Solución:** Se movieron los tags `<script>` de `js/app.js` y `js/panel.js` al `<head>` con el atributo `defer`.
+
 ### ⚠️ Inconsistencia de la URL de la API
 Se detectó que la URL de comunicación con el backend está definida de forma inconsistente:
 - **`js/app.js`**: Usa un ID de despliegue finalizado en `...KTqK8A/exec`.
