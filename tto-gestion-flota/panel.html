@@ -10,6 +10,11 @@
     <script src="js/panel.js" defer></script>
 </head>
 <body class="text-slate-200 font-sans antialiased min-h-full pb-12">
+    <script>
+        const APP_CONFIG = {
+            URL_API: "https://script.google.com/macros/s/AKfycby-G4hvZN8-SebaLLkhV7893ugHkEnTRisuykjs0wgCuJi14XV5lUjwJ6QjV-aIyFvllg/exec"
+        };
+    </script>
 
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -94,8 +99,9 @@
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
                         <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
-                            <option value="Taller Central">Taller Central</option>
+                            <option value="Taller Central">Taller Lagunillas</option>
                             <option value="Taller La Salina">Taller La Salina</option>
+                            <option value="Taller La Salina">Taller Lago Medio</option>
                             <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO (Terceros)</option>
                         </select>
                     </div>
