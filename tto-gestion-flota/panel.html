@@ -6,14 +6,14 @@
     <title>TTOCC System - Panel de Control de Patio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script>
-        const APP_CONFIG = {
-            URL_API: "https://script.google.com/macros/s/AKfycbwpevcpIspFtNiYGAdCrrQTIBVpLdohHws6KTYH0btUDXWpeYsoFm6lOwB9fvKxFZgA4A/exec"
-        };
-    </script>
 </head>
 <body class="text-slate-200 font-sans antialiased min-h-full pb-12">
+
+    <script>
+        const APP_CONFIG = {
+            URL_API: "https://script.google.com/macros/s/AKfycbzxtjOaMKcuEqEZIgxNChm9VsSf75Ff1taXjmlsw8Nl-JR3mLAs2K3YiyHuvXgD-uOwgg/exec"
+        };
+    </script>
 
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -34,6 +34,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
             <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
                 <div>
@@ -71,9 +72,7 @@
                 <h3 class="text-xs uppercase tracking-widest font-black text-blue-400 flex items-center gap-2">
                     <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Patio
                 </h3>
-                <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-white transition-colors cursor-pointer">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
@@ -91,28 +90,18 @@
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Tipo de Flota</label>
-                        <div class="relative">
-                            <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer appearance-none">
-                                <option value="Liviana" class="bg-slate-900 text-slate-200">🚛 Liviana</option>
-                                <option value="Pesada" class="bg-slate-900 text-slate-200">🚜 Pesada</option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-[10px]">
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                        </div>
+                        <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                            <option value="Liviana">Liviana</option>
+                            <option value="Pesada">Pesada</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
-                        <div class="relative">
-                            <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer appearance-none">
-                                <option value="Taller Central" class="bg-slate-900 text-slate-200">🔧 Taller Central</option>
-                                <option value="Taller La Salina" class="bg-slate-900 text-slate-200">🔧 Taller La Salina</option>
-                                <option value="TALLER EXTERNO (Terceros)" class="bg-slate-900 text-slate-200">🏭 TALLER EXTERNO (Terceros)</option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-[10px]">
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                        </div>
+                        <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                            <option value="Taller Central">Taller Central</option>
+                            <option value="Taller La Salina">Taller La Salina</option>
+                            <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO (Terceros)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -124,11 +113,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-calendar-day mr-1"></i> Fecha de Ingreso</label>
-                        <input type="date" id="add-fecha-ingreso" style="color-scheme: dark;" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-medium tracking-wide">
+                        <input type="date" id="add-fecha-ingreso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)</label>
-                        <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer file:mr-2 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700">
+                        <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer">
                     </div>
                 </div>
 
@@ -153,9 +142,7 @@
                 <h3 class="text-xs uppercase tracking-widest font-black text-emerald-400 flex items-center gap-2">
                     <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
                 </h3>
-                <button onclick="cerrarModalEditar()" class="text-slate-500 hover:text-white transition-colors cursor-pointer">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <button onclick="cerrarModalEditar()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
@@ -174,16 +161,11 @@
 
                 <div class="mb-4">
                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
-                    <div class="relative">
-                        <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold appearance-none">
-                            <option value="Por Atender" class="bg-slate-900 text-slate-200">⚠️ Por Atender</option>
-                            <option value="En Proceso" class="bg-slate-900 text-slate-200">⚙️ En Proceso</option>
-                            <option value="Listo" class="bg-slate-900 text-slate-200">✅ Listo</option>
-                        </select>
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-[10px]">
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                    </div>
+                    <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold">
+                        <option value="Por Atender">⚠️ Por Atender</option>
+                        <option value="En Proceso">⚙️ En Proceso</option>
+                        <option value="Listo">✅ Listo</option>
+                    </select>
                 </div>
 
                 <div class="mb-4 border border-slate-800 rounded-xl p-4 bg-slate-950/30">
@@ -211,7 +193,7 @@
                     <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
                         <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
                     </label>
-                    <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer file:mr-2 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700">
+                    <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
                 </div>
 
                 <div class="mb-4">
