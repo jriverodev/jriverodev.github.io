@@ -1,96 +1,124 @@
 // =========================================================================
-// TTOCC SYSTEM - ARCHIVO LOGICO CENTRAL (panel.js)
-// Sincronización PWA de 16 Columnas y carga nativa a Google Drive
+// TTOCC SYSTEM - LÓGICA DE DETRÁS DE ESCENA (js/panel.js)
+// Adaptado 100% al Diseño Dark Mode original de Jesús
 // =========================================================================
 
-// ⚠️ REEMPLAZA ESTA URL POR LA DE TU IMPLEMENTACIÓN DE GOOGLE APPS SCRIPT
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwpevcpIspFtNiYGAdCrrQTIBVpLdohHws6KTYH0btUDXWpeYsoFm6lOwB9fvKxFZgA4A/exec"; 
+const WEB_APP_URL = APP_CONFIG.URL_API || "https://script.google.com/macros/s/AKfycbwpevcpIspFtNiYGAdCrrQTIBVpLdohHws6KTYH0btUDXWpeYsoFm6lOwB9fvKxFZgA4A/exec"; 
 
-let cacheDatos = []; // Caché local para evitar peticiones redundantes
+let cacheDatos = []; 
+let tareasActuales = []; // Guarda temporalmente el checklist del registro en edición
 
-// Inicializar la carga de datos al renderizar el DOM
-window.addEventListener("DOMContentLoaded", cargarDatos);
+// Inicialización automática al cargar la página
+window.addEventListener("DOMContentLoaded", cargarTablaEditable);
 
-/**
- * Consume el backend en Apps Script para extraer el historial de flota
- */
-async function cargarDatos() {
+// =========================================================================
+// 1. LEER DATOS Y NORMALIZAR
+// =========================================================================
+async function cargarTablaEditable() {
+  const tbody = document.getElementById("tablaEditableCuerpo");
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center py-8 text-slate-500 text-xs animate-pulse">
+          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Conectando con la matriz en la nube...
+        </td>
+      </tr>`;
+  }
+
   try {
     const respuesta = await fetch(WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify({ accion: "leer" }) // Coincide exactamente con Código.gs
+      body: JSON.stringify({ accion: "leer" })
     });
     const resultado = await respuesta.json();
     
     if (resultado.status === "SUCCESS") {
-      cacheDatos = resultado.datos;
+      // Normalizador inteligente de llabas para evitar fallos por mayúsculas/minúsculas en el Sheet
+      cacheDatos = resultado.datos.map(item => {
+        let itemNormalizado = {};
+        for (let llave in item) {
+          let llaveLimpia = llave.toUpperCase().trim().replace(/\s+/g, '_');
+          itemNormalizado[llaveLimpia] = item[llave];
+        }
+        return itemNormalizado;
+      });
+      
       renderizarTabla(cacheDatos);
     } else {
-      alert("Error en el Backend de Google: " + resultado.message);
+      alert("Error en el Servidor: " + resultado.message);
     }
   } catch (error) {
-    console.error("Fallo de red o CORS:", error);
-    const tbody = document.getElementById("tabla_historial");
+    console.error("Fallo de red:", error);
     if (tbody) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="9" class="text-center py-8 text-red-500 font-semibold">
-            ❌ No se pudo conectar con Apps Script. Verifica la URL de despliegue o la conexión de red.
+          <td colspan="7" class="text-center py-8 text-red-500 text-xs font-semibold">
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i> Error de conexión con Google Apps Script.
           </td>
         </tr>`;
     }
   }
 }
 
-/**
- * Procesa e inyecta las filas dinámicas en la tabla de control
- * @param {Array} datos - Registros mapeados del Google Sheet
- */
+// =========================================================================
+// 2. RENDERIZAR TABLA EN MODO OSCURO HIGH-TECH
+// =========================================================================
 function renderizarTabla(datos) {
-  const tbody = document.getElementById("tabla_historial");
+  const tbody = document.getElementById("tablaEditableCuerpo");
   if (!tbody) return;
 
   if (datos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400 font-normal">No hay registros activos en la base de datos.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-600 text-xs font-normal">No hay registros activos en el patio.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = "";
   datos.forEach((item, index) => {
-    // Definición de Badges de Estatus con las paletas de color de Tailwind
-    let claseEstatus = "bg-slate-100 text-slate-700 border border-slate-200";
-    if (item["ESTATUS"] === "Listo") claseEstatus = "bg-green-50 text-green-700 border border-green-200 font-bold";
-    if (item["ESTATUS"] === "En Reparación") claseEstatus = "bg-amber-50 text-amber-700 border border-amber-200";
-    if (item["ESTATUS"] === "Por Atender") claseEstatus = "bg-red-50 text-red-700 border border-red-200";
-    if (item["ESTATUS"] === "Espera de Repuesto") claseEstatus = "bg-purple-50 text-purple-700 border border-purple-200";
-    if (item["ESTATUS"] === "En Diagnóstico") claseEstatus = "bg-blue-50 text-blue-700 border border-blue-200";
+    // Extracción tolerante de variables
+    let id_reg     = item["ID_REGISTRO"] || item["ID"] || "—";
+    let unidad     = item["UNIDAD"] || "S/I";
+    let marca      = item["MARCA"] || "Genérica";
+    let fosa       = item["FOSA"] || "Taller Central";
+    let avance     = parseInt(item["AVANCE"]) || 0;
+    let estatus    = item["ESTATUS"] || "Por Atender";
+    let observa    = item["OBSERVA"] || item["OBSERVACIONES"] || "Sin novedades registradas.";
+    let taller_ext = item["TALLER_EXT"] || item["NOMBRE_TALLER_EXT"] || "";
+
+    // Estilos Cyberpunk / Dark Mode para los Badges de Estatus
+    let claseEstatus = "bg-slate-800 text-slate-400 border border-slate-700";
+    if (estatus === "Listo") claseEstatus = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold";
+    if (estatus === "En Proceso" || estatus === "En Reparación") claseEstatus = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+    if (estatus === "Por Atender") claseEstatus = "bg-red-500/10 text-red-400 border border-red-500/20";
 
     tbody.innerHTML += `
-      <tr class="hover:bg-slate-50/80 transition-all duration-150 border-b border-slate-100 last:border-0">
-        <td class="px-6 py-4 font-bold text-blue-600">#${item["ID_REGISTRO"]}</td>
-        <td class="px-6 py-4 font-semibold text-slate-900">${item["UNIDAD"]}</td>
-        <td class="px-6 py-4 text-slate-500 font-medium">${item["FLOTA"] || "—"}</td>
-        <td class="px-6 py-4 text-slate-600 font-medium">
-          ${item["FOSA"] === "Taller Externo" ? '🏭 <span class="text-xs bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200">' + item["TALLER_EXT"] + '</span>' : '🔧 ' + item["FOSA"]}
+      <tr class="hover:bg-slate-900/60 transition-all duration-150 border-b border-slate-800/40 text-xs">
+        <td class="p-3 font-mono font-bold text-blue-400">#${id_reg}</td>
+        <td class="p-3">
+          <div class="font-bold text-white tracking-wide uppercase">${unidad}</div>
+          <div class="text-[10px] text-slate-500 uppercase font-medium">${marca}</div>
         </td>
-        <td class="px-6 py-4 text-xs font-semibold text-slate-600">${item["GERENCIA_USUARIA"] || "—"}</td>
-        <td class="px-6 py-4 text-xs italic text-slate-500 font-normal">${item["CHOFER_RESPONSABLE"] || "No Asignado"}</td>
-        <td class="px-6 py-4">
+        <td class="p-3 text-slate-300 font-medium">
+          ${fosa.includes("EXTERNAL") || fosa === "Taller Externo" 
+            ? `🏭 <span class="text-[10px] bg-yellow-500/10 text-yellow-400 px-1.5 py-0.5 rounded font-bold border border-yellow-500/20">${taller_ext}</span>` 
+            : `🔧 ${fosa}`}
+        </td>
+        <td class="p-3">
           <div class="flex items-center gap-2">
-            <div class="w-20 bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
-              <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: ${item["AVANCE"]}%"></div>
+            <div class="w-24 bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800 shadow-inner">
+              <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: ${avance}%"></div>
             </div>
-            <span class="text-xs font-bold text-slate-500">${item["AVANCE"]}%</span>
+            <span class="font-mono text-[11px] font-bold text-slate-400">${avance}%</span>
           </div>
         </td>
-        <td class="px-6 py-4">
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold inline-block tracking-wide shadow-sm ${claseEstatus}">
-            ${item["ESTATUS"]}
+        <td class="p-3">
+          <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold tracking-wider inline-block ${claseEstatus}">
+            ${estatus}
           </span>
         </td>
-        <td class="px-6 py-4 text-center">
-          <button onclick="abrirModalEditar(${index})" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1 px-3 text-xs rounded-lg transition shadow-sm border border-slate-950">
-            Editar
+        <td class="p-3 text-slate-400 font-normal max-w-xs truncate" title="${observa}">${observa}</td>
+        <td class="p-3 text-center">
+          <button onclick="abrirModalEditar(${index})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1 px-2.5 text-[11px] rounded-lg transition border border-slate-700/60 cursor-pointer">
+            <i class="fa-solid fa-sliders mr-1 text-slate-400"></i> Control
           </button>
         </td>
       </tr>
@@ -99,119 +127,131 @@ function renderizarTabla(datos) {
 }
 
 // =========================================================================
-// INTERFACES REACTIVAS (MOSTRAR / OCULTAR SECCIONES)
+// 3. CONTROL DE MODALES (ALTAMENTE FIEL A TU HTML)
 // =========================================================================
-
-function alternarTallerExterno() {
-  const selectTaller = document.getElementById("nombre_taller");
-  const contenedorExt = document.getElementById("contenedor_taller_ext");
-  if (!selectTaller || !contenedorExt) return;
-
-  if (selectTaller.value === "Taller Externo") {
-    contenedorExt.classList.remove("hidden");
-  } else {
-    contenedorExt.classList.add("hidden");
-    document.getElementById("nombre_taller_ext").value = "";
-  }
+function abrirModalNuevo() {
+  document.getElementById("formNuevoRegistro").reset();
+  // Colocar fecha de hoy por defecto
+  document.getElementById("add-fecha-ingreso").valueToDate = new Date();
+  document.getElementById("add-fecha-ingreso").value = new Date().toISOString().substring(0, 10);
+  document.getElementById("wrapper-externo").classList.add("hidden");
+  document.getElementById("modalNuevoRegistro").classList.remove("hidden");
 }
 
-function alternarOtraGerencia() {
-  const selectGerencia = document.getElementById("gerencia_usuaria");
-  const contenedorOtra = document.getElementById("contenedor_otra_gerencia");
-  if (!selectGerencia || !contenedorOtra) return;
-
-  if (selectGerencia.value === "Otra") {
-    contenedorOtra.classList.remove("hidden");
-    document.getElementById("otra_gerencia").focus();
-  } else {
-    contenedorOtra.classList.add("hidden");
-    document.getElementById("otra_gerencia").value = "";
-  }
+function cerrarModalNuevo() {
+  document.getElementById("modalNuevoRegistro").classList.add("hidden");
 }
 
-// =========================================================================
-// CONTROLADORES DE APERTURA DE MODALES
-// =========================================================================
-
-function abrirModalCrear() {
-  const form = document.getElementById("form_unidad");
-  if (form) form.reset();
-  
-  document.getElementById("id_registro").value = "";
-  document.getElementById("modal_titulo").innerText = "Registrar Nueva Unidad en Flota";
-  document.getElementById("contenedor_taller_ext").classList.add("hidden");
-  document.getElementById("contenedor_otra_gerencia").classList.add("hidden");
-  
-  // Apagar inputs de cierre para el flujo inicial de ingreso
-  document.getElementById("fecha_salida").disabled = true;
-  document.getElementById("foto_despues").disabled = true;
-  
-  document.getElementById("modal_registro").classList.remove("hidden");
+function alternarTallerExterno(valor) {
+  const wrapper = document.getElementById("wrapper-externo");
+  if (valor.includes("EXTERNAL") || valor === "Taller Externo") {
+    wrapper.classList.remove("hidden");
+  } else {
+    wrapper.classList.add("hidden");
+    document.getElementById("add-taller-ext").value = "";
+  }
 }
 
 function abrirModalEditar(index) {
-  const form = document.getElementById("form_unidad");
-  if (form) form.reset();
-  
+  document.getElementById("formEditarRegistro").reset();
   const item = cacheDatos[index];
 
-  document.getElementById("modal_titulo").innerText = `Modificar Registro Unidad: ${item["UNIDAD"]}`;
-  document.getElementById("id_registro").value = item["ID_REGISTRO"];
-  document.getElementById("unidad").value = item["UNIDAD"];
-  document.getElementById("flota").value = item["FLOTA"] || "";
-  document.getElementById("marca").value = item["MARCA"] || "";
-  document.getElementById("estatus").value = item["ESTATUS"];
-  document.getElementById("avance").value = item["AVANCE"] || "0";
-  document.getElementById("observaciones").value = item["OBSERVACIONES"] || "";
-  document.getElementById("fecha_ingreso").value = item["FECHA_INGRESO"] || "";
-  document.getElementById("fecha_salida").value = item["FECHA_SALIDA"] || "";
-  document.getElementById("chofer_usuario").value = item["CHOFER_RESPONSABLE"] || "";
-  
-  // Liberar controles para el flujo de egreso
-  document.getElementById("fecha_salida").disabled = false;
-  document.getElementById("foto_despues").disabled = false;
+  // Inyectar llaves mapeadas en la edición
+  document.getElementById("edit-id-registro").value = item["ID_REGISTRO"] || item["ID"] || "";
+  document.getElementById("edit-unidad").value = item["UNIDAD"] || "";
+  document.getElementById("edit-marca").value = item["MARCA"] || "";
+  document.getElementById("edit-estatus").value = item["ESTATUS"] || "Por Atender";
+  document.getElementById("edit-observa").value = item["OBSERVA"] || item["OBSERVACIONES"] || "";
 
-  // Evaluar fosa externa
-  document.getElementById("nombre_taller").value = item["FOSA"] || "";
-  if (item["FOSA"] === "Taller Externo") {
-    document.getElementById("contenedor_taller_ext").classList.remove("hidden");
-    document.getElementById("nombre_taller_ext").value = item["TALLER_EXT"] || "";
+  // Evaluar estatus para mostrar/ocultar el input de Foto Después si está "Listo"
+  evaluarEstatusModal(item["ESTATUS"]);
+
+  // Cargar y parsear Checklist Seguro
+  try {
+    let rawTareas = item["TAREAS"] || "[]";
+    tareasActuales = typeof rawTareas === "string" ? JSON.parse(rawTareas) : rawTareas;
+  } catch (e) {
+    tareasActuales = [];
+  }
+
+  renderizarChecklistModal();
+  document.getElementById("modalEditarRegistro").classList.remove("hidden");
+}
+
+function cerrarModalEditar() {
+  document.getElementById("modalEditarRegistro").classList.add("hidden");
+}
+
+function evaluarEstatusModal(valor) {
+  const wrapperFoto = document.getElementById("wrapper-foto-despues");
+  if (valor === "Listo") {
+    wrapperFoto.classList.remove("hidden");
   } else {
-    document.getElementById("contenedor_taller_ext").classList.add("hidden");
+    wrapperFoto.classList.add("hidden");
+    document.getElementById("edit-foto-despues").value = "";
   }
-
-  // Evaluar si la gerencia en la DB es una de la lista o fue escrita a mano
-  const selectGerencia = document.getElementById("gerencia_usuaria");
-  const opcionesLista = ["Operaciones", "Logística", "Mantenimiento", "Seguridad Integral / PCP", "Servicios Logísticos"];
-  
-  if (item["GERENCIA_USUARIA"] && item["GERENCIA_USUARIA"] !== "") {
-    if (opcionesLista.includes(item["GERENCIA_USUARIA"])) {
-      selectGerencia.value = item["GERENCIA_USUARIA"];
-      document.getElementById("contenedor_otra_gerencia").classList.add("hidden");
-    } else {
-      selectGerencia.value = "Otra";
-      document.getElementById("contenedor_otra_gerencia").classList.remove("hidden");
-      document.getElementById("otra_gerencia").value = item["GERENCIA_USUARIA"];
-    }
-  }
-
-  // Almacenar URLs de fotos previas en campos invisibles para evitar sobreescritura accidental
-  document.getElementById("foto_antes_url").value = item["FOTO_ANTES"] || "";
-  document.getElementById("foto_despues_url").value = item["FOTO_DESPUES"] || "";
-
-  document.getElementById("modal_registro").classList.remove("hidden");
 }
 
-function cerrarModal() {
-  document.getElementById("modal_registro").classList.add("hidden");
+// =========================================================================
+// 4. MOTOR REVOLUCIONARIO DEL CHECKLIST (PLAN VS REAL)
+// =========================================================================
+function agregarTareaModal() {
+  const input = document.getElementById("edit-nueva-tarea");
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  tareasActuales.push({ descripcion: texto, completada: false });
+  input.value = "";
+  renderizarChecklistModal();
 }
 
-/**
- * Transforma flujos de archivos desde inputs binarios a cadenas Base64 legibles por Apps Script
- * @param {File} file - Instancia del archivo recuperado
- */
-function transformarBase64(file) {
+function eliminarTareaModal(idx) {
+  tareasActuales.splice(idx, 1);
+  renderizarChecklistModal();
+}
+
+function alternarEstadoTarea(idx) {
+  tareasActuales[idx].completada = !tareasActuales[idx].completada;
+  renderizarChecklistModal();
+}
+
+function renderizarChecklistModal() {
+  const container = document.getElementById("edit-container-tareas");
+  const lblAvance = document.getElementById("edit-lbl-avance-calculado");
+  if (!container) return;
+
+  if (tareasActuales.length === 0) {
+    container.innerHTML = `<p class="text-[11px] text-slate-500 italic py-2 text-center">No hay tareas de diagnóstico asignadas a esta unidad.</p>`;
+    lblAvance.innerText = "0%";
+    return;
+  }
+
+  container.innerHTML = "";
+  let completadas = 0;
+
+  tareasActuales.forEach((tarea, idx) => {
+    if (tarea.completada) completadas++;
+
+    container.innerHTML += `
+      <div class="flex items-center justify-between bg-slate-950/80 px-3 py-2 rounded-lg border border-slate-800/60 transition hover:border-slate-700">
+        <label class="flex items-center gap-2.5 flex-1 cursor-pointer select-none text-[11px]">
+          <input type="checkbox" ${tarea.completada ? "checked" : ""} onchange="alternarEstadoTarea(${idx})" class="rounded bg-slate-900 border-slate-700 text-blue-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5 cursor-pointer">
+          <span class="${tarea.completada ? "line-through text-slate-500 font-medium" : "text-slate-300 font-semibold"}">${tarea.descripcion}</span>
+        </label>
+        <button type="button" onclick="eliminarTareaModal(${idx})" class="text-slate-500 hover:text-red-400 text-xs transition px-1 cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
+      </div>
+    `;
+  });
+
+  // Cálculo matemático exacto de avance porcentual automatizado
+  let porcentajeFinal = Math.round((completadas / tareasActuales.length) * 100);
+  lblAvance.innerText = `${porcentajeFinal}%`;
+}
+
+// Helper para convertir archivos a Base64 de forma asíncrona
+function convertirBase64(file) {
   return new Promise((resolve, reject) => {
+    if (!file) resolve("");
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
@@ -220,79 +260,90 @@ function transformarBase64(file) {
 }
 
 // =========================================================================
-// TRANSMISIÓN AJAX CRUD (POST PAYLOAD)
+// 5. ENVÍO CRUD DE REGISTROS (CREAR / EDITAR)
 // =========================================================================
-async function procesarFormulario(event) {
+async function guardarNuevoRegistro(event) {
   event.preventDefault();
-  const btnGuardar = document.getElementById("btn_guardar");
-  
-  btnGuardar.disabled = true;
-  btnGuardar.innerText = "Sincronizando Nube...";
+  const btn = document.getElementById("btn-crear-submit");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Guardando...`;
 
-  const idRegistro = document.getElementById("id_registro").value;
-  const accionEjecutar = idRegistro === "" ? "crear" : "editar";
+  const fotoFile = document.getElementById("add-foto-antes").files[0];
+  let fotoBase64 = "";
+  if (fotoFile) fotoBase64 = await convertirBase64(fotoFile);
 
-  // Captura inteligente de la gerencia seleccionada
-  let gerenciaFinal = document.getElementById("gerencia_usuaria").value;
-  if (gerenciaFinal === "Otra") {
-    gerenciaFinal = document.getElementById("otra_gerencia").value;
-  }
-
-  // Conversión multimedia de imágenes para Google Drive
-  let fotoAntesBase64 = "";
-  let fotoDespuesBase64 = "";
-
-  const fileAntes = document.getElementById("foto_antes").files[0];
-  if (fileAntes) fotoAntesBase64 = await transformarBase64(fileAntes);
-
-  const fileDespues = document.getElementById("foto_despues").files[0];
-  if (fileDespues) fotoDespuesBase64 = await transformarBase64(fileDespues);
-
-  // Mapeo simétrico con el backend del archivo Código.gs
-  const datosPayload = {
-    accion: accionEjecutar,
-    id_registro: idRegistro,
-    unidad: document.getElementById("unidad").value,
-    flota: document.getElementById("flota").value,
-    nombre_taller: document.getElementById("nombre_taller").value,
-    nombre_taller_ext: document.getElementById("nombre_taller_ext").value,
-    marca: document.getElementById("marca").value,
-    gerencia: gerenciaFinal,            // Mapeado a Columna O
-    usuario: document.getElementById("chofer_usuario").value, // Mapeado a Columna P
-    estatus: document.getElementById("estatus").value,
-    avance: document.getElementById("avance").value || "0",
-    fecha_ingreso: document.getElementById("fecha_ingreso").value,
-    fecha_salida: document.getElementById("fecha_salida").value,
-    observaciones: document.getElementById("observaciones").value,
-    
-    // Binarios para procesamiento de DriveApp
-    foto_antes_base64: fotoAntesBase64,
-    foto_despues_base64: fotoDespuesBase64,
-    
-    // URLs de respaldo si no hay archivos nuevos cargados
-    foto_antes: document.getElementById("foto_antes_url").value,
-    foto_despues: document.getElementById("foto_despues_url").value
+  const payload = {
+    accion: "crear",
+    unidad: document.getElementById("add-unidad").value,
+    marca: document.getElementById("add-marca").value,
+    flota: document.getElementById("add-flota").value,
+    nombre_taller: document.getElementById("add-taller").value,
+    nombre_taller_ext: document.getElementById("add-taller-ext").value,
+    fecha_ingreso: document.getElementById("add-fecha-ingreso").value,
+    observaciones: document.getElementById("add-observa").value,
+    foto_antes_base64: fotoBase64
   };
 
   try {
-    const response = await fetch(WEB_APP_URL, {
-      method: "POST",
-      body: JSON.stringify(datosPayload)
-    });
-    const result = await response.json();
-
-    if (result.status === "SUCCESS") {
-      alert(result.message);
-      cerrarModal();
-      cargarDatos(); // Actualización reactiva instantánea
+    const res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
+    const json = await res.json();
+    if (json.status === "SUCCESS") {
+      alert("Registro ingresado con éxito en el Patio.");
+      cerrarModalNuevo();
+      cargarTablaEditable();
     } else {
-      alert("Error en validación de servidor: " + result.message);
+      alert("Error: " + json.message);
     }
   } catch (err) {
-    alert("Fallo crítico de red. No se pudo establecer conexión con Google Apps Script.");
-    console.error("Fetch Exception:", err);
+    alert("Error crítico de red al guardar.");
+    console.error(err);
   } finally {
-    btnGuardar.disabled = false;
-    btnGuardar.innerText = "Sincronizar";
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
+  }
+}
+
+async function guardarEdicionModal(event) {
+  event.preventDefault();
+  const btn = document.getElementById("btn-editar-submit");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Sincronizando...`;
+
+  const fotoDespuesFile = document.getElementById("edit-foto-despues").files[0];
+  let fotoDespuesBase64 = "";
+  if (fotoDespuesFile) fotoDespuesBase64 = await convertirBase64(fotoDespuesFile);
+
+  // Calcular el avance actual en base al checklist antes de empaquetar el objeto
+  let completadas = tareasActuales.filter(t => t.completada).length;
+  let porcentajeFinal = tareasActuales.length > 0 ? Math.round((completadas / tareasActuales.length) * 100) : 0;
+
+  const payload = {
+    accion: "editar",
+    id_registro: document.getElementById("edit-id-registro").value,
+    marca: document.getElementById("edit-marca").value,
+    estatus: document.getElementById("edit-estatus").value,
+    observaciones: document.getElementById("edit-observa").value,
+    avance: porcentajeFinal,
+    tareas: JSON.stringify(tareasActuales), 
+    foto_despues_base64: fotoDespuesBase64,
+    fecha_salida: document.getElementById("edit-estatus").value === "Listo" ? new Date().toISOString().substring(0, 10) : ""
+  };
+
+  try {
+    const res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
+    const json = await res.json();
+    if (json.status === "SUCCESS") {
+      alert("Fila actualizada y sincronizada en el Sheet.");
+      cerrarModalEditar();
+      cargarTablaEditable();
+    } else {
+      alert("Error: " + json.message);
+    }
+  } catch (err) {
+    alert("Error de transmisión de red.");
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
   }
 }
