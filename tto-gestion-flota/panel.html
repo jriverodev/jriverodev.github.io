@@ -1,301 +1,274 @@
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-slate-950">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTOCC System - Panel de Control de Patio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="js/app.js" defer></script>
-    <script src="js/panel.js" defer></script>
-</head>
-<body class="text-slate-200 font-sans antialiased min-h-full pb-12">
-
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>TTOCC System - Panel de Control de Patio</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <script src="js/app.js" defer></script>
+      <script src="js/panel.js" defer></script>
+   </head>
+   <body class="text-slate-200 font-sans antialiased min-h-full pb-12">
+      <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
+         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-gauge-high text-sm"></i>
-                </div>
-                <div>
-                    <h1 class="text-xs uppercase tracking-widest font-black text-white">TTOCC System</h1>
-                    <p class="text-[10px] text-slate-400 font-medium">Panel Operativo de Patio & Mantenimiento</p>
-                </div>
+               <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                  <i class="fa-solid fa-gauge-high text-sm"></i>
+               </div>
+               <div>
+                  <h1 class="text-xs uppercase tracking-widest font-black text-white">TTOCC System</h1>
+                  <p class="text-[10px] text-slate-400 font-medium">Panel Operativo de Patio & Mantenimiento</p>
+               </div>
             </div>
-            
             <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 cursor-pointer">
-                <i class="fa-solid fa-plus text-[10px]"></i> Registrar Ingreso
+            <i class="fa-solid fa-plus text-[10px]"></i> Registrar Ingreso
             </button>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-        
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+         </div>
+      </header>
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
             <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
-                <div>
-                    <h2 class="text-xs uppercase tracking-wider font-black text-slate-300">Matriz Operativa en Tiempo Real</h2>
-                    <p class="text-[10px] text-slate-500">Edición directa sobre celdas o a través de planificación avanzada</p>
-                </div>
-                <button onclick="cargarTablaEditable()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer">
-                    <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar Vista
-                </button>
+               <div>
+                  <h2 class="text-xs uppercase tracking-wider font-black text-slate-300">Matriz Operativa en Tiempo Real</h2>
+                  <p class="text-[10px] text-slate-500">Edición directa sobre celdas o a través de planificación avanzada</p>
+               </div>
+               <button onclick="cargarTablaEditable()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+               <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar Vista
+               </button>
             </div>
-
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-950/40">
-                            <th class="p-3 w-12 font-mono">ID</th>
-                            <th class="p-3 w-48">Unidad / Marca</th>
-                            <th class="p-3 w-48">Fosa / Ubicación</th>
-                            <th class="p-3 w-44">Avance (%)</th>
-                            <th class="p-3 w-40">Estatus Operativo</th>
-                            <th class="p-3">Observaciones / Novedad</th>
-                            <th class="p-3 w-28 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaEditableCuerpo" class="divide-y divide-slate-800/40">
-                        </tbody>
-                </table>
+               <table class="w-full text-left border-collapse">
+                  <thead>
+                     <tr class="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-950/40">
+                        <th class="p-3 w-12 font-mono">ID</th>
+                        <th class="p-3 w-48">Unidad / Marca</th>
+                        <th class="p-3 w-48">Fosa / Ubicación</th>
+                        <th class="p-3 w-44">Avance (%)</th>
+                        <th class="p-3 w-40">Estatus Operativo</th>
+                        <th class="p-3">Observaciones / Novedad</th>
+                        <th class="p-3 w-28 text-center">Acciones</th>
+                     </tr>
+                  </thead>
+                  <tbody id="tablaEditableCuerpo" class="divide-y divide-slate-800/40">
+                  </tbody>
+               </table>
             </div>
-        </div>
-    </main>
-
-    <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200">
+         </div>
+      </main>
+      <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
-                <h3 class="text-xs uppercase tracking-widest font-black text-blue-400 flex items-center gap-2">
-                    <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Patio
-                </h3>
-                <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+               <h3 class="text-xs uppercase tracking-widest font-black text-blue-400 flex items-center gap-2">
+                  <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Patio
+               </h3>
+               <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
             <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
-                <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">ID Unidad <span class="text-red-500">*</span></label>
-                        <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase font-mono tracking-wider">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca</label>
-                        <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Tipo de Flota</label>
-                        <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
-                            <option value="Liviana">Liviana</option>
-                            <option value="Pesada">Pesada</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
-                        <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
-                            <option value="Taller Central">Taller Central</option>
-                            <option value="Taller La Salina">Taller La Salina</option>
-                            <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO (Terceros)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
-                        <input type="text" id="add-gerencia" list="list-gerencias" placeholder="Seleccione o escriba..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
-                        <input type="text" id="add-chofer" placeholder="Nombre del solicitante" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
-                    </div>
-                </div>
-
-                <div id="wrapper-externo" class="mb-3 hidden">
-                    <label class="block text-[10px] uppercase font-bold text-yellow-500 mb-1"><i class="fa-solid fa-building-shield"></i> Nombre del Taller Aliado (Externo)</label>
-                    <input type="text" id="add-taller-ext" placeholder="Ej: Rectificadora Fénix C.A." class="w-full bg-slate-950 border border-yellow-600/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500 text-xs uppercase">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-calendar-day mr-1"></i> Fecha de Ingreso</label>
-                        <input type="date" id="add-fecha-ingreso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)</label>
-                        <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer">
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Observaciones Iniciales / Diagnóstico Preliminar</label>
-                    <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
-                    <button type="button" onclick="cerrarModalNuevo()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
-                    <button type="submit" id="btn-crear-submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-square-check"></i> Registrar Ingreso
-                    </button>
-                </div>
+               <div class="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">ID Unidad <span class="text-red-500">*</span></label>
+                     <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase font-mono tracking-wider">
+                  </div>
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca</label>
+                     <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                  </div>
+               </div>
+               <div class="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Tipo de Flota</label>
+                     <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                        <option value="Liviana">Liviana</option>
+                        <option value="Pesada">Pesada</option>
+                     </select>
+                  </div>
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
+                     <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                        <option value="Taller Central">Taller Central</option>
+                        <option value="Taller La Salina">Taller La Salina</option>
+                        <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO (Terceros)</option>
+                     </select>
+                  </div>
+               </div>
+               <div class="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
+                     <input type="text" id="add-gerencia" list="list-gerencias" placeholder="Seleccione o escriba..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                  </div>
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
+                     <input type="text" id="add-chofer" placeholder="Nombre del solicitante" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                  </div>
+               </div>
+               <div id="wrapper-externo" class="mb-3 hidden">
+                  <label class="block text-[10px] uppercase font-bold text-yellow-500 mb-1"><i class="fa-solid fa-building-shield"></i> Nombre del Taller Aliado (Externo)</label>
+                  <input type="text" id="add-taller-ext" placeholder="Ej: Rectificadora Fénix C.A." class="w-full bg-slate-950 border border-yellow-600/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500 text-xs uppercase">
+               </div>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-calendar-day mr-1"></i> Fecha de Ingreso</label>
+                     <input type="date" id="add-fecha-ingreso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                  </div>
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)</label>
+                     <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer">
+                  </div>
+               </div>
+               <div class="mb-4">
+                  <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Observaciones Iniciales / Diagnóstico Preliminar</label>
+                  <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+               </div>
+               <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
+                  <button type="button" onclick="cerrarModalNuevo()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
+                  <button type="submit" id="btn-crear-submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
+                  <i class="fa-solid fa-square-check"></i> Registrar Ingreso
+                  </button>
+               </div>
             </form>
-        </div>
-    </div>
-
-    <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200 overflow-y-auto max-h-[90vh]">
+         </div>
+      </div>
+      <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
-                <h3 class="text-xs uppercase tracking-widest font-black text-emerald-400 flex items-center gap-2">
-                    <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
-                </h3>
-                <button onclick="cerrarModalEditar()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+               <h3 class="text-xs uppercase tracking-widest font-black text-emerald-400 flex items-center gap-2">
+                  <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
+               </h3>
+               <button onclick="cerrarModalEditar()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
             <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
-                <input type="hidden" id="edit-id-registro">
-                
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">ID Unidad (Protegido)</label>
-                        <input type="text" id="edit-unidad" disabled class="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca del Vehículo</label>
-                        <input type="text" id="edit-marca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
-                        <input type="text" id="edit-gerencia" list="list-gerencias" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
-                        <input type="text" id="edit-chofer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
-                    <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold">
-                        <option value="Por Atender">⚠️ Por Atender</option>
-                        <option value="En Proceso">⚙️ En Proceso</option>
-                        <option value="Listo">✅ Listo</option>
-                    </select>
-                </div>
-
-                <div class="mb-4 border border-slate-800 rounded-xl p-4 bg-slate-950/30">
-                    <label class="block text-[10px] uppercase tracking-wider font-black text-blue-400 mb-2">
-                        <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones (Plan vs Real)
-                    </label>
-                    
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros, Revisar frenos..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-xs">
-                        <button type="button" onclick="agregarTareaModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-
-                    <div id="edit-container-tareas" class="space-y-2 max-h-44 overflow-y-auto pr-1">
-                        </div>
-
-                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/60">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold">Avance Real Calculado:</span>
-                        <span id="edit-lbl-avance-calculado" class="font-mono text-xs font-black text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">0%</span>
-                    </div>
-                </div>
-
-                <div id="wrapper-foto-despues" class="mb-4 hidden p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-xl transition-all">
-                    <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
-                        <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
-                    </label>
-                    <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Bitácora de Observaciones / Novedades</label>
-                    <textarea id="edit-observa" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
-                    <button type="button" onclick="cerrarModalEditar()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
-                    <button type="submit" id="btn-editar-submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
-                    </button>
-                </div>
+               <input type="hidden" id="edit-id-registro">
+               <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">ID Unidad (Protegido)</label>
+                     <input type="text" id="edit-unidad" disabled class="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none">
+                  </div>
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca del Vehículo</label>
+                     <input type="text" id="edit-marca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                  </div>
+               </div>
+               <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
+                     <input type="text" id="edit-gerencia" list="list-gerencias" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                  </div>
+                  <div>
+                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
+                     <input type="text" id="edit-chofer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                  </div>
+               </div>
+               <div class="mb-4">
+                  <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
+                  <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold">
+                     <option value="Por Atender">⚠️ Por Atender</option>
+                     <option value="En Proceso">⚙️ En Proceso</option>
+                     <option value="Listo">✅ Listo</option>
+                  </select>
+               </div>
+               <div class="mb-4 border border-slate-800 rounded-xl p-4 bg-slate-950/30">
+                  <label class="block text-[10px] uppercase tracking-wider font-black text-blue-400 mb-2">
+                  <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones (Plan vs Real)
+                  </label>
+                  <div class="flex gap-2 mb-3">
+                     <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros, Revisar frenos..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-xs">
+                     <button type="button" onclick="agregarTareaModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
+                     <i class="fa-solid fa-plus"></i>
+                     </button>
+                  </div>
+                  <div id="edit-container-tareas" class="space-y-2 max-h-44 overflow-y-auto pr-1">
+                  </div>
+                  <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/60">
+                     <span class="text-[10px] text-slate-400 uppercase font-bold">Avance Real Calculado:</span>
+                     <span id="edit-lbl-avance-calculado" class="font-mono text-xs font-black text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">0%</span>
+                  </div>
+               </div>
+               <div id="wrapper-foto-despues" class="mb-4 hidden p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-xl transition-all">
+                  <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
+                  <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
+                  </label>
+                  <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
+               </div>
+               <div class="mb-4">
+                  <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Bitácora de Observaciones / Novedades</label>
+                  <textarea id="edit-observa" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+               </div>
+               <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
+                  <button type="button" onclick="cerrarModalEditar()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
+                  <button type="submit" id="btn-editar-submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
+                  <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                  </button>
+               </div>
             </form>
-        </div>
-    </div>
-
-    <datalist id="list-gerencias">
-        <option value="VP EYP TRANSPORTE TERRESTRE">
-<option value="VP EYP SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE">
-<option value="VP EYP SERVICIOS LOGISTICOS">
-<option value="VP EYP SERVICIOS ELECTRICOS">
-<option value="VP EYP SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL">
-<option value="VP EYP RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO">
-<option value="VP EYP RECURSOS HUMANOS">
-<option value="VP EYP PROYECTOS MAYORES">
-<option value="VP EYP PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA">
-<option value="VP EYP PROCURA Y CONTROL DE INVENTARIO">
-<option value="VP EYP PLANIFICACION, PRESUPUESTO Y GESTION">
-<option value="VP EYP PDVSA ECUADOR">
-<option value="VP EYP OFICINA DE APOYO">
-<option value="VP EYP INGENIERIA DE COSTOS">
-<option value="VP EYP GERENCIA OPERACION INTEGRAL DE PLANTAS">
-<option value="VP EYP GERENCIA CORP DE CONFIGURACION DE PLANES">
-<option value="VP EYP FINANZAS">
-<option value="VP EYP DIVISION SUR DEL LAGO TRUJILLO">
-<option value="VP EYP DIVISION LAGO">
-<option value="VP EYP DIVISION COSTA ORIENTAL DEL LAGO">
-<option value="VP EYP DIVISION COSTA OCCIDENTAL DEL LAGO">
-<option value="VP EYP DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE">
-<option value="VP EYP DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE">
-<option value="VP EYP DESARROLLO SOCIAL">
-<option value="VP EYP COSTA AFUERA">
-<option value="VP EYP COORDINACION OPERACIONAL">
-<option value="VP EYP CONTRATACION">
-<option value="VP EYP CONFIABILIDAD OPERACIONAL">
-<option value="VP EYP ASUNTOS PUBLICOS">
-<option value="VP EYP ASUNTOS JURIDICOS">
-<option value="VP EYP AMBIENTE">
-<option value="VICEPRESIDENCIA EXPLORACION Y PRODUCCION">
-<option value="PETROQUIMICA DE VENEZUELA, S.A">
-<option value="PETROLEOS DE VENEZUELA S.A.">
-<option value="PDVSA VASSA">
-<option value="PDVSA SERVICIOS PETROLEROS S.A.">
-<option value="PDVSA INGENIERIA Y CONSTRUCCION">
-<option value="PDVSA INDUSTRIAL">
-<option value="PDVSA GAS COMUNAL, S.A">
-<option value="PDVSA GAS">
-<option value="PDVSA ENT">
-<option value="PDV SERVICIOS DE SALUD">
-<option value="MINPET">
-<option value="INTEVEP">
-<option value="EM PETROZAMORA">
-<option value="EM PETROWAYU">
-<option value="EM PETROWARAO">
-<option value="EM PETROURDANETA">
-<option value="EM PETROREGIONAL DEL LAGO">
-<option value="EM PETROQUIRIQUIRE">
-<option value="EM PETROPERIJA">
-<option value="EM PETROLERA SINOVENEZOLANA">
-<option value="EM PETROLERA BIELOVENEZOLANA">
-<option value="EM PETROINDEPENDIENTE">
-<option value="EM PETROCUMAREBO">
-<option value="EM PETROCABIMAS">
-<option value="EM PETROBOSCAN">
-<option value="EM LAGOPETROL">
-<option value="EM BARIPETROL">
-<option value="DIRECCION EJECUTIVA CYSN">
-<option value="DIREC EJEC EXPLOR Y ESTUDIOS INTEG Y YAC">
-<option value="DIR. EJECUTIVA DE SEGURIDAD INTEGRAL">
-<option value="CVP EEMM OCCIDENTE">
-<option value="CVP">
-<option value="BARIVEN">
-    </datalist>
-
-</body>
+         </div>
+      </div>
+      <datalist id="list-gerencias">
+         <option value="VP EYP TRANSPORTE TERRESTRE">
+         <option value="VP EYP SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE">
+         <option value="VP EYP SERVICIOS LOGISTICOS">
+         <option value="VP EYP SERVICIOS ELECTRICOS">
+         <option value="VP EYP SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL">
+         <option value="VP EYP RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO">
+         <option value="VP EYP RECURSOS HUMANOS">
+         <option value="VP EYP PROYECTOS MAYORES">
+         <option value="VP EYP PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA">
+         <option value="VP EYP PROCURA Y CONTROL DE INVENTARIO">
+         <option value="VP EYP PLANIFICACION, PRESUPUESTO Y GESTION">
+         <option value="VP EYP PDVSA ECUADOR">
+         <option value="VP EYP OFICINA DE APOYO">
+         <option value="VP EYP INGENIERIA DE COSTOS">
+         <option value="VP EYP GERENCIA OPERACION INTEGRAL DE PLANTAS">
+         <option value="VP EYP GERENCIA CORP DE CONFIGURACION DE PLANES">
+         <option value="VP EYP FINANZAS">
+         <option value="VP EYP DIVISION SUR DEL LAGO TRUJILLO">
+         <option value="VP EYP DIVISION LAGO">
+         <option value="VP EYP DIVISION COSTA ORIENTAL DEL LAGO">
+         <option value="VP EYP DIVISION COSTA OCCIDENTAL DEL LAGO">
+         <option value="VP EYP DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE">
+         <option value="VP EYP DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE">
+         <option value="VP EYP DESARROLLO SOCIAL">
+         <option value="VP EYP COSTA AFUERA">
+         <option value="VP EYP COORDINACION OPERACIONAL">
+         <option value="VP EYP CONTRATACION">
+         <option value="VP EYP CONFIABILIDAD OPERACIONAL">
+         <option value="VP EYP ASUNTOS PUBLICOS">
+         <option value="VP EYP ASUNTOS JURIDICOS">
+         <option value="VP EYP AMBIENTE">
+         <option value="VICEPRESIDENCIA EXPLORACION Y PRODUCCION">
+         <option value="PETROQUIMICA DE VENEZUELA, S.A">
+         <option value="PETROLEOS DE VENEZUELA S.A.">
+         <option value="PDVSA VASSA">
+         <option value="PDVSA SERVICIOS PETROLEROS S.A.">
+         <option value="PDVSA INGENIERIA Y CONSTRUCCION">
+         <option value="PDVSA INDUSTRIAL">
+         <option value="PDVSA GAS COMUNAL, S.A">
+         <option value="PDVSA GAS">
+         <option value="PDVSA ENT">
+         <option value="PDV SERVICIOS DE SALUD">
+         <option value="MINPET">
+         <option value="INTEVEP">
+         <option value="EM PETROZAMORA">
+         <option value="EM PETROWAYU">
+         <option value="EM PETROWARAO">
+         <option value="EM PETROURDANETA">
+         <option value="EM PETROREGIONAL DEL LAGO">
+         <option value="EM PETROQUIRIQUIRE">
+         <option value="EM PETROPERIJA">
+         <option value="EM PETROLERA SINOVENEZOLANA">
+         <option value="EM PETROLERA BIELOVENEZOLANA">
+         <option value="EM PETROINDEPENDIENTE">
+         <option value="EM PETROCUMAREBO">
+         <option value="EM PETROCABIMAS">
+         <option value="EM PETROBOSCAN">
+         <option value="EM LAGOPETROL">
+         <option value="EM BARIPETROL">
+         <option value="DIRECCION EJECUTIVA CYSN">
+         <option value="DIREC EJEC EXPLOR Y ESTUDIOS INTEG Y YAC">
+         <option value="DIR. EJECUTIVA DE SEGURIDAD INTEGRAL">
+         <option value="CVP EEMM OCCIDENTE">
+         <option value="CVP">
+         <option value="BARIVEN">
+      </datalist>
+   </body>
 </html>
