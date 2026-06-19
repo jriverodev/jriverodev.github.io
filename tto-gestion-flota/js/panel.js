@@ -4,7 +4,7 @@
 // =========================================================================
 
 // ⚠️ REEMPLAZA ESTA URL POR LA DE TU IMPLEMENTACIÓN DE GOOGLE APPS SCRIPT
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxtjOaMKcuEqEZIgxNChm9VsSf75Ff1taXjmlsw8Nl-JR3mLAs2K3YiyHuvXgD-uOwgg/exec"; 
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwpevcpIspFtNiYGAdCrrQTIBVpLdohHws6KTYH0btUDXWpeYsoFm6lOwB9fvKxFZgA4A/exec"; 
 
 let cacheDatos = []; // Caché local para evitar peticiones redundantes
 
