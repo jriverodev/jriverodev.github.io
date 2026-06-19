@@ -46,6 +46,8 @@ async function cargarDatosAnaliticos() {
                 Observaciones: normalized["OBSERVACIONES"] || normalized["DETALLE"] || u["Observaciones"] || "Sin novedades",
                 Fecha_Registro: normalized["FECHAREGISTRO"] || normalized["FECHA"] || u["Fecha_Registro"] || "N/A",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
+                Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "N/A",
+                Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "S/I",
                 Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10)
             };
         });
@@ -87,6 +89,10 @@ async function cargarDatosAnaliticos() {
                         <td class="p-3 font-black text-white tracking-wider font-mono">
                             ${reg.ID_Unidad} 
                             ${reg.Marca ? `<span class="text-[9px] text-slate-400 block font-sans font-normal uppercase tracking-wide">${reg.Marca}</span>` : ''}
+                        </td>
+                        <td class="p-3">
+                            <span class="text-white block font-bold uppercase text-[10px]">${reg.Gerencia}</span>
+                            <span class="text-slate-500 block text-[9px] uppercase tracking-tighter">${reg.Usuario}</span>
                         </td>
                         <td class="p-3 text-slate-400 text-[10px] font-bold">${reg.Tipo_Flota}</td>
                         <td class="p-3 text-slate-300 font-medium">${nombreTallerFinal}</td>
