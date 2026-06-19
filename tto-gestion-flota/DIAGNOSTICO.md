@@ -29,3 +29,11 @@ Se detectó que la URL de comunicación con el backend está definida de forma i
 1. **Unificar `APP_CONFIG`**: Eliminar la definición redundante en `panel.html` y centralizarla en `js/app.js`.
 2. **Depuración de Estilos**: Eliminar `css/estilos.css` y actualizar `sw.js`.
 3. **Completar PWA**: Generar los iconos reglamentarios para permitir la instalación correcta en dispositivos móviles.
+
+## 4. Cambios Realizados (Actualización)
+
+### ✅ Implementación de nuevos campos
+Se agregaron los campos **Gerencia Usuaria** y **Usuario / Chofer** para mejorar la trazabilidad de las solicitudes de mantenimiento.
+- **Frontend:** Se incluyeron inputs en los formularios de creación y edición. El campo "Gerencia Usuaria" cuenta con un `datalist` dinámico que se alimenta de los registros existentes.
+- **Backend (GAS):** Se expandió la estructura de la hoja de cálculo a 16 columnas (añadiendo N y O para los nuevos campos y desplazando el checklist a la columna P).
+- **Lógica de Sincronización:** Se actualizaron los payloads de `crear` y `editar` en `js/panel.js` para persistir estos datos.

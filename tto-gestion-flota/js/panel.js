@@ -65,9 +65,13 @@ async function cargarTablaEditable() {
                 Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
                 Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
+                Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "",
+                Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "",
                 Tareas: tareasArray
             };
         });
+
+        actualizarDatalistGerencias();
 
         if (listaRegistrosPanel.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen unidades activas en el historial.</td></tr>`;
@@ -159,6 +163,23 @@ function transformarABase64(file) {
 }
 
 /**
+ * Alimenta el datalist con las gerencias encontradas en la tabla
+ */
+function actualizarDatalistGerencias() {
+    const datalist = document.getElementById("list-gerencias");
+    if (!datalist) return;
+
+    // Obtener valores únicos y limpiar vacíos
+    const gerenciasUnicas = [...new Set(listaRegistrosPanel.map(r => r.Gerencia).filter(g => g && g.trim() !== ""))];
+
+    // Mantener las opciones por defecto y añadir las nuevas
+    const opcionesBase = ["GERENCIA DE OPERACIONES", "GERENCIA DE MANTENIMIENTO", "GERENCIA DE LOGÍSTICA", "GERENCIA DE SEGURIDAD"];
+    const todasGerencias = [...new Set([...opcionesBase, ...gerenciasUnicas])];
+
+    datalist.innerHTML = todasGerencias.map(g => `<option value="${g}">`).join("");
+}
+
+/**
  * Escucha cambios rápidos de estatus en celdas
  */
 function evaluarEstatusCambio(id, valor) {
@@ -196,6 +217,8 @@ async function guardarChangeInline(idRegistro) {
         foto_antes: document.getElementById(`inline-foto-antes-${idRegistro}`).value,
         foto_despues: document.getElementById(`inline-foto-despues-${idRegistro}`).value,
         avance: avance,
+        gerencia: original ? original.Gerencia : "",
+        usuario: original ? original.Usuario : "",
         tareas: original && original.Tareas ? JSON.stringify(original.Tareas) : "[]", // Resguardo de checklist
         fecha_salida: fechaSalidaStr
     };
@@ -287,6 +310,8 @@ async function guardarNuevoRegistro(event) {
         flota: document.getElementById("add-flota").value,
         nombre_taller: document.getElementById("add-taller").value,
         nombre_taller_ext: document.getElementById("add-taller-ext").value.trim(),
+        gerencia: document.getElementById("add-gerencia").value.trim(),
+        usuario: document.getElementById("add-chofer").value.trim(),
         observaciones: document.getElementById("add-observa").value.trim(),
         fecha_ingreso: fechaFormateada,
         foto_antes_base64: fotoBase64
@@ -323,6 +348,8 @@ function abrirModalEditar(id) {
     document.getElementById("edit-id-registro").value = registro.ID_Registro;
     document.getElementById("edit-unidad").value = registro.ID_Unidad;
     document.getElementById("edit-marca").value = registro.Marca;
+    document.getElementById("edit-gerencia").value = registro.Gerencia;
+    document.getElementById("edit-chofer").value = registro.Usuario;
     document.getElementById("edit-observa").value = registro.Observaciones;
     document.getElementById("edit-estatus").value = registro.Estatus;
 
@@ -471,6 +498,8 @@ async function guardarEdicionModal(event) {
         accion: "editar",
         id_registro: id,
         marca: document.getElementById("edit-marca").value.trim(),
+        gerencia: document.getElementById("edit-gerencia").value.trim(),
+        usuario: document.getElementById("edit-chofer").value.trim(),
         observaciones: document.getElementById("edit-observa").value.trim(),
         estatus: estatus,
         avance: avanceFinal.toString(),

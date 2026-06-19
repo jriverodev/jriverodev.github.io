@@ -10,11 +10,6 @@
     <script src="js/panel.js" defer></script>
 </head>
 <body class="text-slate-200 font-sans antialiased min-h-full pb-12">
-    <script>
-        const APP_CONFIG = {
-            URL_API: "https://script.google.com/macros/s/AKfycby-G4hvZN8-SebaLLkhV7893ugHkEnTRisuykjs0wgCuJi14XV5lUjwJ6QjV-aIyFvllg/exec"
-        };
-    </script>
 
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -99,11 +94,21 @@
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
                         <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
-                            <option value="Taller Central">Taller Lagunillas</option>
+                            <option value="Taller Central">Taller Central</option>
                             <option value="Taller La Salina">Taller La Salina</option>
-                            <option value="Taller La Salina">Taller Lago Medio</option>
                             <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO (Terceros)</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
+                        <input type="text" id="add-gerencia" list="list-gerencias" placeholder="Seleccione o escriba..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
+                        <input type="text" id="add-chofer" placeholder="Nombre del solicitante" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
                     </div>
                 </div>
 
@@ -161,6 +166,17 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
+                        <input type="text" id="edit-gerencia" list="list-gerencias" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
+                        <input type="text" id="edit-chofer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
                     <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold">
@@ -212,6 +228,13 @@
             </form>
         </div>
     </div>
+
+    <datalist id="list-gerencias">
+        <option value="GERENCIA DE OPERACIONES">
+        <option value="GERENCIA DE MANTENIMIENTO">
+        <option value="GERENCIA DE LOGÍSTICA">
+        <option value="GERENCIA DE SEGURIDAD">
+    </datalist>
 
 </body>
 </html>
