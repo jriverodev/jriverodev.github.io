@@ -1,9 +1,11 @@
 // =========================================================================
-// TTOCC SYSTEM - LÓGICA DE DETRÁS DE ESCENA (js/panel.js)
-// Adaptado 100% al Diseño Dark Mode original de Jesús
+// TTOCC SYSTEM - CONFIGURACIÓN SEGURA
 // =========================================================================
 
-const WEB_APP_URL = APP_CONFIG.URL_API || "https://script.google.com/macros/s/AKfycbwpevcpIspFtNiYGAdCrrQTIBVpLdohHws6KTYH0btUDXWpeYsoFm6lOwB9fvKxFZgA4A/exec"; 
+// Validación blindada para evitar el "ReferenceError"
+const WEB_APP_URL = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.URL_API) 
+  ? APP_CONFIG.URL_API 
+  : "https://script.google.com/macros/s/AKfycbwpevcpIspFtNiYGAdCrrQTIBVpLdohHws6KTYH0btUDXWpeYsoFm6lOwB9fvKxFZgA4A/exec"; 
 
 let cacheDatos = []; 
 let tareasActuales = []; // Guarda temporalmente el checklist del registro en edición
