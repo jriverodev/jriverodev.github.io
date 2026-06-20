@@ -1,1 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Seguimiento de tu pedido</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        #map { height: 400px; width: 100%; border-radius: 12px; }
+        .info-card { padding: 15px; font-family: sans-serif; background: #f4f4f4; border-radius: 8px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Sigue tu encomienda</h1>
+    <div id="map"></div>
+    
+    <div class="info-card">
+        <h3>Tu repartidor: <span id="nombreRepartidor">Cargando...</span></h3>
+        <p>Vehículo: <span id="vehiculoRepartidor">-</span></p>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+        const SUPABASE_KEY = 'tu-anon-key-publica';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const viajeId = "CAMBIAR_POR_ID_DEL_VIAJE_ACTUAL"; 
+
+        // 1. Inicializar Mapa centrado por defecto
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Crear el marcador del repartidor (inicialmente invisible u oculto)
+        let markerRepartidor = null;
+
+        // 2. Cargar datos iniciales del viaje
+        async function cargarDatosIniciales() {
+            const { data, error } = await supabase
+                .from('viajes')
+                .select('*')
+                .eq('id', viajeId)
+                .single();
+
+            if (data) {
+                document.getElementById('nombreRepartidor').innerText = data.repartidor_nombre;
+                document.getElementById('vehiculoRepartidor').innerText = data.vehiculo_info;
+                actualizarMapa(data.latitud, data.longitud);
+            }
+        }
+
+        // 3. Mover el marcador en el mapa
+        function actualizarMapa(lat, lng) {
+            if (!lat || !lng) return;
+            
+            if (!markerRepartidor) {
+                // Crear el marcador por primera vez
+                markerRepartidor = L.marker([lat, lng]).addTo(map)
+                    .bindPopup("Tu repartidor está aquí").openPopup();
+                map.setView([lat, lng], 16); // Hacer zoom al repartidor
+            } else {
+                // Si ya existe, moverlo suavemente
+                markerRepartidor.setLatLng([lat, lng]);
+            }
+        }
+
+        // 4. SUSCRIPCIÓN EN TIEMPO REAL (El superpoder de Supabase)
+        supabase
+            .channel('cambios-ubicacion')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'viajes',
+                filter: `id=eq.${viajeId}` 
+            }, payload => {
+                console.log('Cambio recibido en tiempo real!', payload.new);
+                actualizarMapa(payload.new.latitud, payload.new.longitud);
+            })
+            .subscribe();
+
+        // Ejecutar al cargar la página
+        cargarDatosIniciales();
+    </script>
+</body>
+</html>
 
