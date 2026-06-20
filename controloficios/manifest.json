@@ -1,0 +1,17 @@
+{
+  "short_name": "NexusPDF",
+  "name": "Nexus Extractor de Requerimientos PDF",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/9496/9496555.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#ffffff",
+  "theme-color": "#0056b3",
+  "display": "standalone",
+  "orientation": "portrait"
+}

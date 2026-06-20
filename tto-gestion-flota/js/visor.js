@@ -1,0 +1,209 @@
+// js/visor.js - Consola de Solo Lectura y Métricas Estadísticas para Pantalla Gerencial
+
+let datosUnidadesGlobal = [];
+let instanciaChartTalleres = null;
+let instanciaChartEstatus = null;
+
+document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
+
+// EXTRAER REGISTROS DESDE LA PESTAÑA HISTORIAL_MANTENIMIENTO
+async function cargarDatosAnaliticos() {
+    const tbody = document.getElementById("tablaCuerpo");
+    try {
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando datos de Historial...</td></tr>`;
+        }
+
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "leer" })
+        });
+
+        if (!response.ok) throw new Error(`Fallo HTTP: ${response.status}`);
+        const res = await response.json();
+
+        if (res.status !== "SUCCESS") {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${res.message}</td></tr>`;
+            return;
+        }
+
+        let filasCrudas = res.datos || [];
+
+        // MAPEADOR TOLERANTE (Garantiza lectura sin importar mayúsculas/minúsculas de la cabecera)
+        datosUnidadesGlobal = filasCrudas.map(u => {
+            let normalized = {};
+            for (let key in u) {
+                normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
+            }
+            
+            return {
+                ID_Registro: normalized["IDREGISTRO"] || normalized["REGISTRO"] || u["ID_Registro"] || "S/I",
+                ID_Unidad: normalized["IDUNIDAD"] || normalized["UNIDAD"] || u["ID_Unidad"] || "S/I",
+                Tipo_Flota: normalized["TIPOFLOTA"] || normalized["FLOTA"] || u["Tipo_Flota"] || "S/I",
+                Nombre_Taller: normalized["NOMBRETALLER"] || normalized["TALLER"] || u["Nombre_Taller"] || "No especificado",
+                Nombre_Taller_Ext: normalized["NOMBRETALLEREXT"] || normalized["TALLEREXTERNO"] || u["Nombre_Taller_Ext"] || "",
+                Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
+                Observaciones: normalized["OBSERVACIONES"] || normalized["DETALLE"] || u["Observaciones"] || "Sin novedades",
+                Fecha_Registro: normalized["FECHAREGISTRO"] || normalized["FECHA"] || u["Fecha_Registro"] || "N/A",
+                Marca: normalized["MARCA"] || u["Marca"] || "",
+                Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "N/A",
+                Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "S/I",
+                Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10)
+            };
+        });
+
+        // CÓMPUTO DE ESTADÍSTICAS OPERATIVAS (KPIs)
+        let total = datosUnidadesGlobal.length;
+        let porAtender = datosUnidadesGlobal.filter(r => r.Estatus === "Por Atender").length;
+        let enProceso = datosUnidadesGlobal.filter(r => r.Estatus === "En Proceso").length;
+        let listos = total - (porAtender + enProceso); 
+        let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100;
+
+        document.getElementById("kpiTotal").textContent = total;
+        document.getElementById("kpiEspera").textContent = porAtender;
+        document.getElementById("kpiProceso").textContent = enProceso;
+        document.getElementById("kpiDispo").textContent = `${porcDispo}%`;
+
+        if (total === 0) {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros en el historial</td></tr>`;
+            return;
+        }
+
+        if (tbody) {
+            tbody.innerHTML = "";
+            let conteoTalleres = {};
+
+            // Renderizar ordenado del más reciente al más antiguo
+            [...datosUnidadesGlobal].reverse().forEach(reg => {
+                let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
+                conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
+
+                // Definición estilizada de Badges
+                let badgeColor = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-500/10 text-blue-400 border border-blue-500/30";
+                if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+
+                let fila = `
+                    <tr class="hover:bg-slate-950/30 border-b border-slate-800/20 transition-colors">
+                        <td class="p-3 text-slate-500 font-mono text-[11px] font-bold">${reg.ID_Registro}</td>
+                        <td class="p-3 font-black text-white tracking-wider font-mono">
+                            ${reg.ID_Unidad} 
+                            ${reg.Marca ? `<span class="text-[9px] text-slate-400 block font-sans font-normal uppercase tracking-wide">${reg.Marca}</span>` : ''}
+                        </td>
+                        <td class="p-3">
+                            <span class="text-white block font-bold uppercase text-[10px]">${reg.Gerencia}</span>
+                            <span class="text-slate-500 block text-[9px] uppercase tracking-tighter">${reg.Usuario}</span>
+                        </td>
+                        <td class="p-3 text-slate-400 text-[10px] font-bold">${reg.Tipo_Flota}</td>
+                        <td class="p-3 text-slate-300 font-medium">${nombreTallerFinal}</td>
+                        
+                        <td class="p-3">
+                            <div class="flex flex-col gap-1 justify-center">
+                                <span class="font-mono text-[10px] font-bold text-slate-400">${reg.Avance}%</span>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700/30">
+                                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-500" style="width: ${reg.Avance}%"></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${reg.Estatus}</span></td>
+                        <td class="p-3 text-slate-400 max-w-xs truncate" title="${reg.Observaciones}">${reg.Observaciones}</td>
+                        <td class="p-3 font-mono text-slate-500 text-[11px]">${reg.Fecha_Registro}</td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML("beforeend", fila);
+            });
+
+            renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
+        }
+
+    } catch (err) {
+        console.error("Error analítico en visor:", err);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
+    }
+}
+
+// INYECCIÓN DE RENDIMIENTO GRÁFICO (ChartJS)
+function renderizarGraficos(talleresData, espera, proceso, listos) {
+    const canvasTalleres = document.getElementById("chartTalleres");
+    const canvasEstatus = document.getElementById("chartEstatus");
+
+    if (!canvasTalleres || !canvasEstatus) return;
+
+    if (instanciaChartTalleres) instanciaChartTalleres.destroy();
+    if (instanciaChartEstatus) instanciaChartEstatus.destroy();
+
+    const esMovil = window.innerWidth < 768;
+
+    instanciaChartTalleres = new Chart(canvasTalleres, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(talleresData),
+            datasets: [{
+                data: Object.values(talleresData),
+                backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { 
+                    position: esMovil ? 'bottom' : 'right', 
+                    labels: { color: '#94a3b8', font: { size: 9, weight: 'bold' }, boxWidth: 12 } 
+                } 
+            }
+        }
+    });
+
+    instanciaChartEstatus = new Chart(canvasEstatus, {
+        type: 'bar',
+        data: {
+            labels: ['Por Atender', 'En Proceso', 'Disponibles'],
+            datasets: [{
+                label: 'Unidades',
+                data: [espera, proceso, listos],
+                backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9, weight: 'bold' } } },
+                y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// UTILERÍAS DE EXPORTACIÓN Y GENERACIÓN DE REPORTES
+function obtenerFechaFormato() {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    let mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    let dd = String(hoy.getDate()).padStart(2, '0');
+    return `${dd}-${mm}-${yyyy}`;
+}
+
+function exportarAExcel() {
+    const tabla = document.getElementById("tablaLogistica");
+    if (!tabla || document.getElementById("tablaCuerpo").rows[0]?.cells?.length === 1) return alert("No hay datos cargados para exportar.");
+    const libro = XLSX.utils.table_to_book(tabla, { sheet: "Historial Mantenimiento" });
+    XLSX.writeFile(libro, `Reporte_Mantenimiento_TTOCC_${obtenerFechaFormato()}.xlsx`);
+}
+
+function exportarAPDF() {
+    const elemento = document.getElementById("contenedorTablaReporte");
+    if (!elemento || document.getElementById("tablaCuerpo").rows[0]?.cells?.length === 1) return alert("No hay datos cargados para exportar.");
+    html2pdf().set({
+        margin: 0.3,
+        filename: `Reporte_Mantenimiento_TTOCC_${obtenerFechaFormato()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+    }).from(elemento).save();
+}

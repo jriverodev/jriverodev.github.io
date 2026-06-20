@@ -1,0 +1,22 @@
+@echo off
+setlocal enabledelayedexpansion
+
+:: Leer el archivo lista.txt linea por linea
+for /f "tokens=1,2 delims=," %%A in (lista.txt) do (
+    set "cedula=%%A"
+    set "proceso=%%B"
+
+    :: Buscar archivos que terminen con esa cedula
+    if exist "*ARC-2025_T-V-!cedula!.pdf" (
+        echo Procesando Cedula: !cedula! -> Proceso: !proceso!
+        
+        :: Renombrar agregando el proceso al inicio
+        ren "*ARC-2025_T-V-!cedula!.pdf" "!proceso!-ARC-2025_T-V-!cedula!.pdf"
+    ) else (
+        echo Archivo para la cedula !cedula! no encontrado.
+    )
+)
+
+echo.
+echo Proceso finalizado.
+pause

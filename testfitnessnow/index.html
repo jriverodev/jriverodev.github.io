@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitnessNow Tía Juana</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f39200">
+    <style>
+        :root { --orange: #f39200; --dark: #000000; --gray: #1a1a1a; --text: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); margin: 0; padding: 10px; padding-bottom: 50px; }
+        .brand { text-align: center; padding: 15px; }
+        .brand img { max-width: 140px; height: auto; border-radius: 12px; border: 2px solid var(--orange); }
+        .card { background: var(--gray); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        h3 { color: var(--orange); margin-top: 0; font-size: 0.9rem; text-transform: uppercase; border-left: 4px solid var(--orange); padding-left: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full { grid-column: span 2; }
+        label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 3px; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-size: 0.9rem; }
+        input:focus { border-color: var(--orange); outline: none; }
+        button { background: var(--orange); color: #000; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        .timer { font-size: 2.8rem; text-align: center; color: var(--orange); font-family: monospace; margin: 10px 0; font-weight: bold; }
+        #ruffier-box { margin-top: 10px; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
+        hr { border: 0; border-top: 1px solid #333; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+<div class="brand">
+    <img src="logo.png" alt="FitnessNow">
+</div>
+
+<div class="card">
+    <h3>👤 Atleta</h3>
+    <div class="grid">
+        <div class="full"><label>Nombre</label><input type="text" id="nombre"></div>
+        <div><label>Edad</label><input type="number" id="edad"></div>
+        <div><label>Estatura (cm)</label><input type="number" id="estatura"></div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>📏 Medidas y Peso</h3>
+    <div class="grid">
+        <div><label>Peso Real (kg)</label><input type="number" id="peso"></div>
+        <div><label>P.I. (Peso Ideal)</label><input type="number" id="peso_ideal"></div>
+        <div class="full"><hr></div>
+        <div><label>Cuello</label><input type="number" id="cuello"></div>
+        <div><label>Pecho</label><input type="number" id="pecho"></div>
+        <div><label>Cintura</label><input type="number" id="cintura"></div>
+        <div><label>Cadera</label><input type="number" id="cadera"></div>
+        <div><label>Pierna Der.</label><input type="number" id="pierna_d"></div>
+        <div><label>Pierna Izq.</label><input type="number" id="pierna_i"></div>
+        <div><label>Brazo Der.</label><input type="number" id="brazo_d"></div>
+        <div><label>Brazo Izq.</label><input type="number" id="brazo_i"></div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>❤️ Índice de Ruffier</h3>
+    <div class="grid">
+        <div><label>P1 (Reposo)</label><input type="number" id="p1"></div>
+        <div><label>P2 (Esfuerzo)</label><input type="number" id="p2"></div>
+        <div class="full"><label>P3 (Recuperación)</label><input type="number" id="p3"></div>
+    </div>
+    <button onclick="calcRuffier()" style="margin-top:10px">Calcular IR</button>
+    <div id="ruffier-box"></div>
+</div>
+
+<div class="card">
+    <h3>⚡ Workout Test</h3>
+    <div class="timer" id="clock">00:00</div>
+    <div class="grid" style="margin-bottom:15px">
+        <button onclick="runTimer(30)" style="background:#333; color:white">30 seg</button>
+        <button onclick="runTimer(60)" style="background:#333; color:white">1 min</button>
+    </div>
+    <div class="grid">
+        <div><label>M Run (Min:Seg)</label><input type="text" id="mrun" placeholder="00:00"></div>
+        <div><label>30M Speed (Seg,cc)</label><input type="text" id="speed" placeholder="0.00"></div>
+        <div><label>30" ABS</label><input type="number" id="abs"></div>
+        <div><label>1' Burpees</label><input type="number" id="burpees"></div>
+    </div>
+    <br>
+    <div class="grid">
+        <button onclick="saveData()" style="background:#fff; color:#000">Guardar</button>
+        <button onclick="clearForm()" style="background:#444; color:#fff">Limpiar</button>
+    </div>
+</div>
+
+<div class="card" id="history-card" style="display:none">
+    <h3>📋 Registros Guardados</h3>
+    <div id="history-list"></div>
+    <br>
+    <div class="grid">
+        <button onclick="exportExcel()" style="background:#2ecc71; color:white">Excel</button>
+        <button onclick="shareAllWhatsApp()" style="background:#25D366; color:white">WhatsApp Resumen</button>
+    </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script>
+    // Lógica Ruffier
+    function getIR() {
+        const p1 = parseFloat(document.getElementById('p1').value);
+        const p2 = parseFloat(document.getElementById('p2').value);
+        const p3 = parseFloat(document.getElementById('p3').value);
+        if(!isNaN(p1) && !isNaN(p2) && !isNaN(p3)) {
+            return ((p1 + p2 + p3) * 4 - 200) / 10;
+        }
+        return null;
+    }
+
+    function calcRuffier() {
+        const ir = getIR();
+        if(ir !== null) {
+            const box = document.getElementById('ruffier-box');
+            box.style.display = 'block';
+            box.innerHTML = `IR: ${ir.toFixed(1)}`;
+            if(ir <= 0) box.style.background = "#2ecc71";
+            else if(ir <= 5) box.style.background = "#8bc34a";
+            else if(ir <= 10) box.style.background = "#f1c40f";
+            else box.style.background = "#e74c3c";
+        } else {
+            alert("Por favor completa P1, P2 y P3 para calcular el IR.");
+        }
+    }
+
+    // Lógica Timer
+    let countdown;
+    function runTimer(sec) {
+        clearInterval(countdown);
+        let t = sec;
+        const display = document.getElementById('clock');
+        countdown = setInterval(() => {
+            let m = Math.floor(t / 60);
+            let s = t % 60;
+            display.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if (t-- <= 0) {
+                clearInterval(countdown);
+                if(navigator.vibrate) navigator.vibrate(500);
+                alert("¡Tiempo!");
+            }
+        }, 1000);
+    }
+
+    function clearForm() {
+        const ids = ['nombre', 'edad', 'estatura', 'peso', 'peso_ideal', 'cuello', 'pecho', 'cintura', 'cadera', 'pierna_d', 'pierna_i', 'brazo_d', 'brazo_i', 'p1', 'p2', 'p3', 'mrun', 'speed', 'abs', 'burpees'];
+        ids.forEach(id => document.getElementById(id).value = '');
+        document.getElementById('ruffier-box').style.display = 'none';
+        document.getElementById('ruffier-box').innerHTML = '';
+        window.scrollTo(0, 0);
+    }
+
+    // Guardado Local (Persistence)
+    function saveData() {
+        const ir = getIR();
+        const data = {
+            id: Date.now(),
+            fecha: new Date().toLocaleDateString(),
+            nombre: document.getElementById('nombre').value,
+            edad: document.getElementById('edad').value,
+            estatura: document.getElementById('estatura').value,
+            peso: document.getElementById('peso').value,
+            peso_ideal: document.getElementById('peso_ideal').value,
+            cuello: document.getElementById('cuello').value,
+            pecho: document.getElementById('pecho').value,
+            cintura: document.getElementById('cintura').value,
+            cadera: document.getElementById('cadera').value,
+            pierna_d: document.getElementById('pierna_d').value,
+            pierna_i: document.getElementById('pierna_i').value,
+            brazo_d: document.getElementById('brazo_d').value,
+            brazo_i: document.getElementById('brazo_i').value,
+            p1: document.getElementById('p1').value,
+            p2: document.getElementById('p2').value,
+            p3: document.getElementById('p3').value,
+            ir: ir !== null ? ir.toFixed(1) : '',
+            mrun: document.getElementById('mrun').value,
+            speed: document.getElementById('speed').value,
+            abs: document.getElementById('abs').value,
+            burpees: document.getElementById('burpees').value
+        };
+
+        if(!data.nombre) {
+            alert("Por favor ingresa el nombre del atleta.");
+            return;
+        }
+
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        history.push(data);
+        localStorage.setItem('fn_history', JSON.stringify(history));
+        alert("Registro guardado con éxito.");
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        const container = document.getElementById('history-list');
+        const card = document.getElementById('history-card');
+
+        if(history.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'block';
+        container.innerHTML = [...history].reverse().map(reg => `
+            <div style="border-bottom:1px solid #333; padding:10px 0; font-size:0.85rem">
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <strong style="color:var(--orange)">${reg.nombre}</strong>
+                    <span>${reg.fecha}</span>
+                </div>
+                <div style="margin-top:5px; color:#aaa">
+                    IR: ${reg.ir || '-'} | M Run: ${reg.mrun || '-'} | Speed: ${reg.speed || '-'}
+                </div>
+                <div class="grid" style="margin-top:10px">
+                    <button onclick="shareWhatsApp(${reg.id})" style="padding:5px; font-size:0.7rem; background:#25D366; color:white">WhatsApp</button>
+                    <button onclick="deleteRecord(${reg.id})" style="padding:5px; font-size:0.7rem; background:#e74c3c; color:white">Eliminar</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function deleteRecord(id) {
+        if(confirm('¿Estás seguro de eliminar este registro?')) {
+            let history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+            history = history.filter(r => r.id !== id);
+            localStorage.setItem('fn_history', JSON.stringify(history));
+            renderHistory();
+        }
+    }
+
+    function shareWhatsApp(id) {
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        const reg = history.find(r => r.id === id);
+        if(!reg) return;
+
+        const text = `*FitnessNow Tía Juana - Test Mensual*
+*Atleta:* ${reg.nombre}
+*Fecha:* ${reg.fecha}
+*Edad:* ${reg.edad} años | *Estatura:* ${reg.estatura} cm
+*Peso:* ${reg.peso} kg | *P.I:* ${reg.peso_ideal} kg
+-------------------
+*Medidas (cm):*
+Cuello: ${reg.cuello} | Pecho: ${reg.pecho}
+Cintura: ${reg.cintura} | Cadera: ${reg.cadera}
+Pierna D: ${reg.pierna_d} | Pierna I: ${reg.pierna_i}
+Brazo D: ${reg.brazo_d} | Brazo I: ${reg.brazo_i}
+-------------------
+*Resultados:*
+*IR (Ruffier):* ${reg.ir}
+*M Run:* ${reg.mrun}
+*30M Speed:* ${reg.speed}
+*30" ABS:* ${reg.abs}
+*1' Burpees:* ${reg.burpees}`;
+
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+    function exportExcel() {
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        if(history.length === 0) return;
+
+        const worksheet = XLSX.utils.json_to_sheet(history);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Registros");
+        XLSX.writeFile(workbook, `FitnessNow_Registros_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    function shareAllWhatsApp() {
+        const history = JSON.parse(localStorage.getItem('fn_history') || '[]');
+        if(history.length === 0) return;
+
+        let text = `*FitnessNow Tía Juana - Resumen de Tests*\n\n`;
+        [...history].reverse().forEach((reg, index) => {
+            text += `${index + 1}. *${reg.nombre}* (${reg.fecha}): IR: ${reg.ir}, M Run: ${reg.mrun}, Speed: ${reg.speed}\n`;
+        });
+
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+    // Cargar historial al iniciar
+    renderHistory();
+
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+</script>
+</body>
+</html>

@@ -63,7 +63,7 @@ export default function InventoryDashboard() {
   useEffect(() => {
     fetchItems();
   }, []);
-  
+
   const sectors = useMemo(
     () => ["all", ...Array.from(new Set(items.map((item) => item.sector).filter(Boolean)))],
     [items]
@@ -89,7 +89,7 @@ export default function InventoryDashboard() {
       return matchesSearch && matchesSector && matchesStatus;
     });
   }, [items, searchTerm, sectorFilter, statusFilter]);
-  
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     startTransition(() => {

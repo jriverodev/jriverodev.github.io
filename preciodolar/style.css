@@ -1,0 +1,241 @@
+/* ==========================================
+   1. VARIABLES DE DISEÑO (Soporte de Temas)
+   ========================================== */
+:root {
+  --bg-color: #f4f6f9;
+  --card-bg: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --primary: #0056b3;
+  --primary-hover: #004187;
+  --accent: #10b981;
+}
+
+/* Modo Oscuro Automático */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+  }
+}
+
+/* ==========================================
+   2. REGLAS GENERALES Y TIPOGRAFÍA
+   ========================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  transition: background 0.3s ease;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+
+/* Tarjeta base (Aplica a Visualizador y Calculadora) */
+.card {
+  background-color: var(--card-bg);
+  border-radius: 20px;
+  padding: 30px 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  transition: background 0.3s ease;
+}
+
+/* ==========================================
+   3. SECCIÓN: MONITOREO DE TASA (TARJETA 1)
+   ========================================== */
+.currency-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.currency-symbol {
+  background-color: var(--accent);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.price-container {
+  margin-bottom: 20px;
+}
+
+.price {
+  font-size: 3.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.currency-unit {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  display: block;
+  margin-top: 5px;
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  display: none;
+}
+
+.update-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(128, 128, 128, 0.15);
+  padding-top: 15px;
+}
+
+/* ==========================================
+   4. SECCIÓN: CALCULADORA (TARJETA 2)
+   ========================================== */
+.calculator-card {
+  text-align: left;
+  padding: 20px;
+}
+
+.calculator-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.input-group {
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-color);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 12px;
+  padding: 0 14px;
+  transition: border-color 0.2s;
+}
+
+/* Efecto de foco sutil al tocar un input */
+.input-wrapper:focus-within {
+  border-color: var(--primary);
+}
+
+.input-addon {
+  color: var(--text-muted);
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-right: 8px;
+}
+
+.input-wrapper input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 1.1rem;
+  color: var(--text-main);
+  font-weight: 600;
+  outline: none;
+}
+
+/* Remueve las flechitas nativas molestas de los inputs numéricos */
+.input-wrapper input::-webkit-outer-spin-button,
+.input-wrapper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-wrapper input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.conversion-arrow {
+  text-align: center;
+  color: var(--primary);
+  font-size: 1.3rem;
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+/* ==========================================
+   5. BOTONES Y ALERTAS ESTADO OFFLINE
+   ========================================== */
+.refresh-btn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.refresh-btn:active {
+  background-color: var(--primary-hover);
+  transform: scale(0.98);
+}
+
+.offline-message {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+/* Utilidad general para ocultar elementos */
+.hidden {
+  display: none !important;
+}

@@ -1,0 +1,219 @@
+/**
+ * @fileoverview styles.css
+ * @description Arquitectura de diseño CSS basada en variables y Grid para emulación de hardware.
+ */
+
+:root {
+    --bg-main: #0c0c0e;
+    --bg-card: #141417;
+    --bg-block-disabled: #1b1b20;
+    --border-color: #26262b;
+    
+    /* Paleta Valeton / DSP Industrial */
+    --accent-primary: #00ff66; /* Verde de actividad/señal */
+    --accent-secondary: #ff3b30; /* Rojo bypass/alerta */
+    --text-main: #f5f5f7;
+    --text-muted: #8e8e93;
+    
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-stack);
+    padding: 2rem;
+    line-height: 1.5;
+}
+
+.app-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+
+.app-header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.05rem;
+}
+
+.badge {
+    font-size: 0.8rem;
+    background: var(--accent-primary);
+    color: #000;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+.app-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+    .app-container {
+        grid-template-columns: 400px 1fr;
+    }
+    .valeton-chain {
+        grid-column: span 2;
+    }
+}
+
+/* Componente Base: Card */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.card h2 {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    margin-bottom: 1.2rem;
+    border-left: 3px solid var(--accent-primary);
+    padding-left: 0.5rem;
+}
+
+/* Zona de Carga Drag & Drop */
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 3rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    color: var(--text-muted);
+}
+
+.drop-zone.dragover {
+    background: rgba(0, 255, 102, 0.05);
+    border-color: var(--accent-primary);
+    color: var(--text-main);
+}
+
+/* Form y Controles */
+.processing-options {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+select {
+    background: var(--bg-main);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 0.6rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+/* Botones con Feedback */
+.btn {
+    padding: 0.8rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-primary { background-color: var(--accent-primary); color: #000; }
+.btn-secondary { background-color: #2c2c35; color: var(--text-main); }
+
+/* Monitor de Progreso */
+.status-monitor { margin-top: 1.5rem; }
+.status-text { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.progress-bar-container { background: #222; height: 6px; border-radius: 3px; overflow: hidden; }
+.progress-bar { width: 0%; height: 100%; background: var(--accent-primary); transition: width 0.3s ease; }
+
+/* Métricas DSP */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.metric-box {
+    background: var(--bg-main);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+.metric-box span { display: block; font-size: 0.75rem; color: var(--text-muted); }
+.metric-box strong { font-size: 1.3rem; color: var(--accent-primary); }
+
+/* SIMULACIÓN DE LA CADENA DE SEÑAL FÍSICA (VALETON GP-200 DISPLAY) */
+.chain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.chain-block {
+    background: var(--bg-main);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.chain-block.enabled {
+    border-top: 4px solid var(--accent-primary);
+}
+
+.chain-block.disabled {
+    background: var(--bg-block-disabled);
+    opacity: 0.5;
+    border-top: 4px solid var(--accent-secondary);
+}
+
+.block-header {
+    background: rgba(0,0,0,0.2);
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.block-header h3 { font-size: 0.9rem; letter-spacing: 0.05rem; }
+.block-id { font-size: 0.7rem; background: #2c2c35; padding: 0.1rem 0.4rem; border-radius: 3px; }
+
+.block-body { padding: 1rem; }
+.block-name { font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; color: #fff; }
+
+.params-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+}
+
+.param {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+}
+.param span { color: var(--text-muted); }
+
+.export-container { margin-top: 2rem; text-align: right; }

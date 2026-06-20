@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tela Física Pro</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #080808; 
+            touch-action: none; 
+            font-family: 'Segoe UI', sans-serif;
+        }
+        canvas { display: block; }
+        
+        /* Interfaz */
+        .ui-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            pointer-events: none;
+            width: 100%;
+        }
+        
+        .btn-reset {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 25px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            active: scale(0.95);
+            transition: all 0.2s;
+        }
+
+        .hint {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-container">
+        <div class="hint">Tira con fuerza para rasgar</div>
+        <button class="btn-reset" onclick="init()">COSER / REINICIAR</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Configuración de física
+        const rows = 24;
+        const cols = 26;
+        let spacing;
+        const stiffness = 0.85;
+        const friction = 0.98;
+        const gravity = 0.25;
+        let tearDistance;
+
+        let points = [];
+        let constraints = [];
+        let mouse = { x: 0, y: 0, px: 0, py: 0, active: false };
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Adaptar tamaño al dispositivo
+            spacing = Math.min(canvas.width / (cols + 4), 20);
+            tearDistance = spacing * 2.5;
+
+            points = [];
+            constraints = [];
+            
+            const startX = (canvas.width - (cols - 1) * spacing) / 2;
+
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    let p = {
+                        x: startX + x * spacing,
+                        y: 50 + y * spacing,
+                        oldX: startX + x * spacing,
+                        oldY: 50 + y * spacing,
+                        pinned: (y === 0), // Fila superior anclada
+                        active: true
+                    };
+                    points.push(p);
+
+                    if (x > 0) constraints.push({ p1: points[points.length - 2], p2: p });
+                    if (y > 0) constraints.push({ p1: points[points.length - 1 - cols], p2: p });
+                }
+            }
+        }
+
+        function update() {
+            // Resolver restricciones y roturas
+            for (let i = 0; i < 5; i++) {
+                for (let j = constraints.length - 1; j >= 0; j--) {
+                    const c = constraints[j];
+                    const dx = c.p2.x - c.p1.x;
+                    const dy = c.p2.y - c.p1.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > tearDistance) {
+                        constraints.splice(j, 1);
+                        continue;
+                    }
+
+                    const diff = (spacing - dist) / dist;
+                    const ox = dx * diff * stiffness * 0.5;
+                    const oy = dy * diff * stiffness * 0.5;
+
+                    if (!c.p1.pinned) { c.p1.x -= ox; c.p1.y -= oy; }
+                    if (!c.p2.pinned) { c.p2.x += ox; c.p2.y += oy; }
+                }
+            }
+
+            // Actualizar puntos
+            points.forEach(p => {
+                if (!p.active) return;
+
+                if (!p.pinned) {
+                    let vx = (p.x - p.oldX) * friction;
+                    let vy = (p.y - p.oldY) * friction;
+
+                    p.oldX = p.x;
+                    p.oldY = p.y;
+                    p.x += vx;
+                    p.y += vy + gravity;
+
+                    // Interacción táctil
+                    if (mouse.active) {
+                        let dx = p.x - mouse.x;
+                        let dy = p.y - mouse.y;
+                        let d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < 50) {
+                            p.x += (mouse.x - mouse.px) * 1.3;
+                            p.y += (mouse.y - mouse.py) * 1.3;
+                        }
+                    }
+
+                    // Optimización: Desactivar puntos que caen fuera
+                    if (p.y > canvas.height + 100) {
+                        p.active = false;
+                    }
+                }
+            });
+
+            mouse.px = mouse.x;
+            mouse.py = mouse.y;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.lineWidth = 1.2;
+            constraints.forEach(c => {
+                // Color dinámico basado en altura
+                const yPos = (c.p1.y + c.p2.y) / 2;
+                const ratio = Math.min(Math.max((yPos - 50) / (rows * spacing), 0), 1);
+                
+                // Gradiente: De Cian (#00d2ff) a Morado (#9d50bb)
+                const r = Math.floor(0 + (157 - 0) * ratio);
+                const g = Math.floor(210 + (80 - 210) * ratio);
+                const b = Math.floor(255 + (187 - 255) * ratio);
+                
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(${r},${g},${b}, ${c.p1.active ? 1 : 0})`;
+                ctx.moveTo(c.p1.x, c.p1.y);
+                ctx.lineTo(c.p2.x, c.p2.y);
+                ctx.stroke();
+            });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+
+        // Eventos Táctiles y Ratón
+        const setMouse = (e) => {
+            const t = e.touches ? e.touches[0] : e;
+            mouse.x = t.clientX;
+            mouse.y = t.clientY;
+        };
+
+        window.addEventListener('mousedown', e => { mouse.active = true; setMouse(e); mouse.px = mouse.x; mouse.py = mouse.y; });
+        window.addEventListener('mousemove', e => { if(mouse.active) setMouse(e); });
+        window.addEventListener('mouseup', () => mouse.active = false);
+
+        window.addEventListener('touchstart', e => { mouse.active = true; setMouse(e); mouse.px = mouse.x; mouse.py = mouse.y; });
+        window.addEventListener('touchmove', e => { setMouse(e); });
+        window.addEventListener('touchend', () => mouse.active = false);
+        
+        window.addEventListener('resize', init);
+
+        init();
+        draw();
+    </script>
+</body>
+  </html>
+  

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexus Personal Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
+        .stats-card { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+    <div id="app" class="max-w-xl mx-auto min-h-screen pb-40">
+        
+        <section v-if="trabajadores.length > 0" class="p-6">
+            <div class="flex justify-between items-center mb-4 gap-2">
+                <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2">
+                    <button @click="cambiarDia(-1)" class="p-2 text-indigo-600">◀</button>
+                    <input type="date" v-model="fechaSeleccionada" class="bg-transparent py-2 rounded-xl text-sm font-bold text-indigo-600 border-none focus:ring-0">
+                    <button @click="cambiarDia(1)" class="p-2 text-indigo-600">▶</button>
+                </div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right flex-1">
+                    {{ fechaLegible }}
+                    <span v-if="isSyncing" class="ml-2 animate-spin inline-block">⏳</span>
+                    <span v-else-if="lastSync" class="ml-2 opacity-50 text-[8px]">Sync: {{ lastSync }}</span>
+                </p>
+            </div>
+
+            <div class="stats-card rounded-[2.5rem] p-6 text-white shadow-2xl shadow-indigo-200 mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-indigo-100 text-xs font-bold uppercase tracking-widest">Asistencia Total</p>
+                        <h2 class="text-4xl font-black">{{ porcentajeAsistencia }}%</h2>
+                    </div>
+                    <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md text-2xl">📈</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white/10 rounded-2xl p-3">
+                        <p class="text-[10px] uppercase font-bold opacity-70 text-indigo-100">Presentes</p>
+                        <p class="text-xl font-bold">{{ conteoPresentes }}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl p-3">
+                        <p class="text-[10px] uppercase font-bold opacity-70 text-indigo-100">Ausentes</p>
+                        <p class="text-xl font-bold">{{ conteoAusentes }}</p>
+                    </div>
+                </div>
+                <div class="mt-5 h-2 w-full bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white transition-all duration-500" :style="{ width: porcentajeAsistencia + '%' }"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+                <button @click="filtroArea = 'Todos'" 
+                        :class="filtroArea === 'Todos' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'"
+                        class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                    Todos
+                </button>
+                <button v-for="area in areas" :key="area" 
+                        @click="filtroArea = area"
+                        :class="filtroArea === area ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'"
+                        class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                    {{ area }}
+                </button>
+                <button v-if="filtroArea !== 'Todos'" 
+            @click="marcarAreaPresente" 
+            class="px-5 py-2 rounded-full text-xs font-bold bg-emerald-500 text-white whitespace-nowrap shadow-lg shadow-emerald-100 animate-pulse">
+        ✅ Marcar todo {{ filtroArea }}
+    </button>
+            </div>
+        </section>
+
+        <main class="px-6">
+            <div class="relative mb-6" v-if="trabajadores.length > 0">
+                <input v-model="searchQuery" type="text" placeholder="Buscar trabajador..." 
+                       class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 glass transition-all text-sm">
+                <span class="absolute left-4 top-4 opacity-30 text-sm">🔍</span>
+            </div>
+
+            <div class="grid gap-3">
+                <div v-for="t in filtrados" :key="t.cedula" 
+                     @click="toggleAsistencia(t.cedula)"
+                     :class="estaPresente(t.cedula) ? 'bg-indigo-600 border-indigo-500 scale-[0.98]' : 'bg-white border-white'"
+                     class="flex items-center p-5 rounded-[2rem] border-2 transition-all duration-200 cursor-pointer shadow-sm">
+                    
+                    <div class="flex-1">
+                        <p :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-800'" class="font-bold text-base tracking-tight mb-1" v-text="t.nombre"></p>
+                        <div class="flex flex-wrap gap-2">
+                            <span :class="estaPresente(t.cedula) ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.cargo"></span>
+                            <span :class="estaPresente(t.cedula) ? 'bg-indigo-800/30 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.area"></span>
+                            <span :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'" class="text-[9px] font-mono leading-relaxed">C.I. {{t.cedula}}</span>
+                        </div>
+                        <div v-if="t.ubicacion || t.nomina" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 opacity-80">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">📍</span>
+                                <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.ubicacion"></span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">💳</span>
+                                <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.nomina"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="estaPresente(t.cedula)" class="bg-white rounded-full p-1.5 ml-2 shadow-lg">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="trabajadores.length === 0" class="text-center py-20 px-10">
+                <div class="text-6xl mb-6">📁</div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Sin base de trabajadores</h3>
+                <p class="text-slate-400 text-sm mb-8">Importe el archivo Excel para comenzar el control.</p>
+                <label class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold cursor-pointer shadow-xl shadow-indigo-100 block">
+                    Cargar Plantilla
+                    <input type="file" @change="importar" class="hidden">
+                </label>
+            </div>
+        </main>
+
+        <nav class="fixed bottom-6 left-6 right-6 flex gap-2">
+            <button @click="exportarExcel" class="flex-1 bg-emerald-500 text-white py-5 rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
+                📊
+            </button>
+            <button @click="sincronizarGoogleSheets" class="flex-1 bg-indigo-600 text-white py-5 rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
+                ☁️
+            </button>
+            <button @click="menuConfig = true" class="flex-1 bg-white border border-slate-100 text-slate-400 py-5 rounded-[1.8rem] flex items-center justify-center active:scale-95 transition-all text-xl shadow-lg">
+                ⚙️
+            </button>
+        </nav>
+
+        <!-- Modal Configuración -->
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-black text-slate-800">Configuración</h3>
+                    <button @click="menuConfig = false" class="text-slate-400 text-2xl">✕</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Google Sheet Script URL</label>
+                        <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec"
+                               class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
+                    </div>
+
+                    <div class="pt-4 space-y-3">
+                        <button @click="guardarConfig" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all">
+                            Guardar Cambios
+                        </button>
+                        <button @click="resetearDatos" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold active:scale-95 transition-all text-sm">
+                            Limpiar Base de Datos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                const now = new Date();
+                const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const savedConfig = JSON.parse(localStorage.getItem('nexus_final_cfg') || '{}');
+                return {
+                    trabajadores: JSON.parse(localStorage.getItem('nexus_workers') || localStorage.getItem('nexus_final_db') || '[]'),
+                    asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
+                    fechaSeleccionada: hoy,
+                    config: {
+                        googleSheetUrl: '',
+                        ...savedConfig
+                    },
+                    searchQuery: '',
+                    filtroArea: 'Todos',
+                    menuConfig: false,
+                    isSyncing: false,
+                    lastSync: null
+                }
+            },
+            mounted() {
+                if (this.config.googleSheetUrl) {
+                    this.fetchFromSheets();
+                    // Polling cada 30 segundos para actualización real-time entre dispositivos
+                    setInterval(() => this.fetchFromSheets(), 30000);
+                }
+            },
+            computed: {
+                fechaLegible() {
+                    const d = new Date(this.fechaSeleccionada + 'T12:00:00');
+                    return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                },
+                areas() {
+                    return [...new Set(this.trabajadores.map(t => t.area))];
+                },
+                filtrados() {
+                    return this.trabajadores.filter(t => {
+                        const s = this.searchQuery.toLowerCase();
+                        const cumpleBusqueda = t.nombre.toLowerCase().includes(s) ||
+                                             t.cedula.toString().includes(s) ||
+                                             (t.ubicacion || '').toLowerCase().includes(s) ||
+                                             (t.nomina || '').toLowerCase().includes(s);
+                        const cumpleArea = this.filtroArea === 'Todos' || t.area === this.filtroArea;
+                        return cumpleBusqueda && cumpleArea;
+                    });
+                },
+                conteoPresentes() {
+                    const hoyAsis = this.asistencias[this.fechaSeleccionada] || {};
+                    return this.trabajadores.filter(t => hoyAsis[t.cedula]).length;
+                },
+                conteoAusentes() { return this.trabajadores.length - this.conteoPresentes; },
+                porcentajeAsistencia() { 
+                    if(this.trabajadores.length === 0) return 0;
+                    return Math.round((this.conteoPresentes / this.trabajadores.length) * 100);
+                }
+            },
+            methods: {
+                cambiarDia(delta) {
+                    const d = new Date(this.fechaSeleccionada + 'T12:00:00');
+                    d.setDate(d.getDate() + delta);
+                    this.fechaSeleccionada = d.toISOString().slice(0, 10);
+                },
+                estaPresente(cedula) {
+                    return !!(this.asistencias[this.fechaSeleccionada] && this.asistencias[this.fechaSeleccionada][cedula]);
+                },
+                async toggleAsistencia(cedula) {
+                    if (!this.asistencias[this.fechaSeleccionada]) {
+                        this.asistencias[this.fechaSeleccionada] = {};
+                    }
+                    const nuevoEstado = !this.asistencias[this.fechaSeleccionada][cedula];
+                    this.asistencias[this.fechaSeleccionada][cedula] = nuevoEstado;
+                    this.save();
+
+                    // Sincronización automática
+                    const t = this.trabajadores.find(x => x.cedula === cedula);
+                    if (this.config.googleSheetUrl && t) {
+                        await this.syncToSheets('attendance', {
+                            ...t,
+                            fecha: this.fechaSeleccionada,
+                            asistencia: nuevoEstado ? 'PRESENTE' : 'AUSENTE'
+                        });
+                    }
+                },
+                marcarAreaPresente() {
+                    if(this.filtroArea === 'Todos') return;
+
+                    const confirmacion = confirm(`¿Marcar como PRESENTES a todos los trabajadores de ${this.filtroArea} para el día ${this.fechaSeleccionada}?`);
+
+                    if(confirmacion) {
+                        if (!this.asistencias[this.fechaSeleccionada]) {
+                            this.asistencias[this.fechaSeleccionada] = {};
+                        }
+                        const aSincronizar = [];
+                        this.trabajadores.forEach(t => {
+                            if(t.area === this.filtroArea) {
+                                this.asistencias[this.fechaSeleccionada][t.cedula] = true;
+                                aSincronizar.push({
+                                    ...t,
+                                    fecha: this.fechaSeleccionada,
+                                    asistencia: 'PRESENTE'
+                                });
+                            }
+                        });
+                        this.save();
+
+                        if (this.config.googleSheetUrl && aSincronizar.length > 0) {
+                            this.syncToSheets('attendance', aSincronizar);
+                        }
+
+                        alert(`Personal de ${this.filtroArea} actualizado.`);
+                    }
+                },
+                async importar(e) {
+                    const reader = new FileReader();
+                    reader.onload = async (f) => {
+                        const wb = XLSX.read(f.target.result, { type: 'array' });
+                        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                        this.trabajadores = json.map(r => ({
+                            nombre: r.Nombre || r.nombre,
+                            cedula: r.Cedula || r.cedula,
+                            cargo: r.Cargo || r.cargo,
+                            area: r.Area || r.area,
+                            ubicacion: r['Ubicación laboral'] || r.ubicacion || r.Ubicacion || '',
+                            nomina: r['Tipo de nómina'] || r.nomina || r.Nomina || ''
+                        }));
+                        this.save();
+
+                        if (this.config.googleSheetUrl) {
+                            await this.syncToSheets('workers', this.trabajadores);
+                        }
+                    };
+                    reader.readAsArrayBuffer(e.target.files[0]);
+                },
+                async fetchFromSheets() {
+                    if (!this.config.googleSheetUrl || this.isSyncing) return;
+                    this.isSyncing = true;
+                    try {
+                        const res = await fetch(`${this.config.googleSheetUrl}?action=all`);
+                        const data = await res.json();
+
+                        if (data.workers && data.workers.length > 0) {
+                            this.trabajadores = data.workers;
+                        }
+
+                        if (data.attendance) {
+                            const formatted = {};
+                            data.attendance.forEach(a => {
+                                if (!formatted[a.fecha]) formatted[a.fecha] = {};
+                                formatted[a.fecha][a.cedula] = (a.asistencia === 'PRESENTE');
+                            });
+                            this.asistencias = formatted;
+                        }
+                        this.lastSync = new Date().toLocaleTimeString();
+                        this.save();
+                    } catch (e) {
+                        console.error("Error fetching data:", e);
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
+                async syncToSheets(type, data) {
+                    if (!this.config.googleSheetUrl) return;
+                    this.isSyncing = true;
+                    try {
+                        await fetch(this.config.googleSheetUrl, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ type, data })
+                        });
+                    } catch (e) {
+                        console.error("Error syncing data:", e);
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
+                async sincronizarGoogleSheets() {
+                    if(!this.config.googleSheetUrl) return alert("Configura la URL de Google Sheets primero");
+
+                    const dataToSync = this.trabajadores.map(t => ({
+                        ...t,
+                        asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
+                        fecha: this.fechaSeleccionada
+                    }));
+
+                    await this.syncToSheets('attendance', dataToSync);
+                    alert("✅ Sincronización completa");
+                },
+                exportarExcel() {
+                    const dataExport = this.trabajadores.map(t => ({
+                        ...t,
+                        asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
+                        fecha: this.fechaSeleccionada
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(dataExport);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
+                    XLSX.writeFile(wb, `Reporte_Nexus_${this.fechaSeleccionada}.xlsx`);
+                },
+                save() {
+                    localStorage.setItem('nexus_workers', JSON.stringify(this.trabajadores));
+                    localStorage.setItem('nexus_attendance', JSON.stringify(this.asistencias));
+                },
+                resetearDatos() {
+                    if(confirm("¿Estás seguro de eliminar TODOS los trabajadores y el historial de asistencia? Esta acción no se puede deshacer.")) {
+                        this.trabajadores = [];
+                        this.asistencias = {};
+                        localStorage.removeItem('nexus_workers');
+                        localStorage.removeItem('nexus_attendance');
+                        localStorage.removeItem('nexus_final_db');
+                        alert("Datos eliminados correctamente.");
+                        location.reload();
+                    }
+                },
+                guardarConfig() { 
+                    localStorage.setItem('nexus_final_cfg', JSON.stringify(this.config));
+                    this.menuConfig = false;
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

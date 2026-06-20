@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMAÚS - Registro de Retiros TJ</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#312e81">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        [v-cloak] { display: none; }
+        
+        /* Evita estilos nativos molestos en inputs de tipo date y select en iOS/Android */
+        input[type="date"] { min-height: 2.5rem; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+    <div id="app" v-cloak class="max-w-xl mx-auto min-h-screen pb-32">
+        
+        <header class="p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black text-indigo-700 tracking-tighter">EMAÚS <span class="text-amber-500">LOURDES</span></h1>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Inscripción de Caminantes</p>
+            </div>
+            <button @click="menuConfig = true" class="hidden text-slate-300 hover:text-indigo-500 text-xs p-1">⚙️</button>
+            
+            <button v-if="!mostrarFormulario" @click="abrirFormulario" class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl font-bold text-xs active:scale-95 transition-all">
+                + Nueva Planilla
+            </button>
+        </header>
+
+        <main class="px-6">
+            <section v-if="!mostrarFormulario">
+                <div class="relative mb-6">
+                    <input v-model="searchQuery" type="text" placeholder="Buscar caminante por nombre..." 
+                           class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 glass text-sm outline-none">
+                    <span class="absolute left-4 top-4 opacity-30">🔍</span>
+                </div>
+
+                <div class="grid gap-3">
+                    <div v-for="(c, idx) in filtrados" :key="idx" 
+                         class="flex items-center p-5 rounded-[2rem] bg-white border border-slate-100 card-shadow">
+                        <div class="flex-1">
+                            <p class="font-bold text-slate-800 text-base">{{ c.nombre }}</p>
+                            <div class="flex gap-2 mt-1 flex-wrap">
+                                <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[8px] font-black uppercase tracking-tighter">Talla: {{ c.tallaCamisa }}</span>
+                                <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded text-[8px] font-black uppercase tracking-tighter">RH: {{ c.tipoSangre || 'N/A' }}</span>
+                                <span class="text-[9px] font-mono text-slate-400">Cel: {{ c.telCelular }}</span>
+                            </div>
+                        </div>
+                        <div class="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-bold">✓</div>
+                    </div>
+                </div>
+
+                <div v-if="caminantes.length === 0" class="text-center py-20">
+                    <p class="text-slate-400 text-sm">No hay planillas registradas localmente en este dispositivo.</p>
+                </div>
+            </section>
+
+            <section v-if="mostrarFormulario" class="bg-white rounded-[2.5rem] p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+                <button @click="confirmarSalir" class="mb-6 text-slate-400 font-bold text-sm flex items-center active:scale-95 transition-all">
+                    <span class="mr-2">←</span> Cancelar y volver
+                </button>
+                
+                <h2 class="text-xl font-black text-slate-800 mb-6 border-b pb-2 text-indigo-900">Planilla de Inscripción</h2>
+
+                <div class="space-y-6">
+                    
+                    <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
+                        <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">1. Datos Personales</h3>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Nombres y Apellidos *</label>
+                            <input v-model="form.nombre" type="text" placeholder="Ej: Juan Pérez" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Edad *</label>
+                                <input v-model.number="form.edad" type="number" placeholder="Edad" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-span-2 relative">
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Fecha de Nacimiento</label>
+                                <input v-model="form.fechaNacimiento" type="date" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Lugar de Nacimiento</label>
+                                <input v-model="form.lugarNacimiento" type="text" placeholder="Ciudad/Pueblo" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Ocupación</label>
+                                <input v-model="form.ocupacion" type="text" placeholder="Profesión u Oficio" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Estado Civil</label>
+                            <select v-model="form.estadoCivil" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Seleccione...</option>
+                                <option value="Soltero(a)">Soltero(a)</option>
+                                <option value="Casado(a)">Casado(a)</option>
+                                <option value="Divorciado(a)">Divorciado(a)</option>
+                                <option value="Viudo(a)">Viudo(a)</option>
+                                <option value="Concubino(a)">Concubino(a)</option>
+                            </select>
+                        </div>
+
+                        <div v-if="form.estadoCivil === 'Casado(a)' || form.estadoCivil === 'Concubino(a)'" class="grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-200">
+                            <div>
+                                <label class="text-[9px] font-bold text-amber-600 ml-1 uppercase">Nombre Esposo(a) *</label>
+                                <input v-model="form.esposoNombre" type="text" placeholder="Nombre completo" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-amber-600 ml-1 uppercase">Teléf. Esposo(a) *</label>
+                                <input v-model="form.esposoTelefono" type="tel" @input="filtrarNumeros($event, 'esposoTelefono')" placeholder="Solo números" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
+                        <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">2. Ubicación y Contacto</h3>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Dirección de Habitación *</label>
+                            <input v-model="form.direccion" type="text" placeholder="Calle, Avenida, Casa N°" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Estado y Ciudad</label>
+                            <input v-model="form.ciudadEstado" type="text" placeholder="Ej: Zulia, Tía Juana" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Teléfono Fijo Casa</label>
+                                <input v-model="form.telCasa" type="tel" @input="filtrarNumeros($event, 'telCasa')" placeholder="Ej: 02611234567" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Teléfono Celular *</label>
+                                <input v-model="form.telCelular" type="tel" @input="filtrarNumeros($event, 'telCelular')" placeholder="Ej: 04121234567" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Correo Electrónico (Opcional)</label>
+                            <input v-model="form.correo" type="email" placeholder="ejemplo@correo.com" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
+                        <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">3. Parroquia y Detalles</h3>
+                        
+                        <div class="flex items-center justify-between p-2 bg-white rounded-xl px-3 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-500">¿Ya hizo Emaús antes?</span>
+                            <div class="flex gap-2">
+                                <button type="button" @click="form.hizoEmaus = 'Sí'" :class="form.hizoEmaus === 'Sí' ? 'bg-indigo-600 text-white': 'bg-slate-100 text-slate-600'" class="px-3 py-1 rounded-lg text-xs font-bold transition-all">Sí</button>
+                                <button type="button" @click="form.hizoEmaus = 'No'" :class="form.hizoEmaus === 'No' ? 'bg-indigo-600 text-white': 'bg-slate-100 text-slate-600'" class="px-3 py-1 rounded-lg text-xs font-bold transition-all">No</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Parroquia a la que pertenece</label>
+                            <input v-model="form.parroquia" type="text" placeholder="Nombre de su comunidad parroquial" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-slate-400 ml-1 mb-1 block">Talla de Camisa *</label>
+                            <div class="flex gap-1">
+                                <button type="button" v-for="t in ['S','M','L','XL','XXL']" :key="t" @click="form.tallaCamisa = t"
+                                        :class="form.tallaCamisa === t ? 'bg-amber-500 text-white border-amber-500 font-black scale-105' : 'bg-white text-slate-600 border-slate-200'"
+                                        class="flex-1 py-3 text-xs font-bold rounded-xl border transition-all active:scale-95" v-text="t"></button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-2 bg-white rounded-xl px-3 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-500">¿Posee habilidades musicales?</span>
+                            <input type="checkbox" v-model="form.musico" class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Invitado(a) por</label>
+                                <input v-model="form.invitadoPor" type="text" placeholder="Nombre de quien invita" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Teléfono del Invitante</label>
+                                <input v-model="form.telInvitado" type="tel" @input="filtrarNumeros($event, 'telInvitado')" placeholder="Contacto" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl space-y-3">
+                        <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">4. Salud y Emergencias</h3>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Tipo de Sangre (RH)</label>
+                            <input v-model="form.tipoSangre" type="text" placeholder="Ej: O+, A-, AB+" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Necesidades Especiales de Salud / Medicación</label>
+                            <textarea v-model="form.salud" placeholder="Indique condiciones médicas o tratamientos vigentes..." rows="2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 ml-1 uppercase">Necesidades Especiales de Alimentación</label>
+                            <textarea v-model="form.alimentos" placeholder="Alergias alimentarias, regímenes especiales..." rows="2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+                        
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mt-2 ml-1 border-t pt-2 border-slate-200">Contactos de Emergencia (2 Familiares) *</p>
+                        
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input v-model="form.emergencia1Nombre" type="text" placeholder="Nombre Familiar 1 *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                <input v-model="form.emergencia1Tel" type="tel" @input="filtrarNumeros($event, 'emergencia1Tel')" placeholder="Teléfono 1 *" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input v-model="form.emergencia2Nombre" type="text" placeholder="Nombre Familiar 2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                <input v-model="form.emergencia2Tel" type="tel" @input="filtrarNumeros($event, 'emergencia2Tel')" placeholder="Teléfono 2" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl space-y-2">
+                        <h3 class="text-xs font-black uppercase text-indigo-600 tracking-wider">5. Observaciones</h3>
+                        <textarea v-model="form.observaciones" placeholder="Detalles o acotaciones logísticas adicionales..." rows="3" class="w-full p-3 bg-white rounded-xl text-sm border-none shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 text-center italic px-4 leading-relaxed">
+                        * Este retiro está diseñado por la parroquia para personas mayores de 21 años. El mismo iniciará a las 4:00 PM del día pautado y concluirá el domingo con la Santa Misa en la Parroquia Nuestra Señora de Lourdes a las 5:00 PM.
+                    </p>
+
+                    <button @click="procesarInscripcion" :disabled="isSyncing" 
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[1.8rem] font-black shadow-lg active:scale-95 transition-all disabled:bg-slate-200 disabled:text-slate-400">
+                        {{ isSyncing ? 'PROCESANDO...' : 'COMPLETAR REGISTRO' }}
+                    </button>
+                    
+                    <div class="text-center pt-2 text-[10px] font-semibold text-slate-400 tracking-tight">
+                        By jesus.rivero86@gmail.com
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav v-if="!mostrarFormulario" class="fixed bottom-6 left-6 right-6 flex flex-col gap-3 max-w-xl mx-auto">
+            <button @click="exportarExcel" :disabled="caminantes.length === 0"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-5 rounded-3xl shadow-xl font-bold text-xs uppercase tracking-wider text-center active:scale-95 transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:scale-100 flex items-center justify-center gap-2">
+                📥 Exportar Excel ({{ caminantes.length }})
+            </button>
+            
+            <div class="text-center text-[10px] font-semibold text-slate-400 tracking-tight">
+                By jesus.rivero86@gmail.com
+            </div>
+        </nav>
+
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm card-shadow">
+                <h3 class="text-xl font-black mb-6 tracking-tight text-indigo-950">Sincronización</h3>
+                <label class="text-[10px] font-bold text-slate-400 ml-1 mb-1 block uppercase">Apps Script Web App URL</label>
+                <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="w-full p-4 bg-slate-100 rounded-xl mb-6 text-xs font-mono border-none outline-none focus:ring-2 focus:ring-indigo-500">
+                <button @click="guardarConfig" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all">Guardar Configuración</button>
+                <button @click="menuConfig = false" class="w-full text-slate-400 font-bold py-2 text-xs mt-2">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    // Carga inicial Offline-First segura
+                    caminantes: JSON.parse(localStorage.getItem('emaus_caminantes') || '[]'),
+                    config: JSON.parse(localStorage.getItem('emaus_cfg') || '{ "googleSheetUrl": "https://script.google.com/macros/s/AKfycbxxF6-q4OtZZRaHqiLWwWBbQfJTFrPNCLcd-skvHlhkFJmfUC4SFs5NkXACZK9-1Vh7kA/exec" }'),
+                    searchQuery: '',
+                    mostrarFormulario: false,
+                    menuConfig: false,
+                    isSyncing: false,
+                    form: this.getBlankForm()
+                }
+            },
+            computed: {
+                // Filtro de búsqueda reactivo en tiempo real
+                filtrados() {
+                    const s = this.searchQuery.toLowerCase();
+                    return this.caminantes.filter(c => c.nombre && c.nombre.toLowerCase().includes(s));
+                }
+            },
+            methods: {
+                // Estructura exacta requerida para limpiar el formulario y mapear el JSON
+                getBlankForm() {
+                    return {
+                        nombre: '', edad: '', fechaNacimiento: '', lugarNacimiento: '', ocupacion: '', estadoCivil: '',
+                        esposoNombre: '', esposoTelefono: '', direccion: '', ciudadEstado: '',
+                        telCasa: '', telCelular: '', correo: '', hizoEmaus: 'No', parroquia: '',
+                        tallaCamisa: 'M', musico: false, invitadoPor: '', telInvitado: '',
+                        tipoSangre: '', salud: '', alimentos: '',
+                        emergencia1Nombre: '', emergencia1Tel: '', emergencia2Nombre: '', emergencia2Tel: '',
+                        observaciones: ''
+                    };
+                },
+                abrirFormulario() {
+                    this.form = this.getBlankForm();
+                    this.mostrarFormulario = true;
+                },
+                // Interceptador en tiempo real para bloquear caracteres alfabéticos en campos numéricos móviles
+                filtrarNumeros(event, campo) {
+                    this.form[campo] = event.target.value.replace(/[^0-9]/g, '');
+                },
+                confirmarSalir() {
+                    Swal.fire({
+                        title: '¿Cerrar planilla?',
+                        text: 'Si sales ahora, perderás todos los cambios que hayas ingresado en este formulario.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#4f46e5',
+                        cancelButtonColor: '#cbd5e1',
+                        confirmButtonText: 'Sí, salir',
+                        cancelButtonText: 'Permanecer aquí'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.mostrarFormulario = false;
+                        }
+                    });
+                },
+                async procesarInscripcion() {
+                    // 1. VALIDACIÓN: Nombre Completo
+                    if (!this.form.nombre || this.form.nombre.trim().length < 4) {
+                        return Swal.fire({
+                            title: 'Nombre Obligatorio',
+                            text: 'Por favor, introduce el nombre y apellido completo del caminante.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // 2. VALIDACIÓN: Edad y regla parroquial (>21 años)
+                    if (!this.form.edad || this.form.edad <= 0) {
+                        return Swal.fire({
+                            title: 'Edad Inválida',
+                            text: 'Por favor, ingresa un número de edad válido.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } else if (this.form.edad < 21) {
+                        return Swal.fire({
+                            title: 'Restricción de Edad',
+                            text: 'Recuerda que este retiro está diseñado exclusivamente por la parroquia para personas mayores de 21 años.',
+                            icon: 'warning',
+                            confirmButtonColor: '#f59e0b'
+                        });
+                    }
+
+                    // 3. VALIDACIÓN CONDICIONAL: Datos de Cónyuge según Estado Civil seleccionado
+                    if (this.form.estadoCivil === 'Casado(a)' || this.form.estadoCivil === 'Concubino(a)') {
+                        if (!this.form.esposoNombre || this.form.esposoNombre.trim().length < 4) {
+                            return Swal.fire({
+                                title: 'Datos de Cónyuge',
+                                text: 'Al seleccionar Casado(a) o Concubino(a), debes detallar el nombre de tu esposo(a).',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                        if (!this.form.esposoTelefono || this.form.esposoTelefono.trim().length < 7) {
+                            return Swal.fire({
+                                title: 'Teléfono de Cónyuge',
+                                text: 'Por favor, añade un número de contacto válido de tu esposo(a).',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    }
+
+                    // 4. VALIDACIÓN: Dirección detallada
+                    if (!this.form.direccion || this.form.direccion.trim().length < 6) {
+                        return Swal.fire({
+                            title: 'Dirección Incompleta',
+                            text: 'Por favor, detalla con más precisión la dirección de habitación.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // 5. VALIDACIÓN: Celular obligatorio
+                    if (!this.form.telCelular || this.form.telCelular.trim().length < 7) {
+                        return Swal.fire({
+                            title: 'Celular Obligatorio',
+                            text: 'Necesitamos un número celular de contacto para la coordinación del retiro.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // 6. VALIDACIÓN: Expresión Regular para formato de Correo (Si decide llenarse)
+                    if (this.form.correo && this.form.correo.trim() !== '') {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(this.form.correo)) {
+                            return Swal.fire({
+                                title: 'Formato de Correo',
+                                text: 'El correo electrónico ingresado no tiene un formato válido.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    }
+
+                    // 7. VALIDACIÓN: Contacto familiar de emergencia 1 obligatorio
+                    if (!this.form.emergencia1Nombre || this.form.emergencia1Nombre.trim().length < 4 || !this.form.emergencia1Tel) {
+                        return Swal.fire({
+                            title: 'Contacto de Emergencia',
+                            text: 'Por motivos de seguridad, es obligatorio registrar al menos el primer contacto familiar de emergencia completo.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // --- PROCESAMIENTO ESTRATÉGICO OFFLINE-FIRST ---
+                    this.isSyncing = true;
+
+                    Swal.fire({
+                        title: 'Sincronizando...',
+                        text: 'Guardando de inmediato en el dispositivo y enviando a Google Sheets.',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    // Paso A: Resguardar inmediatamente en la caché local del navegador
+                    this.caminantes.unshift({...this.form});
+                    localStorage.setItem('emaus_caminantes', JSON.stringify(this.caminantes));
+
+                    // Paso B: Intentar subir a la nube vía Fetch API a la Web App asignada
+                    if(this.config.googleSheetUrl) {
+                        try {
+                            const respuesta = await fetch(this.config.googleSheetUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({ type: 'registro_caminante', data: this.form })
+                            });
+
+                            const resultado = await respuesta.json();
+
+                            if (resultado.result === 'success') {
+                                Swal.fire({
+                                    title: '¡Guardado en la Nube!',
+                                    text: 'La planilla se registró y sincronizó correctamente en Google Sheets.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#4f46e5'
+                                });
+                                this.mostrarFormulario = false;
+                            } else {
+                                throw new Error(resultado.error);
+                            }
+                        } catch(e) {
+                            // Enfoque Resiliente: Si falla la conexión local o los datos del operador, el flujo no se rompe
+                            Swal.fire({
+                                title: 'Guardado Localmente',
+                                text: 'No se pudo conectar con la nube por problemas de señal, pero la planilla quedó segura en la memoria de este dispositivo.',
+                                icon: 'warning',
+                                confirmButtonColor: '#f59e0b'
+                              });
+                            this.mostrarFormulario = false;
+                        } finally {
+                            this.isSyncing = false;
+                        }
+                    } else {
+                        this.isSyncing = false;
+                        this.mostrarFormulario = false;
+                        Swal.fire({
+                            title: 'Guardado en el Dispositivo',
+                            text: 'Planilla almacenada localmente de manera correcta.',
+                            icon: 'info',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                    }
+                },
+                exportarExcel() {
+                    if(this.caminantes.length === 0) return;
+
+                    // Mapeo riguroso idéntico a las cabeceras de tu base de datos histórica
+                    const datosMapeados = this.caminantes.map((c, i) => ({
+                        'N°': i + 1,
+                        'Nombres y Apellidos': c.nombre,
+                        'Edad': c.edad,
+                        'Fecha Nacimiento': c.fechaNacimiento,
+                        'Lugar de Nacimiento': c.lugarNacimiento,
+                        'Ocupación': c.ocupacion,
+                        'Estado Civil': c.estadoCivil,
+                        'Cónyuge': c.esposoNombre || 'N/A',
+                        'Teléf. Cónyuge': c.esposoTelefono || 'N/A',
+                        'Dirección': c.direccion,
+                        'Ciudad / Estado': c.ciudadEstado,
+                        'Teléfono Casa': c.telCasa,
+                        'Teléfono Celular': c.telCelular,
+                        'Correo': c.correo,
+                        '¿Hizo Emaús?': c.hizoEmaus,
+                        'Parroquia': c.parroquia,
+                        'Talla Camisa': c.tallaCamisa,
+                        '¿Músico?': c.musico ? 'Sí' : 'No',
+                        'Invitado Por': c.invitadoPor,
+                        'Teléf. Invitante': c.telInvitado,
+                        'Tipo Sangre': c.tipoSangre,
+                        'Detalles Salud': c.salud,
+                        'Alergias / Alimentos': c.alimentos,
+                        'Emergencia Contacto 1': c.emergencia1Nombre,
+                        'Teléf. Emergencia 1': c.emergencia1Tel,
+                        'Emergencia Contacto 2': c.emergencia2Nombre,
+                        'Teléf. Emergencia 2': c.emergencia2Tel,
+                        'Observaciones': c.observaciones
+                    }));
+
+                    const hoja = XLSX.utils.json_to_sheet(datosMapeados);
+                    const libro = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(libro, hoja, "Caminantes Inscritos");
+
+                    XLSX.writeFile(libro, `Emaus_Lourdes_Inscritos_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    
+                    Swal.fire({
+                        title: '¡Exportación Exitosa!',
+                        text: 'El archivo Excel con todos los registros se ha descargado de forma correcta.',
+                        icon: 'success',
+                        confirmButtonColor: '#10b981'
+                    });
+                },
+                guardarConfig() {
+                    localStorage.setItem('emaus_cfg', JSON.stringify(this.config));
+                    this.menuConfig = false;
+                    Swal.fire({
+                        title: 'Configuración Guardada',
+                        text: 'El enlace con la Web App de Google Apps Script ha sido actualizado correctamente.',
+                        icon: 'success',
+                        confirmButtonColor: '#4f46e5'
+                    });
+                }
+            }
+        }).mount('#app')
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+                    .catch(err => console.error('Error al registrar el Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>

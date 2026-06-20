@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valeton Tone AI - Isolator & Mapper</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- PWA Capabilities -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121214">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>Valeton Tone AI <span class="badge">DSP Engine</span></h1>
+        <p>Aislamiento de audio mediante IA y mapeo heurístico para GP-200</p>
+    </header>
+
+    <main class="app-container">
+        <!-- SECCIÓN 1: PANEL DE CONTROL Y CARGA -->
+        <section class="control-panel card">
+            <h2>1. Entrada de Audio (Mezcla o Referencia)</h2>
+            <div class="drop-zone" id="dropZone">
+                <p>Arrastra tu archivo de audio (.wav, .mp3) o haz clic para explorar</p>
+                <input type="file" id="audioInput" accept="audio/*" hidden>
+            </div>
+            
+            <div class="processing-options">
+                <label for="isolationMode">Método de Aislamiento:</label>
+                <select id="isolationMode">
+                    <option value="hf-space">Hugging Face API (Demucs v4 Serverless)</option>
+                    <option value="webgpu-local">WebGPU Local (Transformers.js Client-Side)</option>
+                </select>
+                <button id="processBtn" class="btn btn-primary" disabled>Procesar e Aislar Guitarra</button>
+            </div>
+
+            <div class="status-monitor" id="statusMonitor">
+                <p class="status-text">Estado: Listo para cargar archivo.</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: MONITOR DE ENERGÍA ESPECTRAL (AUDIO ISLADO) -->
+        <section class="dsp-monitor card">
+            <h2>2. Análisis de Señal en Tiempo Real (Web Audio API)</h2>
+            <div class="audio-player-container">
+                <audio id="isolatedAudioPlayer" controls></audio>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <span>Crest Factor (Dinámica)</span>
+                    <strong id="crestFactorVal">0.00 dB</strong>
+                </div>
+                <div class="metric-box">
+                    <span>Perfil de Ganancia Estimado</span>
+                    <strong id="gainProfileVal">0.00</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: PRESET RECONSTRUIDO (MAPEO VALETON GP-200) -->
+        <section class="valeton-chain card">
+            <h2>3. Cadena de Señal Sugerida (Valeton GP-200 Target State)</h2>
+            <div id="signalChainTarget" class="chain-grid">
+                <!-- Los bloques de la pedalera se inyectarán dinámicamente aquí mediante JS -->
+                <p class="placeholder-text">Carga y procesa un audio para reconstruir el preset matemático.</p>
+            </div>
+            <div class="export-container">
+                <button id="exportJsonBtn" class="btn btn-secondary" disabled>Exportar JSON de Parámetros</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- TRATAMIENTO MODULAR DE JAVASCRIPT (ES MODULES) -->
+    <script type="module">
+        import { ToneMapperEngine } from './js/valeton-map.js';
+
+        // Estado global de la aplicación cliente
+        const APP_STATE = {
+            audioContext: null,
+            audioBuffer: null,
+            selectedFile: null,
+            isolatedAudioBlob: null,
+            engine: new ToneMapperEngine(44100)
+        };
+
+        // Nodos del DOM
+        const audioInput = document.getElementById('audioInput');
+        const dropZone = document.getElementById('dropZone');
+        const processBtn = document.getElementById('processBtn');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.querySelector('.status-text');
+        const isolatedAudioPlayer = document.getElementById('isolatedAudioPlayer');
+        const signalChainTarget = document.getElementById('signalChainTarget');
+
+        // Manejo de carga de archivos (Drag & Drop)
+        dropZone.addEventListener('click', () => audioInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFileSelection(e.dataTransfer.files[0]);
+        });
+        audioInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFileSelection(e.target.files[0]);
+        });
+
+        function handleFileSelection(file) {
+            APP_STATE.selectedFile = file;
+            statusText.textContent = `Archivo cargado: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+            processBtn.disabled = false;
+        }
+
+        // Ejecución del Pipeline de Procesamiento
+        processBtn.addEventListener('click', async () => {
+            const mode = document.getElementById('isolationMode').value;
+            processBtn.disabled = true;
+            
+            if (mode === 'webgpu-local') {
+                await runLocalTransformersWorker();
+            } else {
+                await runHuggingFaceFetch();
+            }
+        });
+
+        // ENFOQUE A: WEB WORKER + TRANSFORMERS.JS (CLIENT-SIDE)
+        async function runLocalTransformersWorker() {
+            statusText.textContent = "Inicializando Web Worker para aislamiento local con WebGPU...";
+            progressBar.style.width = "15%";
+
+            // Verificación preventiva de hilos y memoria
+            if (!window.Worker) {
+                statusText.textContent = "Error: Tu navegador no soporta Web Workers de forma nativa.";
+                processBtn.disabled = false;
+                return;
+            }
+
+            // Instanciación del Worker (Apuntando a un script dedicado para no congelar la UI)
+            const dspWorker = new Worker(new URL('./js/audio-isolation.worker.js', import.meta.url), { type: 'module' });
+            
+            // Envío del ArrayBuffer del archivo al hilo secundario
+            const arrayBuffer = await APP_STATE.selectedFile.arrayBuffer();
+            dspWorker.postMessage({ audioData: arrayBuffer }, [arrayBuffer]);
+
+            dspWorker.onmessage = function(e) {
+                const { status, progress, resultBlob, error } = e.data;
+                if (progress) progressBar.style.width = `${progress}%`;
+                if (status) statusText.textContent = status;
+                
+                if (resultBlob) {
+                    APP_STATE.isolatedAudioBlob = resultBlob;
+                    executeDspPipeline(resultBlob);
+                    dspWorker.terminate();
+                }
+
+                if (error) {
+                    statusText.textContent = `Worker Error: ${error}`;
+                    processBtn.disabled = false;
+                    dspWorker.terminate();
+                }
+            };
+        }
+
+        // ENFOQUE B: FETCH ASÍNCRONO A HUGGING FACE SPACES (GRADIO API)
+        async function runHuggingFaceFetch() {
+            statusText.textContent = "Subiendo archivo a Hugging Face Space (Demucs v4)...";
+            progressBar.style.width = "30%";
+
+            const formData = new FormData();
+            formData.append("files", APP_STATE.selectedFile);
+
+            try {
+                // Endpoint simulado/configurable de tu espacio en Hugging Face
+                const response = await fetch("https://TU-ESPACIO-DE-HF.hf.space/api/predict", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Fallo en la comunicación con la API remota.");
+                
+                const json = await response.json();
+                progressBar.style.width = "80%";
+                statusText.textContent = "Audio aislado recibido. Descargando stream...";
+
+                // Hugging Face devuelve la URL del archivo .wav de la guitarra aislada
+                const isolatedAudioUrl = json.data[0].url; 
+                const fileResponse = await fetch(isolatedAudioUrl);
+                const audioBlob = await fileResponse.blob();
+                
+                APP_STATE.isolatedAudioBlob = audioBlob;
+                executeDspPipeline(audioBlob);
+
+            } catch (err) {
+                statusText.textContent = `Error API: ${err.message}. Verifica el Endpoint.`;
+                processBtn.disabled = false;
+            }
+        }
+
+        // PIPELINE FINAL: WEB AUDIO API (ANALYZER) + MOTOR VALETON MAP
+        async function executeDspPipeline(audioBlob) {
+            progressBar.style.width = "90%";
+            statusText.textContent = "Ejecutando análisis de firma tonal y dinámica (FFT)...";
+
+            const blobUrl = URL.createObjectURL(audioBlob);
+            isolatedAudioPlayer.src = blobUrl;
+
+            // Inicializar Web Audio API bajo demanda segura
+            if (!APP_STATE.audioContext) {
+                APP_STATE.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            // Decodificación binaria de la pista limpia de guitarra
+            const audioBuffer = await APP_STATE.audioContext.decodeAudioData(arrayBuffer);
+            
+            // Extracción manual de métricas dinámicas rudimentarias (Crest Factor Proxy)
+            const channelData = audioBuffer.getChannelData(0); // Canal izquierdo/mono
+            let sumSq = 0;
+            let peak = 0;
+            for (let i = 0; i < channelData.length; i++) {
+                const absVal = Math.abs(channelData[i]);
+                if (absVal > peak) peak = absVal;
+                sumSq += channelData[i] * channelData[i];
+            }
+            const rms = Math.sqrt(sumSq / channelData.length);
+            const crestFactor = rms > 0 ? 20 * Math.log10(peak / rms) : 15; // dB escala
+
+            // Actualizar Métricas en UI
+            document.getElementById('crestFactorVal').textContent = `${crestFactor.toFixed(2)} dB`;
+
+            // Configurar Analizador FFT nativo para el espectro de frecuencias
+            const offlineCtx = new OfflineAudioContext(1, audioBuffer.length, audioBuffer.sampleRate);
+            const source = offlineCtx.createBufferSource();
+            source.buffer = audioBuffer;
+
+            const analyser = offlineCtx.createAnalyser();
+            analyser.fftSize = 512;
+            
+            source.connect(analyser);
+            analyser.connect(offlineCtx.destination);
+            source.start(0);
+
+            // Renderizar el buffer completo de forma asíncrona para capturar la FFT promedio
+            await offlineCtx.startRendering();
+            const fftData = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(fftData); // Captura del espectro post-render
+
+            // Invocación del Cerebro del Negocio (valeton-map.js)
+            const engine = new ToneMapperEngine(audioBuffer.sampleRate);
+            const calculatedPreset = engine.inferTargetPreset(fftData, { crestFactor });
+
+            renderValetonPresetUI(calculatedPreset);
+        }
+
+        function renderValetonPresetUI(preset) {
+            progressBar.style.width = "100%";
+            statusText.textContent = "Mapeo completo. Cadena reconstruida con éxito.";
+            document.getElementById('gainProfileVal').textContent = preset.meta.estimatedGainProfile;
+            document.getElementById('exportJsonBtn').disabled = false;
+
+            // Renderizado dinámico de los bloques de la cadena de señal de la GP-200
+            signalChainTarget.innerHTML = "";
+            const chain = preset.signalChain;
+
+            for (const [blockName, blockData] of Object.entries(chain)) {
+                const blockEl = document.createElement('div');
+                blockEl.className = `chain-block ${blockData.enabled ? 'enabled' : 'disabled'}`;
+                
+                let settingsHtml = '';
+                if(blockData.settings) {
+                    settingsHtml = Object.entries(blockData.settings)
+                        .map(([param, val]) => `<div class="param"><span>${param}:</span> <strong>${val}</strong></div>`)
+                        .join('');
+                }
+
+                blockEl.innerHTML = `
+                    <div class="block-header">
+                        <h3>${blockName}</h3>
+                        <span class="block-id">${blockData.id || 'BYPASS'}</span>
+                    </div>
+                    <div class="block-body">
+                        <p class="block-name">${blockData.name || ''}</p>
+                        <div class="params-grid">${settingsHtml}</div>
+                    </div>
+                `;
+                signalChainTarget.appendChild(blockEl);
+            }
+
+            // Guardar para descarga
+            document.getElementById('exportJsonBtn').onclick = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(preset, null, 4));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `valeton_preset_${Date.now()}.json`);
+                downloadAnchor.click();
+            };
+        }
+    </script>
+</body>
+</html>

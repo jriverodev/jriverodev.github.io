@@ -1,0 +1,27 @@
+{
+  "short_name": "Reporte OUM",
+  "name": "Reporte Operativo OUM - División Lago",
+  "description": "Sistema de gestión de estatus operacional para unidades mayores y equipos de bombeo.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "utilities"],
+  "lang": "es-VE",
+  "scope": "./"
+}
