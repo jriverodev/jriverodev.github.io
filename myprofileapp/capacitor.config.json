@@ -1,0 +1,6 @@
+{
+  "appId": "com.jrivero.myprofileapp",
+  "appName": "MyProfileApp",
+  "webDir": "myprofileapp/www",
+  "bundledWebRuntime": false
+}

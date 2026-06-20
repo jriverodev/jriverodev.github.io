@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Inventario</title>
+
+  <meta name="theme-color" content="#2c3e50"/>
+  <meta name="description" content="Sistema de Gestión de Inventario - PWA">
+
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIC8+"/>
+  <meta name="apple-mobile-web-app-status-bar" content="#2c3e50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    /* (Se conservan los estilos principales del proyecto) */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh; padding:20px;
+    }
+    .container { max-width:1200px; margin:0 auto; background:white; border-radius:15px; box-shadow:0 20px 40px rgba(0,0,0,0.1); overflow:hidden; }
+    .header { background:linear-gradient(135deg,#2c3e50,#34495e); color:white; padding:20px; text-align:center; }
+    .header-actions{ display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap; }
+    .nav{ display:flex; background:#34495e; border-bottom:1px solid #ddd; flex-wrap:wrap; }
+    .nav button{ flex:1; padding:15px; border:none; background:#34495e; color:white; cursor:pointer; font-size:14px; min-width:120px; }
+    .nav button.active{ background:#3498db; font-weight:bold; }
+    .content{ padding:20px; min-height:400px; }
+    .table-container{ overflow-x:auto; margin-top:20px; }
+    table{ width:100%; border-collapse:collapse; background:white; }
+    th, td{ padding:12px; text-align:left; border-bottom:1px solid #e9ecef; }
+    th{ background:#34495e; color:white; position:sticky; top:0; }
+    .btn{ padding:8px 15px; border:none; border-radius:5px; cursor:pointer; margin:2px; font-size:12px; }
+    .btn-add{ background:#27ae60; color:white; padding:10px 20px; }
+    .btn-export{ background:#9b59b6; color:white; }
+    .btn-import{ background:#e67e22; color:white; }
+    .footer{ text-align:center; padding:20px; background:#f8f9fa; color:#666; border-top:1px solid #e9ecef; }
+    .modal{ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; }
+    .modal-content{ background:white; margin:5% auto; padding:20px; border-radius:10px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto; }
+    @media (max-width:768px){ .nav{ flex-direction:column; } .btn{ font-size:11px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📱 Sistema de Inventario</h1>
+      <p>Gestión completa de inventario</p>
+      <div class="header-actions">
+        <button class="btn btn-export" id="exportExcelBtn">📊 Exportar a Excel</button>
+        <label class="file-label btn-import" for="fileInput">📥 Importar Excel</label>
+        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv" style="display:none">
+      </div>
+    </div>
+
+    <div class="nav">
+      <button id="tabDashboard" class="active">📊 Dashboard</button>
+      <button id="tabUsuarios">👥 Usuarios</button>
+      <button id="tabEquipos">💻 Equipos</button>
+      <button id="tabAsignaciones">🔗 Asignaciones</button>
+    </div>
+
+    <div class="content">
+      <div id="dashboard" class="tab-content active">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:20px;">
+          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="totalUsuarios">0</div>
+            <div>Total Usuarios</div>
+          </div>
+          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="totalEquipos">0</div>
+            <div>Total Equipos</div>
+          </div>
+          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="equiposOperativos">0</div>
+            <div>Equipos Operativos</div>
+          </div>
+          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="equiposAsignados">0</div>
+            <div>Equipos Asignados</div>
+          </div>
+        </div>
+
+        <div class="search-box" style="margin-bottom:20px;">
+          <input type="text" id="globalSearch" placeholder="🔍 Buscar en todo el inventario..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
+        </div>
+
+        <h3>Últimas Asignaciones</h3>
+        <div id="ultimasAsignaciones" class="table-container"></div>
+      </div>
+
+      <div id="usuarios" class="tab-content" style="display:none">
+        <button class="btn btn-add" id="addUsuarioBtn">➕ Agregar Usuario</button>
+        <div class="search-box" style="margin:12px 0;">
+          <input type="text" id="searchUsuarios" placeholder="🔍 Buscar usuarios..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
+        </div>
+        <div class="table-container">
+          <table id="tablaUsuarios"><thead><tr><th>ID</th><th>Responsable</th><th>Cédula</th><th>Cargo</th><th>Sector</th><th>Equipos Asignados</th><th>Acciones</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table>
+        </div>
+      </div>
+
+      <div id="equipos" class="tab-content" style="display:none">
+        <button class="btn btn-add" id="addEquipoBtn">➕ Agregar Equipo</button>
+        <div class="search-box" style="margin:12px 0;">
+          <input type="text" id="searchEquipos" placeholder="🔍 Buscar equipos..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
+        </div>
+        <div class="table-container">
+          <table id="tablaEquipos">
+            <thead>
+              <tr><th>ID</th><th>Descripción</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Status</th><th>Asignado a</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tbodyEquipos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="asignaciones" class="tab-content" style="display:none">
+        <button class="btn btn-add" id="addAsignacionBtn">➕ Nueva Asignación</button>
+        <div class="search-box" style="margin:12px 0;">
+          <input type="text" id="searchAsignaciones" placeholder="🔍 Buscar asignaciones..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
+        </div>
+        <div class="table-container">
+          <table id="tablaAsignaciones">
+            <thead><tr><th>ID</th><th>Usuario</th><th>Equipo</th><th>Serial Equipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="tbodyAsignaciones"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><p>Sistema de Inventario - RIVEROJDU</p></div>
+  </div>
+
+  <!-- Modals (usuarios / equipos / asignaciones) -->
+  <div id="equipmentModal" class="modal"><div class="modal-content">
+    <h3 id="equipmentModalTitle">Agregar / editar equipo</h3>
+    <form id="equipmentForm">
+      <input type="hidden" id="equipmentId">
+      <div style="margin-bottom:10px;"><label>Descripción</label><input id="descripcion" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Marca</label><input id="marca" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Modelo</label><input id="modelo" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Serial</label><input id="serial" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Etiqueta</label><input id="etiqueta" style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Status</label>
+        <select id="status" required style="width:100%;padding:8px">
+          <option value="OPERATIVO">OPERATIVO</option>
+          <option value="INOPERATIVO">INOPERATIVO</option>
+        </select>
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <button type="button" class="btn btn-cancel" id="closeEquipmentModal">Cancelar</button>
+        <button type="submit" class="btn btn-save">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+
+  <div id="userModal" class="modal"><div class="modal-content">
+    <h3>Agregar / editar usuario</h3>
+    <form id="userForm">
+      <input type="hidden" id="userId">
+      <div style="margin-bottom:10px;"><label>Responsable</label><input id="responsable" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Cédula</label><input id="cedula" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Cargo</label><input id="cargo" required style="width:100%;padding:8px"></div>
+      <div style="margin-bottom:10px;"><label>Sector</label><input id="sector" required style="width:100%;padding:8px"></div>
+      <div style="margin-top:10px;text-align:right;">
+        <button type="button" class="btn" id="closeUserModal">Cancelar</button>
+        <button type="submit" class="btn btn-save">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+
+  <div id="assignmentModal" class="modal"><div class="modal-content">
+    <h3>Nueva Asignación</h3>
+    <form id="assignmentForm">
+      <div style="margin-bottom:10px;">
+        <label>Usuario</label>
+        <select id="assignmentUserId" required style="width:100%;padding:8px"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label>Equipo</label>
+        <select id="assignmentEquipmentId" required style="width:100%;padding:8px"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+          <label>Fecha de Asignación</label>
+          <input type="date" id="assignmentDate" required style="width:100%;padding:8px">
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <button type="button" class="btn" id="closeAssignmentModal">Cancelar</button>
+        <button type="submit" class="btn btn-save">Guardar Asignación</button>
+      </div>
+    </form>
+  </div></div>
+
+  <!-- File input already present near header -->
+  <input type="hidden" id="lastExportTimestamp" value="">
+
+  <script type="module">
+  // -------------------------
+  // Supabase init (user-provided credentials)
+  // -------------------------
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const SUPABASE_URL = 'https://memavgxdebiaoanzhysx.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lbWF2Z3hkZWJpYW9hbnpoeXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5Njk4ODgsImV4cCI6MjA3NzU0NTg4OH0._2dfAY4z7ZsWdbXPMIIoqNIIkMoO6kRvZBa6Mg_DWnA';
+  window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // -------------------------
+  // Utilities: DOM helpers
+  // -------------------------
+  const $ = sel => document.querySelector(sel);
+  const $all = sel => Array.from(document.querySelectorAll(sel));
+
+  // -------------------------
+  // Tab handling
+  // -------------------------
+  function showTab(tabId){
+    // Hide all tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.style.display = 'none';
+      content.classList.remove('active');
+    });
+    // Deactivate all nav buttons
+    document.querySelectorAll('.nav button').forEach(button => {
+      button.classList.remove('active');
+    });
+
+    // Show the selected tab content and activate the button
+    const contentToShow = document.getElementById(tabId);
+    if(contentToShow){
+        contentToShow.style.display = 'block';
+        contentToShow.classList.add('active');
+    }
+    const buttonToActivate = document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+    if(buttonToActivate){
+        buttonToActivate.classList.add('active');
+    }
+  }
+
+  // Add event listeners to nav buttons
+  document.querySelectorAll('.nav button').forEach(button => {
+    button.addEventListener('click', () => {
+      const tabId = button.id.replace('tab', '').toLowerCase();
+      showTab(tabId);
+    });
+  });
+
+  // -------------------------
+  // CRUD equipos: Supabase
+  // -------------------------
+  async function addEquipment(equipment){
+    const { data, error } = await supabase.from('equipos').insert([equipment]).select();
+    if(error) throw error;
+    return data;
+  }
+  async function updateEquipment(equipment){
+    const { data, error } = await supabase.from('equipos').update(equipment).eq('id_equipo', equipment.id_equipo).select();
+    if(error) throw error;
+    return data;
+  }
+  async function deleteEquipment(id){
+    const { error } = await supabase.from('equipos').delete().eq('id_equipo', id);
+    if(error) throw error;
+  }
+  async function getAllEquipments(){
+    const { data, error } = await supabase.from('equipos').select('*').order('id_equipo',{ascending:true});
+    if(error) throw error;
+    return data || [];
+  }
+
+  // -------------------------
+  // Render equipos table and handlers
+  // -------------------------
+  const tbodyEquipos = document.getElementById('tbodyEquipos');
+  async function refreshEquipos(){
+    try {
+      const equipos = await getAllEquipments();
+      const totalEquiposEl = document.getElementById('totalEquipos');
+      const equiposOperativosEl = $('#equiposOperativos');
+      const equiposAsignadosEl = $('#equiposAsignados');
+
+      if (totalEquiposEl) totalEquiposEl.textContent = equipos.length;
+      if (equiposOperativosEl) equiposOperativosEl.textContent = equipos.filter(e => e.status === 'OPERATIVO').length;
+      if (equiposAsignadosEl) equiposAsignadosEl.textContent = equipos.filter(e => e.status === 'ASIGNADO').length;
+
+      tbodyEquipos.innerHTML = '';
+      equipos.forEach(eq => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${eq.id_equipo ?? ''}</td>
+          <td>${eq.descripcion ?? ''}</td>
+          <td>${eq.marca ?? ''}</td>
+          <td>${eq.modelo ?? ''}</td>
+          <td>${eq.serial ?? ''}</td>
+          <td>${eq.status ?? ''}</td>
+          <td>${eq.asignado_a ?? ''}</td>
+          <td>
+            <button class="btn btn-edit" data-id="${eq.id_equipo}" data-action="edit">Editar</button>
+            <button class="btn btn-delete" data-id="${eq.id_equipo}" data-action="delete">Eliminar</button>
+          </td>
+        `;
+        tbodyEquipos.appendChild(tr);
+      });
+    } catch (err){
+      console.error('Error refreshing equipos', err);
+      alert('Error al cargar equipos. Revisa consola.');
+    }
+  }
+
+  tbodyEquipos.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const id = btn.getAttribute('data-id');
+    const action = btn.getAttribute('data-action');
+    if(action === 'edit'){
+      // load data into modal
+      const { data, error } = await supabase.from('equipos').select('*').eq('id_equipo', id).single();
+      if(error){ console.error(error); alert('Error al obtener equipo'); return; }
+      $('#equipmentId').value = data.id_equipo || '';
+      $('#descripcion').value = data.descripcion || '';
+      $('#marca').value = data.marca || '';
+      $('#modelo').value = data.modelo || '';
+      $('#serial').value = data.serial || '';
+      $('#etiqueta').value = data.etiqueta || '';
+      $('#status').value = data.status || 'OPERATIVO';
+      $('#equipmentModal').style.display = 'block';
+    } else if(action === 'delete'){
+      if(!confirm('Eliminar equipo?')) return;
+      try {
+        await deleteEquipment(id);
+        await refreshEquipos();
+      } catch(err){ console.error(err); alert('Error eliminando equipo'); }
+    }
+  });
+
+  // Equipment modal handlers
+  $('#addEquipoBtn').addEventListener('click', () => {
+    $('#equipmentForm').reset();
+    $('#equipmentId').value = '';
+    $('#equipmentModal').style.display = 'block';
+  });
+  $('#closeEquipmentModal').addEventListener('click', () => { $('#equipmentModal').style.display = 'none'; });
+  $('#closeUserModal').addEventListener('click', () => { $('#userModal').style.display = 'none'; });
+  $('#closeAssignmentModal').addEventListener('click', () => { $('#assignmentModal').style.display = 'none'; });
+
+  $('#equipmentForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const payload = {
+      descripcion: $('#descripcion').value.trim(),
+      marca: $('#marca').value.trim(),
+      modelo: $('#modelo').value.trim(),
+      serial: $('#serial').value.trim(),
+      etiqueta: $('#etiqueta').value.trim(),
+      status: $('#status').value
+    };
+    const id = $('#equipmentId').value;
+    try {
+      if(id){
+        payload.id_equipo = id;
+        await updateEquipment(payload);
+      } else {
+        await addEquipment(payload);
+      }
+      $('#equipmentModal').style.display = 'none';
+      await refreshEquipos();
+    } catch(err){
+      console.error(err);
+      alert('Error guardando equipo');
+    }
+  });
+
+  // -------------------------
+  // Export a Excel (XLSX)
+  // -------------------------
+  function exportToExcel(){
+    try {
+      const headers = ['ID','Descripción','Marca','Modelo','Serial','Status','Asignado a'];
+      const rows = Array.from(tbodyEquipos.rows).map(r => Array.from(r.cells).slice(0,7).map(c => c.textContent.trim()));
+      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Equipos');
+      XLSX.writeFile(workbook, `equipos_export_${Date.now()}.xlsx`);
+      document.getElementById('lastExportTimestamp').value = Date.now();
+    } catch (err){
+      console.error('Export error', err);
+      alert('Error exportando Excel');
+    }
+  }
+  $('#exportExcelBtn').addEventListener('click', exportToExcel);
+
+  // -------------------------
+  // Import Excel: parse and bulk insert/update
+  // -------------------------
+  $('#fileInput').addEventListener('change', async (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        // rows is array of objects keyed by header names
+        // Expect headers: ID, Descripción, Marca, Modelo, Serial, Status, Asignado a
+        for(const row of rows){
+          const payload = {
+            descripcion: row['Descripción'] ?? row['Descripcion'] ?? '',
+            marca: row['Marca'] ?? '',
+            modelo: row['Modelo'] ?? '',
+            serial: row['Serial'] ?? '',
+            etiqueta: row['Etiqueta'] ?? '',
+            status: row['Status'] ?? row['Estado'] ?? 'OPERATIVO',
+            asignado_a: row['Asignado a'] ?? row['Asignado'] ?? ''
+          };
+          const id = row['ID'] || row['Id'] || row['id_equipo'];
+          if(id){
+            payload.id_equipo = id;
+            // try update or upsert
+            try { await updateEquipment(payload); } catch(e){ console.warn('update failed, trying insert', e); await addEquipment(payload); }
+          } else {
+            await addEquipment(payload);
+          }
+        }
+        alert('Importación finalizada');
+        await refreshEquipos();
+      } catch(err){
+        console.error('Import error', err);
+        alert('Error importando archivo. Revisa consola.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  // -------------------------
+  // Initial load and small UI wiring
+  // -------------------------
+  document.addEventListener('DOMContentLoaded', async () => {
+    await refreshEquipos();
+    await refreshUsers();
+    await refreshAssignments();
+    // Wire other minimal interactions (search on equipos)
+    $('#searchEquipos').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      Array.from(tbodyEquipos.rows).forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+    // globalSearch: simple multi-table search that filters visible rows in each table
+    $('#globalSearch').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      // Equipos
+      Array.from(tbodyEquipos.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
+      // Usuarios
+      Array.from(tbodyUsuarios.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
+      // Asignaciones
+      Array.from(tbodyAsignaciones.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
+    });
+  });
+
+  // Close modal when clicking outside modal-content
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (ev) => {
+      if(ev.target === modal) modal.style.display = 'none';
+    });
+  });
+
+// -------------------------
+// CRUD usuarios: Supabase
+// -------------------------
+async function getAllUsers() {
+  const { data, error } = await supabase.from('usuarios').select('*').order('id_usuario', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function addUser(user) {
+  const { data, error } = await supabase.from('usuarios').insert([user]).select();
+  if (error) throw error;
+  return data;
+}
+
+async function updateUser(user) {
+  const { data, error } = await supabase.from('usuarios').update(user).eq('id_usuario', user.id_usuario).select();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteUser(id) {
+  const { error } = await supabase.from('usuarios').delete().eq('id_usuario', id);
+  if (error) throw error;
+}
+
+// -------------------------
+// Render usuarios table and handlers
+// -------------------------
+const tbodyUsuarios = document.getElementById('tbodyUsuarios');
+async function refreshUsers() {
+  try {
+    const users = await getAllUsers();
+    $('#totalUsuarios').textContent = users.length;
+    tbodyUsuarios.innerHTML = '';
+    users.forEach(u => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.id_usuario ?? ''}</td>
+        <td>${u.responsable ?? ''}</td>
+        <td>${u.cedula ?? ''}</td>
+        <td>${u.cargo ?? ''}</td>
+        <td>${u.sector ?? ''}</td>
+        <td>${u.equipos_asignados ?? 0}</td>
+        <td>
+          <button class="btn btn-edit" data-id="${u.id_usuario}" data-action="edit-user">Editar</button>
+          <button class="btn btn-delete" data-id="${u.id_usuario}" data-action="delete-user">Eliminar</button>
+        </td>
+      `;
+      tbodyUsuarios.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Error refreshing users', err);
+    alert('Error al cargar usuarios.');
+  }
+}
+
+$('#addUsuarioBtn').addEventListener('click', () => {
+  $('#userForm').reset();
+  $('#userId').value = '';
+  $('#userModal').style.display = 'block';
+});
+
+$('#userForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const payload = {
+    responsable: $('#responsable').value.trim(),
+    cedula: $('#cedula').value.trim(),
+    cargo: $('#cargo').value.trim(),
+    sector: $('#sector').value.trim(),
+  };
+  const id = $('#userId').value;
+  try {
+    if (id) {
+      payload.id_usuario = id;
+      await updateUser(payload);
+    } else {
+      await addUser(payload);
+    }
+    $('#userModal').style.display = 'none';
+    await refreshUsers();
+  } catch (err) {
+    console.error(err);
+    alert('Error guardando usuario');
+  }
+});
+
+tbodyUsuarios.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+
+  if (action === 'edit-user') {
+    const { data, error } = await supabase.from('usuarios').select('*').eq('id_usuario', id).single();
+    if (error) { console.error(error); alert('Error al obtener usuario'); return; }
+    $('#userId').value = data.id_usuario || '';
+    $('#responsable').value = data.responsable || '';
+    $('#cedula').value = data.cedula || '';
+    $('#cargo').value = data.cargo || '';
+    $('#sector').value = data.sector || '';
+    $('#userModal').style.display = 'block';
+  } else if (action === 'delete-user') {
+    if (!confirm('¿Eliminar usuario? Esto podría afectar a las asignaciones existentes.')) return;
+    try {
+      await deleteUser(id);
+      await refreshUsers();
+    } catch (err) {
+      console.error(err);
+      alert('Error eliminando usuario');
+    }
+  }
+});
+
+// Search functionality for users
+$('#searchUsuarios').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  Array.from(tbodyUsuarios.rows).forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+
+// -------------------------
+// CRUD asignaciones: Supabase
+// -------------------------
+async function getAllAssignments() {
+  const { data, error } = await supabase.from('asignaciones').select(`
+    id_asignacion,
+    fecha_asignacion,
+    estado,
+    usuarios ( id_usuario, responsable ),
+    equipos ( id_equipo, descripcion, serial )
+  `).order('id_asignacion', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function addAssignment(assignment) {
+  const { data, error } = await supabase.from('asignaciones').insert([assignment]).select();
+  if (error) throw error;
+  // Now, update the equipo's `asignado_a` field
+  const { data: user } = await supabase.from('usuarios').select('responsable').eq('id_usuario', assignment.id_usuario).single();
+  if (user) {
+    await supabase.from('equipos').update({ asignado_a: user.responsable, status: 'ASIGNADO' }).eq('id_equipo', assignment.id_equipo);
+  }
+  return data;
+}
+
+async function deleteAssignment(id, id_equipo) {
+    // First, set the equipo status back to 'OPERATIVO' and clear `asignado_a`
+    await supabase.from('equipos').update({ status: 'OPERATIVO', asignado_a: null }).eq('id_equipo', id_equipo);
+    // Then delete the assignment record
+    const { error } = await supabase.from('asignaciones').delete().eq('id_asignacion', id);
+    if (error) throw error;
+}
+
+
+// -------------------------
+// Render asignaciones table and handlers
+// -------------------------
+const tbodyAsignaciones = document.getElementById('tbodyAsignaciones');
+async function refreshAssignments() {
+  try {
+    const assignments = await getAllAssignments();
+    tbodyAsignaciones.innerHTML = '';
+    assignments.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.id_asignacion}</td>
+        <td>${a.usuarios?.responsable ?? 'N/A'}</td>
+        <td>${a.equipos?.descripcion ?? 'N/A'}</td>
+        <td>${a.equipos?.serial ?? 'N/A'}</td>
+        <td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td>
+        <td>${a.estado ?? 'ACTIVA'}</td>
+        <td>
+          <button class="btn btn-delete" data-id="${a.id_asignacion}" data-equipo-id="${a.equipos?.id_equipo}" data-action="delete-assignment">Eliminar</button>
+        </td>
+      `;
+      tbodyAsignaciones.appendChild(tr);
+    });
+    // Update dashboard's last assignments
+    const ultimasAsignacionesContainer = $('#ultimasAsignaciones');
+    ultimasAsignacionesContainer.innerHTML = '<table>' + tbodyAsignaciones.innerHTML + '</table>';
+
+  } catch (err) {
+    console.error('Error refreshing assignments', err);
+    alert('Error al cargar asignaciones.');
+  }
+}
+
+$('#addAsignacionBtn').addEventListener('click', async () => {
+    // Populate user and equipment dropdowns
+    try {
+        const users = await getAllUsers();
+        const equipments = await getAllEquipments();
+
+        const userSelect = $('#assignmentUserId');
+        userSelect.innerHTML = users.map(u => `<option value="${u.id_usuario}">${u.responsable}</option>`).join('');
+
+        const equipmentSelect = $('#assignmentEquipmentId');
+        // Show only available equipment
+        equipmentSelect.innerHTML = equipments.filter(e => e.status !== 'ASIGNADO' && e.status !== 'INOPERATIVO').map(e => `<option value="${e.id_equipo}">${e.descripcion} (${e.serial})</option>`).join('');
+
+        $('#assignmentDate').valueAsDate = new Date();
+        $('#assignmentModal').style.display = 'block';
+    } catch(err) {
+        console.error('Error populating assignment modal', err);
+        alert('Error al cargar datos para asignación.');
+    }
+});
+
+$('#assignmentForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const payload = {
+        id_usuario: $('#assignmentUserId').value,
+        id_equipo: $('#assignmentEquipmentId').value,
+        fecha_asignacion: $('#assignmentDate').value,
+        estado: 'ACTIVA'
+    };
+    try {
+        await addAssignment(payload);
+        $('#assignmentModal').style.display = 'none';
+        await refreshAssignments();
+        await refreshEquipos(); // Refresh equipos to show updated status
+    } catch (err) {
+        console.error(err);
+        alert('Error guardando asignación');
+    }
+});
+
+tbodyAsignaciones.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn || btn.getAttribute('data-action') !== 'delete-assignment') return;
+
+    const id = btn.getAttribute('data-id');
+    const equipoId = btn.getAttribute('data-equipo-id');
+
+    if (!confirm('¿Eliminar esta asignación? El equipo volverá a estar operativo y disponible.')) return;
+    try {
+        await deleteAssignment(id, equipoId);
+        await refreshAssignments();
+        await refreshEquipos(); // To update equipment status
+    } catch (err) {
+        console.error('Error deleting assignment', err);
+        alert('Error al eliminar asignación');
+    }
+});
+
+  </script>
+</body>
+</html>

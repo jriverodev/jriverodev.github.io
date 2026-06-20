@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RCT Remake Pro</title>
+    <style>
+        body { margin: 0; background: #4B7B4B; overflow: hidden; touch-action: none; font-family: 'Arial', sans-serif; }
+        
+        #header {
+            position: absolute; top: 0; width: 100%; height: 40px;
+            background: linear-gradient(to bottom, #7b7b7b, #5a5a5a);
+            display: flex; align-items: center; justify-content: space-around;
+            border-bottom: 2px solid #292929; z-index: 10;
+        }
+        .stat { color: #f1c40f; font-size: 18px; font-weight: bold; text-shadow: 1px 1px #000; }
+
+        canvas { image-rendering: pixelated; width: 100vw; height: 100vh; }
+
+        #toolbar {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(to bottom, #7b7b7b, #5a5a5a);
+            padding: 8px; border-radius: 8px; display: flex; gap: 8px;
+            border: 2px solid #292929; z-index: 10;
+        }
+        .slot {
+            width: 50px; height: 50px; background: #c0c0c0; border: 2px solid #292929;
+            border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; transition: 0.2s;
+        }
+        .slot.active { background: #f1c40f; border-color: #fff; box-shadow: 0 0 10px #f1c40f; }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div class="stat">💰 $<span id="money">760</span></div>
+        <div class="stat">😊 <span id="happy">100</span>%</div>
+    </div>
+
+    <canvas id="game"></canvas>
+
+    <div id="toolbar">
+        <div class="slot active" onclick="setMode('road', this)">🛣️</div>
+        <div class="slot" onclick="setMode('feria', this)">🎡</div>
+        <div class="slot" onclick="setMode('comida', this)">🍔</div>
+        <div class="slot" style="background: #3498db" onclick="hireStaff()">🧹</div>
+        <div class="slot" style="background: #2ecc71" onclick="addPeep()">👤</div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const T_W = 64, T_H = 32, SZ = 12;
+    
+    let money = 760, mode = 'road', cam = {x:0, y:0};
+    let grid = Array(SZ).fill().map(() => Array(SZ).fill(0));
+    let entities = [];
+
+    const peepSprite = new Image();
+    peepSprite.src = './peep_walk.png';
+
+    function resize() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        cam.x = canvas.width / 2; cam.y = canvas.height / 4;
+    }
+    window.onresize = resize; resize();
+
+    function setMode(m, el) {
+        mode = m;
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    class Peep {
+        constructor(isStaff = false) {
+            this.x = 2; this.y = 0; this.tx = 2; this.ty = 0;
+            this.mv = false; this.isStaff = isStaff;
+            this.color = isStaff ? "#3498db" : (Math.random() > 0.5 ? "#e91e63" : "#cddc39");
+            this.anim = 0;
+        }
+        update() {
+            if(!this.mv) {
+                const d = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}][Math.floor(Math.random()*4)];
+                if(this.x+d.x>=0 && this.x+d.x<SZ && this.y+d.y>=0 && this.y+d.y<SZ && grid[this.x+d.x][this.y+d.y]===1) {
+                    this.tx = this.x+d.x; this.ty = this.y+d.y; this.mv = true;
+                }
+            } else {
+                this.x += (this.tx - this.x) * 0.1; this.y += (this.ty - this.y) * 0.1;
+                this.anim += 0.2;
+                if(Math.abs(this.x - this.tx) < 0.02) {
+                    this.x = this.tx; this.y = this.ty; this.mv = false;
+                    this.anim = 0;
+                }
+            }
+        }
+        draw() {
+            const p = { x: cam.x + (this.x - this.y) * (T_W/2), y: cam.y + (this.x + this.y) * (T_H/2) };
+            
+            // Sombra (Crucial para que no floten)
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+
+            // Dibujar el sprite del peep
+            const frameWidth = 24;
+            const frameHeight = 32;
+            const frameIndex = Math.floor(this.anim) % 6;
+            try {
+                ctx.drawImage(
+                    peepSprite,
+                    frameIndex * frameWidth, 0, frameWidth, frameHeight, // Coordenadas y tamaño del cuadro en la hoja de sprites
+                    p.x - frameWidth / 2, p.y - frameHeight + 14, // Posición en el lienzo
+                    frameWidth, frameHeight // Tamaño de dibujado en el lienzo
+                );
+            } catch (e) {
+                // Si la imagen está corrupta o no se puede dibujar, dibuja un marcador de posición
+                ctx.fillStyle = this.color;
+                ctx.fillRect(p.x - 8, p.y - 18, 16, 18);
+                ctx.strokeStyle = "#000";
+                ctx.strokeRect(p.x - 8, p.y - 18, 16, 18);
+            }
+        }
+    }
+
+    function drawBuilding(x, y, type) {
+        const p = { x: cam.x + (x - y) * (T_W/2), y: cam.y + (x + y) * (T_H/2) };
+        ctx.lineWidth = 2; ctx.strokeStyle = "#292929";
+
+        if(type === 'feria') { // Noria simple
+            ctx.fillStyle = "#A9A9A9"; // Estructura
+            ctx.fillRect(p.x - 5, p.y - 60, 10, 60); ctx.strokeRect(p.x - 5, p.y - 60, 10, 60);
+
+            ctx.fillStyle = "#D35400"; // Cabinas
+            for(let i=0; i<6; i++) {
+                const angle = (i/6) * Math.PI * 2;
+                const cx = p.x + Math.cos(angle) * 25;
+                const cy = p.y - 60 + Math.sin(angle) * 25;
+                ctx.fillRect(cx - 5, cy - 5, 10, 10);
+                ctx.strokeRect(cx - 5, cy - 5, 10, 10);
+            }
+        } else if(type === 'comida') { // Puesto de comida
+            // Base
+            ctx.fillStyle = "#F1C40F";
+            ctx.fillRect(p.x - 20, p.y - 30, 40, 30);
+            ctx.strokeRect(p.x - 20, p.y - 30, 40, 30);
+
+            // Tejado a rayas
+            for(let i=0; i<5; i++) {
+                ctx.fillStyle = i % 2 === 0 ? "#E74C3C" : "#ECF0F1";
+                ctx.beginPath();
+                ctx.moveTo(p.x - 25, p.y - 30);
+                ctx.lineTo(p.x + 25, p.y - 30);
+                ctx.lineTo(p.x + 20, p.y - 50);
+                ctx.lineTo(p.x - 20, p.y - 50);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+
+    function render() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        // El fondo del body ya es verde, no hace falta dibujar el césped aquí
+
+        // Dibujar Grid / Suelo
+        for(let x=0; x<SZ; x++) {
+            for(let y=0; y<SZ; y++) {
+                const p = { x: cam.x + (x - y) * (T_W/2), y: cam.y + (x + y) * (T_H/2) };
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + T_W/2, p.y + T_H/2);
+                ctx.lineTo(p.x, p.y + T_H); ctx.lineTo(p.x - T_W/2, p.y + T_H/2);
+                ctx.closePath();
+
+                // Patrón de césped a cuadros
+                if (grid[x][y] === 0) {
+                    ctx.fillStyle = (x % 2 === 0 && y % 2 === 0) || (x % 2 !== 0 && y % 2 !== 0) ? "#69A069" : "#73A973";
+                } else {
+                    ctx.fillStyle = "#B38C6F"; // Color tierra para el camino
+                }
+
+                ctx.fill();
+                ctx.strokeStyle = "rgba(0,0,0,0.1)"; ctx.stroke();
+            }
+        }
+
+        // Actualizar el estado de todas las entidades primero
+        entities.forEach(e => {
+            if(e.update) { e.update(); }
+        });
+
+        // Ahora, ordenar y dibujar todo por profundidad
+        let sorted = [...entities].sort((a,b) => (a.x+a.y) - (b.x+b.y));
+        sorted.forEach(e => {
+            if(e.draw) { e.draw(); }
+            else { drawBuilding(e.x, e.y, e.type); }
+        });
+
+        requestAnimationFrame(render);
+    }
+
+    canvas.onclick = (e) => {
+        const mx = e.clientX - cam.x, my = e.clientY - cam.y;
+        const gx = Math.floor((my / (T_H/2) + mx / (T_W/2)) / 2);
+        const gy = Math.floor((my / (T_H/2) - mx / (T_W/2)) / 2);
+        if(gx>=0 && gx<SZ && gy>=0 && gy<SZ) {
+            if(mode === 'road') grid[gx][gy] = 1;
+            else entities.push({x: gx, y: gy, type: mode});
+        }
+    };
+
+    function addPeep() { entities.push(new Peep()); }
+    function hireStaff() { entities.push(new Peep(true)); }
+
+    // Camino inicial
+    for(let i=0; i<6; i++) grid[i][2] = 1;
+    grid[5][3] = 1; grid[5][4] = 1;
+
+    peepSprite.onload = () => {
+        // Un pequeño retraso a veces es necesario para asegurar que la imagen
+        // esté completamente decodificada antes del primer renderizado.
+        setTimeout(render, 50);
+    }
+</script>
+</body>
+</html>

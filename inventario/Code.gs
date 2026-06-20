@@ -119,8 +119,8 @@ function addRecord(newItem) {
 
   let maxId = 0;
   if (sheet.getLastRow() > 1) {
-    const idValues = sheet.getRange(2, idColumnIndex + 1, sheet.getLastRow() - 1, 1).getValues();
-    maxId = idValues.reduce((max, row) => Math.max(max, Number(row[0] || 0)), 0);
+    const idValues = sheet.getRange(2, idColIdx + 1, sheet.getLastRow() - 1, 1).getValues();
+    maxId = idValues.reduce((m, row) => Math.max(m, Number(row[0] || 0)), 0);
   }
   const newId = maxId + 1;
   newItem[CONFIG.ID_COLUMN_NAME] = newId;
@@ -179,6 +179,5 @@ function deleteRecord(itemId) {
       return { success: true, deletedId: itemId };
     }
   }
-
   throw new Error(`Item con ID "${itemId}" no encontrado para eliminar.`);
 }

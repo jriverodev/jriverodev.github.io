@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Sala de Operaciones - B</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .disabled-overlay {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-40 font-sans text-slate-800">
+
+    <nav class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50 flex justify-between items-center">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-200">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <h1 class="font-bold tracking-tight uppercase text-xs">Registro Sala de Operaciones - Acceso Restringido</h1>
+        <div class="w-8"></div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-4 space-y-5">
+
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+            <div class="flex items-center">
+                <i class="bi bi-exclamation-octagon-fill text-red-500 text-xl mr-3"></i>
+                <p class="text-red-700 font-bold text-sm uppercase">Licencia de uso suspendida por el desarrollador.</p>
+            </div>
+        </div>
+
+        <div class="disabled-overlay space-y-5">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-blue-900 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                    <i class="bi bi-gear-wide-connected"></i> Configuración General
+                </h2>
+                <div class="h-20 bg-slate-50 rounded-xl"></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-orange-600 mb-4 flex items-center gap-2 text-xs uppercase italic">
+                    <i class="bi bi-plus-square-fill"></i> Registrar Actividad
+                </h2>
+                <div class="space-y-3">
+                    <div class="h-10 bg-slate-50 rounded-xl"></div>
+                    <div class="h-10 bg-slate-50 rounded-xl w-1/2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+            <button onclick="mostrarError()" class="bg-slate-800 text-white font-bold rounded-xl py-4 transition shadow-lg uppercase text-xs">
+                Guardar Registro
+            </button>
+            <button onclick="mostrarError()" class="text-slate-400 border border-slate-200 rounded-xl font-bold uppercase text-xs py-3">
+                Limpiar Base
+            </button>
+        </div>
+
+        <footer class="text-center py-6 border-t border-slate-200">
+            <p class="text-[10px] font-black text-red-500 tracking-[0.2em] uppercase">
+                SOPORTE TÉCNICO REVOCADO POR RIVEROJDU
+            </p>
+        </footer>
+
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 gap-3 z-50">
+            <button onclick="mostrarError()" class="bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg uppercase">Exportar Excel</button>
+            <button onclick="mostrarError()" class="bg-sky-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg uppercase">Enviar WhatsApp</button>
+        </div>
+
+    </main>
+
+    <script>
+        // Función principal que b todo el uso
+        function mostrarError() {
+            Swal.fire({
+                title: '<strong>ACCESO DENEGADO</strong>',
+                icon: 'error',
+                html: `
+                    <div class="text-left text-sm">
+                        <p class="mb-3">La aplicación ha sido <b>deshabilitada permanentemente</b> por el desarrollador original (RIVEROJDU).</p>
+                        <ul class="list-disc ml-5 space-y-1 text-slate-600">
+                            <li>Falta de cumplimiento de términos éticos.</li>
+                            <li>Uso indebido de la herramienta cedida.</li>
+                            <li>Licencia de cortesía revocada.</li>
+                        </ul>
+                        <p class="mt-4 font-bold text-blue-900">Contacte al programador para restablecer el servicio.</p>
+                    </div>
+                `,
+                confirmButtonColor: '#1e3a8a',
+                confirmButtonText: 'Cerrar Aplicación',
+                backdrop: `rgba(15, 23, 42, 0.9)`
+            });
+        }
+
+        // Ejecutar inmediatamente al cargar para "congelar" la experiencia
+        window.onload = function() {
+            console.warn("La aplicación no cuenta con una licencia válida.");
+            // Borramos cualquier rastro de datos locales por si acaso
+            localStorage.clear();
+        };
+
+        // B funciones que el usuario podría llamar desde consola
+        window.guardarRegistro = mostrarError;
+        window.exportarExcel = mostrarError;
+        window.enviarWhatsApp = mostrarError;
+        window.limpiarDB = mostrarError;
+    </script>
+
+</body>
+</html>

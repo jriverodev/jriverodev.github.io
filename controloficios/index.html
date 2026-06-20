@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Extractor PDF - Requerimientos</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0056b3">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9496/9496555.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        .drop-zone {
+            border: 2px dashed var(--primary-color);
+            padding: 40px 20px;
+            border-radius: 8px;
+            background: #f0f4f9;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover { background: #e2ecf7; }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; display: block !important; }
+        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
+        .loading { background-color: #fff3cd; color: #856404; display: block !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Nexus Extractor PDF</h1>
+    <p>Automatización de Requerimientos de Transporte Terrestre</p>
+    
+    <div class="drop-zone" id="dropZone">
+        <p>Arrastra tu oficio PDF aquí o haz clic para buscarlo</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
+        <!-- Agregado br para mejor separación visual cuando el archivo se monte -->
+        <br>
+        <span id="fileName" style="font-weight: bold; color: var(--primary-color);"></span>
+    </div>
+
+    <button class="btn" id="btnProcesar" disabled>Procesar y Enviar a Google Sheets</button>
+    
+    <div id="status"></div>
+
+    
+</div>
+    <div>
+       <hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0 20px 0;">
+    
+    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">¿Necesitas revisar el historial?</p>
+    <a href="https://docs.google.com/spreadsheets/d/1AD8RA17-MFWcj_U9Tf9t1YJj9Jme6w5nd6vnhjnoang/export?format=xlsx" target="_blank" style="text-decoration: none;">
+        <button class="btn" style="background-color: #107c41;">Descargar Historial Completo (Excel)</button>
+    </a> 
+    </div>
+<script>
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxW5kvsbW4V64zs8zGEobXX6ns37PDquOoqsKVeBXkDq5PjM7QobZgeskxCgv-e0Mmh9g/exec";
+    
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const btnProcesar = document.getElementById('btnProcesar');
+    const statusDiv = document.getElementById('status');
+    const fileNameSpan = document.getElementById('fileName');
+    
+    let textoExtraidoPDF = "";
+
+    function mostrarStatus(mensaje, tipo) {
+        statusDiv.innerText = mensaje;
+        statusDiv.className = tipo;
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => manejarArchivo(e.target.files[0]));
+    
+    dropZone.addEventListener('dragover', (e) => { 
+        e.preventDefault(); 
+        dropZone.style.background = '#e2ecf7'; 
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.style.background = '#f0f4f9');
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.background = '#f0f4f9';
+        manejarArchivo(e.dataTransfer.files[0]);
+    });
+
+    async function manejarArchivo(file) {
+        if (!file || file.type !== "application/pdf") {
+            mostrarStatus("Por favor, selecciona un archivo PDF válido.", "error");
+            return;
+        }
+        fileNameSpan.innerText = `Archivo cargado: ${file.name}`;
+        mostrarStatus("Leyendo contenido del PDF...", "loading");
+        
+        try {
+            textoExtraidoPDF = await extraerTextoPDF(file);
+            mostrarStatus("PDF cargado exitosamente. Listo para procesar.", "success");
+            btnProcesar.disabled = false;
+        } catch (error) {
+            mostrarStatus("Error al leer el PDF: " + error.message, "error");
+            btnProcesar.disabled = true;
+        }
+    }
+
+    function extraerTextoPDF(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let numPages = pdf.numPages;
+                    let fullText = "";
+                    
+                    for (let i = 1; i <= numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n";
+                    }
+                    resolve(fullText);
+                } catch (err) { reject(err); }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    btnProcesar.addEventListener('click', async () => {
+        if (!textoExtraidoPDF) return;
+        
+        mostrarStatus("Procesando documento con IA y registrando en Sheets...", "loading");
+        btnProcesar.disabled = true;
+
+        try {
+            const textoLimpio = textoExtraidoPDF.replace(/[\r\t]/g, " ").trim();
+
+            const cuerpoFormulario = new URLSearchParams();
+            cuerpoFormulario.append("textoPDF", textoLimpio);
+
+            const respuestaServidor = await fetch(URL_APPS_SCRIPT, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/x-www-form-urlencoded" 
+                }, 
+                body: cuerpoFormulario.toString()
+            });
+
+            const resultado = await respuestaServidor.json();
+
+            if (resultado.status === "SUCCESS") {
+                mostrarStatus(`¡Procesado con éxito! El documento Nro: ${resultado.doc || 'Detectado'} ha sido registrado (${resultado.action}).`, "success");
+                fileNameSpan.innerText = "";
+                textoExtraidoPDF = "";
+                // CORRECCIÓN: Volvemos a deshabilitar el botón para esperar un nuevo archivo
+                btnProcesar.disabled = true;
+            } else {
+                throw new Error(resultado.message || "Error desconocido en el servidor.");
+            }
+
+        } catch (error) {
+            mostrarStatus("Error de procesamiento: " + error.message, "error");
+            btnProcesar.disabled = false;
+        }
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then(reg => console.log('Nexus Service Worker activo alcance:', reg.scope))
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        console.error('Falla en el Service Worker:', err);
+                    }
+                });
+        });
+    }
+</script>
+</body>
+</html>

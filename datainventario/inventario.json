@@ -1,0 +1,111 @@
+[
+  {
+    "responsable": "JUAN ESCALONA",
+    "cedula": "15158639",
+    "cargo": "SIN INFORMACION",
+    "sector": "SIGAL",
+    "statusGeneral": "MIXTO",
+    "equipo1": {
+      "laptop": {
+        "marca": "VIT",
+        "modelo": "P3400",
+        "serial": "SIN INFORMACION",
+        "etiqueta": "1079390",
+        "status": "INOPERATIVO",
+        "obs": "-"
+      }
+    },
+    "equipo2": {
+      "escritorio": {
+        "cpu": {
+          "marca": "VIT",
+          "modelo": "E2350-02",
+          "serial": "A001339402",
+          "etiqueta": "28017392",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "monitor": {
+          "marca": "VIT",
+          "modelo": "ZP2200",
+          "serial": "SIN INFORMACION",
+          "etiqueta": "28017390",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "teclado": {
+          "marca": "VIT",
+          "modelo": "SIN INFORMACION",
+          "serial": "SIN INFORMACION",
+          "etiqueta": "SIN INFORMACION",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "mouse": {
+          "marca": "VIT",
+          "modelo": "SIN INFORMACION",
+          "serial": "SIN INFORMACION",
+          "etiqueta": "SIN INFORMACION",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "telefono": {
+          "marca": "CISCO",
+          "modelo": "SPA504G",
+          "serial": "CCQ16440WSK",
+          "etiqueta": "SIN INFORMACION",
+          "status": "OPERATIVO",
+          "obs": "-"
+        }
+      }
+    },
+    "obsGenerales": "-"
+  },
+  {
+    "responsable": "MARLOBIS",
+    "cedula": "SIN INFORMACION",
+    "cargo": "SIN INFORMACION",
+    "sector": "SIGAL",
+    "statusGeneral": "OPERATIVO",
+    "equipo1": {
+      "laptop": {}
+    },
+    "equipo2": {
+      "escritorio": {
+        "cpu": {
+          "marca": "VIT",
+          "modelo": "M21000101",
+          "serial": "A001242529",
+          "etiqueta": "1054941",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "monitor": {
+          "marca": "SIRAGON",
+          "modelo": "LED 18SS",
+          "serial": "HC101062504583",
+          "etiqueta": "10311SS",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "teclado": {
+          "marca": "LENOVO",
+          "modelo": "KU 0225",
+          "serial": "1541AS3120331081C",
+          "etiqueta": "SIN INFORMACION",
+          "status": "OPERATIVO",
+          "obs": "-"
+        },
+        "mouse": {
+          "marca": "VIT",
+          "modelo": "DOC M696",
+          "serial": "SIN INFORMACION",
+          "etiqueta": "SIN INFORMACION",
+          "status": "OPERATIVO",
+          "obs": "-"
+        }
+      }
+    },
+    "obsGenerales": "-"
+  }
+]
