@@ -1,1 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel del Repartidor</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Modo Repartidor</h1>
+    <button id="btnRuta">Iniciar Entrega</button>
+    <p id="status">Inactivo</p>
+
+    <script>
+        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+        const SUPABASE_KEY = 'tu-anon-key-publica';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const viajeId = "CAMBIAR_POR_ID_DEL_VIAJE_ACTUAL"; // ID dinámico de la orden
+        let watchId = null;
+
+        document.getElementById('btnRuta').addEventListener('click', () => {
+            if (!watchId) {
+                // Iniciar el rastreo de alta precisión
+                watchId = navigator.geolocation.watchPosition(async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    document.getElementById('status').innerText = `Transmitiendo GPS: ${latitude}, ${longitude}`;
+
+                    // Actualizar coordenadas en Supabase
+                    const { error } = await supabase
+                        .from('viajes')
+                        .update({ latitud: latitude, longitud: longitude })
+                        .eq('id', viajeId);
+                    
+                    if (error) console.error("Error al actualizar ubicación:", error);
+
+                }, (error) => {
+                    console.error("Error GPS:", error);
+                }, {
+                    enableHighAccuracy: true, // Fuerza el uso de GPS real, no solo WiFi
+                    maximumAge: 0,
+                    timeout: 5000
+                });
+                
+                document.getElementById('btnRuta').innerText = "Detener Entrega";
+            } else {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                document.getElementById('status').innerText = "Inactivo";
+                document.getElementById('btnRuta').innerText = "Iniciar Entrega";
+            }
+        });
+    </script>
+</body>
+</html>
 
