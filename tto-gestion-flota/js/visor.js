@@ -11,7 +11,7 @@ async function cargarDatosAnaliticos() {
     const tbody = document.getElementById("tablaCuerpo");
     try {
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando datos de Historial...</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando datos de Historial...</td></tr>`;
         }
 
         const response = await fetch(APP_CONFIG.URL_API, {
@@ -23,7 +23,7 @@ async function cargarDatosAnaliticos() {
         const res = await response.json();
 
         if (res.status !== "SUCCESS") {
-            if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${res.message}</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${res.message}</td></tr>`;
             return;
         }
 
@@ -65,7 +65,7 @@ async function cargarDatosAnaliticos() {
         document.getElementById("kpiDispo").textContent = `${porcDispo}%`;
 
         if (total === 0) {
-            if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros en el historial</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros en el historial</td></tr>`;
             return;
         }
 
@@ -84,31 +84,58 @@ async function cargarDatosAnaliticos() {
                 if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
 
                 let fila = `
-                    <tr class="hover:bg-slate-950/30 border-b border-slate-800/20 transition-colors">
-                        <td class="p-3 text-slate-500 font-mono text-[11px] font-bold">${reg.ID_Registro}</td>
-                        <td class="p-3 font-black text-white tracking-wider font-mono">
-                            ${reg.ID_Unidad} 
-                            ${reg.Marca ? `<span class="text-[9px] text-slate-400 block font-sans font-normal uppercase tracking-wide">${reg.Marca}</span>` : ''}
+                    <tr class="block md:table-row hover:bg-slate-950/30 border-b border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-slate-900 md:bg-transparent rounded-2xl md:rounded-none">
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 text-slate-500 font-mono text-[11px] font-bold border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">ID Registro</span>
+                            <span class="text-right md:text-left">${reg.ID_Registro}</span>
                         </td>
-                        <td class="p-3">
-                            <span class="text-white block font-bold uppercase text-[10px]">${reg.Gerencia}</span>
-                            <span class="text-slate-500 block text-[9px] uppercase tracking-tighter">${reg.Usuario}</span>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Unidad</span>
+                            <div class="text-right md:text-left">
+                                <span class="font-black text-white tracking-wider font-mono">${reg.ID_Unidad}</span>
+                                ${reg.Marca ? `<span class="text-[9px] text-slate-400 block font-sans font-normal uppercase tracking-wide">${reg.Marca}</span>` : ''}
+                            </div>
                         </td>
-                        <td class="p-3 text-slate-400 text-[10px] font-bold">${reg.Tipo_Flota}</td>
-                        <td class="p-3 text-slate-300 font-medium">${nombreTallerFinal}</td>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Gerencia / Usuario</span>
+                            <div class="text-right md:text-left">
+                                <span class="text-white block font-bold uppercase text-[10px]">${reg.Gerencia}</span>
+                                <span class="text-slate-500 block text-[9px] uppercase tracking-tighter">${reg.Usuario}</span>
+                            </div>
+                        </td>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Flota</span>
+                            <span class="text-slate-400 text-[10px] font-bold text-right md:text-left">${reg.Tipo_Flota}</span>
+                        </td>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Ubicación</span>
+                            <span class="text-slate-300 font-medium text-right md:text-left">${nombreTallerFinal}</span>
+                        </td>
                         
-                        <td class="p-3">
-                            <div class="flex flex-col gap-1 justify-center">
-                                <span class="font-mono text-[10px] font-bold text-slate-400">${reg.Avance}%</span>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Avance</span>
+                            <div class="flex flex-col gap-1 justify-center w-full">
+                                <span class="font-mono text-[10px] font-bold text-slate-400 text-right md:text-left">${reg.Avance}%</span>
                                 <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700/30">
                                     <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-500" style="width: ${reg.Avance}%"></div>
                                 </div>
                             </div>
                         </td>
 
-                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${reg.Estatus}</span></td>
-                        <td class="p-3 text-slate-400 max-w-xs truncate" title="${reg.Observaciones}">${reg.Observaciones}</td>
-                        <td class="p-3 font-mono text-slate-500 text-[11px]">${reg.Fecha_Registro}</td>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Estatus</span>
+                            <div class="text-right md:text-left">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${reg.Estatus}</span>
+                            </div>
+                        </td>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Observaciones</span>
+                            <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
+                        </td>
+                        <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3">
+                            <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fecha Ingreso</span>
+                            <span class="font-mono text-slate-500 text-[11px] text-right md:text-left">${reg.Fecha_Registro}</span>
+                        </td>
                     </tr>
                 `;
                 tbody.insertAdjacentHTML("beforeend", fila);
@@ -119,7 +146,7 @@ async function cargarDatosAnaliticos() {
 
     } catch (err) {
         console.error("Error analítico en visor:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
     }
 }
 
