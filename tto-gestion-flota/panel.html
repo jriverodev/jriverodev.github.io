@@ -38,19 +38,19 @@
                </button>
             </div>
             <div class="overflow-x-auto">
-               <table class="w-full text-left border-collapse">
-                  <thead>
-                     <tr class="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-950/40">
-                        <th class="p-3 w-12 font-mono">ID</th>
-                        <th class="p-3 w-48">Unidad / Marca</th>
-                        <th class="p-3 w-48">Fosa / Ubicación</th>
-                        <th class="p-3 w-44">Avance (%)</th>
-                        <th class="p-3 w-40">Estatus Operativo</th>
-                        <th class="p-3">Observaciones / Novedad</th>
-                        <th class="p-3 w-28 text-center">Acciones</th>
+               <table class="block md:table w-full text-left border-collapse">
+                  <thead class="hidden md:table-header-group">
+                     <tr class="border-b border-slate-800/60 bg-slate-900/50 text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                        <th class="p-3">ID Reg</th>
+                        <th class="p-3">Unidad / Marca</th>
+                        <th class="p-3">Ubicación Actual</th>
+                        <th class="p-3 w-40">Avance Mantenimiento</th>
+                        <th class="p-3 w-44">Estatus Operativo</th>
+                        <th class="p-3">Bitácora / Novedad de Patio</th>
+                        <th class="p-3 text-center w-24">Acciones</th>
                      </tr>
                   </thead>
-                  <tbody id="tablaEditableCuerpo" class="divide-y divide-slate-800/40">
+                  <tbody id="tablaEditableCuerpo" class="block md:table-row-group text-xs font-medium text-slate-300">
                   </tbody>
                </table>
             </div>
