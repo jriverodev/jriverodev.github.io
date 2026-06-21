@@ -93,29 +93,33 @@ async function cargarTablaEditable() {
                 : '';
 
             let filaHtml = `
-                <tr id="fila-${reg.ID_Registro}" class="block md:table-row hover:bg-slate-950/20 border-b border-slate-800/40 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-slate-900 md:bg-transparent rounded-2xl md:rounded-none">
-                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 text-slate-500 font-mono text-[11px] font-bold border-b md:border-b-0 border-slate-800/40 md:w-12">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">ID Registro</span>
-                        <span class="text-right md:text-left">${reg.ID_Registro}</span>
+                <tr id="fila-${reg.ID_Registro}" class="block md:table-row bg-slate-900/40 md:bg-transparent border border-slate-800/80 md:border-b md:border-slate-800/40 rounded-xl mb-4 p-3 md:p-0 hover:bg-slate-950/20 transition-colors">
+
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-500 font-mono text-[11px] font-bold border-b border-slate-800/30 md:border-none">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
+                        <span>${reg.ID_Registro}</span>
                     </td>
-                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/40 md:w-48">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Unidad / Marca</span>
-                        <div class="text-right md:text-left w-full md:w-auto">
+
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Unidad / Marca:</span>
+                        <div class="text-right md:text-left w-1/2 md:w-full">
                             <span class="font-black text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
                             <input type="text" id="inline-marca-${reg.ID_Registro}" value="${reg.Marca}"
-                                   class="bg-transparent border-b border-transparent hover:border-slate-800 focus:border-blue-500 px-0.5 py-0.5 text-[11px] text-slate-400 w-full focus:outline-none uppercase font-medium transition-all" placeholder="Marca...">
+                                   class="bg-transparent border-b border-transparent hover:border-slate-800 focus:border-blue-500 px-0.5 py-0.5 text-base md:text-[11px] text-slate-400 w-full text-right md:text-left focus:outline-none uppercase font-medium transition-all" placeholder="Marca...">
                         </div>
                     </td>
-                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 text-slate-300 font-semibold text-[11px] tracking-wide border-b md:border-b-0 border-slate-800/40 md:w-48">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fosa / Ubicación</span>
-                        <div class="text-right md:text-left">
+
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none text-right md:text-left text-slate-300 font-semibold text-[11px] tracking-wide">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Ubicación:</span>
+                        <div>
                             <div>${fosaFinal}</div>
-                            <div class="flex gap-2 flex-wrap justify-end md:justify-start">${badgeFotoAntes} ${badgeFotoDespues}</div>
+                            <div class="flex gap-2 justify-end md:justify-start flex-wrap">${badgeFotoAntes} ${badgeFotoDespues}</div>
                         </div>
                     </td>
-                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/40 md:w-44">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Avance (%)</span>
-                        <div class="flex items-center gap-2 bg-slate-950/40 p-1.5 rounded-xl border border-slate-800/50 w-full">
+
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Avance (%):</span>
+                        <div class="flex items-center gap-2 bg-slate-950/40 p-1.5 rounded-xl border border-slate-800/50 w-1/2 md:w-full">
                             <input type="range" id="inline-avance-${reg.ID_Registro}" min="0" max="100" step="5" value="${reg.Avance}" 
                                    class="w-full accent-blue-500 h-1 rounded cursor-pointer"
                                    oninput="document.getElementById('lbl-avance-${reg.ID_Registro}').textContent = this.value + '%'">
@@ -126,7 +130,7 @@ async function cargarTablaEditable() {
                         <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Estatus</span>
                         <select id="inline-estatus-${reg.ID_Registro}" 
                                 onchange="evaluarEstatusCambio('${reg.ID_Registro}', this.value)"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 font-bold text-[11px] text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer transition-all">
+                                class="w-1/2 md:w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 font-bold text-base md:text-[11px] text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer transition-all">
                             <option value="Por Atender" ${reg.Estatus === "Por Atender" ? "selected" : ""}>⚠️ Por Atender</option>
                             <option value="En Proceso" ${reg.Estatus === "En Proceso" ? "selected" : ""}>⚙️ En Proceso</option>
                             <option value="Listo" ${reg.Estatus === "Listo" || reg.Estatus === "Reparado" ? "selected" : ""}>✅ Listo</option>

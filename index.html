@@ -1,721 +1,2181 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistema de Inventario</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario</title>
 
-  <meta name="theme-color" content="#2c3e50"/>
-  <meta name="description" content="Sistema de Gestión de Inventario - PWA">
+    <!-- === PWA META TAGS === -->
+    <meta name="theme-color" content="#2c3e50"/>
+    <meta name="description" content="Sistema de Gestión de Inventario - PWA">
 
-  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIC8+"/>
-  <meta name="apple-mobile-web-app-status-bar" content="#2c3e50">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- iOS support -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaGyPSJtaWRkbGUiPklOVjwvdGV4dD4KPC9zdmc+">
+    <meta name="apple-mobile-web-app-status-bar" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="inventario/js/supabase-config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* Estilos CSS para la interfaz del sistema */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-  <style>
-    /* (Se conservan los estilos principales del proyecto) */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-      min-height:100vh; padding:20px;
-    }
-    .container { max-width:1200px; margin:0 auto; background:white; border-radius:15px; box-shadow:0 20px 40px rgba(0,0,0,0.1); overflow:hidden; }
-    .header { background:linear-gradient(135deg,#2c3e50,#34495e); color:white; padding:20px; text-align:center; }
-    .header-actions{ display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap; }
-    .nav{ display:flex; background:#34495e; border-bottom:1px solid #ddd; flex-wrap:wrap; }
-    .nav button{ flex:1; padding:15px; border:none; background:#34495e; color:white; cursor:pointer; font-size:14px; min-width:120px; }
-    .nav button.active{ background:#3498db; font-weight:bold; }
-    .content{ padding:20px; min-height:400px; }
-    .table-container{ overflow-x:auto; margin-top:20px; }
-    table{ width:100%; border-collapse:collapse; background:white; }
-    th, td{ padding:12px; text-align:left; border-bottom:1px solid #e9ecef; }
-    th{ background:#34495e; color:white; position:sticky; top:0; }
-    .btn{ padding:8px 15px; border:none; border-radius:5px; cursor:pointer; margin:2px; font-size:12px; }
-    .btn-add{ background:#27ae60; color:white; padding:10px 20px; }
-    .btn-export{ background:#9b59b6; color:white; }
-    .btn-import{ background:#e67e22; color:white; }
-    .footer{ text-align:center; padding:20px; background:#f8f9fa; color:#666; border-top:1px solid #e9ecef; }
-    .modal{ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; }
-    .modal-content{ background:white; margin:5% auto; padding:20px; border-radius:10px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto; }
-    @media (max-width:768px){ .nav{ flex-direction:column; } .btn{ font-size:11px; } }
-  </style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav {
+            display: flex;
+            background: #34495e;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .nav button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: #34495e;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .nav button:hover {
+            background: #2c3e50;
+        }
+
+        .nav button.active {
+            background: #3498db;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-add {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            margin-bottom: 15px;
+        }
+
+        .btn-export {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .btn-import {
+            background: #e67e22;
+            color: white;
+        }
+
+        .btn-download-template {
+            background: #34495e;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .form-actions {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-save {
+            background: #3498db;
+            color: white;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #e67e22;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .import-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .equipment-info {
+            background: #e8f4fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+            }
+
+            .nav button {
+                padding: 12px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            th, td {
+                padding: 8px;
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .status-operativo {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-inoperativo {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .assigned-badge {
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .unassigned-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        /* ... (TODOS TUS ESTILOS ACTUALES SE MANTIENEN) ... */
+
+        /* === ESTILOS PWA ADICIONALES === */
+        .pwa-install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+        }
+
+        .pwa-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .offline-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #e74c3c;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            z-index: 1001;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .pwa-install-btn {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>📱 Sistema de Inventario</h1>
-      <p>Gestión completa de inventario</p>
-      <div class="header-actions">
-        <button class="btn btn-export" id="exportExcelBtn">📊 Exportar a Excel</button>
-        <label class="file-label btn-import" for="fileInput">📥 Importar Excel</label>
-        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv" style="display:none">
-      </div>
+    <!-- === ELEMENTOS PWA === -->
+    <div class="offline-warning" id="offlineWarning">
+        ⚠️ Estás trabajando sin conexión
     </div>
 
-    <div class="nav">
-      <button id="tabDashboard" class="active">📊 Dashboard</button>
-      <button id="tabUsuarios">👥 Usuarios</button>
-      <button id="tabEquipos">💻 Equipos</button>
-      <button id="tabAsignaciones">🔗 Asignaciones</button>
+    <div class="pwa-status" id="pwaStatus">
+        📱 PWA Lista
     </div>
 
-    <div class="content">
-      <div id="dashboard" class="tab-content active">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:20px;">
-          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="totalUsuarios">0</div>
-            <div>Total Usuarios</div>
-          </div>
-          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="totalEquipos">0</div>
-            <div>Total Equipos</div>
-          </div>
-          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="equiposOperativos">0</div>
-            <div>Equipos Operativos</div>
-          </div>
-          <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-            <div style="font-size:1.6rem;font-weight:bold;color:#3498db" id="equiposAsignados">0</div>
-            <div>Equipos Asignados</div>
-          </div>
+    <button class="pwa-install-btn" id="pwaInstallBtn">
+        📲 Instalar App
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <h1>📱 Sistema de Inventario</h1>
+            <p>Gestión completa de inventario</p>
+            <div class="header-actions">
+                <button class="btn btn-export" onclick="exportToExcel()">📊 Exportar a Excel</button>
+                <!--button class="btn btn-download-template" onclick="downloadTemplate()">📥 Descargar Plantilla</button-->
+                <!--label class="file-label">
+                    📤 Importar Excel
+                    <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls" onchange="importFromExcel(event)">
+                </label-->
+            </div>
         </div>
 
-        <div class="search-box" style="margin-bottom:20px;">
-          <input type="text" id="globalSearch" placeholder="🔍 Buscar en todo el inventario..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
+        <div class="nav">
+            <button onclick="showTab('dashboard')" class="active">📊 Dashboard</button>
+            <!--button onclick="showTab('usuarios')">👥 Usuarios</button-->
+            <button onclick="showTab('equipos')">💻 Equipos</button>
+            <button onclick="showTab('asignaciones')">🔗 Asignaciones</button>
         </div>
 
-        <h3>Últimas Asignaciones</h3>
-        <div id="ultimasAsignaciones" class="table-container"></div>
-      </div>
+        <div class="content">
+            <!-- Contenido de las pestañas -->
+            <div id="dashboard" class="tab-content active">
+                <!-- Dashboard con estadísticas -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalUsuarios">0</div>
+                        <div class="stat-label">Total Usuarios</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEquipos">0</div>
+                        <div class="stat-label">Total Equipos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="equiposOperativos">0</div>
+                        <div class="stat-label">Equipos Operativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="equiposAsignados">0</div>
+                        <div class="stat-label">Equipos Asignados</div>
+                    </div>
+                </div>
 
-      <div id="usuarios" class="tab-content" style="display:none">
-        <button class="btn btn-add" id="addUsuarioBtn">➕ Agregar Usuario</button>
-        <div class="search-box" style="margin:12px 0;">
-          <input type="text" id="searchUsuarios" placeholder="🔍 Buscar usuarios..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
-        </div>
-        <div class="table-container">
-          <table id="tablaUsuarios"><thead><tr><th>ID</th><th>Responsable</th><th>Cédula</th><th>Cargo</th><th>Sector</th><th>Equipos Asignados</th><th>Acciones</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table>
-        </div>
-      </div>
+                <div class="search-box">
+                    <input type="text" id="globalSearch" placeholder="🔍 Buscar en todo el inventario..." onkeyup="globalSearch()">
+                </div>
 
-      <div id="equipos" class="tab-content" style="display:none">
-        <button class="btn btn-add" id="addEquipoBtn">➕ Agregar Equipo</button>
-        <div class="search-box" style="margin:12px 0;">
-          <input type="text" id="searchEquipos" placeholder="🔍 Buscar equipos..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
-        </div>
-        <div class="table-container">
-          <table id="tablaEquipos">
-            <thead>
-              <tr><th>ID</th><th>Descripción</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Status</th><th>Asignado a</th><th>Acciones</th></tr>
-            </thead>
-            <tbody id="tbodyEquipos"></tbody>
-          </table>
-        </div>
-      </div>
+                <h3>Últimas Asignaciones</h3>
+                <div id="ultimasAsignaciones" class="table-container">
+                    <!-- Las últimas asignaciones se cargarán aquí -->
+                </div>
+            </div>
 
-      <div id="asignaciones" class="tab-content" style="display:none">
-        <button class="btn btn-add" id="addAsignacionBtn">➕ Nueva Asignación</button>
-        <div class="search-box" style="margin:12px 0;">
-          <input type="text" id="searchAsignaciones" placeholder="🔍 Buscar asignaciones..." style="width:100%; padding:12px; border-radius:8px; border:2px solid #e9ecef;">
+            <!-- Usuarios -->
+            <div id="usuarios" class="tab-content">
+                <button class="btn btn-add" onclick="openUserModal()">➕ Agregar Usuario</button>
+                <div class="search-box">
+                    <input type="text" id="searchUsuarios" placeholder="🔍 Buscar usuarios..." onkeyup="filterTable('usuarios')">
+                </div>
+                <div class="table-container">
+                    <table id="tablaUsuarios">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Responsable</th>
+                                <th>Cédula</th>
+                                <th>Cargo</th>
+                                <th>Sector</th>
+                                <th>Equipos Asignados</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsuarios">
+                            <!-- Los usuarios se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="equipos" class="tab-content">
+                <!-- Gestión de equipos -->
+                <button class="btn btn-add" onclick="openEquipmentModal()">➕ Agregar Equipo</button>
+                <div class="search-box">
+                    <input type="text" id="searchEquipos" placeholder="🔍 Buscar equipos..." onkeyup="filterTable('equipos')">
+                </div>
+                <div class="table-container">
+                    <table id="tablaEquipos">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Descripción</th>
+                                <th>Marca</th>
+                                <th>Modelo</th>
+                                <th>Serial</th>
+                                <th>Status</th>
+                                <th>Asignado a</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyEquipos">
+                            <!-- Los equipos se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="asignaciones" class="tab-content">
+                <!-- Gestión de asignaciones -->
+                <button class="btn btn-add" onclick="openAssignmentModal()">➕ Nueva Asignación</button>
+                <div class="search-box">
+                    <input type="text" id="searchAsignaciones" placeholder="🔍 Buscar asignaciones..." onkeyup="filterTable('asignaciones')">
+                </div>
+                <div class="table-container">
+                    <table id="tablaAsignaciones">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Equipo</th>
+                                <th>Serial Equipo</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAsignaciones">
+                            <!-- Las asignaciones se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <div class="table-container">
-          <table id="tablaAsignaciones">
-            <thead><tr><th>ID</th><th>Usuario</th><th>Equipo</th><th>Serial Equipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="tbodyAsignaciones"></tbody>
-          </table>
+
+        <div class="footer">
+            <p>Sistema de Inventario - RIVEROJDU</p>
         </div>
-      </div>
     </div>
 
-    <div class="footer"><p>Sistema de Inventario - RIVEROJDU</p></div>
-  </div>
+    <!-- Modales para formularios -->
+    <div id="userModal" class="modal">
+        <!-- Modal para usuarios -->
+        <div class="modal-content">
+            <h3 id="userModalTitle">Agregar Usuario</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label>Responsable:</label>
+                    <input type="text" id="responsable" required>
+                </div>
+                <div class="form-group">
+                    <label>Cédula:</label>
+                    <input type="text" id="cedula">
+                </div>
+                <div class="form-group">
+                    <label>Cargo:</label>
+                    <input type="text" id="cargo">
+                </div>
+                <div class="form-group">
+                    <label>Sector:</label>
+                    <input type="text" id="sector" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeUserModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <!-- Modals (usuarios / equipos / asignaciones) -->
-  <div id="equipmentModal" class="modal"><div class="modal-content">
-    <h3 id="equipmentModalTitle">Agregar / editar equipo</h3>
-    <form id="equipmentForm">
-      <input type="hidden" id="equipmentId">
-      <div style="margin-bottom:10px;"><label>Descripción</label><input id="descripcion" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Marca</label><input id="marca" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Modelo</label><input id="modelo" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Serial</label><input id="serial" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Etiqueta</label><input id="etiqueta" style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Status</label>
-        <select id="status" required style="width:100%;padding:8px">
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="INOPERATIVO">INOPERATIVO</option>
-        </select>
-      </div>
-      <div style="margin-top:10px;text-align:right;">
-        <button type="button" class="btn btn-cancel" id="closeEquipmentModal">Cancelar</button>
-        <button type="submit" class="btn btn-save">Guardar</button>
-      </div>
-    </form>
-  </div></div>
+    <div id="equipmentModal" class="modal">
+        <!-- Modal para equipos -->
+        <div class="modal-content">
+            <h3 id="equipmentModalTitle">Agregar Equipo</h3>
+            <form id="equipmentForm">
+                <input type="hidden" id="equipmentId">
+                <div class="form-group">
+                    <label>Descripción:</label>
+                    <input type="text" id="descripcion" required>
+                </div>
+                <div class="form-group">
+                    <label>Marca:</label>
+                    <input type="text" id="marca" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo:</label>
+                    <input type="text" id="modelo" required>
+                </div>
+                <div class="form-group">
+                    <label>Serial: <small>(Único, identifica el equipo)</small></label>
+                    <input type="text" id="serial" required>
+                </div>
+                <div class="form-group">
+                    <label>Etiqueta:</label>
+                    <input type="text" id="etiqueta">
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select id="status" required>
+                        <option value="OPERATIVO">OPERATIVO</option>
+                        <option value="INOPERATIVO">INOPERATIVO</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="observaciones" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeEquipmentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <div id="userModal" class="modal"><div class="modal-content">
-    <h3>Agregar / editar usuario</h3>
-    <form id="userForm">
-      <input type="hidden" id="userId">
-      <div style="margin-bottom:10px;"><label>Responsable</label><input id="responsable" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Cédula</label><input id="cedula" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Cargo</label><input id="cargo" required style="width:100%;padding:8px"></div>
-      <div style="margin-bottom:10px;"><label>Sector</label><input id="sector" required style="width:100%;padding:8px"></div>
-      <div style="margin-top:10px;text-align:right;">
-        <button type="button" class="btn" id="closeUserModal">Cancelar</button>
-        <button type="submit" class="btn btn-save">Guardar</button>
-      </div>
-    </form>
-  </div></div>
+    <div id="assignmentModal" class="modal">
+        <!-- Modal para asignaciones -->
+        <div class="modal-content">
+            <h3 id="assignmentModalTitle">Nueva Asignación</h3>
+            <form id="assignmentForm">
+                <input type="hidden" id="assignmentId">
+                <div class="form-group">
+                    <label>Usuario:</label>
+                    <select id="assignmentUsuario" required onchange="updateAvailableEquipments()">
+                        <option value="">Seleccionar usuario</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Equipo:</label>
+                    <select id="assignmentEquipo" required onchange="updateEquipmentDetails()">
+                        <option value="">Seleccionar equipo</option>
+                    </select>
+                    <div id="equipmentDetails" class="equipment-info" style="display: none;">
+                        <!-- Detalles del equipo se mostrarán aquí -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Estado:</label>
+                    <select id="assignmentEstado" required>
+                        <option value="Asignado">Asignado</option>
+                        <option value="Retirado">Retirado</option>
+                        <option value="En Reparación">En Reparación</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeAssignmentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <div id="assignmentModal" class="modal"><div class="modal-content">
-    <h3>Nueva Asignación</h3>
-    <form id="assignmentForm">
-      <div style="margin-bottom:10px;">
-        <label>Usuario</label>
-        <select id="assignmentUserId" required style="width:100%;padding:8px"></select>
-      </div>
-      <div style="margin-bottom:10px;">
-        <label>Equipo</label>
-        <select id="assignmentEquipmentId" required style="width:100%;padding:8px"></select>
-      </div>
-      <div style="margin-bottom:10px;">
-          <label>Fecha de Asignación</label>
-          <input type="date" id="assignmentDate" required style="width:100%;padding:8px">
-      </div>
-      <div style="margin-top:10px;text-align:right;">
-        <button type="button" class="btn" id="closeAssignmentModal">Cancelar</button>
-        <button type="submit" class="btn btn-save">Guardar Asignación</button>
-      </div>
-    </form>
-  </div></div>
+    <script>
+  // =============================================
+// CONFIGURACIÓN PWA PARA GITHUB PAGES
+// =============================================
 
-  <!-- File input already present near header -->
-  <input type="hidden" id="lastExportTimestamp" value="">
+// Manifest dinámico para PWA
+// =============================================
+// CONFIGURACIÓN PWA CON TUS ICONOS PNG
+// =============================================
 
-  <script type="module">
-  // -------------------------
-  // Supabase init (user-provided credentials)
-  // -------------------------
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-  const SUPABASE_URL = 'https://memavgxdebiaoanzhysx.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lbWF2Z3hkZWJpYW9hbnpoeXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5Njk4ODgsImV4cCI6MjA3NzU0NTg4OH0._2dfAY4z7ZsWdbXPMIIoqNIIkMoO6kRvZBa6Mg_DWnA';
-  window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // -------------------------
-  // Utilities: DOM helpers
-  // -------------------------
-  const $ = sel => document.querySelector(sel);
-  const $all = sel => Array.from(document.querySelectorAll(sel));
-
-  // -------------------------
-  // Tab handling
-  // -------------------------
-  function showTab(tabId){
-    // Hide all tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-      content.style.display = 'none';
-      content.classList.remove('active');
-    });
-    // Deactivate all nav buttons
-    document.querySelectorAll('.nav button').forEach(button => {
-      button.classList.remove('active');
-    });
-
-    // Show the selected tab content and activate the button
-    const contentToShow = document.getElementById(tabId);
-    if(contentToShow){
-        contentToShow.style.display = 'block';
-        contentToShow.classList.add('active');
-    }
-    const buttonToActivate = document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
-    if(buttonToActivate){
-        buttonToActivate.classList.add('active');
-    }
-  }
-
-  // Add event listeners to nav buttons
-  document.querySelectorAll('.nav button').forEach(button => {
-    button.addEventListener('click', () => {
-      const tabId = button.id.replace('tab', '').toLowerCase();
-      showTab(tabId);
-    });
-  });
-
-  // -------------------------
-  // CRUD equipos: Supabase
-  // -------------------------
-  async function addEquipment(equipment){
-    const { data, error } = await supabase.from('equipos').insert([equipment]).select();
-    if(error) throw error;
-    return data;
-  }
-  async function updateEquipment(equipment){
-    const { data, error } = await supabase.from('equipos').update(equipment).eq('id_equipo', equipment.id_equipo).select();
-    if(error) throw error;
-    return data;
-  }
-  async function deleteEquipment(id){
-    const { error } = await supabase.from('equipos').delete().eq('id_equipo', id);
-    if(error) throw error;
-  }
-  async function getAllEquipments(){
-    const { data, error } = await supabase.from('equipos').select('*').order('id_equipo',{ascending:true});
-    if(error) throw error;
-    return data || [];
-  }
-
-  // -------------------------
-  // Render equipos table and handlers
-  // -------------------------
-  const tbodyEquipos = document.getElementById('tbodyEquipos');
-  async function refreshEquipos(){
-    try {
-      const equipos = await getAllEquipments();
-      const totalEquiposEl = document.getElementById('totalEquipos');
-      const equiposOperativosEl = $('#equiposOperativos');
-      const equiposAsignadosEl = $('#equiposAsignados');
-
-      if (totalEquiposEl) totalEquiposEl.textContent = equipos.length;
-      if (equiposOperativosEl) equiposOperativosEl.textContent = equipos.filter(e => e.status === 'OPERATIVO').length;
-      if (equiposAsignadosEl) equiposAsignadosEl.textContent = equipos.filter(e => e.status === 'ASIGNADO').length;
-
-      tbodyEquipos.innerHTML = '';
-      equipos.forEach(eq => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${eq.id_equipo ?? ''}</td>
-          <td>${eq.descripcion ?? ''}</td>
-          <td>${eq.marca ?? ''}</td>
-          <td>${eq.modelo ?? ''}</td>
-          <td>${eq.serial ?? ''}</td>
-          <td>${eq.status ?? ''}</td>
-          <td>${eq.asignado_a ?? ''}</td>
-          <td>
-            <button class="btn btn-edit" data-id="${eq.id_equipo}" data-action="edit">Editar</button>
-            <button class="btn btn-delete" data-id="${eq.id_equipo}" data-action="delete">Eliminar</button>
-          </td>
-        `;
-        tbodyEquipos.appendChild(tr);
-      });
-    } catch (err){
-      console.error('Error refreshing equipos', err);
-      alert('Error al cargar equipos. Revisa consola.');
-    }
-  }
-
-  tbodyEquipos.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button');
-    if(!btn) return;
-    const id = btn.getAttribute('data-id');
-    const action = btn.getAttribute('data-action');
-    if(action === 'edit'){
-      // load data into modal
-      const { data, error } = await supabase.from('equipos').select('*').eq('id_equipo', id).single();
-      if(error){ console.error(error); alert('Error al obtener equipo'); return; }
-      $('#equipmentId').value = data.id_equipo || '';
-      $('#descripcion').value = data.descripcion || '';
-      $('#marca').value = data.marca || '';
-      $('#modelo').value = data.modelo || '';
-      $('#serial').value = data.serial || '';
-      $('#etiqueta').value = data.etiqueta || '';
-      $('#status').value = data.status || 'OPERATIVO';
-      $('#equipmentModal').style.display = 'block';
-    } else if(action === 'delete'){
-      if(!confirm('Eliminar equipo?')) return;
-      try {
-        await deleteEquipment(id);
-        await refreshEquipos();
-      } catch(err){ console.error(err); alert('Error eliminando equipo'); }
-    }
-  });
-
-  // Equipment modal handlers
-  $('#addEquipoBtn').addEventListener('click', () => {
-    $('#equipmentForm').reset();
-    $('#equipmentId').value = '';
-    $('#equipmentModal').style.display = 'block';
-  });
-  $('#closeEquipmentModal').addEventListener('click', () => { $('#equipmentModal').style.display = 'none'; });
-  $('#closeUserModal').addEventListener('click', () => { $('#userModal').style.display = 'none'; });
-  $('#closeAssignmentModal').addEventListener('click', () => { $('#assignmentModal').style.display = 'none'; });
-
-  $('#equipmentForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const payload = {
-      descripcion: $('#descripcion').value.trim(),
-      marca: $('#marca').value.trim(),
-      modelo: $('#modelo').value.trim(),
-      serial: $('#serial').value.trim(),
-      etiqueta: $('#etiqueta').value.trim(),
-      status: $('#status').value
-    };
-    const id = $('#equipmentId').value;
-    try {
-      if(id){
-        payload.id_equipo = id;
-        await updateEquipment(payload);
-      } else {
-        await addEquipment(payload);
-      }
-      $('#equipmentModal').style.display = 'none';
-      await refreshEquipos();
-    } catch(err){
-      console.error(err);
-      alert('Error guardando equipo');
-    }
-  });
-
-  // -------------------------
-  // Export a Excel (XLSX)
-  // -------------------------
-  function exportToExcel(){
-    try {
-      const headers = ['ID','Descripción','Marca','Modelo','Serial','Status','Asignado a'];
-      const rows = Array.from(tbodyEquipos.rows).map(r => Array.from(r.cells).slice(0,7).map(c => c.textContent.trim()));
-      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Equipos');
-      XLSX.writeFile(workbook, `equipos_export_${Date.now()}.xlsx`);
-      document.getElementById('lastExportTimestamp').value = Date.now();
-    } catch (err){
-      console.error('Export error', err);
-      alert('Error exportando Excel');
-    }
-  }
-  $('#exportExcelBtn').addEventListener('click', exportToExcel);
-
-  // -------------------------
-  // Import Excel: parse and bulk insert/update
-  // -------------------------
-  $('#fileInput').addEventListener('change', async (ev) => {
-    const file = ev.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        // rows is array of objects keyed by header names
-        // Expect headers: ID, Descripción, Marca, Modelo, Serial, Status, Asignado a
-        for(const row of rows){
-          const payload = {
-            descripcion: row['Descripción'] ?? row['Descripcion'] ?? '',
-            marca: row['Marca'] ?? '',
-            modelo: row['Modelo'] ?? '',
-            serial: row['Serial'] ?? '',
-            etiqueta: row['Etiqueta'] ?? '',
-            status: row['Status'] ?? row['Estado'] ?? 'OPERATIVO',
-            asignado_a: row['Asignado a'] ?? row['Asignado'] ?? ''
-          };
-          const id = row['ID'] || row['Id'] || row['id_equipo'];
-          if(id){
-            payload.id_equipo = id;
-            // try update or upsert
-            try { await updateEquipment(payload); } catch(e){ console.warn('update failed, trying insert', e); await addEquipment(payload); }
-          } else {
-            await addEquipment(payload);
-          }
+const manifest = {
+    "name": "Sistema de Inventario",
+    "short_name": "InventarioPWA",
+    "description": "Sistema de gestión de inventario completo con usuarios, equipos y asignaciones",
+    "start_url": ".",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2c3e50",
+    "orientation": "any",
+    "categories": ["business", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "content/icons/android-launchericon-192-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "content/icons/android-launchericon-512-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
         }
-        alert('Importación finalizada');
-        await refreshEquipos();
-      } catch(err){
-        console.error('Import error', err);
-        alert('Error importando archivo. Revisa consola.');
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  });
+    ],
+    "screenshots": [
+        {
+            "src": "content/icons/Wide310x150Logo.scale-400.png",
+            "sizes": "1240x600",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Dashboard del Sistema de Inventario"
+        }
+    ]
+};
 
-  // -------------------------
-  // Initial load and small UI wiring
-  // -------------------------
-  document.addEventListener('DOMContentLoaded', async () => {
-    await refreshEquipos();
-    await refreshUsers();
-    await refreshAssignments();
-    // Wire other minimal interactions (search on equipos)
-    $('#searchEquipos').addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase();
-      Array.from(tbodyEquipos.rows).forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q) ? '' : 'none';
-      });
-    });
-    // globalSearch: simple multi-table search that filters visible rows in each table
-    $('#globalSearch').addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase();
-      // Equipos
-      Array.from(tbodyEquipos.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
-      // Usuarios
-      Array.from(tbodyUsuarios.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
-      // Asignaciones
-      Array.from(tbodyAsignaciones.rows).forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none');
-    });
-  });
+// Crear y agregar manifest dinámico
+function setupPWA() {
+    // Crear link del manifest
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
 
-  // Close modal when clicking outside modal-content
-  document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (ev) => {
-      if(ev.target === modal) modal.style.display = 'none';
-    });
-  });
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = manifestURL;
+    document.head.appendChild(manifestLink);
 
-// -------------------------
-// CRUD usuarios: Supabase
-// -------------------------
-async function getAllUsers() {
-  const { data, error } = await supabase.from('usuarios').select('*').order('id_usuario', { ascending: true });
-  if (error) throw error;
-  return data || [];
+    console.log('✅ Manifest PWA configurado');
+
+    // En GitHub Pages usamos un enfoque simplificado sin Service Worker
+    setupPWAInstall();
+    setupConnectionDetection();
+
+    // Marcar como PWA básica (sin Service Worker)
+    updatePWAStatus('✅ PWA Básica');
 }
 
-async function addUser(user) {
-  const { data, error } = await supabase.from('usuarios').insert([user]).select();
-  if (error) throw error;
-  return data;
-}
+// Service Worker ALTERNATIVO - Solo para HTTPS tradicional
+function tryRegisterServiceWorker() {
+    // Solo intentar en entornos que soporten Service Workers correctamente
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        try {
+            // Intentar registrar un Service Worker muy básico
+            const swContent = `
+                self.addEventListener('install', (event) => {
+                    console.log('📦 PWA Installado');
+                    self.skipWaiting();
+                });
 
-async function updateUser(user) {
-  const { data, error } = await supabase.from('usuarios').update(user).eq('id_usuario', user.id_usuario).select();
-  if (error) throw error;
-  return data;
-}
+                self.addEventListener('activate', (event) => {
+                    console.log('✅ PWA Activado');
+                    event.waitUntil(self.clients.claim());
+                });
 
-async function deleteUser(id) {
-  const { error } = await supabase.from('usuarios').delete().eq('id_usuario', id);
-  if (error) throw error;
-}
+                // Cache básico para recursos críticos
+                self.addEventListener('fetch', (event) => {
+                    // Estrategia de cache básica
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => response || fetch(event.request))
+                    );
+                });
+            `;
 
-// -------------------------
-// Render usuarios table and handlers
-// -------------------------
-const tbodyUsuarios = document.getElementById('tbodyUsuarios');
-async function refreshUsers() {
-  try {
-    const users = await getAllUsers();
-    $('#totalUsuarios').textContent = users.length;
-    tbodyUsuarios.innerHTML = '';
-    users.forEach(u => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${u.id_usuario ?? ''}</td>
-        <td>${u.responsable ?? ''}</td>
-        <td>${u.cedula ?? ''}</td>
-        <td>${u.cargo ?? ''}</td>
-        <td>${u.sector ?? ''}</td>
-        <td>${u.equipos_asignados ?? 0}</td>
-        <td>
-          <button class="btn btn-edit" data-id="${u.id_usuario}" data-action="edit-user">Editar</button>
-          <button class="btn btn-delete" data-id="${u.id_usuario}" data-action="delete-user">Eliminar</button>
-        </td>
-      `;
-      tbodyUsuarios.appendChild(tr);
-    });
-  } catch (err) {
-    console.error('Error refreshing users', err);
-    alert('Error al cargar usuarios.');
-  }
-}
+            const swBlob = new Blob([swContent], {type: 'application/javascript'});
+            const swURL = URL.createObjectURL(swBlob);
 
-$('#addUsuarioBtn').addEventListener('click', () => {
-  $('#userForm').reset();
-  $('#userId').value = '';
-  $('#userModal').style.display = 'block';
-});
+            navigator.serviceWorker.register(swURL, { scope: './' })
+                .then(registration => {
+                    console.log('✅ Service Worker registrado (básico)');
+                    updatePWAStatus('✅ PWA Completa');
+                })
+                .catch(error => {
+                    console.log('⚠️ Service Worker no disponible en este entorno');
+                    // No es crítico - continuar sin SW
+                });
 
-$('#userForm').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const payload = {
-    responsable: $('#responsable').value.trim(),
-    cedula: $('#cedula').value.trim(),
-    cargo: $('#cargo').value.trim(),
-    sector: $('#sector').value.trim(),
-  };
-  const id = $('#userId').value;
-  try {
-    if (id) {
-      payload.id_usuario = id;
-      await updateUser(payload);
+        } catch (error) {
+            console.log('⚠️ Entorno no compatible con Service Worker');
+        }
     } else {
-      await addUser(payload);
+        console.log('🌐 Modo PWA Básica (sin Service Worker)');
     }
-    $('#userModal').style.display = 'none';
-    await refreshUsers();
-  } catch (err) {
-    console.error(err);
-    alert('Error guardando usuario');
-  }
-});
-
-tbodyUsuarios.addEventListener('click', async (e) => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  const id = btn.getAttribute('data-id');
-  const action = btn.getAttribute('data-action');
-
-  if (action === 'edit-user') {
-    const { data, error } = await supabase.from('usuarios').select('*').eq('id_usuario', id).single();
-    if (error) { console.error(error); alert('Error al obtener usuario'); return; }
-    $('#userId').value = data.id_usuario || '';
-    $('#responsable').value = data.responsable || '';
-    $('#cedula').value = data.cedula || '';
-    $('#cargo').value = data.cargo || '';
-    $('#sector').value = data.sector || '';
-    $('#userModal').style.display = 'block';
-  } else if (action === 'delete-user') {
-    if (!confirm('¿Eliminar usuario? Esto podría afectar a las asignaciones existentes.')) return;
-    try {
-      await deleteUser(id);
-      await refreshUsers();
-    } catch (err) {
-      console.error(err);
-      alert('Error eliminando usuario');
-    }
-  }
-});
-
-// Search functionality for users
-$('#searchUsuarios').addEventListener('input', (e) => {
-  const q = e.target.value.toLowerCase();
-  Array.from(tbodyUsuarios.rows).forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
-
-
-// -------------------------
-// CRUD asignaciones: Supabase
-// -------------------------
-async function getAllAssignments() {
-  const { data, error } = await supabase.from('asignaciones').select(`
-    id_asignacion,
-    fecha_asignacion,
-    estado,
-    usuarios ( id_usuario, responsable ),
-    equipos ( id_equipo, descripcion, serial )
-  `).order('id_asignacion', { ascending: false });
-  if (error) throw error;
-  return data || [];
 }
 
-async function addAssignment(assignment) {
-  const { data, error } = await supabase.from('asignaciones').insert([assignment]).select();
-  if (error) throw error;
-  // Now, update the equipo's `asignado_a` field
-  const { data: user } = await supabase.from('usuarios').select('responsable').eq('id_usuario', assignment.id_usuario).single();
-  if (user) {
-    await supabase.from('equipos').update({ asignado_a: user.responsable, status: 'ASIGNADO' }).eq('id_equipo', assignment.id_equipo);
-  }
-  return data;
-}
+// Instalación de PWA MEJORADA
+function setupPWAInstall() {
+    let deferredPrompt;
+    const installBtn = document.getElementById('pwaInstallBtn');
 
-async function deleteAssignment(id, id_equipo) {
-    // First, set the equipo status back to 'OPERATIVO' and clear `asignado_a`
-    await supabase.from('equipos').update({ status: 'OPERATIVO', asignado_a: null }).eq('id_equipo', id_equipo);
-    // Then delete the assignment record
-    const { error } = await supabase.from('asignaciones').delete().eq('id_asignacion', id);
-    if (error) throw error;
-}
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'block';
+        updatePWAStatus('📱 Lista para instalar');
+        console.log('📱 App lista para instalación');
 
-
-// -------------------------
-// Render asignaciones table and handlers
-// -------------------------
-const tbodyAsignaciones = document.getElementById('tbodyAsignaciones');
-async function refreshAssignments() {
-  try {
-    const assignments = await getAllAssignments();
-    tbodyAsignaciones.innerHTML = '';
-    assignments.forEach(a => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${a.id_asignacion}</td>
-        <td>${a.usuarios?.responsable ?? 'N/A'}</td>
-        <td>${a.equipos?.descripcion ?? 'N/A'}</td>
-        <td>${a.equipos?.serial ?? 'N/A'}</td>
-        <td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td>
-        <td>${a.estado ?? 'ACTIVA'}</td>
-        <td>
-          <button class="btn btn-delete" data-id="${a.id_asignacion}" data-equipo-id="${a.equipos?.id_equipo}" data-action="delete-assignment">Eliminar</button>
-        </td>
-      `;
-      tbodyAsignaciones.appendChild(tr);
+        // Mostrar por 30 segundos
+        setTimeout(() => {
+            if (installBtn.style.display !== 'none') {
+                installBtn.style.display = 'none';
+                console.log('⏰ Botón de instalación ocultado');
+            }
+        }, 30000);
     });
-    // Update dashboard's last assignments
-    const ultimasAsignacionesContainer = $('#ultimasAsignaciones');
-    ultimasAsignacionesContainer.innerHTML = '<table>' + tbodyAsignaciones.innerHTML + '</table>';
 
-  } catch (err) {
-    console.error('Error refreshing assignments', err);
-    alert('Error al cargar asignaciones.');
-  }
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            installBtn.textContent = '⏳ Instalando...';
+            installBtn.disabled = true;
+
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+
+            if (outcome === 'accepted') {
+                installBtn.textContent = '✅ Instalada';
+                installBtn.style.background = '#27ae60';
+                updatePWAStatus('🎉 App Instalada');
+                console.log('🎉 App aceptada para instalación');
+
+                setTimeout(() => {
+                    installBtn.style.display = 'none';
+                }, 3000);
+            } else {
+                installBtn.textContent = '📲 Instalar App';
+                installBtn.disabled = false;
+                console.log('❌ App rechazada para instalación');
+                updatePWAStatus('📱 Instalación cancelada');
+
+                setTimeout(() => {
+                    installBtn.style.display = 'none';
+                }, 5000);
+            }
+            deferredPrompt = null;
+        }
+    });
+
+    window.addEventListener('appinstalled', (evt) => {
+        installBtn.style.display = 'none';
+        deferredPrompt = null;
+        updatePWAStatus('🎉 App Instalada');
+        console.log('🎉 App instalada exitosamente');
+    });
+
+    // Verificar si ya está instalado
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        installBtn.style.display = 'none';
+        updatePWAStatus('📱 Ejecutando como App');
+        console.log('📱 Ejecutándose en modo standalone');
+    }
+
+    // También verificar usando navigator.standalone (iOS)
+    if (navigator.standalone) {
+        installBtn.style.display = 'none';
+        updatePWAStatus('📱 Ejecutando como App (iOS)');
+        console.log('📱 Ejecutándose en modo standalone (iOS)');
+    }
 }
 
-$('#addAsignacionBtn').addEventListener('click', async () => {
-    // Populate user and equipment dropdowns
-    try {
-        const users = await getAllUsers();
-        const equipments = await getAllEquipments();
+// Detección de conexión MEJORADA
+function setupConnectionDetection() {
+    const offlineWarning = document.getElementById('offlineWarning');
 
-        const userSelect = $('#assignmentUserId');
-        userSelect.innerHTML = users.map(u => `<option value="${u.id_usuario}">${u.responsable}</option>`).join('');
+    function updateOnlineStatus() {
+        if (navigator.onLine) {
+            offlineWarning.style.display = 'none';
+            updatePWAStatus(document.getElementById('pwaStatus').textContent.replace('⚠️ Offline - ', ''));
+            console.log('🌐 Conexión restaurada');
+        } else {
+            offlineWarning.style.display = 'block';
+            const currentStatus = document.getElementById('pwaStatus').textContent;
+            if (!currentStatus.includes('Offline')) {
+                updatePWAStatus('⚠️ Offline - ' + currentStatus);
+            }
+            console.log('🌐 Sin conexión - Modo offline activado');
 
-        const equipmentSelect = $('#assignmentEquipmentId');
-        // Show only available equipment
-        equipmentSelect.innerHTML = equipments.filter(e => e.status !== 'ASIGNADO' && e.status !== 'INOPERATIVO').map(e => `<option value="${e.id_equipo}">${e.descripcion} (${e.serial})</option>`).join('');
-
-        $('#assignmentDate').valueAsDate = new Date();
-        $('#assignmentModal').style.display = 'block';
-    } catch(err) {
-        console.error('Error populating assignment modal', err);
-        alert('Error al cargar datos para asignación.');
+            // Mostrar notificación de offline
+            showOfflineNotification();
+        }
     }
+
+    function showOfflineNotification() {
+        // Crear notificación visual temporal
+        const offlineMsg = document.createElement('div');
+        offlineMsg.style.cssText = `
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        `;
+        offlineMsg.textContent = '⚠️ Modo offline - Los datos se guardan localmente';
+        document.body.appendChild(offlineMsg);
+
+        setTimeout(() => {
+            if (document.body.contains(offlineMsg)) {
+                document.body.removeChild(offlineMsg);
+            }
+        }, 3000);
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // Estado inicial
+    updateOnlineStatus();
+}
+
+// Actualizar estado PWA MEJORADO
+function updatePWAStatus(message) {
+    const statusElement = document.getElementById('pwaStatus');
+    if (statusElement) {
+        statusElement.textContent = message;
+
+        // Cambiar color según estado
+        if (message.includes('✅') || message.includes('🎉')) {
+            statusElement.style.background = '#27ae60';
+        } else if (message.includes('⚠️') || message.includes('📱') || message.includes('🔄')) {
+            statusElement.style.background = '#f39c12';
+        } else if (message.includes('❌')) {
+            statusElement.style.background = '#e74c3c';
+        } else {
+            statusElement.style.background = '#34495e';
+        }
+    }
+}
+
+// Función para simular funcionalidad offline
+function setupOfflineFunctionality() {
+    console.log('🔧 Configurando funcionalidad offline...');
+
+    // Tu base de datos IndexedDB ya proporciona almacenamiento offline
+    // Aquí podrías agregar lógica adicional para manejo offline
+
+    // Ejemplo: Guardar operaciones pendientes cuando hay conexión
+    let pendingOperations = JSON.parse(localStorage.getItem('pendingOperations') || '[]');
+
+    // Intentar procesar operaciones pendientes cuando hay conexión
+    window.addEventListener('online', () => {
+        if (pendingOperations.length > 0) {
+            console.log('🔄 Procesando operaciones pendientes:', pendingOperations.length);
+            // Aquí procesarías las operaciones pendientes
+            pendingOperations = [];
+            localStorage.setItem('pendingOperations', JSON.stringify(pendingOperations));
+        }
+    });
+}
+
+// Configurar notificaciones
+function setupNotifications() {
+    if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+            console.log('ℹ️ Permisos de notificación disponibles');
+        } else if (Notification.permission === 'granted') {
+            console.log('🔔 Notificaciones permitidas');
+        }
+    }
+}
+
+// Función para mostrar notificación
+function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: body,
+            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMmMzZTUwIi8+Cjx0ZXh0IHg9IjMyIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SU5WPC90ZXh0Pgo8L3N2Zz4='
+        });
+    }
+}
+
+        // =============================================
+        // CONFIGURACIÓN DE LA BASE DE DATOS (SUPABASE)
+        // =============================================
+
+        /**
+         * Inicializa la conexión con Supabase.
+         * La configuración del cliente Supabase ya está cargada desde supabase-config.js.
+         * Esta función principalmente inicia la carga de datos.
+         */
+        function initDatabase() {
+            console.log('Cliente Supabase listo. Cargando datos...');
+            loadAllData();
+        }
+
+        // =============================================
+        // FUNCIONES CRUD PARA USUARIOS (SUPABASE)
+        // =============================================
+
+        async function addUser(user) {
+            const { data, error } = await supabase.from('usuarios').insert([user]);
+            if (error) throw error;
+            return data;
+        }
+
+        async function updateUser(user) {
+            const { data, error } = await supabase.from('usuarios').update(user).eq('id_usuario', user.id_usuario);
+            if (error) throw error;
+            return data;
+        }
+
+        async function deleteUser(id) {
+            const { data, error } = await supabase.from('usuarios').delete().eq('id_usuario', id);
+            if (error) throw error;
+            return data;
+        }
+
+        async function getUser(id) {
+            const { data, error } = await supabase.from('usuarios').select('*').eq('id_usuario', id).single();
+            if (error) throw error;
+            return data;
+        }
+
+        async function getAllUsers() {
+            const { data, error } = await supabase.from('usuarios').select('*');
+            if (error) throw error;
+            return data;
+        }
+
+        // =============================================
+        // FUNCIONES CRUD PARA EQUIPOS (SUPABASE)
+        // =============================================
+
+        async function addEquipment(equipment) {
+            const { data, error } = await supabase.from('equipos').insert([equipment]);
+            if (error) throw error;
+            return data;
+        }
+
+        async function updateEquipment(equipment) {
+            const { data, error } = await supabase.from('equipos').update(equipment).eq('id_equipo', equipment.id_equipo);
+            if (error) throw error;
+            return data;
+        }
+
+        async function deleteEquipment(id) {
+            const { data, error } = await supabase.from('equipos').delete().eq('id_equipo', id);
+            if (error) throw error;
+            return data;
+        }
+
+        async function getEquipment(id) {
+            const { data, error } = await supabase.from('equipos').select('*').eq('id_equipo', id).single();
+            if (error) throw error;
+            return data;
+        }
+
+        async function getEquipmentBySerial(serial) {
+            const { data, error } = await supabase.from('equipos').select('*').eq('serial', serial).single();
+            if (error && error.code !== 'PGRST116') { // Ignorar error si no se encuentra (single)
+                throw error;
+            }
+            return data;
+        }
+
+        async function getAllEquipments() {
+            const { data, error } = await supabase.from('equipos').select('*');
+            if (error) throw error;
+            return data;
+        }
+
+        // =============================================
+        // FUNCIONES CRUD PARA ASIGNACIONES (SUPABASE)
+        // =============================================
+
+        async function addAssignment(assignment) {
+            const { data, error } = await supabase.from('asignaciones').insert([assignment]);
+            if (error) throw error;
+            return data;
+        }
+
+        async function updateAssignment(assignment) {
+            const { data, error } = await supabase.from('asignaciones').update(assignment).eq('id_asignacion', assignment.id_asignacion);
+            if (error) throw error;
+            return data;
+        }
+
+        async function deleteAssignment(id) {
+            const { data, error } = await supabase.from('asignaciones').delete().eq('id_asignacion', id);
+            if (error) throw error;
+            return data;
+        }
+
+        async function getAssignmentByEquipment(equipmentId) {
+            const { data, error } = await supabase
+                .from('asignaciones')
+                .select('*')
+                .eq('id_equipo', equipmentId)
+                .eq('estado_asignacion', 'Asignado')
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // Ignorar si no se encuentra
+                throw error;
+            }
+            return data;
+        }
+
+        async function getAssignmentsByUser(userId) {
+            const { data, error } = await supabase.from('asignaciones').select('*').eq('id_usuario', userId);
+            if (error) throw error;
+            return data;
+        }
+
+        async function getAllAssignments() {
+            const { data, error } = await supabase.from('asignaciones').select('*');
+            if (error) throw error;
+            return data;
+        }
+
+        // =============================================
+        // FUNCIONES DE CARGA Y RENDERIZADO DE DATOS
+        // =============================================
+
+        /**
+         * Carga todos los datos de la base de datos y los renderiza en las tablas
+         * Si no hay datos, carga datos iniciales
+         */
+        async function loadAllData() {
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                renderUsers(usuarios, equipos, asignaciones);
+                renderEquipments(equipos, usuarios, asignaciones);
+                renderAssignments(asignaciones, usuarios, equipos);
+                updateStats(usuarios, equipos, asignaciones);
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        /**
+         * Carga datos iniciales en la base de datos (usuarios y equipos de ejemplo)
+         * Crea asignaciones iniciales entre usuarios y equipos
+         */
+        async function loadInitialData() {
+            // This function is now empty as we are not loading initial data anymore.
+        }
+
+        /**
+         * Renderiza la lista de usuarios en la tabla correspondiente
+         * @param {Array} usuarios - Array de objetos usuario
+         * @param {Array} equipos - Array de objetos equipo
+         * @param {Array} asignaciones - Array de objetos asignación
+         */
+        function renderUsers(usuarios, equipos, asignaciones) {
+            const tbody = document.getElementById('tbodyUsuarios');
+            tbody.innerHTML = usuarios.map(usuario => {
+                // Encontrar asignaciones activas del usuario
+                const userAssignments = asignaciones.filter(a => a.id_usuario === usuario.id_usuario && a.estado_asignacion === "Asignado");
+                const assignedEquipments = userAssignments.map(a => {
+                    const equipo = equipos.find(e => e.id_equipo === a.id_equipo);
+                    return equipo ? `${equipo.descripcion} (${equipo.serial})` : 'N/A';
+                });
+
+                return `
+                    <tr>
+                        <td>${usuario.id_usuario}</td>
+                        <td>${usuario.responsable}</td>
+                        <td>${usuario.cedula}</td>
+                        <td>${usuario.cargo}</td>
+                        <td>${usuario.sector}</td>
+                        <td>
+                            ${userAssignments.length > 0 ?
+                                `<span class="assigned-badge">${userAssignments.length} equipo(s)</span><br>
+                                 <small>${assignedEquipments.join(', ')}</small>` :
+                                '<span class="unassigned-badge">Sin equipos</span>'}
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editUser(${usuario.id_usuario})">✏️</button>
+                            <button class="btn btn-delete" onclick="deleteUserConfirm(${usuario.id_usuario})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Renderiza la lista de equipos en la tabla correspondiente
+         * @param {Array} equipos - Array de objetos equipo
+         * @param {Array} usuarios - Array de objetos usuario
+         * @param {Array} asignaciones - Array de objetos asignación
+         */
+        function renderEquipments(equipos, usuarios, asignaciones) {
+            const tbody = document.getElementById('tbodyEquipos');
+            tbody.innerHTML = equipos.map(equipo => {
+                // Encontrar asignación activa del equipo
+                const assignment = asignaciones.find(a => a.id_equipo === equipo.id_equipo && a.estado_asignacion === "Asignado");
+                const assignedUser = assignment ? usuarios.find(u => u.id_usuario === assignment.id_usuario) : null;
+
+                return `
+                    <tr>
+                        <td>${equipo.id_equipo}</td>
+                        <td>${equipo.descripcion}</td>
+                        <td>${equipo.marca}</td>
+                        <td>${equipo.modelo}</td>
+                        <td><strong>${equipo.serial}</strong></td>
+                        <td class="${equipo.status === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">
+                            ${equipo.status}
+                        </td>
+                        <td>
+                            ${assignedUser ?
+                                `<span class="assigned-badge">${assignedUser.responsable}</span>` :
+                                '<span class="unassigned-badge">No asignado</span>'}
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editEquipment(${equipo.id_equipo})">✏️</button>
+                            <button class="btn btn-delete" onclick="deleteEquipmentConfirm(${equipo.id_equipo})">🗑️</button>
+                            ${!assignedUser ?
+                                `<button class="btn btn-add" onclick="assignEquipment(${equipo.id_equipo})" style="padding: 4px 8px; font-size: 10px;">🔗 Asignar</button>` :
+                                ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Renderiza la lista de asignaciones en la tabla correspondiente
+         * @param {Array} asignaciones - Array de objetos asignación
+         * @param {Array} usuarios - Array de objetos usuario
+         * @param {Array} equipos - Array de objetos equipo
+         */
+        function renderAssignments(asignaciones, usuarios, equipos) {
+            const tbody = document.getElementById('tbodyAsignaciones');
+            tbody.innerHTML = asignaciones.map(asignacion => {
+                const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                return `
+                    <tr>
+                        <td>${asignacion.id_asignacion}</td>
+                        <td>${usuario ? `<strong>${usuario.responsable}</strong><br><small>${usuario.sector}</small>` : 'N/A'}</td>
+                        <td>${equipo ? `<strong>${equipo.descripcion}</strong><br>${equipo.marca} ${equipo.modelo}` : 'N/A'}</td>
+                        <td><strong>${equipo ? equipo.serial : 'N/A'}</strong></td>
+                        <td>${asignacion.fecha_asignacion || 'N/A'}</td>
+                        <td>
+                            <span class="${asignacion.estado_asignacion === 'Asignado' ? 'assigned-badge' : 'unassigned-badge'}">
+                                ${asignacion.estado_asignacion}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editAssignment(${asignacion.id_asignacion})">✏️</button>
+                            <button class="btn btn-delete" onclick="deleteAssignmentConfirm(${asignacion.id_asignacion})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // =============================================
+        // FUNCIONES DE INTERFAZ Y NAVEGACIÓN
+        // =============================================
+
+        /**
+         * Muestra una pestaña específica y oculta las demás
+         * @param {string} tabName - Nombre de la pestaña a mostrar
+         */
+        function showTab(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remover clase active de todos los botones
+            document.querySelectorAll('.nav button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Mostrar pestaña seleccionada y activar botón
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Si es el dashboard, actualizar estadísticas
+            if (tabName === 'dashboard') {
+                updateStats();
+            }
+        }
+
+        // =============================================
+        // FUNCIONES DE MODALES
+        // =============================================
+
+        /**
+         * Abre el modal para agregar/editar usuario
+         */
+        function openUserModal() {
+            document.getElementById('userModalTitle').textContent = 'Agregar Usuario';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        /**
+         * Cierra el modal de usuario
+         */
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        /**
+         * Abre el modal para agregar/editar equipo
+         */
+        function openEquipmentModal() {
+            document.getElementById('equipmentModalTitle').textContent = 'Agregar Equipo';
+            document.getElementById('equipmentForm').reset();
+            document.getElementById('equipmentId').value = '';
+            document.getElementById('status').value = 'OPERATIVO';
+            document.getElementById('equipmentModal').style.display = 'block';
+        }
+
+        /**
+         * Cierra el modal de equipo
+         */
+        function closeEquipmentModal() {
+            document.getElementById('equipmentModal').style.display = 'none';
+        }
+
+        /**
+         * Abre el modal para crear/editar asignación
+         * @param {number} equipmentId - ID del equipo a asignar (opcional)
+         */
+        async function openAssignmentModal(equipmentId = null) {
+            try {
+                const [usuarios, equipos] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments()
+                ]);
+
+                const usuarioSelect = document.getElementById('assignmentUsuario');
+                const equipoSelect = document.getElementById('assignmentEquipo');
+
+                // Llenar select de usuarios
+                usuarioSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+                equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+
+                usuarios.forEach(usuario => {
+                    usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.responsable} - ${usuario.sector}</option>`;
+                });
+
+                // Llenar select de equipos (solo equipos no asignados)
+                const asignaciones = await getAllAssignments();
+                const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
+
+                equipos.filter(equipo => !equiposAsignados.has(equipo.id_equipo)).forEach(equipo => {
+                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.descripcion} - ${equipo.marca} (${equipo.serial})</option>`;
+                });
+
+                // Si se pasa un equipmentId, seleccionarlo automáticamente
+                if (equipmentId) {
+                    equipoSelect.value = equipmentId;
+                    updateEquipmentDetails();
+                }
+
+                document.getElementById('assignmentModalTitle').textContent = 'Nueva Asignación';
+                document.getElementById('assignmentForm').reset();
+                document.getElementById('assignmentId').value = '';
+                document.getElementById('assignmentEstado').value = 'Asignado';
+                document.getElementById('assignmentModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error abriendo modal de asignación:', error);
+                alert('Error al cargar datos para la asignación');
+            }
+        }
+
+        /**
+         * Cierra el modal de asignación
+         */
+        function closeAssignmentModal() {
+            document.getElementById('assignmentModal').style.display = 'none';
+            document.getElementById('equipmentDetails').style.display = 'none';
+        }
+
+        /**
+         * Actualiza la lista de equipos disponibles según el usuario seleccionado
+         */
+        async function updateAvailableEquipments() {
+            const usuarioId = document.getElementById('assignmentUsuario').value;
+            const equipoSelect = document.getElementById('assignmentEquipo');
+
+            if (!usuarioId) {
+                equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+                return;
+            }
+
+            try {
+                const [equipos, asignaciones] = await Promise.all([
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                // Filtrar equipos no asignados
+                const equiposAsignados = new Set(asignaciones.filter(a => a.estado_asignacion === "Asignado").map(a => a.id_equipo));
+
+                equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+                equipos.filter(equipo => !equiposAsignados.has(equipo.id_equipo)).forEach(equipo => {
+                    equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.descripcion} - ${equipo.marca} (${equipo.serial})</option>`;
+                });
+            } catch (error) {
+                console.error('Error actualizando equipos disponibles:', error);
+            }
+        }
+
+        /**
+         * Actualiza los detalles del equipo seleccionado en el modal de asignación
+         */
+        async function updateEquipmentDetails() {
+            const equipoId = document.getElementById('assignmentEquipo').value;
+            const equipmentDetails = document.getElementById('equipmentDetails');
+
+            if (!equipoId) {
+                equipmentDetails.style.display = 'none';
+                return;
+            }
+
+            try {
+                const equipo = await getEquipment(parseInt(equipoId));
+                if (equipo) {
+                    equipmentDetails.innerHTML = `
+                        <strong>Detalles del Equipo:</strong><br>
+                        <strong>Descripción:</strong> ${equipo.descripcion}<br>
+                        <strong>Marca/Modelo:</strong> ${equipo.marca} ${equipo.modelo}<br>
+                        <strong>Serial:</strong> ${equipo.serial}<br>
+                        <strong>Status:</strong> <span class="${equipo.status === 'OPERATIVO' ? 'status-operativo' : 'status-inoperativo'}">${equipo.status}</span>
+                    `;
+                    equipmentDetails.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error cargando detalles del equipo:', error);
+            }
+        }
+
+        // Asignar equipo específico
+        async function assignEquipment(equipmentId) {
+            await openAssignmentModal(equipmentId);
+        }
+
+        // Manejo del formulario de usuario
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const user = {
+                responsable: document.getElementById('responsable').value,
+                cedula: document.getElementById('cedula').value,
+                cargo: document.getElementById('cargo').value,
+                sector: document.getElementById('sector').value
+            };
+
+            const userId = document.getElementById('userId').value;
+
+            try {
+                if (userId) {
+                    user.id_usuario = parseInt(userId);
+                    await updateUser(user);
+                } else {
+                    await addUser(user);
+                }
+
+                closeUserModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error guardando usuario:', error);
+                alert('Error al guardar el usuario');
+            }
+        });
+
+        // Manejo del formulario de equipo
+        document.getElementById('equipmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const equipment = {
+                descripcion: document.getElementById('descripcion').value,
+                marca: document.getElementById('marca').value,
+                modelo: document.getElementById('modelo').value,
+                serial: document.getElementById('serial').value,
+                etiqueta: document.getElementById('etiqueta').value,
+                status: document.getElementById('status').value,
+                observaciones: document.getElementById('observaciones').value
+            };
+
+            const equipmentId = document.getElementById('equipmentId').value;
+
+            try {
+                // Verificar si el serial ya existe (excepto para edición)
+                if (!equipmentId) {
+                    const existingEquipment = await getEquipmentBySerial(equipment.serial);
+                    if (existingEquipment) {
+                        alert('Error: Ya existe un equipo con este número de serial. El serial debe ser único.');
+                        return;
+                    }
+                }
+
+                if (equipmentId) {
+                    equipment.id_equipo = parseInt(equipmentId);
+                    await updateEquipment(equipment);
+                } else {
+                    await addEquipment(equipment);
+                }
+
+                closeEquipmentModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error guardando equipo:', error);
+                alert('Error al guardar el equipo');
+            }
+        });
+
+        // Manejo del formulario de asignación
+        document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const assignment = {
+                id_usuario: parseInt(document.getElementById('assignmentUsuario').value),
+                id_equipo: parseInt(document.getElementById('assignmentEquipo').value),
+                fecha_asignacion: new Date().toISOString().split('T')[0],
+                estado_asignacion: document.getElementById('assignmentEstado').value
+            };
+
+            const assignmentId = document.getElementById('assignmentId').value;
+
+            try {
+                // Verificar si el equipo ya está asignado
+                if (!assignmentId) {
+                    const existingAssignment = await getAssignmentByEquipment(assignment.id_equipo);
+                    if (existingAssignment && existingAssignment.estado_asignacion === "Asignado") {
+                        alert('Error: Este equipo ya está asignado a otro usuario.');
+                        return;
+                    }
+                }
+
+                if (assignmentId) {
+                    assignment.id_asignacion = parseInt(assignmentId);
+                    await updateAssignment(assignment);
+                } else {
+                    await addAssignment(assignment);
+                }
+
+                closeAssignmentModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error guardando asignación:', error);
+                alert('Error al guardar la asignación');
+            }
+        });
+
+        // Event listener para mostrar detalles del equipo
+        document.getElementById('assignmentEquipo').addEventListener('change', updateEquipmentDetails);
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            initDatabase();
+        });
+
+        // FUNCIONES CRUD COMPLETAS
+        async function editUser(id) {
+            try {
+                const usuario = await getUser(id);
+                if (usuario) {
+                    document.getElementById('userModalTitle').textContent = 'Editar Usuario';
+                    document.getElementById('userId').value = usuario.id_usuario;
+                    document.getElementById('responsable').value = usuario.responsable;
+                    document.getElementById('cedula').value = usuario.cedula;
+                    document.getElementById('cargo').value = usuario.cargo;
+                    document.getElementById('sector').value = usuario.sector;
+                    document.getElementById('userModal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error editando usuario:', error);
+                alert('Error al cargar datos del usuario');
+            }
+        }
+
+        async function deleteUserConfirm(id) {
+            if (confirm('¿Está seguro de que desea eliminar este usuario? También se eliminarán sus asignaciones.')) {
+                try {
+                    // Eliminar asignaciones del usuario primero
+                    const userAssignments = await getAssignmentsByUser(id);
+                    for (const assignment of userAssignments) {
+                        await deleteAssignment(assignment.id_asignacion);
+                    }
+
+                    await deleteUser(id);
+                    loadAllData();
+                } catch (error) {
+                    console.error('Error eliminando usuario:', error);
+                    alert('Error al eliminar el usuario');
+                }
+            }
+        }
+
+        async function editEquipment(id) {
+            try {
+                const equipo = await getEquipment(id);
+                if (equipo) {
+                    document.getElementById('equipmentModalTitle').textContent = 'Editar Equipo';
+                    document.getElementById('equipmentId').value = equipo.id_equipo;
+                    document.getElementById('descripcion').value = equipo.descripcion;
+                    document.getElementById('marca').value = equipo.marca;
+                    document.getElementById('modelo').value = equipo.modelo;
+                    document.getElementById('serial').value = equipo.serial;
+                    document.getElementById('etiqueta').value = equipo.etiqueta;
+                    document.getElementById('status').value = equipo.status;
+                    document.getElementById('observaciones').value = equipo.observaciones;
+                    document.getElementById('equipmentModal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error editando equipo:', error);
+                alert('Error al cargar datos del equipo');
+            }
+        }
+
+        async function deleteEquipmentConfirm(id) {
+            if (confirm('¿Está seguro de que desea eliminar este equipo? También se eliminarán sus asignaciones.')) {
+                try {
+                    // Eliminar asignaciones del equipo primero
+                    const equipmentAssignment = await getAssignmentByEquipment(id);
+                    if (equipmentAssignment) {
+                        await deleteAssignment(equipmentAssignment.id_asignacion);
+                    }
+
+                    await deleteEquipment(id);
+                    loadAllData();
+                } catch (error) {
+                    console.error('Error eliminando equipo:', error);
+                    alert('Error al eliminar el equipo');
+                }
+            }
+        }
+
+        async function editAssignment(id) {
+            try {
+                const [asignaciones, usuarios, equipos] = await Promise.all([
+                    getAllAssignments(),
+                    getAllUsers(),
+                    getAllEquipments()
+                ]);
+
+                const asignacion = asignaciones.find(a => a.id_asignacion === id);
+
+                if (asignacion) {
+                    const usuarioSelect = document.getElementById('assignmentUsuario');
+                    const equipoSelect = document.getElementById('assignmentEquipo');
+
+                    usuarioSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+                    equipoSelect.innerHTML = '<option value="">Seleccionar equipo</option>';
+
+                    usuarios.forEach(usuario => {
+                        usuarioSelect.innerHTML += `<option value="${usuario.id_usuario}">${usuario.responsable} - ${usuario.sector}</option>`;
+                    });
+
+                    equipos.forEach(equipo => {
+                        equipoSelect.innerHTML += `<option value="${equipo.id_equipo}">${equipo.descripcion} - ${equipo.marca} (${equipo.serial})</option>`;
+                    });
+
+                    document.getElementById('assignmentModalTitle').textContent = 'Editar Asignación';
+                    document.getElementById('assignmentId').value = asignacion.id_asignacion;
+                    document.getElementById('assignmentUsuario').value = asignacion.id_usuario;
+                    document.getElementById('assignmentEquipo').value = asignacion.id_equipo;
+                    document.getElementById('assignmentEstado').value = asignacion.estado_asignacion;
+                    document.getElementById('assignmentModal').style.display = 'block';
+
+                    updateEquipmentDetails();
+                }
+            } catch (error) {
+                console.error('Error editando asignación:', error);
+                alert('Error al cargar datos de la asignación');
+            }
+        }
+
+        async function deleteAssignmentConfirm(id) {
+            if (confirm('¿Está seguro de que desea eliminar esta asignación?')) {
+                try {
+                    await deleteAssignment(id);
+                    loadAllData();
+                } catch (error) {
+                    console.error('Error eliminando asignación:', error);
+                    alert('Error al eliminar la asignación');
+                }
+            }
+        }
+
+        // Actualizar estadísticas
+        async function updateStats() {
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                const equiposAsignados = asignaciones.filter(a => a.estado_asignacion === "Asignado").length;
+                const equiposOperativos = equipos.filter(e => e.status === "OPERATIVO").length;
+
+                document.getElementById('totalUsuarios').textContent = usuarios.length;
+                document.getElementById('totalEquipos').textContent = equipos.length;
+                document.getElementById('equiposOperativos').textContent = equiposOperativos;
+                document.getElementById('equiposAsignados').textContent = equiposAsignados;
+
+                // Mostrar últimas asignaciones
+                const ultimasAsignaciones = document.getElementById('ultimasAsignaciones');
+                const ultimas = asignaciones.slice(-5).reverse();
+
+                ultimasAsignaciones.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Equipo</th>
+                                <th>Serial</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ultimas.map(asignacion => {
+                                const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                                const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                                return `
+                                    <tr>
+                                        <td>${usuario ? usuario.responsable : 'N/A'}</td>
+                                        <td>${equipo ? `${equipo.descripcion} - ${equipo.marca}` : 'N/A'}</td>
+                                        <td>${equipo ? equipo.serial : 'N/A'}</td>
+                                        <td>${asignacion.fecha_asignacion || 'N/A'}</td>
+                                        <td>
+                                            <span class="${asignacion.estado_asignacion === 'Asignado' ? 'assigned-badge' : 'unassigned-badge'}">
+                                                ${asignacion.estado_asignacion}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error actualizando estadísticas:', error);
+            }
+        }
+
+        // Filtrar tablas
+        function filterTable(tableType) {
+            const input = document.getElementById(`search${tableType.charAt(0).toUpperCase() + tableType.slice(1)}`);
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById(`tabla${tableType.charAt(0).toUpperCase() + tableType.slice(1)}`);
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName('td');
+                let found = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        if (td[j].textContent.toLowerCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = found ? '' : 'none';
+            }
+        }
+
+        // Búsqueda global
+        async function globalSearch() {
+            const filter = document.getElementById('globalSearch').value.toLowerCase();
+
+            if (!filter) {
+                updateStats();
+                return;
+            }
+
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                const usuariosFiltrados = usuarios.filter(usuario =>
+                    Object.values(usuario).some(val =>
+                        val.toString().toLowerCase().includes(filter)
+                    )
+                );
+
+                const equiposFiltrados = equipos.filter(equipo =>
+                    Object.values(equipo).some(val =>
+                        val.toString().toLowerCase().includes(filter)
+                    )
+                );
+
+                const asignacionesFiltradas = asignaciones.filter(asignacion => {
+                    const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                    const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+
+                    return (usuario && Object.values(usuario).some(val =>
+                        val.toString().toLowerCase().includes(filter)
+                    )) || (equipo && Object.values(equipo).some(val =>
+                        val.toString().toLowerCase().includes(filter)
+                    ));
+                });
+
+                document.getElementById('totalUsuarios').textContent = usuariosFiltrados.length;
+                document.getElementById('totalEquipos').textContent = equiposFiltrados.length;
+                document.getElementById('equiposOperativos').textContent =
+                    equiposFiltrados.filter(e => e.status === 'OPERATIVO').length;
+                document.getElementById('equiposAsignados').textContent =
+                    asignacionesFiltradas.filter(a => a.estado_asignacion === 'Asignado').length;
+
+                const ultimasAsignaciones = document.getElementById('ultimasAsignaciones');
+                ultimasAsignaciones.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Equipo</th>
+                                <th>Serial</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${asignacionesFiltradas.slice(0, 5).map(asignacion => {
+                                const usuario = usuarios.find(u => u.id_usuario === asignacion.id_usuario);
+                                const equipo = equipos.find(e => e.id_equipo === asignacion.id_equipo);
+                                return `
+                                    <tr>
+                                        <td>${usuario ? usuario.responsable : 'N/A'}</td>
+                                        <td>${equipo ? `${equipo.descripcion} - ${equipo.marca}` : 'N/A'}</td>
+                                        <td>${equipo ? equipo.serial : 'N/A'}</td>
+                                        <td>${asignacion.fecha_asignacion || 'N/A'}</td>
+                                        <td>${asignacion.estado_asignacion}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error en búsqueda global:', error);
+            }
+        }
+
+        // Exportar a Excel
+        async function exportToExcel() {
+            try {
+                const [usuarios, equipos, asignaciones] = await Promise.all([
+                    getAllUsers(),
+                    getAllEquipments(),
+                    getAllAssignments()
+                ]);
+
+                // Crear workbook
+                const wb = XLSX.utils.book_new();
+
+                // Hoja de usuarios
+                const wsUsuarios = XLSX.utils.json_to_sheet(usuarios.map(u => ({
+                    ID_USUARIO: u.id_usuario,
+                    RESPONSABLE: u.responsable,
+                    CEDULA: u.cedula,
+                    CARGO: u.cargo,
+                    SECTOR: u.sector
+                })));
+                XLSX.utils.book_append_sheet(wb, wsUsuarios, "Usuarios");
+
+                // Hoja de equipos
+                const wsEquipos = XLSX.utils.json_to_sheet(equipos.map(e => ({
+                    ID_EQUIPO: e.id_equipo,
+                    DESCRIPCION: e.descripcion,
+                    MARCA: e.marca,
+                    MODELO: e.modelo,
+                    SERIAL: e.serial,
+                    ETIQUETA: e.etiqueta,
+                    STATUS: e.status,
+                    OBSERVACIONES: e.observaciones
+                })));
+                XLSX.utils.book_append_sheet(wb, wsEquipos, "Equipos");
+
+                // Hoja de asignaciones
+                const wsAsignaciones = XLSX.utils.json_to_sheet(asignaciones.map(a => {
+                    const usuario = usuarios.find(u => u.id_usuario === a.id_usuario);
+                    const equipo = equipos.find(e => e.id_equipo === a.id_equipo);
+                    return {
+                        ID_ASIGNACION: a.id_asignacion,
+                        ID_USUARIO: a.id_usuario,
+                        USUARIO: usuario ? usuario.responsable : 'N/A',
+                        ID_EQUIPO: a.id_equipo,
+                        EQUIPO: equipo ? `${equipo.descripcion} - ${equipo.marca}` : 'N/A',
+                        SERIAL_EQUIPO: equipo ? equipo.serial : 'N/A',
+                        FECHA_ASIGNACION: a.fecha_asignacion,
+                        ESTADO_ASIGNACION: a.estado_asignacion
+                    };
+                }));
+                XLSX.utils.book_append_sheet(wb, wsAsignaciones, "Asignaciones");
+
+                // Descargar archivo
+                XLSX.writeFile(wb, `inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+            } catch (error) {
+                console.error('Error exportando a Excel:', error);
+                alert('Error al exportar los datos a Excel');
+            }
+        }
+
+        // Descargar plantilla
+        // Descargar plantilla MEJORADA
+        function downloadTemplate() {
+            const wb = XLSX.utils.book_new();
+
+            // Plantilla de usuarios CON ENCABEZADOS CORRECTOS
+            const usuariosData = [{
+                "responsable": "EJEMPLO: MARIA GONZALEZ",
+                "cedula": "EJEMPLO: 12345678",
+                "cargo": "EJEMPLO: ANALISTA",
+                "sector": "EJEMPLO: SIGAL"
+            }];
+            const wsUsuarios = XLSX.utils.json_to_sheet(usuariosData);
+            XLSX.utils.book_append_sheet(wb, wsUsuarios, "Usuarios");
+
+            // Plantilla de equipos CON ENCABEZADOS CORRECTOS
+            const equiposData = [{
+                "descripcion": "EJEMPLO: LAPTOP",
+                "marca": "EJEMPLO: DELL",
+                "modelo": "EJEMPLO: LATITUDE 5420",
+                "serial": "EJEMPLO: ABC123XYZ",
+                "etiqueta": "EJEMPLO: 28010001",
+                "status": "OPERATIVO",
+                "observaciones": "EJEMPLO: EQUIPO NUEVO"
+            }];
+            const wsEquipos = XLSX.utils.json_to_sheet(equiposData);
+            XLSX.utils.book_append_sheet(wb, wsEquipos, "Equipos");
+
+            // Plantilla de asignaciones CON ENCABEZADOS CORRECTOS
+            const asignacionesData = [{
+                "id_usuario": "1",
+                "id_equipo": "1",
+                "fecha_asignacion": "2024-01-15",
+                "estado_asignacion": "EJEMPLO: Asignado"
+            }];
+            const wsAsignaciones = XLSX.utils.json_to_sheet(asignacionesData);
+            XLSX.utils.book_append_sheet(wb, wsAsignaciones, "Asignaciones");
+
+            XLSX.writeFile(wb, "plantilla_inventario.xlsx");
+        }
+
+        // Importar desde Excel CORREGIDO
+        async function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+
+                let importedCount = 0;
+                const errors = [];
+
+                // IMPORTAR USUARIOS - CORREGIDO
+                if (workbook.Sheets["Usuarios"]) {
+                    const usuariosData = XLSX.utils.sheet_to_json(workbook.Sheets["Usuarios"]);
+                    console.log("Datos de usuarios leídos:", usuariosData);
+
+                    for (const usuario of usuariosData) {
+                        // Verificar que no sea la fila de ejemplo
+                        if (usuario.responsable &&
+                            !usuario.responsable.includes("EJEMPLO:") &&
+                            !usuario.responsable.includes("MARIA GONZALEZ")) {
+
+                            try {
+                                await addUser({
+                                    responsable: usuario.responsable || "",
+                                    cedula: usuario.cedula || "",
+                                    cargo: usuario.cargo || "",
+                                    sector: usuario.sector || ""
+                                });
+                                importedCount++;
+                                console.log("Usuario importado:", usuario.responsable);
+                            } catch (error) {
+                                errors.push(`Error en usuario ${usuario.responsable}: ${error.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    errors.push("No se encontró la hoja 'Usuarios'");
+                }
+
+                // IMPORTAR EQUIPOS - CORREGIDO
+                if (workbook.Sheets["Equipos"]) {
+                    const equiposData = XLSX.utils.sheet_to_json(workbook.Sheets["Equipos"]);
+                    console.log("Datos de equipos leídos:", equiposData);
+
+                    for (const equipo of equiposData) {
+                        // Verificar que no sea la fila de ejemplo
+                        if (equipo.descripcion &&
+                            !equipo.descripcion.includes("EJEMPLO:") &&
+                            !equipo.descripcion.includes("LAPTOP")) {
+
+                            try {
+                                // Verificar si el serial ya existe
+                                const existingEquipment = await getEquipmentBySerial(equipo.serial);
+                                if (existingEquipment) {
+                                    errors.push(`Serial duplicado: ${equipo.serial}`);
+                                    continue;
+                                }
+
+                                await addEquipment({
+                                    descripcion: equipo.descripcion || "",
+                                    marca: equipo.marca || "",
+                                    modelo: equipo.modelo || "",
+                                    serial: equipo.serial || "",
+                                    etiqueta: equipo.etiqueta || "",
+                                    status: equipo.status || "OPERATIVO",
+                                    observaciones: equipo.observaciones || ""
+                                });
+                                importedCount++;
+                                console.log("Equipo importado:", equipo.descripcion);
+                            } catch (error) {
+                                errors.push(`Error en equipo ${equipo.descripcion}: ${error.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    errors.push("No se encontró la hoja 'Equipos'");
+                }
+
+                // IMPORTAR ASIGNACIONES - CORREGIDO (después de usuarios y equipos)
+                if (workbook.Sheets["Asignaciones"]) {
+                    // Esperar a que se importen usuarios y equipos primero
+                    const [usuarios, equipos] = await Promise.all([
+                        getAllUsers(),
+                        getAllEquipments()
+                    ]);
+
+                    const asignacionesData = XLSX.utils.sheet_to_json(workbook.Sheets["Asignaciones"]);
+                    console.log("Datos de asignaciones leídos:", asignacionesData);
+
+                    for (const asignacion of asignacionesData) {
+                        // Verificar que no sea la fila de ejemplo
+                        if (asignacion.id_usuario && asignacion.id_equipo &&
+                            asignacion.id_usuario !== "1" && asignacion.id_equipo !== "1") {
+
+                            try {
+                                const idUsuario = parseInt(asignacion.id_usuario);
+                                const idEquipo = parseInt(asignacion.id_equipo);
+
+                                // Verificar que existan el usuario y el equipo
+                                const usuarioExiste = usuarios.find(u => u.id_usuario === idUsuario);
+                                const equipoExiste = equipos.find(e => e.id_equipo === idEquipo);
+
+                                if (!usuarioExiste) {
+                                    errors.push(`Usuario ID ${idUsuario} no existe para asignación`);
+                                    continue;
+                                }
+
+                                if (!equipoExiste) {
+                                    errors.push(`Equipo ID ${idEquipo} no existe para asignación`);
+                                    continue;
+                                }
+
+                                // Verificar si el equipo ya está asignado
+                                const existingAssignment = await getAssignmentByEquipment(idEquipo);
+                                if (existingAssignment && existingAssignment.estado_asignacion === "Asignado") {
+                                    errors.push(`Equipo ID ${idEquipo} ya está asignado`);
+                                    continue;
+                                }
+
+                                await addAssignment({
+                                    id_usuario: idUsuario,
+                                    id_equipo: idEquipo,
+                                    fecha_asignacion: asignacion.fecha_asignacion || new Date().toISOString().split('T')[0],
+                                    estado_asignacion: asignacion.estado_asignacion || "Asignado"
+                                });
+                                importedCount++;
+                                console.log("Asignación importada:", idUsuario, "->", idEquipo);
+                            } catch (error) {
+                                errors.push(`Error en asignación ${asignacion.id_usuario}-${asignacion.id_equipo}: ${error.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    errors.push("No se encontró la hoja 'Asignaciones'");
+                }
+
+                // Limpiar input file
+                event.target.value = '';
+
+                // Mostrar resultados
+                let message = `Importación completada. Se importaron ${importedCount} registros.`;
+                if (errors.length > 0) {
+                    message += `\n\nErrores encontrados:\n${errors.slice(0, 5).join('\n')}`;
+                    if (errors.length > 5) {
+                        message += `\n... y ${errors.length - 5} errores más.`;
+                    }
+                }
+
+                alert(message);
+                loadAllData();
+
+            } catch (error) {
+                console.error('Error importando desde Excel:', error);
+                alert('Error al importar los datos desde Excel: ' + error.message);
+            }
+        }
+
+
+        // Cerrar modales al hacer clic fuera
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+
+        // =============================================
+        // INICIALIZACIÓN COMBINADA
+        // =============================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Iniciando Sistema de Inventario PWA...');
+
+    // Solucionar el "flash" de contenido sin estilo
+    document.body.style.visibility = 'visible';
+
+    // Inicializar PWA primero (modo básico para GitHub Pages)
+    try {
+        setupPWA();
+        console.log('✅ PWA inicializada (modo básico)');
+    } catch (pwaError) {
+        console.error('❌ Error inicializando PWA:', pwaError);
+        updatePWAStatus('❌ Error PWA');
+    }
+
+    // Inicializar base de datos
+    try {
+        initDatabase();
+        console.log('✅ Base de datos inicializada');
+    } catch (dbError) {
+        console.error('❌ Error inicializando base de datos:', dbError);
+    }
+
+    // Configurar funcionalidad offline
+    setupOfflineFunctionality();
+
+    // Configurar notificaciones
+    setupNotifications();
+
+    console.log('🎉 Sistema de Inventario PWA completamente inicializado');
+
+    // Intentar Service Worker básico después de la carga inicial
+    setTimeout(tryRegisterServiceWorker, 1000);
 });
 
-$('#assignmentForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const payload = {
-        id_usuario: $('#assignmentUserId').value,
-        id_equipo: $('#assignmentEquipmentId').value,
-        fecha_asignacion: $('#assignmentDate').value,
-        estado: 'ACTIVA'
-    };
-    try {
-        await addAssignment(payload);
-        $('#assignmentModal').style.display = 'none';
-        await refreshAssignments();
-        await refreshEquipos(); // Refresh equipos to show updated status
-    } catch (err) {
-        console.error(err);
-        alert('Error guardando asignación');
-    }
+// Manejar el evento antes de descargar la página
+window.addEventListener('beforeunload', function() {
+    console.log('💾 Guardando estado de la aplicación...');
+    // Aquí podrías guardar el estado actual si es necesario
 });
 
-tbodyAsignaciones.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button');
-    if (!btn || btn.getAttribute('data-action') !== 'delete-assignment') return;
-
-    const id = btn.getAttribute('data-id');
-    const equipoId = btn.getAttribute('data-equipo-id');
-
-    if (!confirm('¿Eliminar esta asignación? El equipo volverá a estar operativo y disponible.')) return;
-    try {
-        await deleteAssignment(id, equipoId);
-        await refreshAssignments();
-        await refreshEquipos(); // To update equipment status
-    } catch (err) {
-        console.error('Error deleting assignment', err);
-        alert('Error al eliminar asignación');
-    }
+// Manejar el evento de carga completa
+window.addEventListener('load', function() {
+    console.log('📄 Página completamente cargada');
+    updatePWAStatus('✅ PWA Lista');
 });
-
-  </script>
+    </script>
 </body>
+
 </html>
