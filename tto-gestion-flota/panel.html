@@ -57,7 +57,7 @@
          </div>
       </main>
       <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200">
+         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
                <h3 class="text-xs uppercase tracking-widest font-black text-blue-400 flex items-center gap-2">
                   <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Patio
@@ -65,27 +65,27 @@
                <button onclick="cerrarModalNuevo()" class="text-slate-500 hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
-               <div class="grid grid-cols-2 gap-4 mb-3">
+               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">ID Unidad <span class="text-red-500">*</span></label>
-                     <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase font-mono tracking-wider">
+                     <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase font-mono tracking-wider">
                   </div>
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca</label>
-                     <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                     <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase">
                   </div>
                </div>
-               <div class="grid grid-cols-2 gap-4 mb-3">
+               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Tipo de Flota</label>
-                     <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                     <select id="add-flota" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs cursor-pointer">
                         <option value="Liviana">Liviana</option>
                         <option value="Pesada">Pesada</option>
                      </select>
                   </div>
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
-                     <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                     <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs cursor-pointer">
                         <option value="Taller Lagunillas">Taller Lagunillas</option>
                         <option value="Taller La Salina">Taller La Salina</option>
                         <option value="Taller Lago Medio">Taller Lago Medio</option>
@@ -93,33 +93,33 @@
                      </select>
                   </div>
                </div>
-               <div class="grid grid-cols-2 gap-4 mb-3">
+               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
-                     <input type="text" id="add-gerencia" list="list-gerencias" placeholder="Seleccione o escriba..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                     <input type="text" id="add-gerencia" list="list-gerencias" placeholder="Seleccione o escriba..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase">
                   </div>
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
-                     <input type="text" id="add-chofer" placeholder="Nombre del solicitante" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                     <input type="text" id="add-chofer" placeholder="Nombre del solicitante" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase">
                   </div>
                </div>
                <div id="wrapper-externo" class="mb-3 hidden">
                   <label class="block text-[10px] uppercase font-bold text-yellow-500 mb-1"><i class="fa-solid fa-building-shield"></i> Nombre del Taller Aliado (Externo)</label>
-                  <input type="text" id="add-taller-ext" placeholder="Ej: Rectificadora Fénix C.A." class="w-full bg-slate-950 border border-yellow-600/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500 text-xs uppercase">
+                  <input type="text" id="add-taller-ext" placeholder="Ej: Rectificadora Fénix C.A." class="w-full bg-slate-950 border border-yellow-600/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500 text-base md:text-xs uppercase">
                </div>
-               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-calendar-day mr-1"></i> Fecha de Ingreso</label>
-                     <input type="date" id="add-fecha-ingreso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
+                     <input type="date" id="add-fecha-ingreso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs cursor-pointer">
                   </div>
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)</label>
-                     <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer">
+                     <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-sm cursor-pointer">
                   </div>
                </div>
                <div class="mb-4">
                   <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Observaciones Iniciales / Diagnóstico Preliminar</label>
-                  <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+                  <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs resize-none"></textarea>
                </div>
                <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
                   <button type="button" onclick="cerrarModalNuevo()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
@@ -130,6 +130,7 @@
             </form>
          </div>
       </div>
+
       <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
          <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-200 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
@@ -140,29 +141,29 @@
             </div>
             <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
                <input type="hidden" id="edit-id-registro">
-               <div class="grid grid-cols-2 gap-4 mb-4">
+               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">ID Unidad (Protegido)</label>
-                     <input type="text" id="edit-unidad" disabled class="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none">
+                     <input type="text" id="edit-unidad" disabled class="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-base md:text-xs font-mono font-bold select-none">
                   </div>
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Marca del Vehículo</label>
-                     <input type="text" id="edit-marca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                     <input type="text" id="edit-marca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase">
                   </div>
                </div>
-               <div class="grid grid-cols-2 gap-4 mb-4">
+               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gerencia Usuaria</label>
-                     <input type="text" id="edit-gerencia" list="list-gerencias" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                     <input type="text" id="edit-gerencia" list="list-gerencias" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase">
                   </div>
                   <div>
                      <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Usuario / Chofer</label>
-                     <input type="text" id="edit-chofer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs uppercase">
+                     <input type="text" id="edit-chofer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs uppercase">
                   </div>
                </div>
                <div class="mb-4">
                   <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Estatus Operativo</label>
-                  <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold">
+                  <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs cursor-pointer font-bold">
                      <option value="Por Atender">⚠️ Por Atender</option>
                      <option value="En Proceso">⚙️ En Proceso</option>
                      <option value="Listo">✅ Listo</option>
@@ -173,7 +174,7 @@
                   <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones (Plan vs Real)
                   </label>
                   <div class="flex gap-2 mb-3">
-                     <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros, Revisar frenos..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-xs">
+                     <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs">
                      <button type="button" onclick="agregarTareaModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
                      <i class="fa-solid fa-plus"></i>
                      </button>
@@ -189,11 +190,11 @@
                   <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
                   <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
                   </label>
-                  <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
+                  <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-sm cursor-pointer">
                </div>
                <div class="mb-4">
                   <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Bitácora de Observaciones / Novedades</label>
-                  <textarea id="edit-observa" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs resize-none"></textarea>
+                  <textarea id="edit-observa" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-base md:text-xs resize-none"></textarea>
                </div>
                <div class="flex justify-end gap-3 border-t border-slate-800 pt-4">
                   <button type="button" onclick="cerrarModalEditar()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer">Cancelar</button>
