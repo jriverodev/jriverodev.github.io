@@ -92,8 +92,8 @@
                 <span class="text-[9px] text-blue-400 bg-slate-800/80 px-2 py-0.5 rounded font-mono uppercase tracking-wider border border-slate-700/50">Modo Monitor</span>
             </div>
             <div class="overflow-x-auto w-full antialiased chunk-touch-scrolling">
-                <table id="tablaLogistica" class="w-full text-left border-collapse min-w-[900px]">
-                    <thead>
+                <table id="tablaLogistica" class="w-full text-left border-collapse md:min-w-[900px]">
+                    <thead class="hidden md:table-header-group">
                         <tr class="bg-slate-900 text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800 uppercase">
                             <th class="p-3">ID Registro</th>
                             <th class="p-3">Unidad</th>
@@ -106,7 +106,7 @@
                             <th class="p-3">Fecha Ingreso</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaCuerpo" class="divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
+                    <tbody id="tablaCuerpo" class="block md:table-row-group divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
                         <tr>
                             <td colspan="9" class="p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">Conectando con repositorio central...</td>
                         </tr>

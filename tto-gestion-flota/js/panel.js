@@ -14,8 +14,8 @@ async function cargarTablaEditable() {
     if (!tbody) return;
 
     tbody.innerHTML = `
-        <tr>
-            <td colspan="7" class="p-8 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]">
+        <tr class="block md:table-row">
+            <td colspan="7" class="block md:table-cell p-8 text-center text-blue-400 font-bold uppercase tracking-widest text-[10px]">
                 <i class="fa-solid fa-spinner animate-spin mr-2 text-xs"></i> Interconectando con Base de Datos Central...
             </td>
         </tr>
@@ -29,7 +29,7 @@ async function cargarTablaEditable() {
         
         const res = await response.json();
         if (res.status !== "SUCCESS") {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${res.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${res.message}</td></tr>`;
             return;
         }
 
@@ -74,7 +74,7 @@ async function cargarTablaEditable() {
         actualizarDatalistGerencias();
 
         if (listaRegistrosPanel.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen unidades activas en el historial.</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen unidades activas en el historial.</td></tr>`;
             return;
         }
 
@@ -126,9 +126,8 @@ async function cargarTablaEditable() {
                             <span id="lbl-avance-${reg.ID_Registro}" class="font-mono text-[10px] font-bold text-blue-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 w-11 text-center">${reg.Avance}%</span>
                         </div>
                     </td>
-
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none">
-                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Estatus:</span>
+                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/40 md:w-40">
+                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Estatus</span>
                         <select id="inline-estatus-${reg.ID_Registro}" 
                                 onchange="evaluarEstatusCambio('${reg.ID_Registro}', this.value)"
                                 class="w-1/2 md:w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 font-bold text-base md:text-[11px] text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer transition-all">
@@ -137,27 +136,24 @@ async function cargarTablaEditable() {
                             <option value="Listo" ${reg.Estatus === "Listo" || reg.Estatus === "Reparado" ? "selected" : ""}>✅ Listo</option>
                         </select>
                     </td>
-
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none">
-                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Novedad:</span>
-                        <div class="w-1/2 md:w-full">
-                            <input type="text" id="inline-observa-${reg.ID_Registro}" value="${reg.Observaciones}"
-                                   class="w-full bg-slate-950/40 border border-slate-800/40 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500 font-medium placeholder:text-slate-700 text-base md:text-[11px] transition-all" placeholder="Añadir novedad de patio...">
-                            <input type="hidden" id="inline-foto-antes-${reg.ID_Registro}" value="${reg.Foto_Antes}">
-                            <input type="hidden" id="inline-foto-despues-${reg.ID_Registro}" value="${reg.Foto_Despues}">
-                        </div>
+                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/40">
+                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Novedad</span>
+                        <input type="text" id="inline-observa-${reg.ID_Registro}" value="${reg.Observaciones}" 
+                               class="w-full bg-slate-950/40 border border-slate-800/40 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500 font-medium placeholder:text-slate-700 text-[11px] transition-all" placeholder="Añadir novedad de patio...">
+                        
+                        <input type="hidden" id="inline-foto-antes-${reg.ID_Registro}" value="${reg.Foto_Antes}">
+                        <input type="hidden" id="inline-foto-despues-${reg.ID_Registro}" value="${reg.Foto_Despues}">
                     </td>
-
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-center">
-                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Acciones:</span>
-                        <div class="flex items-center justify-end md:justify-center gap-1.5">
+                    <td class="grid grid-cols-[40%_60%] md:table-cell md:justify-center items-center p-2 md:p-3 gap-1.5 md:w-28">
+                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Acciones</span>
+                        <div class="flex gap-1.5 justify-end md:justify-center">
                             <button onclick="guardarChangeInline('${reg.ID_Registro}')" id="btn-save-${reg.ID_Registro}"
-                                    class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white p-2.5 md:p-2 rounded-xl transition-all border border-blue-500/20 cursor-pointer" title="Guardar fila">
-                                <i class="fa-solid fa-floppy-disk text-sm md:text-xs"></i>
+                                    class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white p-2 rounded-xl transition-all border border-blue-500/20 cursor-pointer" title="Guardar fila">
+                                <i class="fa-solid fa-floppy-disk text-xs"></i>
                             </button>
                             <button onclick="abrirModalEditar('${reg.ID_Registro}')"
-                                    class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white p-2.5 md:p-2 rounded-xl transition-all border border-slate-700 cursor-pointer" title="Planificación Avanzada">
-                                <i class="fa-solid fa-list-check text-sm md:text-xs"></i>
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white p-2 rounded-xl transition-all border border-slate-700 cursor-pointer" title="Planificación Avanzada">
+                                <i class="fa-solid fa-list-check text-xs"></i>
                             </button>
                         </div>
                     </td>
@@ -168,7 +164,7 @@ async function cargarTablaEditable() {
 
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 font-bold text-xs">Error crítico de enlace de datos.</td></tr>`;
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error crítico de enlace de datos.</td></tr>`;
     }
 }
 

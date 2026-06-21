@@ -37,3 +37,9 @@ Se agregaron los campos **Gerencia Usuaria** y **Usuario / Chofer** para mejorar
 - **Frontend:** Se incluyeron inputs en los formularios de creación y edición. El campo "Gerencia Usuaria" cuenta con un `datalist` dinámico que se alimenta de los registros existentes.
 - **Backend (GAS):** Se expandió la estructura de la hoja de cálculo a 16 columnas (añadiendo N y O para los nuevos campos y desplazando el checklist a la columna P).
 - **Lógica de Sincronización:** Se actualizaron los payloads de `crear` y `editar` en `js/panel.js` para persistir estos datos.
+
+### ✅ Corrección de Responsividad (Matriz a Tarjetas)
+Se resolvió el problema de visualización en dispositivos móviles donde la tabla colapsaba en una sola columna sin contexto.
+- **Arquitectura de Tarjetas:** Se implementó una transformación dinámica mediante Tailwind CSS. En escritorio se mantiene una tabla de alta densidad, mientras que en móvil cada fila se convierte en una **tarjeta independiente** con bordes redondeados y fondo oscuro.
+- **Layout 40/60:** Se aplicó una estructura interna de grilla en las celdas móviles donde el lado izquierdo (40%) muestra etiquetas descriptivas en negrita (ej. "ESTATUS", "ID REGISTRO") y el lado derecho (60%) contiene los datos o controles, garantizando legibilidad total en pantallas pequeñas.
+- **Consistencia Visual:** Los cambios se aplicaron tanto en el Panel Operativo como en el Visor Gerencial.
