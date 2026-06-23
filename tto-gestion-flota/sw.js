@@ -3,7 +3,6 @@ const ASSETS = [
   "index.html",
   "panel.html",
   "visor.html",
-  "css/estilos.css",
   "js/app.js",
   "js/panel.js",
   "js/visor.js",

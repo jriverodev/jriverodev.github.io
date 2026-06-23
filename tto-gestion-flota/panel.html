@@ -45,14 +45,22 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
 
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
-                <div>
-                    <h2 class="text-xs uppercase tracking-wider font-black text-slate-700 dark:text-slate-300">Matriz Operativa en Tiempo Real</h2>
-                    <p class="text-[10px] text-slate-500">Gestión centralizada de unidades en patio</p>
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="relative flex-1 max-w-md">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="input-busqueda" oninput="filtrarMatriz()" placeholder="Buscar unidad, marca o ubicación..."
+                               class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all">
+                    </div>
+                    <button onclick="abrirFiltros()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 p-2 rounded-xl border border-slate-200 dark:border-slate-700 transition-all">
+                        <i class="fa-solid fa-filter text-xs"></i>
+                    </button>
                 </div>
-                <button onclick="cargarTablaEditable()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700">
-                    <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar Vista
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="cargarTablaEditable()" class="bg-blue-600/10 hover:bg-blue-600 text-blue-600 hover:text-white px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-blue-600/20">
+                        <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar
+                    </button>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -276,6 +284,42 @@
         <option value="GERENTE DE LOGÍSTICA">
         <option value="SOLICITANTE">
     </datalist>
+
+    <!-- BOTTOM SHEET DE FILTROS -->
+    <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
+        <div id="sheetContent" class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-3xl shadow-2xl p-6 transition-transform translate-y-full duration-300 ease-out overflow-hidden" onclick="event.stopPropagation()">
+            <div class="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6"></div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-sm uppercase font-black tracking-widest text-slate-900 dark:text-white">Filtros Avanzados</h3>
+                <button onclick="limpiarFiltros()" class="text-blue-600 text-[11px] font-bold uppercase tracking-wider hover:underline">Limpiar todo</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2">Estatus Operativo</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="toggleFiltroBadge(this, 'estatus', 'Por Atender')" class="filter-badge px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase transition-all">⚠️ Por Atender</button>
+                        <button onclick="toggleFiltroBadge(this, 'estatus', 'En Proceso')" class="filter-badge px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase transition-all">⚙️ En Proceso</button>
+                        <button onclick="toggleFiltroBadge(this, 'estatus', 'Listo')" class="filter-badge px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase transition-all">✅ Listo</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2">Ubicación / Fosa</label>
+                    <select id="filtro-ubicacion" onchange="filtrarMatriz()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none transition-all">
+                        <option value="">Todas las ubicaciones</option>
+                        <option value="Taller Central">Taller Central</option>
+                        <option value="Taller La Salina">Taller La Salina</option>
+                        <option value="TALLER EXTERNO (Terceros)">Taller Externo</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="cerrarFiltros()" class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-8 shadow-xl transition-all active:scale-95">
+                Aplicar Filtros
+            </button>
+        </div>
+    </div>
 
     <datalist id="list-gerencias">
         <option value="GERENCIA DE OPERACIONES">
