@@ -406,27 +406,40 @@ function exportarAExcel() {
     XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
 function exportarAPDF() {
-  // En lugar de buscar un ID, usamos todo el cuerpo del HTML visible
+  // 1. Usamos todo el cuerpo o el contenedor principal
   const elemento = document.body; 
 
+  // 2. Forzamos a que los canvas ocultos o en animación se estabilicen
+  // Si usas Chart.js, es ideal desactivar sus animaciones antes de exportar, 
+  // pero si no, este pequeño truco con promesas y tiempo solucionará el tamaño 0.
+  
   const opciones = {
     margin:       0.3,
     filename:     'Reporte_TTOCC_Gerencial.pdf',
     image:        { type: 'jpeg', quality: 0.95 },
     html2canvas:  { 
-      scale: 1.5, // Bajamos a 1.5 para que los teléfonos carguen más rápido en el patio
+      scale: 1.5, 
       useCORS: true,        
-      logging: false,       
-      letterRendering: true
+      logging: false,
+      letterRendering: true,
+      // Espera a que todas las imágenes y recursos externos carguen
+      delay: 500 
     },
-    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' } // 'landscape' (horizontal) suele ser mejor para gráficos del visor
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
   };
 
-  html2pdf().set(opciones).from(elemento).save()
-    .then(() => {
-      console.log("PDF generado exitosamente");
-    })
-    .catch(err => console.error("Error generando PDF:", err));
+  // Envolvemos la ejecución en un setTimeout para asegurar que el hilo
+  // de ejecución de los gráficos haya terminado de asignar anchos y altos en el DOM
+  setTimeout(() => {
+    html2pdf().set(opciones).from(elemento).save()
+      .then(() => {
+        console.log("✔ PDF generado exitosamente desde el patio.");
+      })
+      .catch(err => {
+        console.error("Error generando PDF:", err);
+        alert("Hubo un problema al renderizar los gráficos. Intenta de nuevo en unos segundos.");
+      });
+  }, 300); // 300 milisegundos bastan para que el navegador asigne las dimensiones reales
 }
 /*
 function exportarAPDF() {
