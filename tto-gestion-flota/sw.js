@@ -6,6 +6,8 @@ const ASSETS = [
   "js/app.js",
   "js/panel.js",
   "js/visor.js",
+  "assets/icon-512.png",
+  "assets/icon-192.png",
   "manifest.json"
 ];
 
