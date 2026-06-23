@@ -187,6 +187,10 @@ function renderizarVisor(datos) {
                         <span class="text-[9px] text-slate-400 block font-sans font-bold uppercase tracking-wide">${reg.Marca}</span>
                     </div>
                 </td>
+                  <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Flota</span>
+                    <span class="text-slate-300 font-medium text-right md:text-left text-[11px]">${reg.Tipo_Flota}</span>
+                </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Gerencia / Usuario</span>
                     <div class="text-right md:text-left">
