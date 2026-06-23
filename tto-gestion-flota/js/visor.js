@@ -406,24 +406,22 @@ function exportarAExcel() {
     XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
 function exportarAPDF() {
-  // Elemento que vas a exportar (ej. el contenedor de tus gráficos)
-  const elemento = document.getElementById('contenedor-visor'); 
+  // En lugar de buscar un ID, usamos todo el cuerpo del HTML visible
+  const elemento = document.body; 
 
-  // Configuración optimizada para evitar Reflow y caídas de rendimiento
   const opciones = {
-    margin:       0.5,
+    margin:       0.3,
     filename:     'Reporte_TTOCC_Gerencial.pdf',
-    image:        { type: 'jpeg', quality: 0.95 }, // JPEG es más rápido de procesar que PNG
+    image:        { type: 'jpeg', quality: 0.95 },
     html2canvas:  { 
-      scale: 2,             // Buena resolución sin saturar la memoria
-      useCORS: true,        // Crucial para que cargue las fotos de Google Drive
-      logging: false,       // Desactiva los logs internos en consola (apaga worker.js:143)
+      scale: 1.5, // Bajamos a 1.5 para que los teléfonos carguen más rápido en el patio
+      useCORS: true,        
+      logging: false,       
       letterRendering: true
     },
-    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' } // 'landscape' (horizontal) suele ser mejor para gráficos del visor
   };
 
-  // Ejecutar con promesa para no bloquear el hilo principal bruscamente
   html2pdf().set(opciones).from(elemento).save()
     .then(() => {
       console.log("PDF generado exitosamente");
