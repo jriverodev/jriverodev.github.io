@@ -406,34 +406,51 @@ function exportarAExcel() {
     XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
 function exportarAPDF() {
-  // 1. Clonamos el elemento que queremos exportar (ej. todo el body o tu contenedor)
-  // Esto nos permite manipular el HTML antes de que html2pdf lo vea
+  // 1. Clonamos el contenedor original
   const contenedorOriginal = document.body; 
   const clon = contenedorOriginal.cloneNode(true);
 
-  // 2. Buscamos TODOS los elementos <canvas> dentro del clon
+  // =========================================================================
+  // SOLUCIÓN AL ERROR OKLCH: Limpieza de colores incompatibles en el clon
+  // =========================================================================
+  const todosLosElementos = clon.querySelectorAll('*');
+  todosLosElementos.forEach(elemento => {
+    // Obtenemos los estilos calculados reales del elemento original
+    const estiloOriginal = window.getComputedStyle(elemento);
+    
+    // Si el fondo o el borde usan oklch en el CSS, la librería colapsará.
+    // Forzamos al clon a usar colores planos de respaldo (Fallback) en su lugar.
+    if (estiloOriginal.backgroundColor.includes('oklch')) {
+      elemento.style.backgroundColor = '#ffffff'; // Reemplaza fondos raros por blanco puro para el PDF
+    }
+    if (estiloOriginal.color.includes('oklch')) {
+      elemento.style.color = '#1f2937'; // Reemplaza textos raros por un gris oscuro legible
+    }
+    if (estiloOriginal.borderColor.includes('oklch')) {
+      elemento.style.borderColor = '#d1d5db'; // Reemplaza bordes raros por un gris claro
+    }
+  });
+  // =========================================================================
+
+  // 2. Buscamos y reparamos los canvas válidos (Tu lógica anterior exitosa)
   const canvasEnClon = clon.querySelectorAll('canvas');
   const canvasOriginales = contenedorOriginal.querySelectorAll('canvas');
 
-  // 3. PASO CRUCIAL: Como cloneNode NO copia los dibujos de los canvas, 
-  // redibujamos los canvas reales en el clon y ELIMINAMOS los que midan cero.
   canvasEnClon.forEach((canvasClonado, index) => {
     const canvasOriginal = canvasOriginales[index];
     
-    // Si el canvas original no existe o mide cero de ancho/alto, lo borramos del mapa
     if (!canvasOriginal || canvasOriginal.width === 0 || canvasOriginal.height === 0) {
       canvasClonado.remove(); 
       return;
     }
 
-    // Si el canvas sí es válido, le copiamos el contenido gráfico real
     const contextoClonado = canvasClonado.getContext('2d');
     if (contextoClonado) {
       contextoClonado.drawImage(canvasOriginal, 0, 0);
     }
   });
 
-  // 4. Configuración optimizada de html2pdf
+  // 3. Configuración de html2pdf
   const opciones = {
     margin:       0.3,
     filename:     'Reporte_TTOCC_Gerencial.pdf',
@@ -447,10 +464,10 @@ function exportarAPDF() {
     jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
   };
 
-  // 5. Ejecutamos la exportación usando nuestro clon limpio de "fantasmas"
+  // 4. Exportamos el clon completamente sanitizado de fantasmas y colores OKLCH
   html2pdf().set(opciones).from(clon).save()
     .then(() => {
-      console.log("✔ PDF generado exitosamente filtrando elementos corruptos.");
+      console.log("✔ PDF generado exitosamente filtrando elementos corruptos y colores OKLCH.");
     })
     .catch(err => {
       console.error("Error generando PDF:", err);
