@@ -17,7 +17,7 @@ function doPost(e) {
       return retornarJSON({ status: "ERROR", message: "La pestaña 'Historial_Mantenimiento' no fue encontrada." });
     }
 
-    // MAPEO DE COLUMNAS (Estructura expandida a 16 columnas)
+    // MAPEO DE COLUMNAS (Estructura expandida a 17 columnas)
     var COL_ID_REGISTRO = 1;   // A
     var COL_UNIDAD = 2;        // B
     var COL_FLOTA = 3;         // C
@@ -34,6 +34,7 @@ function doPost(e) {
     var COL_GERENCIA = 14;     // N
     var COL_USUARIO = 15;      // O
     var COL_TAREAS = 16;       // P
+    var COL_MODIFICADO_POR = 17; // Q
 
     // ==========================================
     // ACCIÓN 1: LEER DATOS
@@ -88,6 +89,7 @@ function doPost(e) {
           sheet.getRange(numeroFila, COL_AVANCE).setValue(payload.avance);
           sheet.getRange(numeroFila, COL_GERENCIA).setValue(payload.gerencia);
           sheet.getRange(numeroFila, COL_USUARIO).setValue(payload.usuario);
+          sheet.getRange(numeroFila, COL_MODIFICADO_POR).setValue(payload.modificado_por || "");
 
           // Sincronizar el estado del string JSON de las tareas del checklist
           if (payload.tareas) {
@@ -153,6 +155,7 @@ function doPost(e) {
       nuevaFila[COL_GERENCIA - 1] = payload.gerencia || "";
       nuevaFila[COL_USUARIO - 1] = payload.usuario || "";
       nuevaFila[COL_TAREAS - 1] = "[]"; // Inicializa el checklist vacío
+      nuevaFila[COL_MODIFICADO_POR - 1] = payload.modificado_por || "";
 
       sheet.appendRow(nuevaFila);
       SpreadsheetApp.flush();

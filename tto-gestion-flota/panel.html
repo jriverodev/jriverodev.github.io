@@ -1,43 +1,56 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-950">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTOCC System - Panel de Control de Patio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {}
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/app.js" defer></script>
     <script src="js/panel.js" defer></script>
 </head>
-<body class="text-slate-200 font-sans antialiased min-h-full pb-12">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans antialiased min-h-full pb-12 transition-colors duration-300">
 
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-slate-900/80">
+    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-900/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
                     <i class="fa-solid fa-gauge-high text-sm"></i>
                 </div>
                 <div>
-                    <h1 class="text-xs uppercase tracking-widest font-black text-white">TTOCC System</h1>
-                    <p class="text-[10px] text-slate-400 font-medium">Panel Operativo de Patio & Mantenimiento</p>
+                    <h1 class="text-xs uppercase tracking-widest font-black text-slate-900 dark:text-white">TTOCC System</h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Panel Operativo de Patio & Mantenimiento</p>
                 </div>
             </div>
 
-            <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 cursor-pointer">
-                <i class="fa-solid fa-plus text-[10px]"></i> Registrar Ingreso
-            </button>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleTheme()" class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-2" title="Alternar Tema">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Registrar Ingreso
+                </button>
+            </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center flex-wrap gap-2">
                 <div>
-                    <h2 class="text-xs uppercase tracking-wider font-black text-slate-300">Matriz Operativa en Tiempo Real</h2>
-                    <p class="text-[10px] text-slate-500">Edición directa sobre celdas o a través de planificación avanzada</p>
+                    <h2 class="text-xs uppercase tracking-wider font-black text-slate-700 dark:text-slate-300">Matriz Operativa en Tiempo Real</h2>
+                    <p class="text-[10px] text-slate-500">Gestión centralizada de unidades en patio</p>
                 </div>
-                <button onclick="cargarTablaEditable()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+                <button onclick="cargarTablaEditable()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700">
                     <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar Vista
                 </button>
             </div>
@@ -45,7 +58,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="hidden md:table-header-group">
-                        <tr class="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-950/40">
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-500 bg-slate-50 dark:bg-slate-950/40">
                             <th class="p-1.5 w-12 font-mono text-center">ID</th>
                             <th class="p-1.5 w-48">Unidad / Marca</th>
                             <th class="p-1.5 w-48">Fosa / Ubicación</th>
@@ -228,6 +241,41 @@
             </form>
         </div>
     </div>
+
+    <!-- MODAL DE IDENTIFICACIÓN OBLIGATORIA -->
+    <div id="modalIdentificacion" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 transition-all duration-500">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-8 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
+
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600/10 text-blue-600 mb-4">
+                    <i class="fa-solid fa-user-shield text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Acceso Restringido</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">Por favor, identifíquese para auditar sus cambios</p>
+            </div>
+
+            <form onsubmit="confirmarIdentidad(event)" class="space-y-6">
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest">Nombre del Responsable / Rol</label>
+                    <input type="text" id="input-operador" required list="list-roles" placeholder="EJ: OPERADOR PATIO 1"
+                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-sm font-bold uppercase transition-all">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    Ingresar al Sistema <i class="fa-solid fa-right-to-bracket ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <datalist id="list-roles">
+        <option value="OPERADOR PATIO 1">
+        <option value="PLANIFICADOR MANTENIMIENTO">
+        <option value="SUPERVISOR PATIO">
+        <option value="GERENTE DE LOGÍSTICA">
+        <option value="SOLICITANTE">
+    </datalist>
 
     <datalist id="list-gerencias">
         <option value="GERENCIA DE OPERACIONES">
