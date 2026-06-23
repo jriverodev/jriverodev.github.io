@@ -187,6 +187,7 @@ async function cargarTablaEditable() {
                 Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10),
                 Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
                 Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
+                Fecha_Ingreso: normalized["FECHAINGR"] || normalized["FECHAINGRESO"] || normalized["FECHAING"] || normalized["FECHA"] || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "",
                 Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "",

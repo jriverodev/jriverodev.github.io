@@ -13,8 +13,8 @@
 
     <link rel="icon" href="data:,">
 
-    <script src="js/app.js"></script>
-    <script src="js/visor.js"></script>
+    <script src="js/app.js" defer></script>
+    <script src="js/visor.js" defer></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500/30">
 
@@ -52,8 +52,17 @@
 
     <main class="max-w-7xl mx-auto w-full p-3 md:p-6 space-y-4 md:space-y-6 flex-grow">
         
-        <!-- FILTROS AVANZADOS -->
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-wrap gap-4 items-end">
+        <div class="flex flex-wrap gap-2 mb-2">
+            <button onclick="toggleSeccion('visor-filtros-contenedor')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-filter"></i> Filtros y Búsqueda
+            </button>
+            <button onclick="toggleSeccion('visor-graficos-contenedor')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-chart-line"></i> Estadísticas Visuales
+            </button>
+        </div>
+
+        <!-- FILTROS AVANZADOS (Ocultos por defecto) -->
+        <div id="visor-filtros-contenedor" class="bg-slate-950 border border-slate-800 rounded-2xl p-4 hidden flex-wrap gap-4 items-end transition-all">
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-[9px] uppercase font-black text-slate-500 mb-1.5 tracking-widest">Búsqueda Predictiva</label>
                 <div class="relative">
@@ -90,7 +99,7 @@
                     <input type="date" id="visor-fecha-hasta" onchange="filtrarVisor()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[10px] text-slate-300 focus:outline-none focus:border-blue-500">
                 </div>
             </div>
-            <button onclick="limpiarFiltrosVisor()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all border border-slate-700" title="Limpiar Filtros">
+            <button onclick="limpiarFiltrosVisor()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all border border-slate-700 cursor-pointer" title="Limpiar Filtros">
                 <i class="fa-solid fa-filter-circle-xmark"></i>
             </button>
         </div>
@@ -114,7 +123,8 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <!-- GRÁFICOS (Ocultos por defecto) -->
+        <div id="visor-graficos-contenedor" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 transition-all">
             <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl min-h-[260px] flex flex-col justify-between">
                 <h3 class="text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-slate-500"></i> Distribución por Fosa</h3>
                 <div class="w-full h-48 relative flex justify-center items-center">
@@ -146,7 +156,8 @@
                             <th class="p-3 w-36">Avance</th>
                             <th class="p-3">Estatus</th>
                             <th class="p-3">Observaciones Técnicas</th>
-                            <th class="p-3">Fecha Ingreso</th>
+                            <th class="p-3">Fechas</th>
+                            <th class="p-3 text-center">Detalle</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCuerpo" class="block md:table-row-group divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
@@ -158,6 +169,106 @@
             </div>
         </div>
     </main>
+
+    <!-- MODAL DE DETALLE EXTENDIDO -->
+    <div id="modalDetalleRegistro" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden text-slate-200 max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600/20 p-2 rounded-xl text-blue-500">
+                        <i class="fa-solid fa-circle-info text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm uppercase font-black tracking-widest text-white" id="detalle-titulo-unidad">UNIDAD: S/I</h3>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider" id="detalle-subtitulo-id">ID REGISTRO: #000</p>
+                    </div>
+                </div>
+                <button onclick="cerrarModalDetalle()" class="text-slate-500 hover:text-white transition-all cursor-pointer p-2 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-6 space-y-6">
+                <!-- Grid de Info Principal -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Estatus Actual</span>
+                        <span id="det-estatus" class="text-xs font-bold uppercase"></span>
+                    </div>
+                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Ubicación</span>
+                        <span id="det-ubicacion" class="text-xs font-bold uppercase truncate"></span>
+                    </div>
+                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Marca / Flota</span>
+                        <span id="det-marca-flota" class="text-xs font-bold uppercase"></span>
+                    </div>
+                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Fecha Ingreso</span>
+                        <span id="det-fecha-ingr" class="text-xs font-mono font-bold text-blue-400"></span>
+                    </div>
+                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Fecha Salida</span>
+                        <span id="det-fecha-salida" class="text-xs font-mono font-bold text-emerald-400"></span>
+                    </div>
+                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Responsable</span>
+                        <span id="det-usuario" class="text-xs font-bold uppercase truncate"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Sección Checklist -->
+                    <div class="space-y-3">
+                        <h4 class="text-[10px] uppercase font-black tracking-widest text-blue-500 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check"></i> Tareas de Mantenimiento
+                        </h4>
+                        <div id="det-container-tareas" class="bg-slate-950/60 rounded-2xl border border-slate-800 p-4 space-y-2 min-h-[100px]">
+                            <!-- Dinámico -->
+                        </div>
+                    </div>
+
+                    <!-- Sección Auditoría y Fotos -->
+                    <div class="space-y-4">
+                        <div class="bg-blue-600/5 border border-blue-500/20 p-4 rounded-2xl">
+                            <h4 class="text-[10px] uppercase font-black tracking-widest text-slate-300 mb-2">Última Modificación por:</h4>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-black">
+                                    <i class="fa-solid fa-user-check"></i>
+                                </div>
+                                <span id="det-modificado-por" class="text-xs font-black text-white uppercase tracking-tight">S/I</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <h4 class="text-[10px] uppercase font-black tracking-widest text-slate-400">Evidencias Fotográficas</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-950 border border-slate-800 aspect-video flex items-center justify-center">
+                                    <span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO ANTES</span>
+                                </div>
+                                <div id="det-foto-despues-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-950 border border-slate-800 aspect-video flex items-center justify-center">
+                                    <span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-[10px] uppercase font-black tracking-widest text-slate-400">Observaciones Técnicas</h4>
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 text-xs text-slate-300 leading-relaxed italic" id="det-observaciones">
+                        No hay observaciones adicionales registradas.
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+                <button onclick="cerrarModalDetalle()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer">
+                    Cerrar Visor
+                </button>
+            </div>
+        </div>
+    </div>
 
     <footer class="w-full text-center py-3 bg-slate-950 border-t border-slate-800/60 hidden sm:block">
         <p class="text-[9px] md:text-[10px] text-slate-500 uppercase tracking-widest font-semibold">TTOCC Analytics Console — Gerencia de Logística Terrestre</p>
