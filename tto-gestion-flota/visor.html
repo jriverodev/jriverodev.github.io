@@ -52,6 +52,49 @@
 
     <main class="max-w-7xl mx-auto w-full p-3 md:p-6 space-y-4 md:space-y-6 flex-grow">
         
+        <!-- FILTROS AVANZADOS -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-[9px] uppercase font-black text-slate-500 mb-1.5 tracking-widest">Búsqueda Predictiva</label>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
+                    <input type="text" id="visor-busqueda" oninput="filtrarVisor()" placeholder="Unidad, Marca, ID..."
+                           class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500 transition-all">
+                </div>
+            </div>
+            <div class="w-full sm:w-40">
+                <label class="block text-[9px] uppercase font-black text-slate-500 mb-1.5 tracking-widest">Estatus</label>
+                <select id="visor-filtro-estatus" onchange="filtrarVisor()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+                    <option value="">TODOS</option>
+                    <option value="Por Atender">⚠️ POR ATENDER</option>
+                    <option value="En Proceso">⚙️ EN PROCESO</option>
+                    <option value="Listo">✅ LISTO</option>
+                </select>
+            </div>
+            <div class="w-full sm:w-48">
+                <label class="block text-[9px] uppercase font-black text-slate-500 mb-1.5 tracking-widest">Ubicación</label>
+                <select id="visor-filtro-ubicacion" onchange="filtrarVisor()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+                    <option value="">TODAS LAS FOSAS</option>
+                    <option value="Taller Central">TALLER CENTRAL</option>
+                    <option value="Taller La Salina">TALLER LA SALINA</option>
+                    <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO</option>
+                </select>
+            </div>
+            <div class="w-full sm:w-auto flex gap-2">
+                <div class="w-32">
+                    <label class="block text-[9px] uppercase font-black text-slate-500 mb-1.5 tracking-widest">Desde</label>
+                    <input type="date" id="visor-fecha-desde" onchange="filtrarVisor()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[10px] text-slate-300 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="w-32">
+                    <label class="block text-[9px] uppercase font-black text-slate-500 mb-1.5 tracking-widest">Hasta</label>
+                    <input type="date" id="visor-fecha-hasta" onchange="filtrarVisor()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[10px] text-slate-300 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <button onclick="limpiarFiltrosVisor()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all border border-slate-700" title="Limpiar Filtros">
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+            </button>
+        </div>
+
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <div class="bg-slate-950/40 border border-slate-800 p-3 md:p-4 rounded-xl flex flex-col justify-between">
                 <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unidades Totales</span>
