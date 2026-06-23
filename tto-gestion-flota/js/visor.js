@@ -6,6 +6,20 @@ let instanciaChartEstatus = null;
 
 document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
 
+/**
+ * Alterna la visibilidad de secciones (Filtros y Gráficos)
+ */
+function toggleSeccion(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.toggle("hidden");
+        // Si se muestran los gráficos, forzar redibujado para evitar glitches de tamaño
+        if (id === 'visor-graficos-contenedor' && !el.classList.contains("hidden")) {
+            setTimeout(actualizarGraficosVivos, 50);
+        }
+    }
+}
+
 // EXTRAER REGISTROS DESDE LA PESTAÑA HISTORIAL_MANTENIMIENTO
 async function cargarDatosAnaliticos() {
     const tbody = document.getElementById("tablaCuerpo");
@@ -36,6 +50,15 @@ async function cargarDatosAnaliticos() {
                 normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
             }
             
+            // Procesamiento de tareas (JSON)
+            let tareasRaw = normalized["TAREAS"] || normalized["CHECKLIST"] || u["Tareas"] || "";
+            let tareasArray = [];
+            try {
+                if (tareasRaw) {
+                    tareasArray = typeof tareasRaw === "string" ? JSON.parse(tareasRaw) : tareasRaw;
+                }
+            } catch(e) { console.error("Error parseando tareas", e); }
+
             return {
                 ID_Registro: normalized["IDREGISTRO"] || normalized["REGISTRO"] || u["ID_Registro"] || "S/I",
                 ID_Unidad: normalized["IDUNIDAD"] || normalized["UNIDAD"] || u["ID_Unidad"] || "S/I",
@@ -44,11 +67,17 @@ async function cargarDatosAnaliticos() {
                 Nombre_Taller_Ext: normalized["NOMBRETALLEREXT"] || normalized["TALLEREXTERNO"] || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
                 Observaciones: normalized["OBSERVACIONES"] || normalized["DETALLE"] || u["Observaciones"] || "Sin novedades",
-                Fecha_Registro: normalized["FECHAREGISTRO"] || normalized["FECHA"] || u["Fecha_Registro"] || "N/A",
+                // Mapeo exhaustivo para fecha de ingreso
+                Fecha_Registro: normalized["FECHAINGR"] || normalized["FECHAINGRESO"] || normalized["FECHAING"] || normalized["FECHA"] || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
+                Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "N/A",
                 Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "S/I",
-                Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10)
+                Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10),
+                Modificado_Por: normalized["MODIFICADOPOR"] || u["Modificado_Por"] || "S/I",
+                Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
+                Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
+                Tareas: tareasArray
             };
         });
 
@@ -81,7 +110,6 @@ function filtrarVisor() {
 
         let matchesFecha = true;
         if (fechaDesde || fechaHasta) {
-            // Convertir dd-mm-yyyy a objeto fecha para comparar
             const [d, m, y] = reg.Fecha_Registro.split("-").map(Number);
             const fechaReg = new Date(y, m - 1, d);
 
@@ -131,75 +159,80 @@ function renderizarVisor(datos) {
 
     if (total === 0) {
         tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros que coincidan con los filtros</td></tr>`;
-        renderizarGraficos({}, 0, 0, 0); // Limpiar gráficos
+        renderizarGraficos({}, 0, 0, 0);
         return;
     }
 
     tbody.innerHTML = "";
     let conteoTalleres = {};
 
-    // Renderizar ordenado del más reciente al más antiguo
     [...datos].reverse().forEach(reg => {
         let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
-        // Definición estilizada de Badges
-        let badgeColor = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
-        if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-500/10 text-blue-400 border border-blue-500/30";
-        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+        let badgeColor = "bg-amber-950/60 border border-amber-500/30 text-amber-400";
+        if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-950/60 border border-blue-500/30 text-blue-400";
+        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400";
 
         let fila = `
             <tr class="block md:table-row hover:bg-slate-950/30 border-b border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-slate-900 md:bg-transparent rounded-2xl md:rounded-none">
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 text-slate-500 font-mono text-[11px] font-bold border-b md:border-b-0 border-slate-800/20">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-500 font-mono text-[10px] font-bold border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">ID Registro</span>
                     <span class="text-right md:text-left">${reg.ID_Registro}</span>
                 </td>
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Unidad</span>
                     <div class="text-right md:text-left">
-                        <span class="font-black text-white tracking-wider font-mono">${reg.ID_Unidad}</span>
-                        ${reg.Marca ? `<span class="text-[9px] text-slate-400 block font-sans font-normal uppercase tracking-wide">${reg.Marca}</span>` : ''}
+                        <span class="font-black text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
+                        <span class="text-[9px] text-slate-400 block font-sans font-bold uppercase tracking-wide">${reg.Marca}</span>
                     </div>
                 </td>
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Gerencia / Usuario</span>
                     <div class="text-right md:text-left">
                         <span class="text-white block font-bold uppercase text-[10px]">${reg.Gerencia}</span>
                         <span class="text-slate-500 block text-[9px] uppercase tracking-tighter">${reg.Usuario}</span>
                     </div>
                 </td>
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Flota</span>
-                    <span class="text-slate-400 text-[10px] font-bold text-right md:text-left">${reg.Tipo_Flota}</span>
-                </td>
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Ubicación</span>
-                    <span class="text-slate-300 font-medium text-right md:text-left">${nombreTallerFinal}</span>
+                    <span class="text-slate-300 font-medium text-right md:text-left text-[11px]">${nombreTallerFinal}</span>
                 </td>
 
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Avance</span>
-                    <div class="flex flex-col gap-1 justify-center w-full">
-                        <span class="font-mono text-[10px] font-bold text-slate-400 text-right md:text-left">${reg.Avance}%</span>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700/30">
-                            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-500" style="width: ${reg.Avance}%"></div>
-                        </div>
+                    <div class="flex items-center justify-end md:justify-start">
+                        <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
 
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Estatus</span>
                     <div class="text-right md:text-left">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${reg.Estatus}</span>
                     </div>
                 </td>
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Observaciones</span>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fechas</span>
+                    <div class="text-right md:text-left font-mono text-[9px]">
+                        <div class="text-blue-400"><i class="fa-solid fa-arrow-right-to-bracket text-[8px]"></i> ${reg.Fecha_Registro}</div>
+                        ${reg.Fecha_Salida ? `<div class="text-emerald-400"><i class="fa-solid fa-arrow-right-from-bracket text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+                    </div>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Obs</span>
                     <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
                 </td>
-                <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3">
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fecha Ingreso</span>
-                    <span class="font-mono text-slate-500 text-[11px] text-right md:text-left">${reg.Fecha_Registro}</span>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 md:w-28 text-center">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Detalle</span>
+                    <div class="flex justify-end md:justify-center">
+                        <button onclick="abrirModalDetalle('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-3 py-1 rounded-lg transition-all border border-slate-700 hover:border-blue-500 text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                            Detalle
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -207,6 +240,69 @@ function renderizarVisor(datos) {
     });
 
     renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
+}
+
+// ==========================================
+// CONTROLADORES DE MODAL DETALLE
+// ==========================================
+function abrirModalDetalle(id) {
+    const reg = datosUnidadesGlobal.find(r => String(r.ID_Registro) === String(id));
+    if (!reg) return;
+
+    document.getElementById("detalle-titulo-unidad").textContent = `UNIDAD: ${reg.ID_Unidad} - ${reg.Marca}`;
+    document.getElementById("detalle-subtitulo-id").textContent = `ID REGISTRO: #${reg.ID_Registro} | FLOTA: ${reg.Tipo_Flota}`;
+
+    document.getElementById("det-estatus").textContent = reg.Estatus;
+    document.getElementById("det-ubicacion").textContent = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? reg.Nombre_Taller_Ext : reg.Nombre_Taller;
+    document.getElementById("det-marca-flota").textContent = `${reg.Marca} (${reg.Tipo_Flota})`;
+    document.getElementById("det-fecha-ingr").textContent = reg.Fecha_Registro;
+    document.getElementById("det-fecha-salida").textContent = reg.Fecha_Salida || "PENDIENTE";
+    document.getElementById("det-usuario").textContent = reg.Usuario;
+    document.getElementById("det-modificado-por").textContent = reg.Modificado_Por;
+    document.getElementById("det-observaciones").textContent = reg.Observaciones;
+
+    // Renderizar Checklist en el modal
+    const tareasContainer = document.getElementById("det-container-tareas");
+    tareasContainer.innerHTML = "";
+    if (reg.Tareas && reg.Tareas.length > 0) {
+        reg.Tareas.forEach(t => {
+            const item = document.createElement("div");
+            item.className = "flex items-center gap-3 p-2 bg-slate-900/80 rounded-xl border border-slate-800/40";
+            item.innerHTML = `
+                <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-600'} text-sm"></i>
+                <span class="text-xs ${t.hecho ? 'text-slate-300' : 'text-slate-500'} font-medium">${t.texto}</span>
+            `;
+            tareasContainer.appendChild(item);
+        });
+    } else {
+        tareasContainer.innerHTML = `<p class="text-[10px] text-slate-600 italic text-center py-4">No se asignaron tareas específicas en el diagnóstico.</p>`;
+    }
+
+    // Renderizar Fotos
+    const fotoAntes = document.getElementById("det-foto-antes-container");
+    const fotoDespues = document.getElementById("det-foto-despues-container");
+
+    if (reg.Foto_Antes) {
+        fotoAntes.innerHTML = `<img src="${reg.Foto_Antes}" class="w-full h-full object-cover">`;
+        fotoAntes.onclick = () => window.open(reg.Foto_Antes, '_blank');
+    } else {
+        fotoAntes.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO ANTES</span>`;
+        fotoAntes.onclick = null;
+    }
+
+    if (reg.Foto_Despues) {
+        fotoDespues.innerHTML = `<img src="${reg.Foto_Despues}" class="w-full h-full object-cover">`;
+        fotoDespues.onclick = () => window.open(reg.Foto_Despues, '_blank');
+    } else {
+        fotoDespues.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>`;
+        fotoDespues.onclick = null;
+    }
+
+    document.getElementById("modalDetalleRegistro").classList.remove("hidden");
+}
+
+function cerrarModalDetalle() {
+    document.getElementById("modalDetalleRegistro").classList.add("hidden");
 }
 
 // INYECCIÓN DE RENDIMIENTO GRÁFICO (ChartJS)
@@ -221,7 +317,8 @@ function renderizarGraficos(talleresData, espera, proceso, listos) {
 
     const esMovil = window.innerWidth < 768;
 
-    instanciaChartTalleres = new Chart(canvasTalleres, {
+    const ctxTalleres = canvasTalleres.getContext('2d');
+    instanciaChartTalleres = new Chart(ctxTalleres, {
         type: 'doughnut',
         data: {
             labels: Object.keys(talleresData),
@@ -243,7 +340,8 @@ function renderizarGraficos(talleresData, espera, proceso, listos) {
         }
     });
 
-    instanciaChartEstatus = new Chart(canvasEstatus, {
+    const ctxEstatus = canvasEstatus.getContext('2d');
+    instanciaChartEstatus = new Chart(ctxEstatus, {
         type: 'bar',
         data: {
             labels: ['Por Atender', 'En Proceso', 'Disponibles'],
@@ -266,28 +364,51 @@ function renderizarGraficos(talleresData, espera, proceso, listos) {
     });
 }
 
-// UTILERÍAS DE EXPORTACIÓN Y GENERACIÓN DE REPORTES
-function obtenerFechaFormato() {
-    const hoy = new Date();
-    const yyyy = hoy.getFullYear();
-    let mm = String(hoy.getMonth() + 1).padStart(2, '0');
-    let dd = String(hoy.getDate()).padStart(2, '0');
-    return `${dd}-${mm}-${yyyy}`;
+function actualizarGraficosVivos() {
+    if (instanciaChartTalleres) instanciaChartTalleres.resize();
+    if (instanciaChartEstatus) instanciaChartEstatus.resize();
 }
 
+// UTILERÍAS DE EXPORTACIÓN
 function exportarAExcel() {
-    const tabla = document.getElementById("tablaLogistica");
-    if (!tabla || document.getElementById("tablaCuerpo").rows[0]?.cells?.length === 1) return alert("No hay datos cargados para exportar.");
-    const libro = XLSX.utils.table_to_book(tabla, { sheet: "Historial Mantenimiento" });
-    XLSX.writeFile(libro, `Reporte_Mantenimiento_TTOCC_${obtenerFechaFormato()}.xlsx`);
+    if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
+
+    // Transformar datos globales para el Excel (incluyendo todo)
+    const exportData = datosUnidadesGlobal.map(reg => ({
+        "ID Registro": reg.ID_Registro,
+        "Unidad": reg.ID_Unidad,
+        "Marca": reg.Marca,
+        "Flota": reg.Tipo_Flota,
+        "Ubicación": reg.Nombre_Taller,
+        "Taller Externo": reg.Nombre_Taller_Ext,
+        "Estatus": reg.Estatus,
+        "Avance %": reg.Avance,
+        "Gerencia Usuaria": reg.Gerencia,
+        "Usuario/Chofer": reg.Usuario,
+        "Fecha Ingreso": reg.Fecha_Registro,
+        "Fecha Salida": reg.Fecha_Salida,
+        "Observaciones": reg.Observaciones,
+        "Modificado Por": reg.Modificado_Por,
+        "Checklist": JSON.stringify(reg.Tareas),
+        "Link Foto Antes": reg.Foto_Antes,
+        "Link Foto Después": reg.Foto_Despues
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(exportData);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Historial Completo");
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
 
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
-    if (!elemento || document.getElementById("tablaCuerpo").rows[0]?.cells?.length === 1) return alert("No hay datos cargados para exportar.");
+    if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
+
     html2pdf().set({
         margin: 0.3,
-        filename: `Reporte_Mantenimiento_TTOCC_${obtenerFechaFormato()}.pdf`,
+        filename: `Reporte_TTOCC_Gerencial.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
