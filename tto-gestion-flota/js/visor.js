@@ -405,7 +405,32 @@ function exportarAExcel() {
     const fecha = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
+function exportarAPDF() {
+  // Elemento que vas a exportar (ej. el contenedor de tus gráficos)
+  const elemento = document.getElementById('contenedor-visor'); 
 
+  // Configuración optimizada para evitar Reflow y caídas de rendimiento
+  const opciones = {
+    margin:       0.5,
+    filename:     'Reporte_TTOCC_Gerencial.pdf',
+    image:        { type: 'jpeg', quality: 0.95 }, // JPEG es más rápido de procesar que PNG
+    html2canvas:  { 
+      scale: 2,             // Buena resolución sin saturar la memoria
+      useCORS: true,        // Crucial para que cargue las fotos de Google Drive
+      logging: false,       // Desactiva los logs internos en consola (apaga worker.js:143)
+      letterRendering: true
+    },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  // Ejecutar con promesa para no bloquear el hilo principal bruscamente
+  html2pdf().set(opciones).from(elemento).save()
+    .then(() => {
+      console.log("PDF generado exitosamente");
+    })
+    .catch(err => console.error("Error generando PDF:", err));
+}
+/*
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
     if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
@@ -417,4 +442,4 @@ function exportarAPDF() {
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
-}
+}*/
