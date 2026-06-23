@@ -406,13 +406,34 @@ function exportarAExcel() {
     XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
 function exportarAPDF() {
-  // 1. Usamos todo el cuerpo o el contenedor principal
-  const elemento = document.body; 
+  // 1. Clonamos el elemento que queremos exportar (ej. todo el body o tu contenedor)
+  // Esto nos permite manipular el HTML antes de que html2pdf lo vea
+  const contenedorOriginal = document.body; 
+  const clon = contenedorOriginal.cloneNode(true);
 
-  // 2. Forzamos a que los canvas ocultos o en animación se estabilicen
-  // Si usas Chart.js, es ideal desactivar sus animaciones antes de exportar, 
-  // pero si no, este pequeño truco con promesas y tiempo solucionará el tamaño 0.
-  
+  // 2. Buscamos TODOS los elementos <canvas> dentro del clon
+  const canvasEnClon = clon.querySelectorAll('canvas');
+  const canvasOriginales = contenedorOriginal.querySelectorAll('canvas');
+
+  // 3. PASO CRUCIAL: Como cloneNode NO copia los dibujos de los canvas, 
+  // redibujamos los canvas reales en el clon y ELIMINAMOS los que midan cero.
+  canvasEnClon.forEach((canvasClonado, index) => {
+    const canvasOriginal = canvasOriginales[index];
+    
+    // Si el canvas original no existe o mide cero de ancho/alto, lo borramos del mapa
+    if (!canvasOriginal || canvasOriginal.width === 0 || canvasOriginal.height === 0) {
+      canvasClonado.remove(); 
+      return;
+    }
+
+    // Si el canvas sí es válido, le copiamos el contenido gráfico real
+    const contextoClonado = canvasClonado.getContext('2d');
+    if (contextoClonado) {
+      contextoClonado.drawImage(canvasOriginal, 0, 0);
+    }
+  });
+
+  // 4. Configuración optimizada de html2pdf
   const opciones = {
     margin:       0.3,
     filename:     'Reporte_TTOCC_Gerencial.pdf',
@@ -421,25 +442,19 @@ function exportarAPDF() {
       scale: 1.5, 
       useCORS: true,        
       logging: false,
-      letterRendering: true,
-      // Espera a que todas las imágenes y recursos externos carguen
-      delay: 500 
+      letterRendering: true
     },
     jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
   };
 
-  // Envolvemos la ejecución en un setTimeout para asegurar que el hilo
-  // de ejecución de los gráficos haya terminado de asignar anchos y altos en el DOM
-  setTimeout(() => {
-    html2pdf().set(opciones).from(elemento).save()
-      .then(() => {
-        console.log("✔ PDF generado exitosamente desde el patio.");
-      })
-      .catch(err => {
-        console.error("Error generando PDF:", err);
-        alert("Hubo un problema al renderizar los gráficos. Intenta de nuevo en unos segundos.");
-      });
-  }, 300); // 300 milisegundos bastan para que el navegador asigne las dimensiones reales
+  // 5. Ejecutamos la exportación usando nuestro clon limpio de "fantasmas"
+  html2pdf().set(opciones).from(clon).save()
+    .then(() => {
+      console.log("✔ PDF generado exitosamente filtrando elementos corruptos.");
+    })
+    .catch(err => {
+      console.error("Error generando PDF:", err);
+    });
 }
 /*
 function exportarAPDF() {
