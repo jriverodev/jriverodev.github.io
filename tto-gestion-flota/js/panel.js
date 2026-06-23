@@ -1,10 +1,65 @@
 // js/panel.js - Controlador Unificado de Patio, Edición Inline, Checklist Automatizado y Manejo de Imágenes en Base64
 
-document.addEventListener("DOMContentLoaded", cargarTablaEditable);
+document.addEventListener("DOMContentLoaded", () => {
+    verificarSesion();
+    initTheme();
+    cargarTablaEditable();
+});
 
 // Almacenes de control en memoria global
 let listaRegistrosPanel = [];
 let tareasModalActual = []; 
+let OPERADOR_ACTUAL = "";
+
+/**
+ * Lógica de Identificación y Auditoría
+ */
+function verificarSesion() {
+    const sesion = sessionStorage.getItem("TTOCC_OPERADOR");
+    if (sesion) {
+        OPERADOR_ACTUAL = sesion;
+        document.getElementById("modalIdentificacion").classList.add("hidden");
+    }
+}
+
+function confirmarIdentidad(event) {
+    event.preventDefault();
+    const input = document.getElementById("input-operador");
+    const nombre = input.value.trim().toUpperCase();
+
+    if (nombre) {
+        OPERADOR_ACTUAL = nombre;
+        sessionStorage.setItem("TTOCC_OPERADOR", nombre);
+        document.getElementById("modalIdentificacion").classList.add("hidden");
+    }
+}
+
+/**
+ * Gestión de Temas (Claro/Oscuro)
+ */
+function initTheme() {
+    const savedTheme = localStorage.getItem("TTOCC_THEME") || "light";
+    if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        actualizarIconoTema(true);
+    } else {
+        document.documentElement.classList.remove("dark");
+        actualizarIconoTema(false);
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle("dark");
+    localStorage.setItem("TTOCC_THEME", isDark ? "dark" : "light");
+    actualizarIconoTema(isDark);
+}
+
+function actualizarIconoTema(isDark) {
+    const icon = document.getElementById("theme-icon");
+    if (icon) {
+        icon.className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
+    }
+}
 
 /**
  * Consulta y despliega la matriz operativa en tiempo real
@@ -244,7 +299,8 @@ async function guardarNuevoRegistro(event) {
         usuario: document.getElementById("add-chofer").value.trim(),
         observaciones: document.getElementById("add-observa").value.trim(),
         fecha_ingreso: fechaFormateada,
-        foto_antes_base64: fotoBase64
+        foto_antes_base64: fotoBase64,
+        modificado_por: OPERADOR_ACTUAL
     };
 
     try {
@@ -437,7 +493,8 @@ async function guardarEdicionModal(event) {
         foto_antes: original ? original.Foto_Antes : "",
         foto_despues: original ? original.Foto_Despues : "", 
         foto_despues_base64: fotoDespuesBase64, 
-        fecha_salida: fechaSalidaStr
+        fecha_salida: fechaSalidaStr,
+        modificado_por: OPERADOR_ACTUAL
     };
 
     try {
