@@ -85,75 +85,70 @@ async function cargarTablaEditable() {
             let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
             
             let badgeFotoAntes = reg.Foto_Antes 
-                ? `<a href="${reg.Foto_Antes}" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors text-[10px] font-bold block mt-0.5"><i class="fa-solid fa-image mr-1"></i> Foto Inicial</a>` 
-                : '<span class="text-slate-600 block text-[9px] mt-0.5 italic">Sin foto inicial</span>';
-
-            let badgeFotoDespues = reg.Foto_Despues
-                ? `<a href="${reg.Foto_Despues}" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition-colors text-[10px] font-bold block mt-0.5"><i class="fa-solid fa-square-check mr-1"></i> Foto Final</a>`
+                ? `<a href="${reg.Foto_Antes}" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors text-[9px] font-bold flex items-center gap-1"><i class="fa-solid fa-image"></i> Antes</a>`
                 : '';
 
-            let filaHtml = `
-                <tr id="fila-${reg.ID_Registro}" class="block md:table-row bg-slate-900/40 md:bg-transparent border border-slate-800/80 md:border-b md:border-slate-800/40 rounded-xl mb-4 p-3 md:p-0 hover:bg-slate-950/20 transition-colors">
+            let badgeFotoDespues = reg.Foto_Despues
+                ? `<a href="${reg.Foto_Despues}" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Después</a>`
+                : '';
 
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-500 font-mono text-[11px] font-bold border-b border-slate-800/30 md:border-none">
+            // Definición de estilo de estatus y colores de fila
+            let badgeEstatus = `<span class="bg-amber-950/60 border border-amber-500/30 text-amber-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">⚠️ Por Atender</span>`;
+            let colorFila = "bg-slate-900/40 border-slate-800/80 hover:bg-slate-950/40";
+
+            if (reg.Estatus === "En Proceso") {
+                badgeEstatus = `<span class="bg-blue-950/60 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">⚙️ En Proceso</span>`;
+                colorFila = "bg-blue-900/10 border-blue-500/20 hover:bg-blue-900/20";
+            } else if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
+                badgeEstatus = `<span class="bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">✅ Listo</span>`;
+                colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
+            } else if (reg.Estatus === "Por Atender") {
+                colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10";
+            }
+
+            let filaHtml = `
+                <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-500 font-mono text-[10px] font-bold border-b border-slate-800/30 md:border-none">
                         <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
                         <span>${reg.ID_Registro}</span>
                     </td>
-
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none">
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
                         <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Unidad / Marca:</span>
-                        <div class="text-right md:text-left w-1/2 md:w-full">
+                        <div class="text-right md:text-left">
                             <span class="font-black text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
-                            <input type="text" id="inline-marca-${reg.ID_Registro}" value="${reg.Marca}"
-                                   class="bg-transparent border-b border-transparent hover:border-slate-800 focus:border-blue-500 px-0.5 py-0.5 text-base md:text-[11px] text-slate-400 w-full text-right md:text-left focus:outline-none uppercase font-medium transition-all" placeholder="Marca...">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wide">${reg.Marca}</span>
                         </div>
                     </td>
-
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none text-right md:text-left text-slate-300 font-semibold text-[11px] tracking-wide">
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-right md:text-left text-slate-300 font-medium text-[11px]">
                         <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Ubicación:</span>
                         <div>
-                            <div>${fosaFinal}</div>
-                            <div class="flex gap-2 justify-end md:justify-start flex-wrap">${badgeFotoAntes} ${badgeFotoDespues}</div>
+                            <div class="font-semibold text-slate-300">${fosaFinal}</div>
+                            <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
                         </div>
                     </td>
-
-                    <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b border-slate-800/30 md:border-none">
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
                         <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Avance (%):</span>
-                        <div class="flex items-center gap-2 bg-slate-950/40 p-1.5 rounded-xl border border-slate-800/50 w-1/2 md:w-full">
-                            <input type="range" id="inline-avance-${reg.ID_Registro}" min="0" max="100" step="5" value="${reg.Avance}" 
-                                   class="w-full accent-blue-500 h-1 rounded cursor-pointer"
-                                   oninput="document.getElementById('lbl-avance-${reg.ID_Registro}').textContent = this.value + '%'">
-                            <span id="lbl-avance-${reg.ID_Registro}" class="font-mono text-[10px] font-bold text-blue-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 w-11 text-center">${reg.Avance}%</span>
+                        <div class="flex items-center justify-end md:justify-start">
+                            <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                         </div>
                     </td>
-                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/40 md:w-40">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Estatus</span>
-                        <select id="inline-estatus-${reg.ID_Registro}" 
-                                onchange="evaluarEstatusCambio('${reg.ID_Registro}', this.value)"
-                                class="w-1/2 md:w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 font-bold text-base md:text-[11px] text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer transition-all">
-                            <option value="Por Atender" ${reg.Estatus === "Por Atender" ? "selected" : ""}>⚠️ Por Atender</option>
-                            <option value="En Proceso" ${reg.Estatus === "En Proceso" ? "selected" : ""}>⚙️ En Proceso</option>
-                            <option value="Listo" ${reg.Estatus === "Listo" || reg.Estatus === "Reparado" ? "selected" : ""}>✅ Listo</option>
-                        </select>
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:w-40">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Estatus</span>
+                        <div class="flex justify-end md:justify-start">
+                            ${badgeEstatus}
+                        </div>
                     </td>
-                    <td class="grid grid-cols-[40%_60%] md:table-cell items-center p-2 md:p-3 border-b md:border-b-0 border-slate-800/40">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Novedad</span>
-                        <input type="text" id="inline-observa-${reg.ID_Registro}" value="${reg.Observaciones}" 
-                               class="w-full bg-slate-950/40 border border-slate-800/40 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500 font-medium placeholder:text-slate-700 text-[11px] transition-all" placeholder="Añadir novedad de patio...">
-                        
-                        <input type="hidden" id="inline-foto-antes-${reg.ID_Registro}" value="${reg.Foto_Antes}">
-                        <input type="hidden" id="inline-foto-despues-${reg.ID_Registro}" value="${reg.Foto_Despues}">
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-right md:text-left">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Novedad</span>
+                        <p class="text-[11px] text-slate-300 font-medium max-w-xs truncate md:whitespace-normal" title="${reg.Observaciones}">
+                            ${reg.Observaciones}
+                        </p>
                     </td>
-                    <td class="grid grid-cols-[40%_60%] md:table-cell md:justify-center items-center p-2 md:p-3 gap-1.5 md:w-28">
-                        <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Acciones</span>
+                    <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center">
+                        <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Acciones</span>
                         <div class="flex gap-1.5 justify-end md:justify-center">
-                            <button onclick="guardarChangeInline('${reg.ID_Registro}')" id="btn-save-${reg.ID_Registro}"
-                                    class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white p-2 rounded-xl transition-all border border-blue-500/20 cursor-pointer" title="Guardar fila">
-                                <i class="fa-solid fa-floppy-disk text-xs"></i>
-                            </button>
-                            <button onclick="abrirModalEditar('${reg.ID_Registro}')"
-                                    class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white p-2 rounded-xl transition-all border border-slate-700 cursor-pointer" title="Planificación Avanzada">
-                                <i class="fa-solid fa-list-check text-xs"></i>
+                            <button onclick="abrirModalEditar('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white p-1.5 rounded-lg transition-all border border-slate-700/60 hover:border-blue-500 shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold" title="Planificación y Control Avanzado">
+                                <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
                             </button>
                         </div>
                     </td>
@@ -198,90 +193,6 @@ function actualizarDatalistGerencias() {
     datalist.innerHTML = todasGerencias.map(g => `<option value="${g}">`).join("");
 }
 
-/**
- * Escucha cambios rápidos de estatus en celdas
- */
-function evaluarEstatusCambio(id, valor) {
-    if (valor === "Listo") {
-        document.getElementById(`inline-avance-${id}`).value = 100;
-        document.getElementById(`lbl-avance-${id}`).textContent = "100%";
-    }
-}
-
-/**
- * Ejecuta el guardado rápido desde la tabla (Protege y reenvía el JSON de tareas existente)
- */
-async function guardarChangeInline(idRegistro) {
-    const btn = document.getElementById(`btn-save-${idRegistro}`);
-    const estatus = document.getElementById(`inline-estatus-${idRegistro}`).value;
-    let avance = document.getElementById(`inline-avance-${idRegistro}`).value;
-    
-    const original = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(idRegistro));
-
-    let fechaSalidaStr = original ? original.Fecha_Salida : "";
-    if (estatus === "Listo") {
-        avance = "100";
-        if (!fechaSalidaStr) {
-            const hoy = new Date();
-            fechaSalidaStr = `${String(hoy.getDate()).padStart(2,'0')}-${String(hoy.getMonth()+1).padStart(2,'0')}-${hoy.getFullYear()}`;
-        }
-    }
-
-    const payload = {
-        accion: "editar",
-        id_registro: idRegistro,
-        marca: document.getElementById(`inline-marca-${idRegistro}`).value.trim(),
-        estatus: estatus,
-        observaciones: document.getElementById(`inline-observa-${idRegistro}`).value.trim(),
-        foto_antes: document.getElementById(`inline-foto-antes-${idRegistro}`).value,
-        foto_despues: document.getElementById(`inline-foto-despues-${idRegistro}`).value,
-        avance: avance,
-        gerencia: original ? original.Gerencia : "",
-        usuario: original ? original.Usuario : "",
-        tareas: original && original.Tareas ? JSON.stringify(original.Tareas) : "[]", // Resguardo de checklist
-        fecha_salida: fechaSalidaStr
-    };
-
-    ejecutarEnvioEdicion(payload, btn, idRegistro);
-}
-
-async function ejecutarEnvioEdicion(payload, btn, idRegistro) {
-    try {
-        btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i>`;
-        
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        const res = await response.json();
-        
-        if (res.status === "SUCCESS") {
-            const fila = document.getElementById(`fila-${idRegistro}`);
-            fila.classList.add("bg-emerald-950/30");
-            btn.className = "bg-emerald-600 text-white p-2 rounded-xl transition-all";
-            btn.innerHTML = `<i class="fa-solid fa-check text-xs"></i>`;
-            
-            setTimeout(() => {
-                fila.classList.remove("bg-emerald-950/30");
-                cargarTablaEditable();
-            }, 1000);
-        } else {
-            alert("Error: " + res.message);
-            recargarBotonOriginal(btn);
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Fallo de comunicación de red.");
-        recargarBotonOriginal(btn);
-    }
-}
-
-function recargarBotonOriginal(btn) {
-    btn.disabled = false;
-    btn.className = "bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white p-2 rounded-xl border border-blue-500/20";
-    btn.innerHTML = `<i class="fa-solid fa-floppy-disk text-xs"></i>`;
-}
 
 // ==========================================
 // CONTROLADORES DE MODAL 1: NUEVO INGRESO

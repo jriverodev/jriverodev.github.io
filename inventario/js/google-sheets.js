@@ -11,6 +11,9 @@
  * Esta clase abstrae toda la comunicación con la Web App de Google Apps Script.
 
  * Se encarga de construir las solicitudes (GET y POST) y de procesar las respuestas.
+
+ * Es fundamental que la `scriptURL` sea correcta.
+
  */
 
 class GoogleSheetsAPI {
@@ -24,7 +27,9 @@ class GoogleSheetsAPI {
      * !! IMPORTANTE: Reemplaza esta URL por la URL de tu propia implementación.
 
      */
-    this.scriptURL = 'https://script.google.com/macros/s/AKfycbw3_fWKHQmX9g8MjQ1Qs32p_zHCQM5wnmkJIh6CJGLVBHvYEZ3MAgBtI0RkahAESv4/exec';
+
+    this.scriptURL = 'https://script.google.com/macros/s/AKfycbznoxXMaauGkBAEh-Cy1gTFscwE8gGW7z6eTr9dUr_wpUn7v2xWLGjyPKkhUotd5JBd/exec';
+
   }
 
 
@@ -42,12 +47,29 @@ class GoogleSheetsAPI {
     console.log('📡 Cargando datos desde Google Sheets...');
 
     try {
+
+      // Realiza una solicitud GET simple para obtener todos los datos.
+
       const response = await fetch(this.scriptURL);
 
       const result = await response.json();
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || `Error de red: ${response.statusText}`);
+
+
+      if (!response.ok) {
+
+        // Si la respuesta HTTP no es exitosa (ej. 500 Internal Server Error).
+
+        throw new Error(`Error de red: ${response.statusText}`);
+
+      }
+
+      if (!result.success) {
+
+        // Si la respuesta del script indica un fallo.
+
+        throw new Error(`Error en el script de Google: ${result.error}`);
+
       }
 
 
@@ -59,7 +81,11 @@ class GoogleSheetsAPI {
     } catch (error) {
 
       console.error('❌ Error crítico al cargar desde Google Sheets:', error);
-      return []; // Devuelve un array vacío como respaldo.
+
+      // Devuelve un array vacío como respaldo para que la aplicación no se rompa.
+
+      return [];
+
     }
 
   }
@@ -71,7 +97,9 @@ class GoogleSheetsAPI {
    * @description Envía una acción (add, update, delete) al script de Google mediante POST.
 
    * @param {string} action - La acción a realizar ('add', 'update', 'delete').
-   * @param {Object} payload - Los datos adicionales para la acción.
+
+   * @param {Object} payload - Los datos adicionales para la acción (newItem, itemId, updates).
+
    * @returns {Promise<Object>} - Una promesa que se resuelve con la respuesta del servidor.
 
    */
@@ -79,6 +107,8 @@ class GoogleSheetsAPI {
   async sendAction(action, payload) {
 
     try {
+
+
       const response = await fetch(this.scriptURL, {
         method: 'POST',
         headers: {
@@ -88,16 +118,38 @@ class GoogleSheetsAPI {
         redirect: 'follow', // Google Apps Script a menudo redirige, esto lo maneja.
       });
 
+      if (!response.ok) {
+        throw new Error(`Error de red: ${response.statusText}`);
+      }
+
       const result = await response.json();
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || `Error en la acción '${action}'`);
+      if (!result.success) {
+          throw new Error(`Error en el script de Google: ${result.error}`);
       }
 
       return result;
+
+
+
+
+
+
+
+
+
+
     } catch (error) {
+
+
+      // Esto solo capturará errores de red, no errores lógicos del script.
+
       console.error(`❌ Fallo en la acción '${action}':`, error);
-      return { success: false, error: error.message };
+
+
+      return { success: false, error: `Error de red: ${error.message}` };
+
+
     }
 
   }
@@ -157,4 +209,5 @@ class GoogleSheetsAPI {
     return this.sendAction('delete', { itemId });
 
   }
+
 }
