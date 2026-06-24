@@ -165,8 +165,14 @@ async function cargarTablaEditable() {
                 normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
             }
             
+            // Buscador flexible para campos específicos
+            const getV = (terms) => {
+                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
+                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+            };
+
             // Deserialización segura del string de tareas (JSON)
-            let tareasRaw = normalized["TAREAS"] || normalized["CHECKLIST"] || u["Tareas"] || "";
+            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
             let tareasArray = [];
             try {
                 if (tareasRaw) {
@@ -177,20 +183,20 @@ async function cargarTablaEditable() {
             }
 
             return {
-                ID_Registro: normalized["IDREGISTRO"] || normalized["REGISTRO"] || u["ID_Registro"] || "S/I",
-                ID_Unidad: normalized["IDUNIDAD"] || normalized["UNIDAD"] || u["ID_Unidad"] || "S/I",
-                Nombre_Taller: normalized["NOMBRETALLER"] || normalized["TALLER"] || u["Nombre_Taller"] || "No especificado",
-                Nombre_Taller_Ext: normalized["NOMBRETALLEREXT"] || normalized["TALLEREXTERNO"] || u["Nombre_Taller_Ext"] || "",
+                ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
+                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
+                Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",
+                Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
-                Observaciones: normalized["OBSERVACIONES"] || normalized["DETALLE"] || u["Observaciones"] || "",
+                Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
-                Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10),
+                Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
                 Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
                 Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
-                Fecha_Ingreso: normalized["FECHAINGR"] || normalized["FECHAINGRESO"] || normalized["FECHAING"] || normalized["FECHA"] || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
+                Fecha_Ingreso: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
-                Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "",
-                Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "",
+                Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "",
+                Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "",
                 Tareas: tareasArray
             };
         });
@@ -322,12 +328,16 @@ function actualizarDatalistGerencias() {
     const datalist = document.getElementById("list-gerencias");
     if (!datalist) return;
 
-    // Obtener valores únicos y limpiar vacíos
-    const gerenciasUnicas = [...new Set(listaRegistrosPanel.map(r => r.Gerencia).filter(g => g && g.trim() !== ""))];
-
-    // Mantener las opciones por defecto y añadir las nuevas
+    // Opciones estáticas base
     const opcionesBase = ["GERENCIA DE OPERACIONES", "GERENCIA DE MANTENIMIENTO", "GERENCIA DE LOGÍSTICA", "GERENCIA DE SEGURIDAD"];
-    const todasGerencias = [...new Set([...opcionesBase, ...gerenciasUnicas])];
+
+    // Extraer gerencias de los datos actuales, normalizarlas a Mayúsculas y filtrar vacíos
+    const gerenciasDeDatos = listaRegistrosPanel
+        .map(r => String(r.Gerencia || "").trim().toUpperCase())
+        .filter(g => g !== "");
+
+    // Unificar, eliminar duplicados y ordenar
+    const todasGerencias = [...new Set([...opcionesBase, ...gerenciasDeDatos])].sort();
 
     datalist.innerHTML = todasGerencias.map(g => `<option value="${g}">`).join("");
 }

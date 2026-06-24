@@ -50,8 +50,14 @@ async function cargarDatosAnaliticos() {
                 normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
             }
             
+            // Buscador flexible para campos específicos
+            const getV = (terms) => {
+                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
+                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+            };
+
             // Procesamiento de tareas (JSON)
-            let tareasRaw = normalized["TAREAS"] || normalized["CHECKLIST"] || u["Tareas"] || "";
+            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
             let tareasArray = [];
             try {
                 if (tareasRaw) {
@@ -60,21 +66,20 @@ async function cargarDatosAnaliticos() {
             } catch(e) { console.error("Error parseando tareas", e); }
 
             return {
-                ID_Registro: normalized["IDREGISTRO"] || normalized["REGISTRO"] || u["ID_Registro"] || "S/I",
-                ID_Unidad: normalized["IDUNIDAD"] || normalized["UNIDAD"] || u["ID_Unidad"] || "S/I",
-                Tipo_Flota: normalized["TIPOFLOTA"] || normalized["FLOTA"] || u["Tipo_Flota"] || "S/I",
-                Nombre_Taller: normalized["NOMBRETALLER"] || normalized["TALLER"] || u["Nombre_Taller"] || "No especificado",
-                Nombre_Taller_Ext: normalized["NOMBRETALLEREXT"] || normalized["TALLEREXTERNO"] || u["Nombre_Taller_Ext"] || "",
+                ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
+                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
+                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I",
+                Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",
+                Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
-                Observaciones: normalized["OBSERVACIONES"] || normalized["DETALLE"] || u["Observaciones"] || "Sin novedades",
-                // Mapeo exhaustivo para fecha de ingreso
-                Fecha_Registro: normalized["FECHAINGR"] || normalized["FECHAINGRESO"] || normalized["FECHAING"] || normalized["FECHA"] || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
+                Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "Sin novedades",
+                Fecha_Registro: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
-                Gerencia: normalized["GERENCIA"] || normalized["GERENCIAUSUARIA"] || u["Gerencia"] || "N/A",
-                Usuario: normalized["USUARIO"] || normalized["USUARIOCHOFER"] || u["Usuario"] || "S/I",
-                Avance: parseInt(normalized["AVANCE"] || normalized["PORCENTAJEAVANCE"] || 0, 10),
-                Modificado_Por: normalized["MODIFICADOPOR"] || u["Modificado_Por"] || "S/I",
+                Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "N/A",
+                Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "S/I",
+                Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
+                Modificado_Por: getV(["MODIFICADO"]) || u["Modificado_Por"] || "S/I",
                 Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
                 Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
                 Tareas: tareasArray
