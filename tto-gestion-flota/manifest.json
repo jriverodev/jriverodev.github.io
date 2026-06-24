@@ -3,20 +3,20 @@
   "name": "Control de Flota - Transporte Terrestre PDVSA",
   "short_name": "TTO Flota",
   "description": "Sistema unificado de gestión de flota pesada y liviana en talleres de mantenimiento TTO",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
   "background_color": "#1a365d",
   "theme_color": "#1a365d",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/assets/icon-192x192.png",
+      "src": "assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/icon-512x512.png",
+      "src": "assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -24,14 +24,16 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshots/desktop.png",
+      "src": "assets/screenshot-desktop.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
-      "src": "/screenshots/mobile.png",
+      "src": "assets/screenshot-mobile.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow"
     }
+  ]
+}
