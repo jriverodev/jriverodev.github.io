@@ -318,48 +318,19 @@ function transformarABase64(file) {
 /**
  * Alimenta el datalist con las gerencias encontradas en la tabla
  */
-/*function actualizarDatalistGerencias() {
-    const datalist = document.getElementById("list-gerencias");
-    if (!datalist) return;
-
-    // Obtener valores únicos y limpiar vacíos
-    const gerenciasUnicas = [...new Set(listaRegistrosPanel.map(r => r.Gerencia).filter(g => g && g.trim() !== ""))];
-
-    // Mantener las opciones por defecto y añadir las nuevas
-    const opcionesBase = ["GERENCIA DE OPERACIONES", "GERENCIA DE MANTENIMIENTO", "GERENCIA DE LOGÍSTICA", "GERENCIA DE SEGURIDAD"];
-    const todasGerencias = [...new Set([...opcionesBase, ...gerenciasUnicas])];
-
-    datalist.innerHTML = todasGerencias.map(g => `<option value="${g}">`).join("");
-}*/
-
-/**
- * Alimenta el datalist con las gerencias encontradas en la tabla
- */
 function actualizarDatalistGerencias() {
     const datalist = document.getElementById("list-gerencias");
     if (!datalist) return;
 
-    // 1. PRIMER CONSOLE.LOG: Ver qué datos reales tienen los registros mapeados en memoria
-    console.log("=== DIAGNÓSTICO DATALIST ===");
-    console.log("1. Contenido de listaRegistrosPanel:", listaRegistrosPanel);
-
     // Obtener valores únicos y limpiar vacíos
     const gerenciasUnicas = [...new Set(listaRegistrosPanel.map(r => r.Gerencia).filter(g => g && g.trim() !== ""))];
-    
-    // 2. SEGUNDO CONSOLE.LOG: Ver si logró extraer con éxito alguna gerencia de los objetos
-    console.log("2. Gerencias dinámicas extraídas (filtradas):", gerenciasUnicas);
 
     // Mantener las opciones por defecto y añadir las nuevas
     const opcionesBase = ["GERENCIA DE OPERACIONES", "GERENCIA DE MANTENIMIENTO", "GERENCIA DE LOGÍSTICA", "GERENCIA DE SEGURIDAD"];
     const todasGerencias = [...new Set([...opcionesBase, ...gerenciasUnicas])];
 
-    // 3. TERCER CONSOLE.LOG: Ver el arreglo final combinado antes de insertarlo en el HTML
-    console.log("3. Lista total combinada que irá al HTML:", todasGerencias);
-    console.log("=======================================");
-
     datalist.innerHTML = todasGerencias.map(g => `<option value="${g}">`).join("");
 }
-
 
 // ==========================================
 // CONTROLADORES DE MODAL 1: NUEVO INGRESO
