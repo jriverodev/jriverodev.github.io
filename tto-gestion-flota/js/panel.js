@@ -446,7 +446,6 @@ function actualizarSelectGerencias() {
     });
 }
 
-
 // ==========================================
 // CONTROLADORES DE MODAL 1: NUEVO INGRESO
 // ==========================================
