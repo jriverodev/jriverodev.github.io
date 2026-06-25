@@ -4,7 +4,35 @@ document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
     initTheme();
     cargarTablaEditable();
+    inicializarSelects();
 });
+
+function inicializarSelects() {
+    const configGerencia = {
+        placeholder: 'Seleccione o escriba...',
+        tags: true,
+        width: '100%'
+    };
+
+    const configEquipo = {
+        placeholder: 'Seleccione tipo de equipo...',
+        width: '100%'
+    };
+
+    const tiposEquiposLista = ["AMBULANCIAS", "AUTOBUS", "BATEA", "CAMION 750 BRAZO ARTICULADO", "CAMION CAVA", "CAMION CESTA", "CAMION VOLTEO", "CAMIONETA", "CHUTO CON BATEA", "CHUTO CON VAGON", "CISTERNA DE 36 MIL", "CONTENEDOR", "GRUA TELESCOPICA 100 TON", "GRUA TELESCOPICA 80 TON", "GRUA TELESCOPICA 75 TON", "MONTA CARGA 05 TON", "TOYOTA JEEP", "VACUUN DE 25 MIL AGUA POTABLE", "VACUUN DE ACHIQUE (SEPTICO)", "VACUUN DE ACHIQUE (PETROLEO)", "VAN"];
+
+    $('#add-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalNuevoRegistro') }));
+    $('#edit-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalEditarRegistro') }));
+
+    $('#add-flota').select2(Object.assign({}, configEquipo, {
+        dropdownParent: $('#modalNuevoRegistro'),
+        data: tiposEquiposLista.map(t => ({ id: t, text: t }))
+    }));
+    $('#edit-flota').select2(Object.assign({}, configEquipo, {
+        dropdownParent: $('#modalEditarRegistro'),
+        data: tiposEquiposLista.map(t => ({ id: t, text: t }))
+    }));
+}
 
 // Almacenes de control en memoria global
 var listaRegistrosPanel = [];
@@ -185,6 +213,7 @@ async function cargarTablaEditable() {
             return {
                 ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
                 ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
+                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I",
                 Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",
                 Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
@@ -201,7 +230,7 @@ async function cargarTablaEditable() {
             };
         });
 
-        actualizarDatalistGerencias();
+        actualizarSelectGerencias();
 
         if (listaRegistrosPanel.length === 0) {
             tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen unidades activas en el historial.</td></tr>`;
@@ -322,14 +351,77 @@ function transformarABase64(file) {
 }
 
 /**
- * Alimenta el datalist con las gerencias encontradas en la tabla
+ * Actualiza los Select2 de gerencias con las opciones base y los datos encontrados en la tabla
  */
-function actualizarDatalistGerencias() {
-    const datalist = document.getElementById("list-gerencias");
-    if (!datalist) return;
-
-    // Opciones estáticas base
-    const opcionesBase = ["GERENCIA DE OPERACIONES", "GERENCIA DE MANTENIMIENTO", "GERENCIA DE LOGÍSTICA", "GERENCIA DE SEGURIDAD"];
+function actualizarSelectGerencias() {
+    // Opciones estáticas base extendidas según el script del usuario
+    const opcionesBase = [
+        "VP EYP TRANSPORTE TERRESTRE",
+        "VP EYP SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
+        "VP EYP SERVICIOS LOGISTICOS",
+        "VP EYP SERVICIOS ELECTRICOS",
+        "VP EYP SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL",
+        "VP EYP RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO",
+        "VP EYP RECURSOS HUMANOS",
+        "VP EYP PROYECTOS MAYORES",
+        "VP EYP PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA",
+        "VP EYP PROCURA Y CONTROL DE INVENTARIO",
+        "VP EYP PLANIFICACION, PRESUPUESTO Y GESTION",
+        "VP EYP PDVSA ECUADOR",
+        "VP EYP OFICINA DE APOYO",
+        "VP EYP INGENIERIA DE COSTOS",
+        "VP EYP GERENCIA OPERACION INTEGRAL DE PLANTAS",
+        "VP EYP GERENCIA CORP DE CONFIGURACION DE PLANES",
+        "VP EYP FINANZAS",
+        "VP EYP DIVISION SUR DEL LAGO TRUJILLO",
+        "VP EYP DIVISION LAGO",
+        "VP EYP DIVISION COSTA ORIENTAL DEL LAGO",
+        "VP EYP DIVISION COSTA OCCIDENTAL DEL LAGO",
+        "VP EYP DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE",
+        "VP EYP DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
+        "VP EYP DESARROLLO SOCIAL",
+        "VP EYP COSTA AFUERA",
+        "VP EYP COORDINACION OPERACIONAL",
+        "VP EYP CONTRATACION",
+        "VP EYP CONFIABILIDAD OPERACIONAL",
+        "VP EYP ASUNTOS PUBLICOS",
+        "VP EYP ASUNTOS JURIDICOS",
+        "VP EYP AMBIENTE",
+        "VICEPRESIDENCIA EXPLORACION Y PRODUCCION",
+        "PETROQUIMICA DE VENEZUELA, S.A",
+        "PETROLEOS DE VENEZUELA S.A. YACIMIENTO",
+        "PDVSA VASSA",
+        "PDVSA SERVICIOS PETROLEROS S.A.",
+        "PDVSA INGENIERIA Y CONSTRUCCION",
+        "PDVSA INDUSTRIAL",
+        "PDVSA GAS COMUNAL, S.A",
+        "PDVSA GAS",
+        "PDVSA ENT",
+        "PDV SERVICIOS DE SALUD",
+        "MINPET",
+        "INTEVEP",
+        "EM PETROZAMORA",
+        "EM PETROWAYU",
+        "EM PETROWARAO",
+        "EM PETROURDANETA",
+        "EM PETROREGIONAL DEL LAGO",
+        "EM PETROQUIRIQUIRE",
+        "EM PETROPERIJA",
+        "EM PETROLERA SINOVENEZOLANA",
+        "EM PETROLERA BIELOVENEZOLANA",
+        "EM PETROINDEPENDIENTE",
+        "EM PETROCUMAREBO",
+        "EM PETROCABIMAS",
+        "EM PETROBOSCAN",
+        "EM LAGOPETROL",
+        "EM BARIPETROL",
+        "DIRECCION EJECUTIVA CYSN",
+        "DIREC EJEC EXPLOR Y ESTUDIOS INTEG Y YAC",
+        "DIR. EJECUTIVA DE SEGURIDAD INTEGRAL",
+        "CVP EEMM OCCIDENTE",
+        "CVP",
+        "BARIVEN"
+    ];
 
     // Extraer gerencias de los datos actuales, normalizarlas a Mayúsculas y filtrar vacíos
     const gerenciasDeDatos = listaRegistrosPanel
@@ -339,7 +431,19 @@ function actualizarDatalistGerencias() {
     // Unificar, eliminar duplicados y ordenar
     const todasGerencias = [...new Set([...opcionesBase, ...gerenciasDeDatos])].sort();
 
-    datalist.innerHTML = todasGerencias.map(g => `<option value="${g}">`).join("");
+    // Actualizar los Select2
+    const data = todasGerencias.map(g => ({ id: g, text: g }));
+
+    $('#add-gerencia, #edit-gerencia').each(function() {
+        const $el = $(this);
+        const val = $el.val();
+        $el.empty().select2({
+            placeholder: 'Seleccione o escriba...',
+            tags: true,
+            data: data,
+            dropdownParent: $el.closest('.fixed')
+        }).val(val).trigger('change');
+    });
 }
 
 
@@ -386,10 +490,10 @@ async function guardarNuevoRegistro(event) {
         accion: "crear",
         unidad: document.getElementById("add-unidad").value.trim(),
         marca: document.getElementById("add-marca").value.trim(),
-        flota: document.getElementById("add-flota").value,
+        flota: $('#add-flota').val(),
         nombre_taller: document.getElementById("add-taller").value,
         nombre_taller_ext: document.getElementById("add-taller-ext").value.trim(),
-        gerencia: document.getElementById("add-gerencia").value.trim(),
+        gerencia: $('#add-gerencia').val(),
         usuario: document.getElementById("add-chofer").value.trim(),
         observaciones: document.getElementById("add-observa").value.trim(),
         fecha_ingreso: fechaFormateada,
@@ -428,7 +532,10 @@ function abrirModalEditar(id) {
     document.getElementById("edit-id-registro").value = registro.ID_Registro;
     document.getElementById("edit-unidad").value = registro.ID_Unidad;
     document.getElementById("edit-marca").value = registro.Marca;
-    document.getElementById("edit-gerencia").value = registro.Gerencia;
+
+    $('#edit-gerencia').val(registro.Gerencia).trigger('change');
+    $('#edit-flota').val(registro.Tipo_Flota).trigger('change');
+
     document.getElementById("edit-chofer").value = registro.Usuario;
     document.getElementById("edit-observa").value = registro.Observaciones;
     document.getElementById("edit-estatus").value = registro.Estatus;
@@ -578,7 +685,8 @@ async function guardarEdicionModal(event) {
         accion: "editar",
         id_registro: id,
         marca: document.getElementById("edit-marca").value.trim(),
-        gerencia: document.getElementById("edit-gerencia").value.trim(),
+        flota: $('#edit-flota').val(),
+        gerencia: $('#edit-gerencia').val(),
         usuario: document.getElementById("edit-chofer").value.trim(),
         observaciones: document.getElementById("edit-observa").value.trim(),
         estatus: estatus,
