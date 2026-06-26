@@ -224,6 +224,11 @@ function renderizarVisor(datos) {
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Obs</span>
+                    <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fechas</span>
                     <div class="text-right md:text-left font-mono text-[9px]">
                         <div class="text-blue-400"><i class="fa-solid fa-arrow-right-to-bracket text-[8px]"></i> ${reg.Fecha_Registro}</div>
@@ -231,10 +236,7 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Obs</span>
-                    <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
-                </td>
+        
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 md:w-28 text-center">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Detalle</span>
