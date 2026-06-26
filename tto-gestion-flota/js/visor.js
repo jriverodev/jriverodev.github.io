@@ -291,7 +291,7 @@ function renderizarVisor(datos) {
 
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fechas</span>
 
-                    <div class="text-right md:text-left font-mono text-[9px]">
+                    <div class="text-right md:text-left font-mono text-[12px]">
 
                         <div class="text-blue-400"><i class="fa-solid fa-arrow-right-to-bracket text-[8px]"></i> ${reg.Fecha_Registro}</div>
 
