@@ -22,24 +22,8 @@ function inicializarSelects() {
         width: '100%'
     };
 
-    const configEquipo = {
-        placeholder: 'Seleccione tipo de equipo...',
-        width: '100%'
-    };
-
-    const tiposEquiposLista = ["AMBULANCIAS", "AUTOBUS", "BATEA", "CAMION 750 BRAZO ARTICULADO", "CAMION CAVA", "CAMION CESTA", "CAMION VOLTEO", "CAMIONETA", "CHUTO CON BATEA", "CHUTO CON VAGON", "CISTERNA DE 36 MIL", "CONTENEDOR", "GRUA TELESCOPICA 100 TON", "GRUA TELESCOPICA 80 TON", "GRUA TELESCOPICA 75 TON", "MONTA CARGA 05 TON", "TOYOTA JEEP", "VACUUN DE 25 MIL AGUA POTABLE", "VACUUN DE ACHIQUE (SEPTICO)", "VACUUN DE ACHIQUE (PETROLEO)", "VAN"];
-
     $('#add-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalNuevoRegistro') }));
     $('#edit-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalEditarRegistro') }));
-
-    $('#add-flota').select2(Object.assign({}, configEquipo, {
-        dropdownParent: $('#modalNuevoRegistro'),
-        data: tiposEquiposLista.map(t => ({ id: t, text: t }))
-    }));
-    $('#edit-flota').select2(Object.assign({}, configEquipo, {
-        dropdownParent: $('#modalEditarRegistro'),
-        data: tiposEquiposLista.map(t => ({ id: t, text: t }))
-    }));
 }
 
 // Almacenes de control en memoria global
@@ -500,7 +484,7 @@ async function guardarNuevoRegistro(event) {
         accion: "crear",
         unidad: document.getElementById("add-unidad").value.trim(),
         marca: document.getElementById("add-marca").value.trim(),
-        flota: $('#add-flota').val(),
+        flota: document.getElementById("add-flota").value,
         nombre_taller: document.getElementById("add-taller").value,
         nombre_taller_ext: document.getElementById("add-taller-ext").value.trim(),
         gerencia: $('#add-gerencia').val(),
@@ -544,8 +528,8 @@ function abrirModalEditar(id) {
     document.getElementById("edit-marca").value = registro.Marca;
 
     $('#edit-gerencia').val(registro.Gerencia).trigger('change');
-    $('#edit-flota').val(registro.Tipo_Flota).trigger('change');
 
+    document.getElementById("edit-flota").value = registro.Tipo_Flota || "Liviana";
     document.getElementById("edit-chofer").value = registro.Usuario;
     document.getElementById("edit-observa").value = registro.Observaciones;
     document.getElementById("edit-estatus").value = registro.Estatus;
@@ -695,7 +679,7 @@ async function guardarEdicionModal(event) {
         accion: "editar",
         id_registro: id,
         marca: document.getElementById("edit-marca").value.trim(),
-        flota: $('#edit-flota').val(),
+        flota: document.getElementById("edit-flota").value,
         gerencia: $('#edit-gerencia').val(),
         usuario: document.getElementById("edit-chofer").value.trim(),
         observaciones: document.getElementById("edit-observa").value.trim(),
