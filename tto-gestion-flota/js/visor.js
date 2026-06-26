@@ -73,8 +73,8 @@ async function cargarDatosAnaliticos() {
                 Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
                 Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "Sin novedades",
-                Fecha_Registro: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
-                Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
+                Fecha_Registro: (getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A").split('T')[0],
+                Fecha_Salida: (normalized["FECHASALIDA"] || u["Fecha_Salida"] || "").split('T')[0],
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "N/A",
                 Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "S/I",
@@ -115,8 +115,8 @@ function filtrarVisor() {
 
         let matchesFecha = true;
         if (fechaDesde || fechaHasta) {
-            const [d, m, y] = reg.Fecha_Registro.split("-").map(Number);
-            const fechaReg = new Date(y, m - 1, d);
+        const [y, m, d] = reg.Fecha_Registro.split("-").map(Number);
+        const fechaReg = new Date(y, m - 1, d);
 
             if (fechaDesde) {
                 const fDesde = new Date(fechaDesde);
