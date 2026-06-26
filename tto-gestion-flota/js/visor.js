@@ -176,6 +176,7 @@ function renderizarVisor(datos) {
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
         // Ajuste de escala para los Badges (Mejor lectura de estatus)
+        // Badges optimizados para escritorio y móvil
         let badgeColor = "bg-amber-950/60 border border-amber-500/30 text-amber-400 text-[11px] px-2.5 py-1 font-bold";
         if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-950/60 border border-blue-500/30 text-blue-400 text-[11px] px-2.5 py-1 font-bold";
         if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-[11px] px-2.5 py-1 font-bold";
@@ -183,66 +184,76 @@ function renderizarVisor(datos) {
         let fila = `
             <tr class="block md:table-row hover:bg-slate-950/40 border-b border-slate-800/30 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-slate-900 md:bg-transparent rounded-2xl md:rounded-none">
                 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-400 font-mono text-xs font-bold border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">ID Registro</span>
+                <!-- ID Registro -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-300 md:text-slate-400 font-mono text-xs font-bold border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">ID Registro</span>
                     <span class="text-right md:text-left">${reg.ID_Registro}</span>
                 </td>
                 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Unidad</span>
-                    <div class="text-right md:text-left">
+                <!-- Unidad -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Unidad</span>
+                    <div class="text-right md:text-left min-w-0">
                         <span class="font-black text-white tracking-wider font-mono block text-sm">${reg.ID_Unidad}</span>
                         <span class="text-[11px] text-slate-400 block font-sans font-bold uppercase tracking-wide mt-0.5">${reg.Marca}</span>
                     </div>
                 </td>
                 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Gerencia / Usuario</span>
-                    <div class="text-right md:text-left">
-                        <span class="text-white block font-bold uppercase text-[11px] tracking-wide">${reg.Gerencia}</span>
-                        <span class="text-slate-400 block text-[10px] uppercase tracking-normal font-medium mt-0.5">${reg.Usuario}</span>
+                <!-- Gerencia / Usuario -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Gerencia / Usuario</span>
+                    <div class="text-right md:text-left min-w-0">
+                        <span class="text-white block font-bold uppercase text-[11px] md:text-xs tracking-wide">${reg.Gerencia}</span>
+                        <span class="text-slate-400 block text-[10px] md:text-[11px] uppercase tracking-normal font-medium mt-0.5">${reg.Usuario}</span>
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Tipo de Flota</span>
+                <!-- Tipo de Flota -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Tipo de Flota</span>
                     <span class="text-slate-200 font-semibold text-right md:text-left text-xs">${reg.Tipo_Flota}</span>
                 </td>
                 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Ubicación</span>
-                    <span class="text-slate-200 font-semibold text-right md:text-left text-xs">${nombreTallerFinal}</span>
+                <!-- Ubicación -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Ubicación</span>
+                    <span class="text-slate-200 font-semibold text-right md:text-left text-xs break-words md:break-normal min-w-0">${nombreTallerFinal}</span>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Avance</span>
+                <!-- Avance -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Avance</span>
                     <div class="flex items-center justify-end md:justify-start">
                         <span class="font-mono text-[11px] font-black text-blue-400 bg-blue-950/60 border border-blue-500/30 px-2.5 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Estatus</span>
+                <!-- Estatus -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Estatus</span>
                     <div class="text-right md:text-left">
                         <span class="${badgeColor} rounded uppercase inline-block">${reg.Estatus}</span>
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Obs</span>
+                <!-- Observaciones Técnicas -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Obs</span>
                     <span class="text-slate-300 md:max-w-xs md:truncate text-right md:text-left font-medium text-xs block" title="${reg.Observaciones}">${reg.Observaciones}</span>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Fechas</span>
+                <!-- Fechas -->
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20 gap-2">
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Fechas</span>
                     <div class="text-right md:text-left font-mono text-xs tracking-tight space-y-0.5">
                         <div class="text-blue-400/90 font-bold"><i class="fa-solid fa-arrow-right-to-bracket text-[9px] mr-0.5"></i> ${reg.Fecha_Registro}</div>
                         ${reg.Fecha_Salida ? `<div class="text-emerald-400/95 font-bold"><i class="fa-solid fa-arrow-right-from-bracket text-[9px] mr-0.5"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
                 </td>
 
+                <!-- Botón Detalle -->
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 md:w-28 text-center">
-                    <span class="md:hidden text-slate-500 uppercase text-[10px] font-black">Detalle</span>
+                    <span class="md:hidden text-slate-400 uppercase text-[11px] font-black tracking-wider shrink-0">Detalle</span>
                     <div class="flex justify-end md:justify-center">
                         <button onclick="abrirModalDetalle('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white px-3.5 py-1.5 rounded-lg transition-all border border-slate-700 hover:border-blue-500 text-[11px] font-black uppercase tracking-wider cursor-pointer shadow-sm">
                             Detalle
