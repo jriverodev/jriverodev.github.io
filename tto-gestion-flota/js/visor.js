@@ -175,19 +175,23 @@ function renderizarVisor(datos) {
         let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
-        // Ajuste de escala para los Badges (Mejor lectura de estatus)
-        // Badges optimizados para escritorio y móvil
-       let badgeColor = "bg-amber-950/60 border border-amber-500/30 text-amber-400";
+        
+       let filaColor = "bg-amber-950/10 border-amber-500/20 hover:bg-amber-950/20";
+        let badgeColor = "bg-amber-950/60 border border-amber-500/30 text-amber-400";
 
-        if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-950/60 border border-blue-500/30 text-blue-400";
-
-        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400";
-
+        if (reg.Estatus === "En Proceso") {
+            filaColor = "bg-blue-950/10 border-blue-500/20 hover:bg-blue-950/20";
+            badgeColor = "bg-blue-950/60 border border-blue-500/30 text-blue-400";
+        }
+        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
+            filaColor = "bg-emerald-950/10 border-emerald-500/20 hover:bg-emerald-950/20";
+            badgeColor = "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400";
+        }
 
 
         let fila = `
 
-            <tr class="block md:table-row hover:bg-slate-950/30 border-b border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-slate-900 md:bg-transparent rounded-2xl md:rounded-none">
+            <tr class="block md:table-row ${filaColor} md:bg-transparent border md:border-b md:border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 rounded-2xl md:rounded-none">
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-500 font-mono text-[10px] font-bold border-b md:border-b-0 border-slate-800/20">
 
