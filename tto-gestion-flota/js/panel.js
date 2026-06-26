@@ -4,10 +4,18 @@ document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
     initTheme();
     cargarTablaEditable();
-    inicializarSelects();
+    // Esperar un breve instante para asegurar que Select2 esté disponible si hay latencia en carga defer
+    if (typeof $ !== 'undefined') {
+        inicializarSelects();
+    } else {
+        console.warn("jQuery no detectado de inmediato, reintentando inicialización...");
+        setTimeout(inicializarSelects, 100);
+    }
 });
 
 function inicializarSelects() {
+    if (typeof $ === 'undefined') return;
+
     const configGerencia = {
         placeholder: 'Seleccione o escriba...',
         tags: true,
@@ -434,17 +442,20 @@ function actualizarSelectGerencias() {
     // Actualizar los Select2
     const data = todasGerencias.map(g => ({ id: g, text: g }));
 
-    $('#add-gerencia, #edit-gerencia').each(function() {
-        const $el = $(this);
-        const val = $el.val();
-        $el.empty().select2({
-            placeholder: 'Seleccione o escriba...',
-            tags: true,
-            data: data,
-            dropdownParent: $el.closest('.fixed')
-        }).val(val).trigger('change');
-    });
+    if (typeof $ !== 'undefined') {
+        $('#add-gerencia, #edit-gerencia').each(function() {
+            const $el = $(this);
+            const val = $el.val();
+            $el.empty().select2({
+                placeholder: 'Seleccione o escriba...',
+                tags: true,
+                data: data,
+                dropdownParent: $el.closest('.fixed')
+            }).val(val).trigger('change');
+        });
+    }
 }
+
 
 // ==========================================
 // CONTROLADORES DE MODAL 1: NUEVO INGRESO

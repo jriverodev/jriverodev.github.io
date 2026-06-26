@@ -192,10 +192,6 @@ function renderizarVisor(datos) {
                         <span class="text-[9px] text-slate-400 block font-sans font-bold uppercase tracking-wide">${reg.Marca}</span>
                     </div>
                 </td>
-                  <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Flota</span>
-                    <span class="text-slate-300 font-medium text-right md:text-left text-[11px]">${reg.Tipo_Flota}</span>
-                </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Gerencia / Usuario</span>
                     <div class="text-right md:text-left">
@@ -224,7 +220,7 @@ function renderizarVisor(datos) {
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fechas</span>
-                    <div class="text-right md:text-left font-mono text-[12px]">
+                    <div class="text-right md:text-left font-mono text-[9px]">
                         <div class="text-blue-400"><i class="fa-solid fa-arrow-right-to-bracket text-[8px]"></i> ${reg.Fecha_Registro}</div>
                         ${reg.Fecha_Salida ? `<div class="text-emerald-400"><i class="fa-solid fa-arrow-right-from-bracket text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
@@ -410,75 +406,7 @@ function exportarAExcel() {
     const fecha = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
 }
-function exportarAPDF() {
-  // 1. Clonamos el contenedor original
-  const contenedorOriginal = document.body; 
-  const clon = contenedorOriginal.cloneNode(true);
 
-  // =========================================================================
-  // SOLUCIÓN AL ERROR OKLCH: Limpieza de colores incompatibles en el clon
-  // =========================================================================
-  const todosLosElementos = clon.querySelectorAll('*');
-  todosLosElementos.forEach(elemento => {
-    // Obtenemos los estilos calculados reales del elemento original
-    const estiloOriginal = window.getComputedStyle(elemento);
-    
-    // Si el fondo o el borde usan oklch en el CSS, la librería colapsará.
-    // Forzamos al clon a usar colores planos de respaldo (Fallback) en su lugar.
-    if (estiloOriginal.backgroundColor.includes('oklch')) {
-      elemento.style.backgroundColor = '#ffffff'; // Reemplaza fondos raros por blanco puro para el PDF
-    }
-    if (estiloOriginal.color.includes('oklch')) {
-      elemento.style.color = '#1f2937'; // Reemplaza textos raros por un gris oscuro legible
-    }
-    if (estiloOriginal.borderColor.includes('oklch')) {
-      elemento.style.borderColor = '#d1d5db'; // Reemplaza bordes raros por un gris claro
-    }
-  });
-  // =========================================================================
-
-  // 2. Buscamos y reparamos los canvas válidos (Tu lógica anterior exitosa)
-  const canvasEnClon = clon.querySelectorAll('canvas');
-  const canvasOriginales = contenedorOriginal.querySelectorAll('canvas');
-
-  canvasEnClon.forEach((canvasClonado, index) => {
-    const canvasOriginal = canvasOriginales[index];
-    
-    if (!canvasOriginal || canvasOriginal.width === 0 || canvasOriginal.height === 0) {
-      canvasClonado.remove(); 
-      return;
-    }
-
-    const contextoClonado = canvasClonado.getContext('2d');
-    if (contextoClonado) {
-      contextoClonado.drawImage(canvasOriginal, 0, 0);
-    }
-  });
-
-  // 3. Configuración de html2pdf
-  const opciones = {
-    margin:       0.3,
-    filename:     'Reporte_TTOCC_Gerencial.pdf',
-    image:        { type: 'jpeg', quality: 0.95 },
-    html2canvas:  { 
-      scale: 1.5, 
-      useCORS: true,        
-      logging: false,
-      letterRendering: true
-    },
-    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-  };
-
-  // 4. Exportamos el clon completamente sanitizado de fantasmas y colores OKLCH
-  html2pdf().set(opciones).from(clon).save()
-    .then(() => {
-      console.log("✔ PDF generado exitosamente filtrando elementos corruptos y colores OKLCH.");
-    })
-    .catch(err => {
-      console.error("Error generando PDF:", err);
-    });
-}
-/*
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
     if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
@@ -490,4 +418,4 @@ function exportarAPDF() {
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
-}*/
+}
