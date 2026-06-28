@@ -5,7 +5,7 @@
 // =========================================================================
 const APP_CONFIG = {
     // REEMPLAZA ESTA URL CON EL LINK DE TU DESPLIEGUE EN GOOGLE APPS SCRIPT
-    URL_API: "https://script.google.com/macros/s/AKfycbx9Uf8cFB3wTMk_vGxBGPxGKw2TBOUWPGJ4-IOxql8dIPO4x6dzeVcfZ9cZJSMuN4fAmw/exec"
+    URL_API: "https://script.google.com/macros/s/AKfycbzgpWJ8vrwfr_FHhjiHWVqrYU8ItoR8WHSrGdT-x3GFMJbtJrg9VOSYCt4vFjBiv0Yp-g/exec"
 };
 
 // Registro del Service Worker para soporte de PWA (Instalación y caché local)
