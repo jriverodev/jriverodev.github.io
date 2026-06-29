@@ -182,7 +182,13 @@ async function cargarTablaEditable() {
         listaRegistrosPanel = filasCrudas.map(u => {
             let normalized = {};
             for (let key in u) {
-                normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
+                let val = u[key];
+                // Limpieza de URLs de Drive para evitar CORB
+                if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
+                    const id = val.split('id=')[1]?.split('&')[0];
+                    if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+                }
+                normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = val;
             }
             
             // Buscador flexible para campos específicos
