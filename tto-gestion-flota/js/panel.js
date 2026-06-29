@@ -449,6 +449,10 @@ function abrirModalNuevo() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById("add-fecha-ingreso").value = hoy;
     document.getElementById("wrapper-externo").classList.add("hidden"); 
+
+    // Limpiar previas
+    limpiarPrevia('add-foto-antes', 'preview-add-antes');
+
     document.getElementById("modalNuevoRegistro").classList.remove("hidden");
 }
 
@@ -458,6 +462,38 @@ function cerrarModalNuevo() {
 
 function alternarTallerExterno(valor) {
     document.getElementById("wrapper-externo").classList.toggle("hidden", valor !== "TALLER EXTERNO (Terceros)");
+}
+
+/**
+ * Lógica de Previsualización de Imágenes locales
+ */
+function previsualizarImagen(input, idContenedor) {
+    const container = document.getElementById(idContenedor);
+    if (!container) return;
+    const img = container.querySelector("img");
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            container.classList.remove("hidden");
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        img.src = "";
+        container.classList.add("hidden");
+    }
+}
+
+function limpiarPrevia(idInput, idContenedor) {
+    const input = document.getElementById(idInput);
+    if (input) input.value = "";
+    const container = document.getElementById(idContenedor);
+    if (container) {
+        const img = container.querySelector("img");
+        if (img) img.src = "";
+        container.classList.add("hidden");
+    }
 }
 
 async function guardarNuevoRegistro(event) {
@@ -522,6 +558,9 @@ async function guardarNuevoRegistro(event) {
 function abrirModalEditar(id) {
     const registro = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
     if (!registro) return;
+
+    // Limpiar previa de edición
+    limpiarPrevia('edit-foto-despues', 'preview-edit-despues');
 
     document.getElementById("edit-id-registro").value = registro.ID_Registro;
     document.getElementById("edit-unidad").value = registro.ID_Unidad;

@@ -21,6 +21,15 @@
             children: 'a.pswp-link',
             pswpModule: () => import('https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.esm.min.js')
         });
+
+        lightbox.addFilter('itemData', (itemData, index) => {
+            if (!itemData.width || !itemData.height) {
+                itemData.width = 1200;
+                itemData.height = 900;
+            }
+            return itemData;
+        });
+
         lightbox.init();
         window.pswpLightbox = lightbox;
     </script>
@@ -183,7 +192,11 @@
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1"><i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)</label>
-                        <input type="file" id="add-foto-antes" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer">
+                        <input type="file" id="add-foto-antes" accept="image/*" onchange="previsualizarImagen(this, 'preview-add-antes')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-slate-400 focus:outline-none focus:border-blue-500 text-[11px] cursor-pointer">
+                        <div id="preview-add-antes" class="hidden mt-2 relative w-full aspect-video bg-slate-950 rounded-lg border border-slate-800 overflow-hidden">
+                            <img src="" class="w-full h-full object-contain">
+                            <button type="button" onclick="limpiarPrevia('add-foto-antes', 'preview-add-antes')" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-md text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -280,7 +293,11 @@
                     <label class="block text-[10px] uppercase font-bold text-emerald-400 mb-1">
                         <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
                     </label>
-                    <input type="file" id="edit-foto-despues" accept="image/*" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
+                    <input type="file" id="edit-foto-despues" accept="image/*" onchange="previsualizarImagen(this, 'preview-edit-despues')" class="w-full bg-slate-950 border border-emerald-600/30 rounded-lg px-3 py-1 text-slate-300 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer">
+                    <div id="preview-edit-despues" class="hidden mt-2 relative w-full aspect-video bg-slate-950 rounded-lg border border-emerald-800 overflow-hidden">
+                        <img src="" class="w-full h-full object-contain">
+                        <button type="button" onclick="limpiarPrevia('edit-foto-despues', 'preview-edit-despues')" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-md text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
 
                 <div class="mb-4">
