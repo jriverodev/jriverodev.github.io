@@ -566,9 +566,30 @@ function exportarAPDF() {
     }).from(elemento).save();
 }
 
+/**
+ * Extrae de forma estricta el ID único de un enlace de Google Drive
+ * Evita devoluciones de objetos o textos rotos.
+ */
 function extraerIdGoogleDrive(url) {
     if (!url) return "";
-    if (url.length >= 25 && !url.includes("/") && !url.includes(".")) return url;
-    const matchId = url.match(/(?:\/d\/|id=)([\w-]+)/);
-    return matchId ? matchId[1] : "";
+    
+    // Convertir a string por seguridad si viene un objeto
+    const urlStr = String(url).trim();
+    
+    // Si ya es un ID directo de Drive (generalmente 33 o 44 caracteres sin símbolos)
+    if (urlStr.length >= 25 && !urlStr.includes("/") && !urlStr.includes(".")) {
+        return urlStr;
+    }
+    
+    // Expresión regular robusta para capturar el ID en cualquier tipo de formato de Drive
+    const regex = /(?:\/d\/|id=)([\w-]+)/;
+    const match = urlStr.match(regex);
+    
+    // IMPORTANTE: match[1] contiene el texto puro capturado por el grupo de la regex
+    if (match && match[1]) {
+        return match[1];
+    }
+    
+    return "";
 }
+
