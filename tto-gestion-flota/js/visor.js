@@ -302,11 +302,6 @@ function renderizarVisor(datos) {
                 </td>
 
 
-
-       
-
-
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 md:w-28 text-center">
 
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Detalle</span>
@@ -370,7 +365,72 @@ function abrirModalDetalle(id) {
     }
 
     // Renderizar Fotos
+    // =========================================================================
+    // RENDERIZADO DE FOTOS CON DETECCIÓN DE ID E INTEGRACIÓN DE PHOTOSWIPE
+    // =========================================================================
     const fotoAntes = document.getElementById("det-foto-antes-container");
+    const fotoDespues = document.getElementById("det-foto-despues-container");
+
+    // Forzamos las dimensiones para que PhotoSwipe calcule la animación de apertura
+    const anchoHD = "1600";
+    const altoHD = "1200";
+
+    // --- PROCESAR FOTO ANTES ---
+    const idAntes = extraerIdGoogleDrive(reg.Foto_Antes);
+    if (idAntes) {
+        // Envolvemos la imagen en la etiqueta <a> que PhotoSwipe necesita
+        fotoAntes.innerHTML = `
+            <a href="https://google.com{idAntes}" 
+               data-pswp-width="${anchoHD}" 
+               data-pswp-height="${altoHD}" 
+               class="block w-full h-full">
+                <img src="https://google.com{idAntes}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
+            </a>
+        `;
+        fotoAntes.onclick = null; // Eliminamos el window.open antiguo
+    } else {
+        fotoAntes.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO ANTES</span>`;
+        fotoAntes.onclick = null;
+    }
+
+    // --- PROCESAR FOTO DESPUES ---
+    const idDespues = extraerIdGoogleDrive(reg.Foto_Despues);
+    if (idDespues) {
+        // Envolvemos la imagen en la etiqueta <a> que PhotoSwipe necesita
+        fotoDespues.innerHTML = `
+            <a href="https://google.com{idDespues}" 
+               data-pswp-width="${anchoHD}" 
+               data-pswp-height="${altoHD}" 
+               class="block w-full h-full">
+                <img src="https://google.com{idDespues}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
+            </a>
+        `;
+        fotoDespues.onclick = null; // Eliminamos el window.open antiguo
+    } else {
+        fotoDespues.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>`;
+        fotoDespues.onclick = null;
+    }
+
+    // =========================================================================
+    // INICIALIZACIÓN AUTOMÁTICA DEL LIGHTBOX PARA ESTE CONTENEDOR DE DETALLE
+    // =========================================================================
+    // Buscamos si existe un contenedor padre que envuelva a ambas fotos para agruparlas, 
+    // si no lo hay, usamos el body o un selector común. En este caso agrupamos por clase o IDs.
+    import('https://unpkg.com').then((module) => {
+        const PhotoSwipeLightbox = module.default;
+        
+        // Creamos la instancia apuntando a los enlaces <a> dentro de tus contenedores de fotos
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '#det-foto-antes-container, #det-foto-despues-container',
+            children: 'a',
+            pswpModule: () => import('https://unpkg.com')
+        });
+        
+        lightbox.init();
+    }).catch(err => console.error("Error cargando PhotoSwipe en el panel de detalle:", err));
+
+    
+   /* const fotoAntes = document.getElementById("det-foto-antes-container");
     const fotoDespues = document.getElementById("det-foto-despues-container");
 
     if (reg.Foto_Antes) {
@@ -387,7 +447,7 @@ function abrirModalDetalle(id) {
     } else {
         fotoDespues.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>`;
         fotoDespues.onclick = null;
-    }
+    } */
 
     document.getElementById("modalDetalleRegistro").classList.remove("hidden");
 }
@@ -504,4 +564,11 @@ function exportarAPDF() {
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
+}
+
+function extraerIdGoogleDrive(url) {
+    if (!url) return "";
+    if (url.length >= 25 && !url.includes("/") && !url.includes(".")) return url;
+    const matchId = url.match(/(?:\/d\/|id=)([\w-]+)/);
+    return matchId ? matchId[1] : "";
 }
