@@ -4,22 +4,9 @@
 // =========================================================================
 
 // ⚠️ CONFIGURACIÓN INICIAL:
+// Crea una carpeta en tu Google Drive, copia su ID de la URL y pégalo aquí abajo.
 const CONFIG_DRIVE_FOLDER_ID = "1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg";
 
-// =========================================================================
-// INTERCEPTOR PARA SOLICITUDES GET (Evita el error 'Script function not found: doGet')
-// =========================================================================
-function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "ONLINE",
-    message: "TTOCC SYSTEM API - Endpoint operativo. Las peticiones de datos deben enviarse por método POST.",
-    timestamp: new Date().toISOString()
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-// =========================================================================
-// PROCESADOR DE ACCIONES (POST)
-// =========================================================================
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
@@ -49,9 +36,9 @@ function doPost(e) {
     var COL_TAREAS = 16;       // P
     var COL_MODIFICADO_POR = 17; // Q
 
-    // ------------------------------------------
-    // ACCIÓN 1: LEER DATOS [POST]
-    // ------------------------------------------
+    // ==========================================
+    // ACCIÓN 1: LEER DATOS
+    // ==========================================
     if (payload.accion === "leer") {
       var rango = sheet.getDataRange();
       var valores = rango.getValues();
@@ -73,9 +60,9 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", datos: listaObjetos });
     }
 
-    // ------------------------------------------
-    // ACCIÓN 2: EDITAR REGISTRO [POST]
-    // ------------------------------------------
+    // ==========================================
+    // ACCIÓN 2: EDITAR REGISTRO (Modal y Checklists)
+    // ==========================================
     if (payload.accion === "editar") {
       var datos = sheet.getDataRange().getValues();
       var idBuscado = String(payload.id_registro);
@@ -93,6 +80,7 @@ function doPost(e) {
             );
           }
 
+          // Inyección de campos en la fila correspondiente
           sheet.getRange(numeroFila, COL_MARCA).setValue(payload.marca);
           sheet.getRange(numeroFila, COL_ESTATUS).setValue(payload.estatus);
           sheet.getRange(numeroFila, COL_OBSERVA).setValue(payload.observaciones);
@@ -103,10 +91,12 @@ function doPost(e) {
           sheet.getRange(numeroFila, COL_USUARIO).setValue(payload.usuario);
           sheet.getRange(numeroFila, COL_MODIFICADO_POR).setValue(payload.modificado_por || "");
 
+          // Sincronizar el estado del string JSON de las tareas del checklist
           if (payload.tareas) {
             sheet.getRange(numeroFila, COL_TAREAS).setValue(payload.tareas);
           }
 
+          // Control automatizado de fechas de salida
           if (payload.fecha_salida !== "") {
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(payload.fecha_salida);
           } else if (payload.estatus !== "Listo") {
@@ -120,9 +110,9 @@ function doPost(e) {
       return retornarJSON({ status: "ERROR", message: "ID no encontrado." });
     }
 
-    // ------------------------------------------
-    // ACCIÓN 3: CREAR NUEVO REGISTRO [POST]
-    // ------------------------------------------
+    // ==========================================
+    // ACCIÓN 3: CREAR NUEVO REGISTRO
+    // ==========================================
     if (payload.accion === "crear") {
       var ultimaFila = sheet.getLastRow();
       var nuevoId = 1;
@@ -147,6 +137,7 @@ function doPost(e) {
         );
       }
 
+      // Estructuración de la nueva fila mapeada perfectamente
       var nuevaFila = [];
       nuevaFila[COL_ID_REGISTRO - 1] = nuevoId;
       nuevaFila[COL_UNIDAD - 1] = payload.unidad || "S/I";
@@ -163,7 +154,7 @@ function doPost(e) {
       nuevaFila[COL_TALLER_EXT - 1] = payload.nombre_taller_ext || "";
       nuevaFila[COL_GERENCIA - 1] = payload.gerencia || "";
       nuevaFila[COL_USUARIO - 1] = payload.usuario || "";
-      nuevaFila[COL_TAREAS - 1] = "[]";
+      nuevaFila[COL_TAREAS - 1] = "[]"; // Inicializa el checklist vacío
       nuevaFila[COL_MODIFICADO_POR - 1] = payload.modificado_por || "";
 
       sheet.appendRow(nuevaFila);
@@ -180,33 +171,47 @@ function doPost(e) {
 }
 
 /**
- * Recibe los datos binarios en Base64 de la PWA, genera el archivo físico en Google Drive,
- * le otorga permisos públicos de lectura y retorna la URL directa.
- */
+ * Recibe los datos binarios en Base64 de la PWA, genera el archivo físico en Google Drive
+  * y retorna un enlace directo (direct stream link) compatible con etiquetas <img>
+   */
 function guardarFotoEnDrive(base64Data, nombreArchivo) {
   try {
     if (CONFIG_DRIVE_FOLDER_ID === "TU_ID_DE_CARPETA_DE_GOOGLE_DRIVE_AQUI" || !CONFIG_DRIVE_FOLDER_ID) {
       return "Error: ID de carpeta de Drive no configurado en Código.gs";
     }
 
+    // Aislar la cadena pura de Base64 omitiendo el prefijo 'data:image/jpeg;base64,'
     var partes = base64Data.split(",");
     var rawData = partes.length > 1 ? partes[1] : partes[0];
 
+    // Convertir el string base64 en un archivo binario (Blob)
     var blob = Utilities.newBlob(Utilities.base64Decode(rawData), "image/jpeg", nombreArchivo);
+
+    // Acceder a la carpeta destino e instanciar el archivo
     var carpeta = DriveApp.getFolderById(CONFIG_DRIVE_FOLDER_ID);
     var archivo = carpeta.createFile(blob);
 
-    // ⚠️ CAMBIO DE PRIVACIDAD: Otorga acceso público inmediato de lectura para PhotoSwipe
+    // Conceder permisos de lectura pública mediante enlace para que la PWA dibuje la imagen sin loguearse
     archivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    return "https://google.com" + archivo.getId();
+    // Retornar la estructura URL de renderizado directo
+    return "https://drive.google.com/uc?export=view&id=" + archivo.getId();
 
-  } catch (error) {
-    return "Error al subir archivo: " + error.toString();
+  } catch (e) {
+    return "Error al guardar en Drive: " + e.toString();
   }
 }
 
 function retornarJSON(objeto) {
-  return ContentService.createTextOutput(JSON.stringify(objeto))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(objeto)).setMimeType(ContentService.MimeType.JSON);
+}
+function probarPermisos() {
+  var carpeta = DriveApp.getFolderById("1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg");
+
+  // 1. Forzamos el permiso de ESCRITURA creando un archivo de texto de prueba
+  var archivoPrueba = carpeta.createFile("prueba_permisos.txt", "Verificación de escritura para PWA", "text/plain");
+  Logger.log("¡Permisos de ESCRITURA aprobados! Archivo creado: " + archivoPrueba.getName());
+
+  // 2. Limpiamos la carpeta enviando el archivo de prueba a la papelera
+  archivoPrueba.setTrashed(true);
 }

@@ -12,6 +12,19 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
 
+    <!-- PhotoSwipe v5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.min.css">
+    <script type="module">
+        import PhotoSwipeLightbox from 'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe-lightbox.esm.min.js';
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '#tablaEditableCuerpo',
+            children: 'a.pswp-link',
+            pswpModule: () => import('https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.esm.min.js')
+        });
+        lightbox.init();
+        window.pswpLightbox = lightbox;
+    </script>
+
     <style>
         /* Ajustes Select2 para Tema Oscuro TTOCC */
         .select2-container--default .select2-selection--single {
@@ -140,9 +153,8 @@
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fosa / Taller Asignado</label>
                         <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer">
-                            <option value="Taller Lagunillas">Taller Lagunillas</option>
+                            <option value="Taller Central">Taller Central</option>
                             <option value="Taller La Salina">Taller La Salina</option>
-                            <option value="Taller Lago Medio">Taller Lago Medio</option>
                             <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO (Terceros)</option>
                         </select>
                     </div>
@@ -334,9 +346,8 @@
                     <label class="block text-[10px] uppercase font-black text-slate-500 mb-2">Ubicación</label>
                     <select id="filtro-ubicacion" onchange="filtrarMatriz()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none transition-all">
                         <option value="">Todas las ubicaciones</option>
-                        <option value="Taller Lagunillas">Taller Lagunillas</option>
+                        <option value="Taller Central">Taller Central</option>
                         <option value="Taller La Salina">Taller La Salina</option>
-                        <option value="Taller Lago Medio">Taller Lago Medio</option>
                         <option value="TALLER EXTERNO (Terceros)">Taller Externo</option>
                     </select>
                 </div>
