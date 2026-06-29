@@ -200,6 +200,11 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Flota</span>
+                    <span class="text-slate-300 font-bold text-right md:text-left text-[10px] uppercase">${reg.Tipo_Flota}</span>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Ubicación</span>
                     <span class="text-slate-300 font-medium text-right md:text-left text-[11px]">${nombreTallerFinal}</span>
                 </td>
@@ -219,16 +224,16 @@ function renderizarVisor(datos) {
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Obs</span>
+                    <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fechas</span>
                     <div class="text-right md:text-left font-mono text-[9px]">
                         <div class="text-blue-400"><i class="fa-solid fa-arrow-right-to-bracket text-[8px]"></i> ${reg.Fecha_Registro}</div>
                         ${reg.Fecha_Salida ? `<div class="text-emerald-400"><i class="fa-solid fa-arrow-right-from-bracket text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
-                </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Obs</span>
-                    <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 md:w-28 text-center">
