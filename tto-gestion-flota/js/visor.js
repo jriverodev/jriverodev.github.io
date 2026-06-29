@@ -368,7 +368,7 @@ function abrirModalDetalle(id) {
     // =========================================================================
     // RENDERIZADO DE FOTOS CON DETECCIÓN DE ID E INTEGRACIÓN DE PHOTOSWIPE
     // =========================================================================
-    const fotoAntes = document.getElementById("det-foto-antes-container");
+        const fotoAntes = document.getElementById("det-foto-antes-container");
     const fotoDespues = document.getElementById("det-foto-despues-container");
 
     // Forzamos las dimensiones para que PhotoSwipe calcule la animación de apertura
@@ -410,6 +410,7 @@ function abrirModalDetalle(id) {
         fotoDespues.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>`;
         fotoDespues.onclick = null;
     }
+
 
     // =========================================================================
     // INICIALIZACIÓN AUTOMÁTICA DEL LIGHTBOX PARA ESTE CONTENEDOR DE DETALLE
