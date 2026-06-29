@@ -194,8 +194,8 @@ function guardarFotoEnDrive(base64Data, nombreArchivo) {
     // Conceder permisos de lectura pública mediante enlace para que la PWA dibuje la imagen sin loguearse
     archivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    // Retornar la estructura URL de renderizado directo
-    return "https://drive.google.com/uc?export=view&id=" + archivo.getId();
+    // Retornar la estructura URL de renderizado directo (Thumbnail de alta resolución para evitar CORB)
+    return "https://drive.google.com/thumbnail?id=" + archivo.getId() + "&sz=w1200";
 
   } catch (e) {
     return "Error al guardar en Drive: " + e.toString();
