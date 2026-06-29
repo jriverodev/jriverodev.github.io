@@ -73,8 +73,8 @@ async function cargarDatosAnaliticos() {
                 Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
                 Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "Sin novedades",
-                Fecha_Registro: (getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A").split('T')[0],
-                Fecha_Salida: (normalized["FECHASALIDA"] || u["Fecha_Salida"] || "").split('T')[0],
+                Fecha_Registro: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
+                Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "N/A",
                 Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "S/I",
@@ -115,8 +115,8 @@ function filtrarVisor() {
 
         let matchesFecha = true;
         if (fechaDesde || fechaHasta) {
-        const [y, m, d] = reg.Fecha_Registro.split("-").map(Number);
-        const fechaReg = new Date(y, m - 1, d);
+            const [d, m, y] = reg.Fecha_Registro.split("-").map(Number);
+            const fechaReg = new Date(y, m - 1, d);
 
             if (fechaDesde) {
                 const fDesde = new Date(fechaDesde);
@@ -175,152 +175,76 @@ function renderizarVisor(datos) {
         let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
-        
-       let filaColor = "bg-amber-950/10 border-amber-500/20 hover:bg-amber-950/20";
         let badgeColor = "bg-amber-950/60 border border-amber-500/30 text-amber-400";
-
-        if (reg.Estatus === "En Proceso") {
-            filaColor = "bg-blue-950/10 border-blue-500/20 hover:bg-blue-950/20";
-            badgeColor = "bg-blue-950/60 border border-blue-500/30 text-blue-400";
-        }
-        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            filaColor = "bg-emerald-950/10 border-emerald-500/20 hover:bg-emerald-950/20";
-            badgeColor = "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400";
-        }
-
+        if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-950/60 border border-blue-500/30 text-blue-400";
+        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400";
 
         let fila = `
-
-            <tr class="block md:table-row ${filaColor} md:bg-transparent border md:border-b md:border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 rounded-2xl md:rounded-none">
-
+            <tr class="block md:table-row hover:bg-slate-950/30 border-b border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-slate-900 md:bg-transparent rounded-2xl md:rounded-none">
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 text-slate-500 font-mono text-[10px] font-bold border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">ID Registro</span>
-
                     <span class="text-right md:text-left">${reg.ID_Registro}</span>
-
                 </td>
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Unidad</span>
-
                     <div class="text-right md:text-left">
-
                         <span class="font-black text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
-
                         <span class="text-[9px] text-slate-400 block font-sans font-bold uppercase tracking-wide">${reg.Marca}</span>
-
                     </div>
-
                 </td>
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Gerencia / Usuario</span>
-
                     <div class="text-right md:text-left">
-
                         <span class="text-white block font-bold uppercase text-[10px]">${reg.Gerencia}</span>
-
                         <span class="text-slate-500 block text-[9px] uppercase tracking-tighter">${reg.Usuario}</span>
-
                     </div>
-
                 </td>
-
-
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
-                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Tipo de Flota</span>
-
-                    <span class="text-slate-300 font-medium text-right md:text-left text-[11px]">${reg.Tipo_Flota}</span>
-
+                    <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Flota</span>
+                    <span class="text-slate-300 font-bold text-right md:text-left text-[10px] uppercase">${reg.Tipo_Flota}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Ubicación</span>
-
                     <span class="text-slate-300 font-medium text-right md:text-left text-[11px]">${nombreTallerFinal}</span>
-
                 </td>
 
-
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Avance</span>
-
                     <div class="flex items-center justify-end md:justify-start">
-
                         <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
-
                     </div>
-
                 </td>
 
-
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Estatus</span>
-
                     <div class="text-right md:text-left">
-
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${reg.Estatus}</span>
-
                     </div>
-
                 </td>
 
-
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Obs</span>
-
                     <span class="text-slate-400 md:max-w-xs md:truncate text-right md:text-left" title="${reg.Observaciones}">${reg.Observaciones}</span>
-
                 </td>
-
-
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 border-b md:border-b-0 border-slate-800/20">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Fechas</span>
-
-                    <div class="text-right md:text-left font-mono text-[12px]">
-
+                    <div class="text-right md:text-left font-mono text-[9px]">
                         <div class="text-blue-400"><i class="fa-solid fa-arrow-right-to-bracket text-[8px]"></i> ${reg.Fecha_Registro}</div>
-
                         ${reg.Fecha_Salida ? `<div class="text-emerald-400"><i class="fa-solid fa-arrow-right-from-bracket text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
-
                     </div>
-
                 </td>
-
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-3 md:w-28 text-center">
-
                     <span class="md:hidden text-slate-400 uppercase text-[9px] font-black">Detalle</span>
-
                     <div class="flex justify-end md:justify-center">
-
                         <button onclick="abrirModalDetalle('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-3 py-1 rounded-lg transition-all border border-slate-700 hover:border-blue-500 text-[10px] font-black uppercase tracking-widest cursor-pointer">
-
                             Detalle
-
                         </button>
-
                     </div>
-
                 </td>
-
-            </tr> 
-
-
+            </tr>
         `;
         tbody.insertAdjacentHTML("beforeend", fila);
     });
@@ -364,127 +288,31 @@ function abrirModalDetalle(id) {
         tareasContainer.innerHTML = `<p class="text-[10px] text-slate-600 italic text-center py-4">No se asignaron tareas específicas en el diagnóstico.</p>`;
     }
 
-
-
-
-
-    /**
- * Extrae de forma estricta el ID único de un enlace de Google Drive
- * Evita devoluciones de objetos o textos rotos.
- */
-function extraerIdGoogleDrive(url) {
-    if (!url) return "";
-    
-    // Convertir a string por seguridad si viene un objeto
-    const urlStr = String(url).trim();
-    
-    // Si ya es un ID directo de Drive (generalmente 33 o 44 caracteres sin símbolos)
-    if (urlStr.length >= 25 && !urlStr.includes("/") && !urlStr.includes(".")) {
-        return urlStr;
-    }
-    
-    // Expresión regular robusta para capturar el ID en cualquier tipo de formato de Drive
-    const regex = /(?:\/d\/|id=)([\w-]+)/;
-    const match = urlStr.match(regex);
-    
-    // IMPORTANTE: match[1] contiene el texto puro capturado por el grupo de la regex
-    if (match && match[1]) {
-        return match[1];
-    }
-    
-    return "";
-}
-
-
-
-
-
-    
     // Renderizar Fotos
-    // =========================================================================
-    // RENDERIZADO DE FOTOS CON DETECCIÓN DE ID E INTEGRACIÓN DE PHOTOSWIPE
-    // =========================================================================
-        const fotoAntes = document.getElementById("det-foto-antes-container");
-    const fotoDespues = document.getElementById("det-foto-despues-container");
-
-    // Forzamos las dimensiones para que PhotoSwipe calcule la animación de apertura
-    const anchoHD = "1600";
-    const altoHD = "1200";
-
-    // --- PROCESAR FOTO ANTES ---
-    const idAntes = extraerIdGoogleDrive(reg.Foto_Antes);
-    if (idAntes) {
-        // Envolvemos la imagen en la etiqueta <a> que PhotoSwipe necesita
-        fotoAntes.innerHTML = `
-            <a href="https://google.com{idAntes}" 
-               data-pswp-width="${anchoHD}" 
-               data-pswp-height="${altoHD}" 
-               class="block w-full h-full">
-                <img src="https://google.com{idAntes}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
-            </a>
-        `;
-        fotoAntes.onclick = null; // Eliminamos el window.open antiguo
-    } else {
-        fotoAntes.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO ANTES</span>`;
-        fotoAntes.onclick = null;
-    }
-
-    // --- PROCESAR FOTO DESPUES ---
-    const idDespues = extraerIdGoogleDrive(reg.Foto_Despues);
-    if (idDespues) {
-        // Envolvemos la imagen en la etiqueta <a> que PhotoSwipe necesita
-        fotoDespues.innerHTML = `
-            <a href="https://google.com{idDespues}" 
-               data-pswp-width="${anchoHD}" 
-               data-pswp-height="${altoHD}" 
-               class="block w-full h-full">
-                <img src="https://google.com{idDespues}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
-            </a>
-        `;
-        fotoDespues.onclick = null; // Eliminamos el window.open antiguo
-    } else {
-        fotoDespues.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>`;
-        fotoDespues.onclick = null;
-    }
-
-
-    // =========================================================================
-    // INICIALIZACIÓN AUTOMÁTICA DEL LIGHTBOX PARA ESTE CONTENEDOR DE DETALLE
-    // =========================================================================
-    // Buscamos si existe un contenedor padre que envuelva a ambas fotos para agruparlas, 
-    // si no lo hay, usamos el body o un selector común. En este caso agrupamos por clase o IDs.
-    import('https://unpkg.com').then((module) => {
-        const PhotoSwipeLightbox = module.default;
-        
-        // Creamos la instancia apuntando a los enlaces <a> dentro de tus contenedores de fotos
-        const lightbox = new PhotoSwipeLightbox({
-            gallery: '#det-foto-antes-container, #det-foto-despues-container',
-            children: 'a',
-            pswpModule: () => import('https://unpkg.com')
-        });
-        
-        lightbox.init();
-    }).catch(err => console.error("Error cargando PhotoSwipe en el panel de detalle:", err));
-
-    
-   /* const fotoAntes = document.getElementById("det-foto-antes-container");
+    const fotoAntes = document.getElementById("det-foto-antes-container");
     const fotoDespues = document.getElementById("det-foto-despues-container");
 
     if (reg.Foto_Antes) {
-        fotoAntes.innerHTML = `<img src="${reg.Foto_Antes}" class="w-full h-full object-cover">`;
-        fotoAntes.onclick = () => window.open(reg.Foto_Antes, '_blank');
+        fotoAntes.innerHTML = `
+            <a href="${reg.Foto_Antes}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
+                <img src="${reg.Foto_Antes}" class="w-full h-full object-contain">
+            </a>`;
+        fotoAntes.onclick = null;
     } else {
         fotoAntes.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO ANTES</span>`;
         fotoAntes.onclick = null;
     }
 
     if (reg.Foto_Despues) {
-        fotoDespues.innerHTML = `<img src="${reg.Foto_Despues}" class="w-full h-full object-cover">`;
-        fotoDespues.onclick = () => window.open(reg.Foto_Despues, '_blank');
+        fotoDespues.innerHTML = `
+            <a href="${reg.Foto_Despues}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
+                <img src="${reg.Foto_Despues}" class="w-full h-full object-contain">
+            </a>`;
+        fotoDespues.onclick = null;
     } else {
         fotoDespues.innerHTML = `<span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>`;
         fotoDespues.onclick = null;
-    } */
+    }
 
     document.getElementById("modalDetalleRegistro").classList.remove("hidden");
 }
@@ -602,5 +430,3 @@ function exportarAPDF() {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
 }
-
-

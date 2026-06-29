@@ -256,11 +256,11 @@ function renderizarMatriz(datos) {
         let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
 
         let badgeFotoAntes = reg.Foto_Antes
-            ? `<a href="${reg.Foto_Antes}" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors text-[9px] font-bold flex items-center gap-1"><i class="fa-solid fa-image"></i> Antes</a>`
+            ? `<a href="${reg.Foto_Antes}" target="_blank" class="pswp-link text-blue-400 hover:text-blue-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
             : '';
 
         let badgeFotoDespues = reg.Foto_Despues
-            ? `<a href="${reg.Foto_Despues}" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Después</a>`
+            ? `<a href="${reg.Foto_Despues}" target="_blank" class="pswp-link text-emerald-400 hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
             : '';
 
         // Definición de estilo de estatus y colores de fila
