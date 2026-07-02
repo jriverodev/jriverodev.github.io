@@ -1,6 +1,6 @@
 {
   "name": "Control de Flota - Visor",
-  "short_name": "TTO Visor",
+  "short_name": "TTOCC Visor Gerencial",
   "description": "Visor de estatus de flota en talleres TTO",
   "start_url": "./visor.html",
   "scope": "./visor.html", 
