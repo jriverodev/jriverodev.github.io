@@ -92,15 +92,33 @@ async function cargarDatosAnaliticos() {
             };
         });
 
-        // 1. Calculamos los KPIs fijos con el 100% de los datos globales recién bajados
+        // 1. Cómputo de KPIs fijos globales con toda la data descargada
         calcularKpisGlobales(datosUnidadesGlobal);
-        
+
+        // 2. Renderizado inicial del visor
         renderizarVisor(datosUnidadesGlobal);
 
     } catch (err) {
         console.error("Error analítico en visor:", err);
         if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
     }
+}
+
+/**
+ * Calcula e inyecta las estadísticas fijas basadas en el set inicial de datos globales
+ * @param {Array} datos - El array completo con todos los registros del historial
+ */
+function calcularKpisGlobales(datos) {
+    let total = datos.length;
+    let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
+    let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
+    let listos = total - (porAtender + enProceso);
+
+    // Los contenedores ahora retienen de forma persistente los totales generales
+    document.getElementById("kpiTotal").textContent = total;
+    document.getElementById("kpiEspera").textContent = porAtender;
+    document.getElementById("kpiProceso").textContent = enProceso;
+    document.getElementById("kpiDispo").textContent = listos;
 }
 
 /**
@@ -152,44 +170,14 @@ function limpiarFiltrosVisor() {
     renderizarVisor(datosUnidadesGlobal);
 }
 
-
 /**
- * Calcula e inyecta las estadísticas fijas basadas en el set inicial de datos globales
- * @param {Array} datos - El array completo con todos los registros del historial
- */
-function calcularKpisGlobales(datos) {
-    let total = datos.length;
-    let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
-    let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
-    let listos = total - (porAtender + enProceso);
-
-    // Estos elementos ahora retendrán el valor global permanentemente
-    document.getElementById("kpiTotal").textContent = total;
-    document.getElementById("kpiEspera").textContent = porAtender;
-    document.getElementById("kpiProceso").textContent = enProceso;
-    document.getElementById("kpiDispo").textContent = listos;
-}
-
-
-/**
- * Renderiza la tabla y KPIs basándose en el set de datos proporcionado
+ * Renderiza la tabla y gráficos basándose en el set de datos proporcionado
  */
 function renderizarVisor(datos) {
     const tbody = document.getElementById("tablaCuerpo");
     if (!tbody) return;
 
-    // CÓMPUTO DE ESTADÍSTICAS OPERATIVAS (KPIs)
     let total = datos.length;
-   /* let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
-    let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
-    let listos = total - (porAtender + enProceso); */
-    /* let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100; */
-
-    document.getElementById("kpiTotal").textContent = total;
-    document.getElementById("kpiEspera").textContent = porAtender;
-    document.getElementById("kpiProceso").textContent = enProceso;
- /*   document.getElementById("kpiDispo").textContent = `${porcDispo}%`; */
-    document.getElementById("kpiDispo").textContent = listos;
 
     if (total === 0) {
         tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros que coincidan con los filtros</td></tr>`;
@@ -199,6 +187,11 @@ function renderizarVisor(datos) {
 
     tbody.innerHTML = "";
     let conteoTalleres = {};
+    
+    // Recalcular métricas contextuales locales únicamente para actualizar los gráficos dinámicos
+    let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
+    let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
+    let listos = total - (porAtender + enProceso);
 
     [...datos].reverse().forEach(reg => {
         let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
@@ -418,7 +411,6 @@ function actualizarGraficosVivos() {
 function exportarAExcel() {
     if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
 
-    // Transformar datos globales para el Excel (incluyendo todo)
     const exportData = datosUnidadesGlobal.map(reg => ({
         "ID Registro": reg.ID_Registro,
         "Unidad": reg.ID_Unidad,
@@ -466,17 +458,10 @@ function exportarAPDF() {
  */
 function filtrarPorKpi(estatus) {
     const selectEstatus = document.getElementById('visor-filtro-estatus');
-    
     if (selectEstatus) {
-        // Asignamos el valor al select de la interfaz
         selectEstatus.value = estatus;
-        
-        // Ejecutamos tu función nativa de filtrado que ya lee los componentes
         if (typeof filtrarVisor === 'function') {
             filtrarVisor();
         }
-        
-        // Opcional: Si el contenedor de filtros estaba oculto y quieres que el usuario 
-        // vea reflejado el cambio en el selector, podrías forzar su apertura si lo deseas.
     }
 }
