@@ -3,7 +3,6 @@
   "short_name": "TTOCC Taller MTTO",
   "description": "Panel de gestión de flota pesada y liviana",
   "start_url": "./panel.html",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#1a365d",
   "theme_color": "#1a365d",
