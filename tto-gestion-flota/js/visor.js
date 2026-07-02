@@ -92,6 +92,9 @@ async function cargarDatosAnaliticos() {
             };
         });
 
+        // 1. Calculamos los KPIs fijos con el 100% de los datos globales recién bajados
+        calcularKpisGlobales(datosUnidadesGlobal);
+        
         renderizarVisor(datosUnidadesGlobal);
 
     } catch (err) {
@@ -149,6 +152,25 @@ function limpiarFiltrosVisor() {
     renderizarVisor(datosUnidadesGlobal);
 }
 
+
+/**
+ * Calcula e inyecta las estadísticas fijas basadas en el set inicial de datos globales
+ * @param {Array} datos - El array completo con todos los registros del historial
+ */
+function calcularKpisGlobales(datos) {
+    let total = datos.length;
+    let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
+    let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
+    let listos = total - (porAtender + enProceso);
+
+    // Estos elementos ahora retendrán el valor global permanentemente
+    document.getElementById("kpiTotal").textContent = total;
+    document.getElementById("kpiEspera").textContent = porAtender;
+    document.getElementById("kpiProceso").textContent = enProceso;
+    document.getElementById("kpiDispo").textContent = listos;
+}
+
+
 /**
  * Renderiza la tabla y KPIs basándose en el set de datos proporcionado
  */
@@ -158,9 +180,9 @@ function renderizarVisor(datos) {
 
     // CÓMPUTO DE ESTADÍSTICAS OPERATIVAS (KPIs)
     let total = datos.length;
-    let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
+   /* let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
     let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
-    let listos = total - (porAtender + enProceso);
+    let listos = total - (porAtender + enProceso); */
     /* let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100; */
 
     document.getElementById("kpiTotal").textContent = total;
