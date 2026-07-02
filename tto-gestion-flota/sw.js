@@ -6,7 +6,9 @@ const ASSETS = [
   "js/app.js",
   "js/panel.js",
   "js/visor.js",
-  "manifest.json"
+  "manifest.json",
+  "manifest-visor.json",
+  "manifest-panel.json"
 ];
 
 self.addEventListener("install", (e) => {
