@@ -161,12 +161,13 @@ function renderizarVisor(datos) {
     let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
     let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
     let listos = total - (porAtender + enProceso);
-    let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100;
+    /* let porcDispo = total > 0 ? Math.round((listos / total) * 100) : 100; */
 
     document.getElementById("kpiTotal").textContent = total;
     document.getElementById("kpiEspera").textContent = porAtender;
     document.getElementById("kpiProceso").textContent = enProceso;
-    document.getElementById("kpiDispo").textContent = `${porcDispo}%`;
+ /*   document.getElementById("kpiDispo").textContent = `${porcDispo}%`; */
+    document.getElementById("kpiDispo").textContent = listos;
 
     if (total === 0) {
         tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros que coincidan con los filtros</td></tr>`;
