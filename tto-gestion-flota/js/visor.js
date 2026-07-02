@@ -436,3 +436,24 @@ function exportarAPDF() {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
 }
+
+/**
+ * Filtra el visor de forma rápida haciendo clic en las tarjetas de KPI
+ * @param {string} estatus - El estatus seleccionado ('Por Atender', 'En Proceso', 'Listo' o '')
+ */
+function filtrarPorKpi(estatus) {
+    const selectEstatus = document.getElementById('visor-filtro-estatus');
+    
+    if (selectEstatus) {
+        // Asignamos el valor al select de la interfaz
+        selectEstatus.value = estatus;
+        
+        // Ejecutamos tu función nativa de filtrado que ya lee los componentes
+        if (typeof filtrarVisor === 'function') {
+            filtrarVisor();
+        }
+        
+        // Opcional: Si el contenedor de filtros estaba oculto y quieres que el usuario 
+        // vea reflejado el cambio en el selector, podrías forzar su apertura si lo deseas.
+    }
+}
