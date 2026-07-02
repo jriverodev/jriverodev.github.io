@@ -1,6 +1,6 @@
 {
   "name": "Control de Flota - Transporte Terrestre PDVSA",
-  "short_name": "TTOCC Flota",
+  "short_name": "TTOCC Vista Gerencial Flota",
   "description": "Sistema unificado de gestión de flota pesada y liviana en talleres de mantenimiento TTO",
   "start_url": "./",
   "display": "standalone",
