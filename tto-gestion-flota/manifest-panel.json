@@ -1,6 +1,6 @@
 {
   "name": "Control de Flota - Panel",
-  "short_name": "TTO Panel",
+  "short_name": "TTOCC Taller MTTO",
   "description": "Panel de gestión de flota pesada y liviana",
   "start_url": "./panel.html",
   "scope": "./",
