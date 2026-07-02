@@ -758,3 +758,51 @@ async function guardarEdicionModal(event) {
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
     }
 }
+
+
+
+
+
+
+
+// Base de datos local simulada (Las contraseñas ideales deben ser validadas en backend)
+const USUARIOS_AUTORIZADOS = {
+    "WILLIAM RIOS": "wr123", // Reemplaza por las contraseñas reales de 5 dígitos
+    "VANNESA ROMERO": "vr456",
+    "PEDRO POLANCO": "pp789"
+};
+
+function confirmarIdentidad(event) {
+    event.preventDefault();
+
+    const selectOperador = document.getElementById('input-operador');
+    const inputPassword = document.getElementById('input-password');
+    const divError = document.getElementById('error-identificacion');
+
+    // 1. Sanitización estricta contra inyección de código (Remueve cualquier caracter que no sea letra o número)
+    const operadorSanitizado = selectOperador.value.replace(/[^A-Z ]/g, "");
+    const passwordSanitizado = inputPassword.value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    // 2. Validación de credenciales
+    if (USUARIOS_AUTORIZADOS[operadorSanitizado] && USUARIOS_AUTORIZADOS[operadorSanitizado] === passwordSanitizado) {
+        
+        // Guardar el operador en sesión para auditoría de cambios
+        window.operadorActivo = operadorSanitizado; 
+        
+        // Ocultar error y cerrar el modal con animación o remoción directa
+        divError.classList.add('hidden');
+        document.getElementById('modalIdentificacion').classList.add('hidden');
+        
+        console.log(`Acceso concedido a: ${operadorSanitizado}`);
+        
+        // Opcional: Ejecutar la carga inicial de datos si es requerido
+        if (typeof cargarTablaEditable === "font") cargarTablaEditable();
+
+    } else {
+        // Mostrar alerta de error de acceso
+        divError.classList.remove('hidden');
+        inputPassword.value = ''; // Limpiar campo
+        inputPassword.focus();
+    }
+}
+
