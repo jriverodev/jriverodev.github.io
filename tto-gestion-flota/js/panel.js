@@ -577,7 +577,8 @@ function renderizarTareasModal() {
             container.insertAdjacentHTML("beforeend", itemHtml);
         });
     }
-
+    
+    // 1. Calcular el avance real según las tareas
     let avanceCalculado = 0;
     if (tareasModalActual.length > 0) {
         const total = tareasModalActual.length;
@@ -587,16 +588,26 @@ function renderizarTareasModal() {
 
     const selectorEstatus = document.getElementById("edit-estatus");
     
-    if (tareasModalActual.length > 0 && avanceCalculado === 100) {
-        if (selectorEstatus) selectorEstatus.value = "Listo";
-    }
-
-    if (selectorEstatus && selectorEstatus.value === "Listo") {
-        avanceCalculado = 100;
+    if (selectorEstatus) {
+        // 2. Si el avance llegó a 100% de forma natural, asegurar que pase a "Listo"
+        if (tareasModalActual.length > 0 && avanceCalculado === 100) {
+            selectorEstatus.value = "Listo";
+        } 
+        // 3. ¡La clave! Si el usuario desmarcó una tarea y el estatus quedó huérfano en "Listo"
+        else if (avanceCalculado < 100 && (selectorEstatus.value === "Listo" || selectorEstatus.value === "Reparado")) {
+            selectorEstatus.value = "En Proceso";
+        }
+        
+        // 4. Si el operador fuerza manualmente "Listo" sin tareas, el avance se da por completado
+        if (selectorEstatus.value === "Listo") {
+            avanceCalculado = 100;
+        }
     }
     
+    // 5. Actualizar los gráficos y la visibilidad de la foto "Después"
     actualizarInterfazAvanceModal(avanceCalculado);
 }
+
 
 function agregarTareaModal() {
     const input = document.getElementById("edit-nueva-tarea");
