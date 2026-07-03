@@ -303,8 +303,55 @@ function renderizarMatriz(datos) {
         } else if (reg.Estatus === "Por Atender") {
             colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10";
         }
-
-        let filaHtml = `
+let filaHtml = `
+<tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-500 font-mono text-[10px] font-bold border-b border-slate-800/30 md:border-none">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
+      <span>${reg.ID_Registro}</span>
+   </td>
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Unidad / Marca:</span>
+      <div class="text-right md:text-left">
+         <span class="font-black text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
+         <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wide">${reg.Marca}</span>
+      </div>
+   </td>
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-right md:text-left text-slate-300 font-medium text-[11px]">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Ubicación:</span>
+      <div>
+         <div class="font-semibold text-slate-300">${fosaFinal}</div>
+         <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
+      </div>
+   </td>
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Avance (%):</span>
+      <div class="flex items-center justify-end md:justify-start">
+         <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+      </div>
+   </td>
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:w-40">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Estatus</span>
+      <div class="flex justify-end md:justify-start">
+         ${badgeEstatus}
+      </div>
+   </td>
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-right md:text-left">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Novedad</span>
+      <p class="text-[11px] text-slate-300 font-medium max-w-xs truncate md:whitespace-normal" title="${reg.Observaciones}">
+         ${reg.Observaciones}
+      </p>
+   </td>
+   <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center">
+      <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Acciones</span>
+      <div class="flex gap-1.5 justify-end md:justify-center">
+         <button onclick="abrirModalEditar('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white p-1.5 rounded-lg transition-all border border-slate-700/60 hover:border-blue-500 shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold" title="Planificación y Control Avanzado">
+         <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
+         </button>
+      </div>
+   </td>
+</tr>
+`;
+     /*   let filaHtml = `
             <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-500 font-mono text-[10px] font-bold border-b border-slate-800/30 md:border-none">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
@@ -351,7 +398,7 @@ function renderizarMatriz(datos) {
                     </div>
                 </td>
             </tr>
-        `;
+        `;*/
         tbody.insertAdjacentHTML("beforeend", filaHtml);
     });
 }
