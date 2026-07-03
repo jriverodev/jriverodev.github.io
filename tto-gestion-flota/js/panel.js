@@ -336,12 +336,17 @@ function renderizarMatriz(datos) {
                         ${badgeEstatus}
                     </div>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-right md:text-left">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Novedad</span>
-                    <p class="text-[11px] text-slate-300 font-medium max-w-xs truncate break-words md:whitespace-normal" title="${reg.Observaciones}">
-                        ${reg.Observaciones}
-                    </p>
-                </td>
+                
+
+
+                
+<td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
+    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 mb-1 block">Novedad</span>
+    <p class="text-[11px] text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
+        ${reg.Observaciones || 'Sin novedades registradas.'}
+    </p>
+</td>
+
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Acciones</span>
                     <div class="flex gap-1.5 justify-end md:justify-center">
