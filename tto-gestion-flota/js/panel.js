@@ -36,6 +36,13 @@ var FILTROS_ACTIVOS = {
     ubicacion: ""
 };
 
+// Base de datos de usuarios autorizados
+const USUARIOS_AUTORIZADOS = {
+    "WILLIAM RIOS": "wr123", 
+    "VANNESA ROMERO": "vr456",
+    "PEDRO POLANCO": "pp789"
+};
+
 /**
  * Lógica de Identificación y Auditoría
  */
@@ -43,19 +50,39 @@ function verificarSesion() {
     const sesion = sessionStorage.getItem("TTOCC_OPERADOR");
     if (sesion) {
         OPERADOR_ACTUAL = sesion;
+        window.operadorActivo = sesion;
         document.getElementById("modalIdentificacion").classList.add("hidden");
     }
 }
 
 function confirmarIdentidad(event) {
     event.preventDefault();
-    const input = document.getElementById("input-operador");
-    const nombre = input.value.trim().toUpperCase();
 
-    if (nombre) {
-        OPERADOR_ACTUAL = nombre;
-        sessionStorage.setItem("TTOCC_OPERADOR", nombre);
-        document.getElementById("modalIdentificacion").classList.add("hidden");
+    const selectOperador = document.getElementById('input-operador');
+    const inputPassword = document.getElementById('input-password');
+    const divError = document.getElementById('error-identificacion');
+
+    if (!selectOperador || !inputPassword) return;
+
+    // Sanitización estricta contra inyección de código
+    const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
+    const passwordSanitizado = inputPassword.value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    // Validación de credenciales
+    if (USUARIOS_AUTORIZADOS[operadorSanitizado] && USUARIOS_AUTORIZADOS[operadorSanitizado] === passwordSanitizado) {
+        OPERADOR_ACTUAL = operadorSanitizado;
+        window.operadorActivo = operadorSanitizado; 
+        sessionStorage.setItem("TTOCC_OPERADOR", operadorSanitizado);
+        
+        if (divError) divError.classList.add('hidden');
+        document.getElementById('modalIdentificacion').classList.add('hidden');
+        
+        console.log(`Acceso concedido a: ${operadorSanitizado}`);
+
+    } else {
+        if (divError) divError.classList.remove('hidden');
+        inputPassword.value = ''; 
+        inputPassword.focus();
     }
 }
 
@@ -178,12 +205,10 @@ async function cargarTablaEditable() {
 
         let filasCrudas = res.datos || res.unidades || [];
         
-        // Mapeo y normalización estricta de cabeceras
         listaRegistrosPanel = filasCrudas.map(u => {
             let normalized = {};
             for (let key in u) {
                 let val = u[key];
-                // Limpieza de URLs de Drive para evitar CORB
                 if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
                     const id = val.split('id=')[1]?.split('&')[0];
                     if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
@@ -191,13 +216,11 @@ async function cargarTablaEditable() {
                 normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = val;
             }
             
-            // Buscador flexible para campos específicos
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
                 return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
-            // Deserialización segura del string de tareas (JSON)
             let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
             let tareasArray = [];
             try {
@@ -244,7 +267,7 @@ async function cargarTablaEditable() {
 }
 
 /**
- * Renderiza la matriz operativa basándose en un set de datos (soporta filtrado)
+ * Renderiza la matriz operativa basándose en un set de datos
  */
 function renderizarMatriz(datos) {
     const tbody = document.getElementById("tablaEditableCuerpo");
@@ -257,7 +280,6 @@ function renderizarMatriz(datos) {
 
     tbody.innerHTML = "";
 
-    // Renderizado inverso (últimos ingresos arriba)
     [...datos].reverse().forEach(reg => {
         let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
 
@@ -269,7 +291,6 @@ function renderizarMatriz(datos) {
             ? `<a href="${reg.Foto_Despues}" target="_blank" class="pswp-link text-emerald-400 hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
             : '';
 
-        // Definición de estilo de estatus y colores de fila
         let badgeEstatus = `<span class="bg-amber-950/60 border border-amber-500/30 text-amber-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">⚠️ Por Atender</span>`;
         let colorFila = "bg-slate-900/40 border-slate-800/80 hover:bg-slate-950/40";
 
@@ -335,9 +356,6 @@ function renderizarMatriz(datos) {
     });
 }
 
-/**
- * Convierte archivos binarios a cadenas DataURL Base64
- */
 function transformarABase64(file) {
     return new Promise((resolve, reject) => {
         if (!file) resolve("");
@@ -348,88 +366,34 @@ function transformarABase64(file) {
     });
 }
 
-/**
- * Actualiza los Select2 de gerencias con las opciones base y los datos encontrados en la tabla
- */
 function actualizarSelectGerencias() {
-    // Opciones estáticas base extendidas según el script del usuario
     const opcionesBase = [
-        "VP EYP TRANSPORTE TERRESTRE",
-        "VP EYP SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
-        "VP EYP SERVICIOS LOGISTICOS",
-        "VP EYP SERVICIOS ELECTRICOS",
-        "VP EYP SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL",
-        "VP EYP RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO",
-        "VP EYP RECURSOS HUMANOS",
-        "VP EYP PROYECTOS MAYORES",
-        "VP EYP PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA",
-        "VP EYP PROCURA Y CONTROL DE INVENTARIO",
-        "VP EYP PLANIFICACION, PRESUPUESTO Y GESTION",
-        "VP EYP PDVSA ECUADOR",
-        "VP EYP OFICINA DE APOYO",
-        "VP EYP INGENIERIA DE COSTOS",
-        "VP EYP GERENCIA OPERACION INTEGRAL DE PLANTAS",
-        "VP EYP GERENCIA CORP DE CONFIGURACION DE PLANES",
-        "VP EYP FINANZAS",
-        "VP EYP DIVISION SUR DEL LAGO TRUJILLO",
-        "VP EYP DIVISION LAGO",
-        "VP EYP DIVISION COSTA ORIENTAL DEL LAGO",
-        "VP EYP DIVISION COSTA OCCIDENTAL DEL LAGO",
-        "VP EYP DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE",
-        "VP EYP DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
-        "VP EYP DESARROLLO SOCIAL",
-        "VP EYP COSTA AFUERA",
-        "VP EYP COORDINACION OPERACIONAL",
-        "VP EYP CONTRATACION",
-        "VP EYP CONFIABILIDAD OPERACIONAL",
-        "VP EYP ASUNTOS PUBLICOS",
-        "VP EYP ASUNTOS JURIDICOS",
-        "VP EYP AMBIENTE",
-        "VICEPRESIDENCIA EXPLORACION Y PRODUCCION",
-        "PETROQUIMICA DE VENEZUELA, S.A",
-        "PETROLEOS DE VENEZUELA S.A. YACIMIENTO",
-        "PDVSA VASSA",
-        "PDVSA SERVICIOS PETROLEROS S.A.",
-        "PDVSA INGENIERIA Y CONSTRUCCION",
-        "PDVSA INDUSTRIAL",
-        "PDVSA GAS COMUNAL, S.A",
-        "PDVSA GAS",
-        "PDVSA ENT",
-        "PDV SERVICIOS DE SALUD",
-        "MINPET",
-        "INTEVEP",
-        "EM PETROZAMORA",
-        "EM PETROWAYU",
-        "EM PETROWARAO",
-        "EM PETROURDANETA",
-        "EM PETROREGIONAL DEL LAGO",
-        "EM PETROQUIRIQUIRE",
-        "EM PETROPERIJA",
-        "EM PETROLERA SINOVENEZOLANA",
-        "EM PETROLERA BIELOVENEZOLANA",
-        "EM PETROINDEPENDIENTE",
-        "EM PETROCUMAREBO",
-        "EM PETROCABIMAS",
-        "EM PETROBOSCAN",
-        "EM LAGOPETROL",
-        "EM BARIPETROL",
-        "DIRECCION EJECUTIVA CYSN",
-        "DIREC EJEC EXPLOR Y ESTUDIOS INTEG Y YAC",
-        "DIR. EJECUTIVA DE SEGURIDAD INTEGRAL",
-        "CVP EEMM OCCIDENTE",
-        "CVP",
-        "BARIVEN"
+        "VP EYP TRANSPORTE TERRESTRE", "VP EYP SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
+        "VP EYP SERVICIOS LOGISTICOS", "VP EYP SERVICIOS ELECTRICOS", "VP EYP SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL",
+        "VP EYP RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO", "VP EYP RECURSOS HUMANOS", "VP EYP PROYECTOS MAYORES",
+        "VP EYP PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA", "VP EYP PROCURA Y CONTROL DE INVENTARIO",
+        "VP EYP PLANIFICACION, PRESUPUESTO Y GESTION", "VP EYP PDVSA ECUADOR", "VP EYP OFICINA DE APOYO",
+        "VP EYP INGENIERIA DE COSTOS", "VP EYP GERENCIA OPERACION INTEGRAL DE PLANTAS",
+        "VP EYP GERENCIA CORP DE CONFIGURACION DE PLANES", "VP EYP FINANZAS", "VP EYP DIVISION SUR DEL LAGO TRUJILLO",
+        "VP EYP DIVISION LAGO", "VP EYP DIVISION COSTA ORIENTAL DEL LAGO", "VP EYP DIVISION COSTA OCCIDENTAL DEL LAGO",
+        "VP EYP DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE", "VP EYP DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
+        "VP EYP DESARROLLO SOCIAL", "VP EYP COSTA AFUERA", "VP EYP COORDINACION OPERACIONAL", "VP EYP CONTRATACION",
+        "VP EYP CONFIABILIDAD OPERACIONAL", "VP EYP ASUNTOS PUBLICOS", "VP EYP ASUNTOS JURIDICOS", "VP EYP AMBIENTE",
+        "VICEPRESIDENCIA EXPLORACION Y PRODUCCION", "PETROQUIMICA DE VENEZUELA, S.A", "PETROLEOS DE VENEZUELA S.A. YACIMIENTO",
+        "PDVSA VASSA", "PDVSA SERVICIOS PETROLEROS S.A.", "PDVSA INGENIERIA Y CONSTRUCCION", "PDVSA INDUSTRIAL",
+        "PDVSA GAS COMUNAL, S.A", "PDVSA GAS", "PDVSA ENT", "PDV SERVICIOS DE SALUD", "MINPET", "INTEVEP",
+        "EM PETROZAMORA", "EM PETROWAYU", "EM PETROWARAO", "EM PETROURDANETA", "EM PETROREGIONAL DEL LAGO",
+        "EM PETROQUIRIQUIRE", "EM PETROPERIJA", "EM PETROLERA SINOVENEZOLANA", "EM PETROLERA BIELOVENEZOLANA",
+        "EM PETROINDEPENDIENTE", "EM PETROCUMAREBO", "EM PETROCABIMAS", "EM PETROBOSCAN", "EM LAGOPETROL",
+        "EM BARIPETROL", "DIRECCION EJECUTIVA CYSN", "DIREC EJEC EXPLOR Y ESTUDIOS INTEG Y YAC",
+        "DIR. EJECUTIVA DE SEGURIDAD INTEGRAL", "CVP EEMM OCCIDENTE", "CVP", "BARIVEN"
     ];
 
-    // Extraer gerencias de los datos actuales, normalizarlas a Mayúsculas y filtrar vacíos
     const gerenciasDeDatos = listaRegistrosPanel
         .map(r => String(r.Gerencia || "").trim().toUpperCase())
         .filter(g => g !== "");
 
-    // Unificar, eliminar duplicados y ordenar
     const todasGerencias = [...new Set([...opcionesBase, ...gerenciasDeDatos])].sort();
-
-    // Actualizar los Select2
     const data = todasGerencias.map(g => ({ id: g, text: g }));
 
     if (typeof $ !== 'undefined') {
@@ -446,19 +410,15 @@ function actualizarSelectGerencias() {
     }
 }
 
-
-// ==========================================
-// CONTROLADORES DE MODAL 1: NUEVO INGRESO
-// ==========================================
+/**
+ * CONTROLADORES DE MODAL 1: NUEVO INGRESO
+ */
 function abrirModalNuevo() {
     document.getElementById("formNuevoRegistro").reset(); 
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById("add-fecha-ingreso").value = hoy;
     document.getElementById("wrapper-externo").classList.add("hidden"); 
-
-    // Limpiar previas
     limpiarPrevia('add-foto-antes', 'preview-add-antes');
-
     document.getElementById("modalNuevoRegistro").classList.remove("hidden");
 }
 
@@ -470,9 +430,6 @@ function alternarTallerExterno(valor) {
     document.getElementById("wrapper-externo").classList.toggle("hidden", valor !== "TALLER EXTERNO (Terceros)");
 }
 
-/**
- * Lógica de Previsualización de Imágenes locales
- */
 function previsualizarImagen(input, idContenedor) {
     const container = document.getElementById(idContenedor);
     if (!container) return;
@@ -558,14 +515,13 @@ async function guardarNuevoRegistro(event) {
     }
 }
 
-// ==========================================
-// CONTROLADORES DE MODAL 2: DIAGNÓSTICO & CHECKLIST
-// ==========================================
+/**
+ * CONTROLADORES DE MODAL 2: DIAGNÓSTICO & CHECKLIST
+ */
 function abrirModalEditar(id) {
     const registro = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
     if (!registro) return;
 
-    // Limpiar previa de edición
     limpiarPrevia('edit-foto-despues', 'preview-edit-despues');
 
     document.getElementById("edit-id-registro").value = registro.ID_Registro;
@@ -579,7 +535,6 @@ function abrirModalEditar(id) {
     document.getElementById("edit-observa").value = registro.Observaciones;
     document.getElementById("edit-estatus").value = registro.Estatus;
 
-    // Duplicamos en memoria local las tareas del registro
     tareasModalActual = Array.isArray(registro.Tareas) ? [...registro.Tareas] : [];
     
     renderizarTareasModal();
@@ -590,11 +545,9 @@ function cerrarModalEditar() {
     document.getElementById("modalEditarRegistro").classList.add("hidden");
 }
 
-/**
- * Procesa el render de elementos del checklist y gestiona los estados del motor Plan vs Real
- */
 function renderizarTareasModal() {
     const container = document.getElementById("edit-container-tareas");
+    if (!container) return;
     container.innerHTML = "";
 
     if (tareasModalActual.length === 0) {
@@ -620,7 +573,6 @@ function renderizarTareasModal() {
         });
     }
 
-    // Evaluación matemática del avance real
     let avanceCalculado = 0;
     if (tareasModalActual.length > 0) {
         const total = tareasModalActual.length;
@@ -630,13 +582,11 @@ function renderizarTareasModal() {
 
     const selectorEstatus = document.getElementById("edit-estatus");
     
-    // Regla automática: Si existen tareas y todas se marcaron completas, forzar 'Listo'
     if (tareasModalActual.length > 0 && avanceCalculado === 100) {
-        selectorEstatus.value = "Listo";
+        if (selectorEstatus) selectorEstatus.value = "Listo";
     }
 
-    // Regla manual: Si el operador fuerza estatus a 'Listo', el avance se asume al 100%
-    if (selectorEstatus.value === "Listo") {
+    if (selectorEstatus && selectorEstatus.value === "Listo") {
         avanceCalculado = 100;
     }
     
@@ -645,6 +595,7 @@ function renderizarTareasModal() {
 
 function agregarTareaModal() {
     const input = document.getElementById("edit-nueva-tarea");
+    if (!input) return;
     const texto = input.value.trim();
     if (!texto) return;
 
@@ -674,21 +625,21 @@ function evaluarEstatusModal(valor) {
 }
 
 function actualizarInterfazAvanceModal(porcentaje) {
-    document.getElementById("edit-lbl-avance-calculado").textContent = porcentaje + "%";
-    const wrapperFoto = document.getElementById("wrapper-foto-despues");
+    const lblAvance = document.getElementById("edit-lbl-avance-calculado");
+    if (lblAvance) lblAvance.textContent = porcentaje + "%";
     
-    // Habilita o bloquea la carga de la foto final según el avance real
+    const wrapperFoto = document.getElementById("wrapper-foto-despues");
+    if (!wrapperFoto) return;
+
     if (porcentaje === 100) {
         wrapperFoto.classList.remove("hidden");
     } else {
         wrapperFoto.classList.add("hidden");
-        document.getElementById("edit-foto-despues").value = ""; 
+        const inputFoto = document.getElementById("edit-foto-despues");
+        if (inputFoto) inputFoto.value = ""; 
     }
 }
 
-/**
- * Empaqueta el diagnóstico final, calcula cierres de fecha y procesa base64 de salida
- */
 async function guardarEdicionModal(event) {
     event.preventDefault();
     const id = document.getElementById("edit-id-registro").value;
@@ -730,7 +681,7 @@ async function guardarEdicionModal(event) {
         observaciones: document.getElementById("edit-observa").value.trim(),
         estatus: estatus,
         avance: avanceFinal.toString(),
-        tareas: JSON.stringify(tareasModalActual), // Matriz serializada para persistencia en una sola celda
+        tareas: JSON.stringify(tareasModalActual), 
         foto_antes: original ? original.Foto_Antes : "",
         foto_despues: original ? original.Foto_Despues : "", 
         foto_despues_base64: fotoDespuesBase64, 
@@ -758,51 +709,3 @@ async function guardarEdicionModal(event) {
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
     }
 }
-
-
-
-
-
-
-
-// Base de datos local simulada (Las contraseñas ideales deben ser validadas en backend)
-const USUARIOS_AUTORIZADOS = {
-    "WILLIAM RIOS": "wr123", // Reemplaza por las contraseñas reales de 5 dígitos
-    "VANNESA ROMERO": "vr456",
-    "PEDRO POLANCO": "pp789"
-};
-
-function confirmarIdentidad(event) {
-    event.preventDefault();
-
-    const selectOperador = document.getElementById('input-operador');
-    const inputPassword = document.getElementById('input-password');
-    const divError = document.getElementById('error-identificacion');
-
-    // 1. Sanitización estricta contra inyección de código (Remueve cualquier caracter que no sea letra o número)
-    const operadorSanitizado = selectOperador.value.replace(/[^A-Z ]/g, "");
-    const passwordSanitizado = inputPassword.value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-
-    // 2. Validación de credenciales
-    if (USUARIOS_AUTORIZADOS[operadorSanitizado] && USUARIOS_AUTORIZADOS[operadorSanitizado] === passwordSanitizado) {
-        
-        // Guardar el operador en sesión para auditoría de cambios
-        window.operadorActivo = operadorSanitizado; 
-        
-        // Ocultar error y cerrar el modal con animación o remoción directa
-        divError.classList.add('hidden');
-        document.getElementById('modalIdentificacion').classList.add('hidden');
-        
-        console.log(`Acceso concedido a: ${operadorSanitizado}`);
-        
-        // Opcional: Ejecutar la carga inicial de datos si es requerido
-        if (typeof cargarTablaEditable === "font") cargarTablaEditable();
-
-    } else {
-        // Mostrar alerta de error de acceso
-        divError.classList.remove('hidden');
-        inputPassword.value = ''; // Limpiar campo
-        inputPassword.focus();
-    }
-}
-
