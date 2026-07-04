@@ -4,7 +4,6 @@
 // =========================================================================
 
 // ⚠️ CONFIGURACIÓN INICIAL:
-// Crea una carpeta en tu Google Drive, copia su ID de la URL y pégalo aquí abajo.
 const CONFIG_DRIVE_FOLDER_ID = "1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg";
 
 function doPost(e) {
@@ -96,10 +95,15 @@ function doPost(e) {
             sheet.getRange(numeroFila, COL_TAREAS).setValue(payload.tareas);
           }
 
-          // Control automatizado de fechas de salida
-          if (payload.fecha_salida !== "") {
+          // CONTROL INTELIGENTE DE FECHAS DE SALIDA
+          if (payload.fecha_salida && payload.fecha_salida !== "") {
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(payload.fecha_salida);
-          } else if (payload.estatus !== "Listo") {
+          } else if (payload.estatus === "Listo") {
+            // Si pasa a 'Listo' y no trae fecha, se le asigna la fecha actual automáticamente
+            var fechaHoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy");
+            sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(fechaHoy);
+          } else {
+            // Si el estatus retrocede o cambia a otra cosa que no sea 'Listo', se limpia la salida
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue("");
           }
 
@@ -171,30 +175,23 @@ function doPost(e) {
 }
 
 /**
- * Recibe los datos binarios en Base64 de la PWA, genera el archivo físico en Google Drive
-  * y retorna un enlace directo (direct stream link) compatible con etiquetas <img>
-   */
+ * Genera el archivo físico en Google Drive y retorna el stream directo
+ */
 function guardarFotoEnDrive(base64Data, nombreArchivo) {
   try {
     if (CONFIG_DRIVE_FOLDER_ID === "TU_ID_DE_CARPETA_DE_GOOGLE_DRIVE_AQUI" || !CONFIG_DRIVE_FOLDER_ID) {
       return "Error: ID de carpeta de Drive no configurado en Código.gs";
     }
 
-    // Aislar la cadena pura de Base64 omitiendo el prefijo 'data:image/jpeg;base64,'
     var partes = base64Data.split(",");
     var rawData = partes.length > 1 ? partes[1] : partes[0];
 
-    // Convertir el string base64 en un archivo binario (Blob)
     var blob = Utilities.newBlob(Utilities.base64Decode(rawData), "image/jpeg", nombreArchivo);
-
-    // Acceder a la carpeta destino e instanciar el archivo
     var carpeta = DriveApp.getFolderById(CONFIG_DRIVE_FOLDER_ID);
     var archivo = carpeta.createFile(blob);
 
-    // Conceder permisos de lectura pública mediante enlace para que la PWA dibuje la imagen sin loguearse
     archivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    // Retornar la estructura URL de renderizado directo (Thumbnail de alta resolución para evitar CORB)
     return "https://drive.google.com/thumbnail?id=" + archivo.getId() + "&sz=w1200";
 
   } catch (e) {
@@ -205,13 +202,10 @@ function guardarFotoEnDrive(base64Data, nombreArchivo) {
 function retornarJSON(objeto) {
   return ContentService.createTextOutput(JSON.stringify(objeto)).setMimeType(ContentService.MimeType.JSON);
 }
+
 function probarPermisos() {
   var carpeta = DriveApp.getFolderById("1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg");
-
-  // 1. Forzamos el permiso de ESCRITURA creando un archivo de texto de prueba
   var archivoPrueba = carpeta.createFile("prueba_permisos.txt", "Verificación de escritura para PWA", "text/plain");
   Logger.log("¡Permisos de ESCRITURA aprobados! Archivo creado: " + archivoPrueba.getName());
-
-  // 2. Limpiamos la carpeta enviando el archivo de prueba a la papelera
   archivoPrueba.setTrashed(true);
 }
