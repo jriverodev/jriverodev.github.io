@@ -8,7 +8,8 @@ const ASSETS = [
   "js/visor.js",
   "manifest.json",
   "manifest-visor.json",
-  "manifest-panel.json"
+  "manifest-panel.json",
+  "DESIGN.md"
 ];
 
 self.addEventListener("install", (e) => {
