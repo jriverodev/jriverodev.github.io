@@ -291,14 +291,14 @@ function renderizarMatriz(datos) {
             ? `<a href="${reg.Foto_Despues}" target="_blank" class="pswp-link text-emerald-400 hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
             : '';
 
-        let badgeEstatus = `<span class="bg-amber-950/60 border border-amber-500/30 text-amber-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">⚠️ Por Atender</span>`;
+        let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
         let colorFila = "bg-slate-900/40 border-slate-800/80 hover:bg-slate-950/40";
 
         if (reg.Estatus === "En Proceso") {
-            badgeEstatus = `<span class="bg-blue-950/60 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">⚙️ En Proceso</span>`;
+            badgeEstatus = `<span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
             colorFila = "bg-blue-900/10 border-blue-500/20 hover:bg-blue-900/20";
         } else if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            badgeEstatus = `<span class="bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">✅ Listo</span>`;
+            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Listo</span>`;
             colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
         } else if (reg.Estatus === "Por Atender") {
             colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10";
