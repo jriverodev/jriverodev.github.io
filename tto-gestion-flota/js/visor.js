@@ -133,9 +133,9 @@ function filtrarVisor() {
 
     const filtrados = datosUnidadesGlobal.filter(reg => {
         const matchesBusqueda = !query ||
-            reg.ID_Unidad.toLowerCase().includes(query) ||
-            reg.Marca.toLowerCase().includes(query) ||
-            reg.ID_Registro.toString().includes(query);
+            String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
+            String(reg.Marca || "").toLowerCase().includes(query) ||
+            String(reg.ID_Registro || "").toLowerCase().includes(query);
 
         const matchesEstatus = !estatus || reg.Estatus === estatus;
         const matchesUbicacion = !ubicacion || reg.Nombre_Taller === ubicacion;
