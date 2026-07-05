@@ -710,7 +710,7 @@ async function confirmarEliminarRegistro() {
     const unidad = document.getElementById("edit-unidad").value;
 
     const confirmacion = await TTOCC_UI.confirm(
-        "¿Eliminar Registro?", 
+        "¿Eliminar Registro?",
         `Esta acción borrará la unidad ${unidad} (ID #${id}) de la base de datos y sus fotos en Drive.`,
         "Eliminar",
         "Cancelar"
@@ -751,7 +751,7 @@ async function confirmarEliminarRegistro() {
         });
 
         const res = await response.json();
-        
+
         if (res.status === "SUCCESS") {
             cerrarModalEditar();
             // Restaurar el contenido original para el siguiente uso del modal
