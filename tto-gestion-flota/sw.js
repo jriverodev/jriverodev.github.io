@@ -4,6 +4,8 @@ const ASSETS = [
   "panel.html",
   "visor.html",
   "js/app.js",
+  "js/ui.js",
+  "js/tema.js",
   "js/panel.js",
   "js/visor.js",
   "manifest.json",
