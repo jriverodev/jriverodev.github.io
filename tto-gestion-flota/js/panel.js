@@ -2,7 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
-    initTheme();
+    // initTheme(); // Ahora manejado por tema.js
     cargarTablaEditable();
     // Esperar un breve instante para asegurar que Select2 esté disponible si hay latencia en carga defer
     if (typeof $ !== 'undefined') {
@@ -86,32 +86,6 @@ function confirmarIdentidad(event) {
     }
 }
 
-/**
- * Gestión de Temas (Claro/Oscuro)
- */
-function initTheme() {
-    const savedTheme = localStorage.getItem("TTOCC_THEME") || "light";
-    if (savedTheme === "dark") {
-        document.documentElement.classList.add("dark");
-        actualizarIconoTema(true);
-    } else {
-        document.documentElement.classList.remove("dark");
-        actualizarIconoTema(false);
-    }
-}
-
-function toggleTheme() {
-    const isDark = document.documentElement.classList.toggle("dark");
-    localStorage.setItem("TTOCC_THEME", isDark ? "dark" : "light");
-    actualizarIconoTema(isDark);
-}
-
-function actualizarIconoTema(isDark) {
-    const icon = document.getElementById("theme-icon");
-    if (icon) {
-        icon.className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
-    }
-}
 
 /**
  * Lógica de Búsqueda y Filtros (Matriz Operativa)
@@ -284,43 +258,43 @@ function renderizarMatriz(datos) {
         let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
 
         let badgeFotoAntes = reg.Foto_Antes
-            ? `<a href="${reg.Foto_Antes}" target="_blank" class="pswp-link text-blue-400 hover:text-blue-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
+            ? `<a href="${reg.Foto_Antes}" target="_blank" class="pswp-link text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
             : '';
 
         let badgeFotoDespues = reg.Foto_Despues
-            ? `<a href="${reg.Foto_Despues}" target="_blank" class="pswp-link text-emerald-400 hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
+            ? `<a href="${reg.Foto_Despues}" target="_blank" class="pswp-link text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
             : '';
 
-        let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
-        let colorFila = "bg-slate-900/40 border-slate-800/80 hover:bg-slate-950/40";
+        let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
+        let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-950/40";
 
         if (reg.Estatus === "En Proceso") {
-            badgeEstatus = `<span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
-            colorFila = "bg-blue-900/10 border-blue-500/20 hover:bg-blue-900/20";
+            badgeEstatus = `<span class="bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
+            colorFila = "bg-blue-500/[0.02] dark:bg-blue-900/10 border-blue-500/10 dark:border-blue-500/20 hover:bg-blue-500/[0.05] dark:hover:bg-blue-900/20";
         } else if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Ya Operativa</span>`;
-            colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
+            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Listo</span>`;
+            colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
         } else if (reg.Estatus === "Por Atender") {
-            colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10";
+            colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
         }
 
         let filaHtml = `
-            <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-500 font-mono text-[10px] font-bold border-b border-slate-800/30 md:border-none">
+            <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-200 dark:md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors shadow-sm dark:shadow-none">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-400 dark:text-slate-500 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
                     <span>${reg.ID_Registro}</span>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Unidad / Marca:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Unidad / Marca:</span>
                     <div class="text-right md:text-left">
-                        <span class="font-black text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wide">${reg.Marca}</span>
+                        <span class="font-black text-slate-900 dark:text-white tracking-wider font-mono block text-xs">${reg.ID_Unidad}</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block tracking-wide">${reg.Marca}</span>
                     </div>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-right md:text-left text-slate-300 font-medium text-[11px]">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Ubicación:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-right md:text-left text-slate-700 dark:text-slate-300 font-medium text-[11px]">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Ubicación:</span>
                     <div>
-                        <div class="font-semibold text-slate-300">${fosaFinal}</div>
+                        <div class="font-semibold text-slate-800 dark:text-slate-300">${fosaFinal}</div>
                         <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
                     </div>
                 </td>
@@ -340,9 +314,9 @@ function renderizarMatriz(datos) {
 
 
                 
-<td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
-    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 mb-1 block">Novedad</span>
-    <p class="text-[11px] text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
+<td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
+    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1 block">Novedad</span>
+    <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
         ${reg.Observaciones || 'Sin novedades registradas.'}
     </p>
 </td>
@@ -736,7 +710,7 @@ async function confirmarEliminarRegistro() {
     const unidad = document.getElementById("edit-unidad").value;
 
     const confirmacion = await TTOCC_UI.confirm(
-        "¿Eliminar Registro?",
+        "¿Eliminar Registro?", 
         `Esta acción borrará la unidad ${unidad} (ID #${id}) de la base de datos y sus fotos en Drive.`,
         "Eliminar",
         "Cancelar"
@@ -777,7 +751,7 @@ async function confirmarEliminarRegistro() {
         });
 
         const res = await response.json();
-
+        
         if (res.status === "SUCCESS") {
             cerrarModalEditar();
             // Restaurar el contenido original para el siguiente uso del modal
