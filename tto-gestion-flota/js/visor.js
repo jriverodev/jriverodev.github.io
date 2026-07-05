@@ -242,7 +242,7 @@ function renderizarVisor(datos) {
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
                     <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+                        <span class="font-mono text-[12px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
 
@@ -260,9 +260,9 @@ function renderizarVisor(datos) {
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Fechas</span>
-                    <div class="text-right md:text-left font-mono text-[9px] font-black tracking-tighter">
-                        <div class="text-blue-500/80"><i class="fa-solid fa-calendar-day text-[8px]"></i> ${reg.Fecha_Registro}</div>
-                        ${reg.Fecha_Salida ? `<div class="text-emerald-500/80"><i class="fa-solid fa-circle-check text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+                    <div class="text-right md:text-left font-mono text-[12px] font-black tracking-tighter">
+                        <div class="text-blue-500/80"><i class="fa-solid fa-calendar-day text-[12px]"></i> ${reg.Fecha_Registro}</div>
+                        ${reg.Fecha_Salida ? `<div class="text-emerald-500/80"><i class="fa-solid fa-circle-check text-[12px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
                 </td>
 
