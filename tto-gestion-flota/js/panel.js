@@ -298,7 +298,7 @@ function renderizarMatriz(datos) {
             badgeEstatus = `<span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
             colorFila = "bg-blue-900/10 border-blue-500/20 hover:bg-blue-900/20";
         } else if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Listo</span>`;
+            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Ya Operativa</span>`;
             colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
         } else if (reg.Estatus === "Por Atender") {
             colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10";
