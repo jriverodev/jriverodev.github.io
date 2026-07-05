@@ -198,9 +198,17 @@ function renderizarVisor(datos) {
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
         let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-500";
-        if (reg.Estatus === "En Proceso") badgeColor = "bg-blue-500/10 border border-blue-500/30 text-blue-400";
-        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+        let colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10"; // Por Atender por defecto
 
+        if (reg.Estatus === "En Proceso") {
+            badgeColor = "bg-blue-500/10 border border-blue-500/30 text-blue-400";
+            colorFila = "bg-blue-900/10 border-blue-500/20 hover:bg-blue-900/20";
+        }
+        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
+            badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+            colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
+        }
+        
         let fila = `
         <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila || 'hover:bg-slate-950/30'} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
     
