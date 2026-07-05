@@ -508,12 +508,13 @@ async function guardarNuevoRegistro(event) {
         if (res.status === "SUCCESS") {
             cerrarModalNuevo();
             await cargarTablaEditable();
+            TTOCC_UI.success("Registro Exitoso", "La unidad ha sido ingresada correctamente a la base de datos central.");
         } else {
-            alert("Error: " + res.message);
+            TTOCC_UI.error("Error de Servidor", res.message);
         }
     } catch (err) {
         console.error(err);
-        alert("Fallo de comunicación al registrar.");
+        TTOCC_UI.error("Fallo de Red", "No se pudo establecer comunicación con el servidor. Verifique su conexión.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
@@ -714,12 +715,13 @@ async function guardarEdicionModal(event) {
         if (res.status === "SUCCESS") {
             cerrarModalEditar();
             await cargarTablaEditable();
+            TTOCC_UI.success("Actualización Correcta", "Los cambios en el diagnóstico han sido sincronizados.");
         } else {
-            alert("Error: " + res.message);
+            TTOCC_UI.error("Error al Guardar", res.message);
         }
     } catch (err) {
         console.error(err);
-        alert("Fallo crítico de comunicación.");
+        TTOCC_UI.error("Error Crítico", "Fallo de comunicación durante la sincronización de datos.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
@@ -733,12 +735,23 @@ async function confirmarEliminarRegistro() {
     const id = document.getElementById("edit-id-registro").value;
     const unidad = document.getElementById("edit-unidad").value;
 
-    const confirmacion = confirm(`¿ESTÁ SEGURO DE ELIMINAR ESTE REGISTRO?\n\nUnidad: ${unidad}\nID Registro: ${id}\n\nEsta acción eliminará la fila de la base de datos y borrará las fotos asociadas en Google Drive.`);
+    const confirmacion = await TTOCC_UI.confirm(
+        "¿Eliminar Registro?",
+        `Esta acción borrará la unidad ${unidad} (ID #${id}) de la base de datos y sus fotos en Drive.`,
+        "Eliminar",
+        "Cancelar"
+    );
 
     if (!confirmacion) return;
 
     // Segundo paso de seguridad para acciones críticas
-    const confirmacionFinal = confirm("¿CONFIRMA LA ELIMINACIÓN DEFINITIVA? Esta operación no se puede deshacer.");
+    const confirmacionFinal = await TTOCC_UI.confirm(
+        "Confirmación Final",
+        "¿Está absolutamente seguro? Esta operación no se puede deshacer.",
+        "SÍ, ELIMINAR",
+        "VOLVER"
+    );
+
     if (!confirmacionFinal) return;
 
     const modalContent = document.querySelector("#modalEditarRegistro > div");
@@ -770,13 +783,14 @@ async function confirmarEliminarRegistro() {
             // Restaurar el contenido original para el siguiente uso del modal
             setTimeout(() => { modalContent.innerHTML = originalContentHtml; }, 500);
             await cargarTablaEditable();
+            TTOCC_UI.success("Registro Eliminado", "La unidad y sus archivos asociados han sido removidos con éxito.");
         } else {
-            alert("Error al eliminar: " + res.message);
+            TTOCC_UI.error("Error al Eliminar", res.message);
             modalContent.innerHTML = originalContentHtml;
         }
     } catch (err) {
         console.error(err);
-        alert("Fallo de conexión al intentar eliminar el registro.");
+        TTOCC_UI.error("Error de Red", "No se pudo completar la eliminación debido a un fallo de conexión.");
         modalContent.innerHTML = originalContentHtml;
     }
 }

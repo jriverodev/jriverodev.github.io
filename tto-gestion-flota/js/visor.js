@@ -423,7 +423,7 @@ function actualizarGraficosVivos() {
 
 // UTILERÍAS DE EXPORTACIÓN
 function exportarAExcel() {
-    if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
+    if (datosUnidadesGlobal.length === 0) return TTOCC_UI.error("Error de Exportación", "No hay datos disponibles en el visor para generar el archivo Excel.");
 
     const exportData = datosUnidadesGlobal.map(reg => ({
         "ID Registro": reg.ID_Registro,
@@ -455,7 +455,7 @@ function exportarAExcel() {
 
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
-    if (datosUnidadesGlobal.length === 0) return alert("No hay datos para exportar.");
+    if (datosUnidadesGlobal.length === 0) return TTOCC_UI.error("Error de Exportación", "No hay datos para exportar a PDF.");
 
     html2pdf().set({
         margin: 0.3,
