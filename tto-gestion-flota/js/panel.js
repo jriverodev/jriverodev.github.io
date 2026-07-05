@@ -161,11 +161,11 @@ function filtrarMatriz() {
 
     const filtrados = listaRegistrosPanel.filter(reg => {
         const matchesBusqueda = !query ||
-            reg.ID_Unidad.toLowerCase().includes(query) ||
-            reg.Marca.toLowerCase().includes(query) ||
-            reg.Nombre_Taller.toLowerCase().includes(query) ||
-            reg.Nombre_Taller_Ext.toLowerCase().includes(query) ||
-            reg.ID_Registro.toString().includes(query);
+            String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
+            String(reg.Marca || "").toLowerCase().includes(query) ||
+            String(reg.Nombre_Taller || "").toLowerCase().includes(query) ||
+            String(reg.Nombre_Taller_Ext || "").toLowerCase().includes(query) ||
+            String(reg.ID_Registro || "").toLowerCase().includes(query);
 
         const matchesEstatus = FILTROS_ACTIVOS.estatus.length === 0 || FILTROS_ACTIVOS.estatus.includes(reg.Estatus);
         const matchesUbicacion = !ubicacion || reg.Nombre_Taller === ubicacion;
