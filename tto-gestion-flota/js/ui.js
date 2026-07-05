@@ -38,14 +38,14 @@ const TTOCC_UI = (() => {
         init();
         return new Promise((resolve) => {
             const scrim = createScrim();
-
+            
             const dialog = document.createElement('div');
             // M3 Dialog Background en Dark Mode suele ser Surface Container (un poco más claro que el fondo puro)
             dialog.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 m3-rounded-28 shadow-2xl w-full max-w-[320px] overflow-hidden m3-dialog-enter pointer-events-auto transition-colors';
-
+            
             let iconHtml = '';
             let titleColor = 'text-slate-900 dark:text-slate-100';
-
+            
             if (type === 'error') {
                 iconHtml = '<i class="fa-solid fa-circle-exclamation text-red-600 dark:text-red-500 mb-4 text-2xl"></i>';
                 titleColor = 'text-red-600 dark:text-red-400';
@@ -89,7 +89,7 @@ const TTOCC_UI = (() => {
             const close = (result) => {
                 scrim.classList.replace('m3-scrim-enter-active', 'm3-scrim-exit-active');
                 dialog.classList.replace('m3-dialog-enter-active', 'm3-dialog-exit-active');
-
+                
                 setTimeout(() => {
                     dialogContainer.removeChild(scrim);
                     dialogContainer.removeChild(dialog);
@@ -108,7 +108,7 @@ const TTOCC_UI = (() => {
         alert: (title, message) => show({ title, message }),
         success: (title, message) => show({ title, message, type: 'success' }),
         error: (title, message) => show({ title, message, type: 'error' }),
-        confirm: (title, message, confirmText = 'Aceptar', cancelText = 'Cancelar') =>
+        confirm: (title, message, confirmText = 'Aceptar', cancelText = 'Cancelar') => 
             show({ title, message, confirmText, cancelText, type: 'warning' })
     };
 })();
