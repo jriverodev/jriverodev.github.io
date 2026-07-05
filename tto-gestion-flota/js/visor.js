@@ -253,9 +253,16 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
+                <!--td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
                     <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">Obs</span>
                     <span class="text-slate-400 dark:text-slate-500 md:max-w-xs md:truncate text-right md:text-left text-[11px] font-medium" title="${reg.Observaciones}">${reg.Observaciones}</span>
+                </td-->
+
+                <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:max-w-xs md:align-middle">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1 block">Obs:</span>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 md:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed md:block md:truncate text-right md:text-left" title="${reg.Observaciones}">
+                        ${reg.Observaciones || 'Sin observaciones.'}
+                    </p>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
