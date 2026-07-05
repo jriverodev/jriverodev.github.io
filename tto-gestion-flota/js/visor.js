@@ -231,19 +231,11 @@ function renderizarVisor(datos) {
                     <span class="text-slate-300 font-black text-right md:text-left text-[10px] uppercase tracking-wider">${nombreTallerFinal}</span>
                 </td>
 
-                <!--td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
-                    <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
-                    </div>
-                </td-->
-
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Avance (%):</span>
-                    <div class="flex items-center justify-end md:justify-start">
-                       <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
-                    </div>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20 md:align-middle">
+                   <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
+                   <div class="flex items-center justify-end md:justify-start">
+                    <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+                   </div>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
