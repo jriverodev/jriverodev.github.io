@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Transporte Terrestre - TTOCC</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-scheme: light dark;
+        }
+        @variant dark (&:where(.dark, .dark *));
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <script src="js/app.js" defer></script>
@@ -13,7 +19,10 @@
 </head>
 <body class="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-orange-500 selection:text-white transition-colors duration-300">
 
-    <header class="w-full text-center py-10 border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-900/40 backdrop-blur-md transition-colors">
+    <header class="w-full text-center py-10 border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-900/40 backdrop-blur-md transition-colors relative">
+        <button onclick="toggleTema()" class="absolute top-6 right-6 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 p-3 rounded-full border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-sm active:scale-95">
+            <i class="fa-solid fa-sun theme-toggle-icon"></i>
+        </button>
         <div class="flex justify-center items-center gap-3 mb-3">
             <div class="bg-orange-500/10 p-3 rounded-2xl border border-orange-500/20">
                 <i class="fa-solid fa-truck-ramp-box text-orange-500 text-3xl"></i>
