@@ -299,9 +299,9 @@ function renderizarMatriz(datos) {
                     </div>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Avance (%):</span>
+                    <span class="md:hidden text-[12px] uppercase font-bold text-slate-400">Avance (%):</span>
                     <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+                        <span class="font-mono text-[12px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:w-40">
