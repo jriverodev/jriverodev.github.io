@@ -167,6 +167,34 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", message: "Registrado con éxito.", id_asignado: nuevoId });
     }
 
+    // ==========================================
+    // ACCIÓN 4: ELIMINAR REGISTRO
+    // ==========================================
+    if (payload.accion === "eliminar") {
+      var datos = sheet.getDataRange().getValues();
+      var idBuscado = String(payload.id_registro);
+
+      for (var k = 1; k < datos.length; k++) {
+        if (String(datos[k][COL_ID_REGISTRO - 1]) === idBuscado) {
+          var numeroFila = k + 1;
+
+          // Obtener URLs de fotos para eliminarlas de Drive
+          var urlFotoAntes = datos[k][COL_FOTO_ANTES - 1];
+          var urlFotoDespues = datos[k][COL_FOTO_DESPUES - 1];
+
+          eliminarArchivoDrive(urlFotoAntes);
+          eliminarArchivoDrive(urlFotoDespues);
+
+          // Eliminar la fila
+          sheet.deleteRow(numeroFila);
+          SpreadsheetApp.flush();
+
+          return retornarJSON({ status: "SUCCESS", message: "Registro y archivos eliminados correctamente." });
+        }
+      }
+      return retornarJSON({ status: "ERROR", message: "ID no encontrado para eliminar." });
+    }
+
     return retornarJSON({ status: "ERROR", message: "Operación no reconocida." });
 
   } catch (error) {
@@ -196,6 +224,20 @@ function guardarFotoEnDrive(base64Data, nombreArchivo) {
 
   } catch (e) {
     return "Error al guardar en Drive: " + e.toString();
+  }
+}
+
+/**
+ * Intenta extraer el ID de un archivo de Drive de su URL y lo envía a la papelera
+ */
+function eliminarArchivoDrive(url) {
+  if (!url || typeof url !== "string" || !url.includes("id=")) return;
+  try {
+    var id = url.split("id=")[1].split("&")[0];
+    var archivo = DriveApp.getFileById(id);
+    archivo.setTrashed(true);
+  } catch (e) {
+    Logger.log("No se pudo eliminar el archivo de Drive: " + e.toString());
   }
 }
 

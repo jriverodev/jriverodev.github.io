@@ -725,3 +725,58 @@ async function guardarEdicionModal(event) {
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
     }
 }
+
+/**
+ * ELIMINACIÓN DE REGISTROS
+ */
+async function confirmarEliminarRegistro() {
+    const id = document.getElementById("edit-id-registro").value;
+    const unidad = document.getElementById("edit-unidad").value;
+
+    const confirmacion = confirm(`¿ESTÁ SEGURO DE ELIMINAR ESTE REGISTRO?\n\nUnidad: ${unidad}\nID Registro: ${id}\n\nEsta acción eliminará la fila de la base de datos y borrará las fotos asociadas en Google Drive.`);
+
+    if (!confirmacion) return;
+
+    // Segundo paso de seguridad para acciones críticas
+    const confirmacionFinal = confirm("¿CONFIRMA LA ELIMINACIÓN DEFINITIVA? Esta operación no se puede deshacer.");
+    if (!confirmacionFinal) return;
+
+    const modalContent = document.querySelector("#modalEditarRegistro > div");
+    const originalContentHtml = modalContent.innerHTML;
+
+    // Bloqueo visual del modal durante la eliminación
+    modalContent.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <i class="fa-solid fa-trash-can animate-bounce text-red-500 text-5xl mb-4"></i>
+            <h3 class="text-white font-black uppercase tracking-widest">Eliminando Registro...</h3>
+            <p class="text-slate-500 text-[10px] mt-2 uppercase tracking-tighter">Limpiando Base de Datos y Archivos en Drive</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({
+                accion: "eliminar",
+                id_registro: id,
+                modificado_por: OPERADOR_ACTUAL
+            })
+        });
+
+        const res = await response.json();
+
+        if (res.status === "SUCCESS") {
+            cerrarModalEditar();
+            // Restaurar el contenido original para el siguiente uso del modal
+            setTimeout(() => { modalContent.innerHTML = originalContentHtml; }, 500);
+            await cargarTablaEditable();
+        } else {
+            alert("Error al eliminar: " + res.message);
+            modalContent.innerHTML = originalContentHtml;
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Fallo de conexión al intentar eliminar el registro.");
+        modalContent.innerHTML = originalContentHtml;
+    }
+}
