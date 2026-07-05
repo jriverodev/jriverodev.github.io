@@ -258,18 +258,18 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
 
-                <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-left min-w-0 w-full md:max-w-xs md:align-middle">
+                <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 mb-1 block">Obs:</span>
-                    <p class="text-[11px] text-slate-500 md:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed md:block md:truncate text-right md:text-left" title="${reg.Observaciones}">
+                    <p class="text-[11px] text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
                         ${reg.Observaciones || 'Sin observaciones.'}
                     </p>
                 </td>
-
+               
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Fechas:</span>
                     <div class="text-right md:text-left font-mono text-[10px] font-bold">
-                        <div class="text-blue-500/80"><i class="fa-solid fa-calendar-day text-[8px]"></i> ${reg.Fecha_Ingreso || reg.Fecha_Registro || 'N/A'}</div>
-                        ${reg.Fecha_Salida ? `<div class="text-emerald-500/80"><i class="fa-solid fa-circle-check text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+                        <div class="text-blue-500/80"><i class="fa-solid fa-calendar-day text-[9px]"></i> ${reg.Fecha_Ingreso || reg.Fecha_Registro || 'N/A'}</div>
+                        ${reg.Fecha_Salida ? `<div class="text-emerald-500/80"><i class="fa-solid fa-circle-check text-[9px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
                 </td>
 
