@@ -180,7 +180,7 @@ function renderizarVisor(datos) {
     let total = datos.length;
 
     if (total === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="10" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros que coincidan con los filtros</td></tr>`;
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen registros que coincidan con los filtros</td></tr>`;
         renderizarGraficos({}, 0, 0, 0);
         return;
     }
@@ -197,98 +197,79 @@ function renderizarVisor(datos) {
         let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
-        // Declaración inicial de variables de color con alcance correcto para evitar el ReferenceError
-       /* let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-500";
-        let colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10"; 
+        let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500";
+        let colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
 
         if (reg.Estatus === "En Proceso") {
-            badgeColor = "bg-blue-500/10 border border-blue-500/30 text-blue-400";
-            colorFila = "bg-blue-900/10 border-blue-500/20 hover:bg-blue-900/20";
+            badgeColor = "bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400";
+            colorFila = "bg-blue-500/[0.02] dark:bg-blue-900/10 border-blue-500/10 dark:border-blue-500/20 hover:bg-blue-500/[0.05] dark:hover:bg-blue-900/20";
         }
         if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
-            colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
-        }*/
-        // Ahora (Adaptable):
-let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500";
-let colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10"; 
+            badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
+            colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
+        }
 
-if (reg.Estatus === "En Proceso") {
-    badgeColor = "bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400";
-    colorFila = "bg-blue-500/[0.02] dark:bg-blue-900/10 border-blue-500/10 dark:border-blue-500/20 hover:bg-blue-500/[0.05] dark:hover:bg-blue-900/20";
-} 
-        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-    badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
-    colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
-}
-        
         let fila = `
-            <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
-            
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-500 font-mono text-[10px] font-bold border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
+            <tr class="block md:table-row ${colorFila} border-b border-slate-200 dark:border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-white dark:bg-transparent rounded-2xl md:rounded-none shadow-sm dark:shadow-none">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 text-slate-400 dark:text-slate-500 font-mono text-[10px] font-bold border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
+                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">ID Registro</span>
                     <span class="text-right md:text-left font-black tracking-widest">#${reg.ID_Registro}</span>
                 </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Unidad:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
+                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">Unidad</span>
                     <div class="text-right md:text-left">
-                        <span class="font-black text-white tracking-widest font-mono block text-xs">${reg.ID_Unidad}</span>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wide">${reg.Marca}</span>
+                        <span class="font-black text-slate-900 dark:text-white tracking-widest font-mono block text-xs">${reg.ID_Unidad}</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 block font-sans font-black uppercase tracking-[0.1em]">${reg.Marca}</span>
                     </div>
                 </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Gerencia / Usuario:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
+                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">Gerencia / Usuario</span>
                     <div class="text-right md:text-left">
-                        <span class="text-white block font-black uppercase text-[10px] tracking-tight">${reg.Gerencia}</span>
-                        <span class="text-slate-500 block text-[9px] uppercase tracking-widest font-black">${reg.Usuario}</span>
+                        <span class="text-slate-800 dark:text-white block font-black uppercase text-[10px] tracking-tight">${reg.Gerencia}</span>
+                        <span class="text-slate-400 dark:text-slate-500 block text-[9px] uppercase tracking-widest font-black">${reg.Usuario}</span>
                     </div>
                 </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Flota:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Flota</span>
                     <span class="text-slate-400 font-black text-right md:text-left text-[10px] uppercase tracking-widest">${reg.Tipo_Flota}</span>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Ubicación:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Ubicación</span>
                     <span class="text-slate-300 font-black text-right md:text-left text-[10px] uppercase tracking-wider">${nombreTallerFinal}</span>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Avance (%):</span>
-                 <div class="flex items-center justify-end md:justify-start">
-                    <span class="font-mono text-xs font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
-                 </div>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
+                    <div class="flex items-center justify-end md:justify-start">
+                        <span class="font-mono text-[10px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+                    </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Estatus:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Estatus</span>
                     <div class="text-right md:text-left">
                         <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${badgeColor}">${reg.Estatus}</span>
                     </div>
                 </td>
 
-                <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 mb-1 block">Obs:</span>
-                    <p class="text-[11px] text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
-                        ${reg.Observaciones || 'Sin observaciones.'}
-                    </p>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
+                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">Obs</span>
+                    <span class="text-slate-400 dark:text-slate-500 md:max-w-xs md:truncate text-right md:text-left text-[11px] font-medium" title="${reg.Observaciones}">${reg.Observaciones}</span>
                 </td>
-               
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Fechas:</span>
-                    <div class="text-right md:text-left font-mono text-[13px] font-bold">
-                        <div class="text-blue-500/80"><i class="fa-solid fa-calendar-day text-[13px]"></i> ${reg.Fecha_Ingreso || reg.Fecha_Registro || 'N/A'}</div>
-                        ${reg.Fecha_Salida ? `<div class="text-emerald-500/80"><i class="fa-solid fa-circle-check text-[13px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
+                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Fechas</span>
+                    <div class="text-right md:text-left font-mono text-[9px] font-black tracking-tighter">
+                        <div class="text-blue-500/80"><i class="fa-solid fa-calendar-day text-[8px]"></i> ${reg.Fecha_Registro}</div>
+                        ${reg.Fecha_Salida ? `<div class="text-emerald-500/80"><i class="fa-solid fa-circle-check text-[8px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center md:align-middle">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Detalle:</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 md:w-28 text-center">
+                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Detalle</span>
                     <div class="flex justify-end md:justify-center">
-                        <button onclick="abrirModalDetalle('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition-all border border-slate-700/60 hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.1em] cursor-pointer shadow-md">
+                        <button onclick="abrirModalDetalle('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-4 py-2 rounded-xl transition-all border border-slate-700 hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer shadow-lg shadow-black/20">
                             Detalle
                         </button>
                     </div>
@@ -300,6 +281,7 @@ if (reg.Estatus === "En Proceso") {
 
     renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
 }
+
 // ==========================================
 // CONTROLADORES DE MODAL DETALLE
 // ==========================================
