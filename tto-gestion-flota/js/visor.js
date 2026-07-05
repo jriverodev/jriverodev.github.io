@@ -198,7 +198,7 @@ function renderizarVisor(datos) {
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
         // Declaración inicial de variables de color con alcance correcto para evitar el ReferenceError
-        let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-500";
+       /* let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-500";
         let colorFila = "bg-amber-900/5 border-amber-500/20 hover:bg-amber-900/10"; 
 
         if (reg.Estatus === "En Proceso") {
@@ -208,7 +208,19 @@ function renderizarVisor(datos) {
         if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
             badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
             colorFila = "bg-emerald-900/10 border-emerald-500/20 hover:bg-emerald-900/20";
-        }
+        }*/
+        // Ahora (Adaptable):
+let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500";
+let colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10"; 
+
+if (reg.Estatus === "En Proceso") {
+    badgeColor = "bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400";
+    colorFila = "bg-blue-500/[0.02] dark:bg-blue-900/10 border-blue-500/10 dark:border-blue-500/20 hover:bg-blue-500/[0.05] dark:hover:bg-blue-900/20";
+} 
+        if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
+    badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
+    colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
+}
         
         let fila = `
             <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors">
