@@ -257,7 +257,6 @@ function renderizarVisor(datos) {
 
                 <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:max-w-xs md:align-middle transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-500 mb-1 block transition-colors">Obs:</span>
-                        { }
                             <p class="text-[11px] text-slate-600 dark:text-slate-400 md:text-slate-700 md:dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed md:block md:truncate text-right md:text-left transition-colors" title="${reg.Observaciones}">
                             ${reg.Observaciones || 'Sin observaciones.'}
                             </p>
