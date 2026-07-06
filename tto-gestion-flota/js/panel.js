@@ -530,7 +530,7 @@ function renderizarTareasModal() {
     } else {
         tareasModalActual.forEach((tarea, index) => {
             const itemHtml = `
-                <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-800/60 gap-2">
+                <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-800/60 gap-2 transition-colors">
                     <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
                         <input type="checkbox" ${tarea.hecho ? "checked" : ""} 
                                onchange="alternarTareaModal(${index})"
