@@ -296,7 +296,7 @@ function renderizarMatriz(datos) {
                     <div>
                         <div class="font-semibold text-slate-800 dark:text-slate-300">${fosaFinal}</div>
                         <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
-                    </div>
+                     </div>
                 </td>
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
