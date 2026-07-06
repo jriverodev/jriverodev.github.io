@@ -530,18 +530,19 @@ function renderizarTareasModal() {
     } else {
         tareasModalActual.forEach((tarea, index) => {
             const itemHtml = `
-                <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800/60 gap-2 transition-colors">
-                <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
-                <input type="checkbox" ${tarea.hecho ? "checked" : ""} 
-                onchange="alternarTareaModal(${index})"
-                class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
-                <span class="text-xs ${tarea.hecho ? "line-through text-slate-400 dark:text-slate-500 font-medium" : "text-slate-700 dark:text-slate-200 font-medium"} truncate max-w-[280px]">
-                ${tarea.texto}
-                </span>
-                </label>
-                <button type="button" onclick="eliminarTareaModal(${index})" class="text-slate-400 dark:text-slate-600 hover:text-red-500 p-1 transition-colors">
-                <i class="fa-solid fa-trash-can text-[10px]"></i>
-                </button>
+            
+                <div class="flex items-center justify-between bg-white bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800/60 gap-2 transition-colors">
+                    <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
+                        <input type="checkbox" ${tarea.hecho ? "checked" : ""} 
+                               onchange="alternarTareaModal(${index})"
+                               class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
+                        <span class="text-xs ${tarea.hecho ? "line-through text-slate-400 dark:text-slate-500 font-medium" : "text-slate-100 dark:text-slate-200 font-medium"} truncate max-w-[280px]">
+                            ${tarea.texto}
+                        </span>
+                    </label>
+                    <button type="button" onclick="eliminarTareaModal(${index})" class="text-slate-500 dark:text-slate-600 hover:text-red-400 p-1 transition-colors">
+                        <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    </button>
                 </div>
             `;
             container.insertAdjacentHTML("beforeend", itemHtml);
