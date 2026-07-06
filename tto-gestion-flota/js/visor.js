@@ -309,21 +309,25 @@ function abrirModalDetalle(id) {
     document.getElementById("det-observaciones").textContent = reg.Observaciones;
 
     // Renderizar Checklist en el modal
-    const tareasContainer = document.getElementById("det-container-tareas");
-    tareasContainer.innerHTML = "";
-    if (reg.Tareas && reg.Tareas.length > 0) {
-        reg.Tareas.forEach(t => {
-            const item = document.createElement("div");
-            item.className = "flex items-center gap-3 p-2 bg-slate-900/80 rounded-xl border border-slate-800/40";
-            item.innerHTML = `
-                <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-600'} text-sm"></i>
-                <span class="text-xs ${t.hecho ? 'text-slate-300' : 'text-slate-500'} font-medium">${t.texto}</span>
-            `;
-            tareasContainer.appendChild(item);
-        });
-    } else {
-        tareasContainer.innerHTML = `<p class="text-[10px] text-slate-600 italic text-center py-4">No se asignaron tareas específicas en el diagnóstico.</p>`;
-    }
+const tareasContainer = document.getElementById("det-container-tareas");
+tareasContainer.innerHTML = "";
+
+if (reg.Tareas && reg.Tareas.length > 0) {
+    reg.Tareas.forEach(t => {
+        const item = document.createElement("div");
+        // Ajuste de contenedor: Fondo y borde dinámicos con transición suave
+        item.className = "flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800/40 transition-colors";
+        
+        item.innerHTML = `
+            <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-400 dark:text-slate-600'} text-sm transition-colors"></i>
+            <span class="text-xs ${t.hecho ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'} font-medium transition-colors">${t.texto}</span>
+        `;
+        tareasContainer.appendChild(item);
+    });
+} else {
+    // Texto de "No se asignaron tareas" con colores corregidos para modo claro y oscuro
+    tareasContainer.innerHTML = `<p class="text-[10px] text-slate-500 dark:text-slate-600 italic text-center py-4 transition-colors">No se asignaron tareas específicas en el diagnóstico.</p>`;
+}
 
     // Renderizar Fotos
     const fotoAntes = document.getElementById("det-foto-antes-container");
