@@ -269,11 +269,12 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 md:w-28 text-center">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Detalle</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 md:w-28 text-center transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Detalle</span>
                     <div class="flex justify-end md:justify-center">
-                        <button onclick="abrirModalDetalle('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-4 py-2 rounded-xl transition-all border border-slate-700 hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer shadow-lg shadow-black/20">
-                            Detalle
+                        <button onclick="abrirModalDetalle('${reg.ID_Registro}')" 
+                        class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer shadow-md shadow-slate-200 dark:shadow-black/20 transition-all active:scale-95">
+                        Detalle
                         </button>
                     </div>
                 </td>
