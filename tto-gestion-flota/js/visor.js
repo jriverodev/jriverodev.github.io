@@ -211,32 +211,34 @@ function renderizarVisor(datos) {
 
         let fila = `
             <tr class="block md:table-row ${colorFila} border-b border-slate-200 dark:border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-white dark:bg-transparent rounded-2xl md:rounded-none shadow-sm dark:shadow-none">
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 text-slate-400 dark:text-slate-500 font-mono text-[10px] font-bold border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
-                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">ID Registro</span>
-                    <span class="text-right md:text-left font-black tracking-widest">#${reg.ID_Registro}</span>
-                </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
-                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">Unidad</span>
-                    <div class="text-right md:text-left">
-                        <span class="font-black text-slate-900 dark:text-white tracking-widest font-mono block text-xs">${reg.ID_Unidad}</span>
-                        <span class="text-[9px] text-slate-400 dark:text-slate-500 block font-sans font-black uppercase tracking-[0.1em]">${reg.Marca}</span>
-                    </div>
-                </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20">
-                    <span class="md:hidden text-slate-400 dark:text-slate-500 uppercase text-[9px] font-black tracking-widest">Gerencia / Usuario</span>
-                    <div class="text-right md:text-left">
-                        <span class="text-slate-800 dark:text-white block font-black uppercase text-[10px] tracking-tight">${reg.Gerencia}</span>
-                        <span class="text-slate-400 dark:text-slate-500 block text-[9px] uppercase tracking-widest font-black">${reg.Usuario}</span>
-                    </div>
-                </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Flota</span>
-                    <span class="text-slate-400 font-black text-right md:text-left text-[10px] uppercase tracking-widest">${reg.Tipo_Flota}</span>
-                </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Ubicación</span>
-                    <span class="text-slate-300 font-black text-right md:text-left text-[10px] uppercase tracking-wider">${nombreTallerFinal}</span>
+             <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[10px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+              <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Registro</span>
+    
+              <span class="text-right md:text-left font-black tracking-widest text-slate-700 dark:text-slate-400 transition-colors">#${reg.ID_Registro}</span>
+             </td>
+
+                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Unidad</span>
+                    <div class="text-right md:text-left">
+                    <span class="font-black text-slate-900 dark:text-white tracking-widest font-mono block text-xs transition-colors">${reg.ID_Unidad}</span>
+                    <span class="text-[9px] text-slate-500 dark:text-slate-400 block font-sans font-black uppercase tracking-[0.1em] transition-colors">${reg.Marca}</span>
+                    </div>
+                </td>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Gerencia / Usuario</span>
+                    <div class="text-right md:text-left">
+                    <span class="text-slate-800 dark:text-white block font-black uppercase text-[10px] tracking-tight transition-colors">${reg.Gerencia}</span>
+                    <span class="text-slate-500 dark:text-slate-400 block text-[9px] uppercase tracking-widest font-black transition-colors">${reg.Usuario}</span>
+                    </div>
+                </td>
+                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Flota</span>
+                    <span class="text-slate-700 dark:text-slate-400 font-black text-right md:text-left text-[10px] uppercase tracking-widest transition-colors">${reg.Tipo_Flota}</span>
+                 </td>
+                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Ubicación</span>
+                    <span class="text-slate-800 dark:text-slate-300 font-black text-right md:text-left text-[10px] uppercase tracking-wider transition-colors">${nombreTallerFinal}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
