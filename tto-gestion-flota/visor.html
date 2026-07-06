@@ -266,17 +266,19 @@
                         <span class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1">Marca / Flota</span>
                         <span id="det-marca-flota" class="text-xs font-bold uppercase"></span>
                     </div>
-                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
-                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Fecha Ingreso</span>
-                        <span id="det-fecha-ingr" class="text-xs font-mono font-bold text-blue-400"></span>
+                    <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/60 transition-colors">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1 transition-colors">Fecha Ingreso</span>
+                        <span id="det-fecha-ingr" class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 transition-colors"></span>
                     </div>
-                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
-                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Fecha Salida</span>
-                        <span id="det-fecha-salida" class="text-xs font-mono font-bold text-emerald-400"></span>
+
+                    <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/60 transition-colors">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1 transition-colors">Fecha Salida</span>
+                        <span id="det-fecha-salida" class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 transition-colors"></span>
                     </div>
-                    <div class="bg-slate-950/40 p-3 rounded-2xl border border-slate-800/60">
-                        <span class="block text-[9px] uppercase font-black text-slate-500 mb-1">Responsable</span>
-                        <span id="det-usuario" class="text-xs font-bold uppercase truncate"></span>
+
+                    <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/60 transition-colors">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1 transition-colors">Responsable</span>
+                        <span id="det-usuario" class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase truncate block transition-colors"></span>
                     </div>
                 </div>
 
@@ -305,12 +307,15 @@
 
                         <div class="space-y-3">
                             <h4 class="text-[10px] uppercase font-black tracking-widest text-slate-400">Evidencias Fotográficas</h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-950 border border-slate-800 aspect-video flex items-center justify-center">
-                                    <span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO ANTES</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {/* Contenedor Foto Antes */}
+                                <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
+                                    <span class="text-[9px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-wider transition-colors">SIN FOTO ANTES</span>
                                 </div>
-                                <div id="det-foto-despues-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-950 border border-slate-800 aspect-video flex items-center justify-center">
-                                    <span class="text-[9px] font-black uppercase text-slate-600">SIN FOTO DESPUES</span>
+    
+                                {/* Contenedor Foto Después */}
+                                <div id="det-foto-despues-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
+                                    <span class="text-[9px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-wider transition-colors">SIN FOTO DESPUÉS</span>
                                 </div>
                             </div>
                         </div>
