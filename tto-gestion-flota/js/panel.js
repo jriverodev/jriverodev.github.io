@@ -298,39 +298,24 @@ function renderizarMatriz(datos) {
                         <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
                     </div>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/20 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance (%):</span>
-                    <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[12px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
-                    </div>
-                </td>
-
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
                     <div class="flex items-center justify-end md:justify-start">
                         <span class="font-mono text-[12px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
-
-
-                
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none md:w-40">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Estatus</span>
                     <div class="flex justify-end md:justify-start">
                         ${badgeEstatus}
                     </div>
                 </td>
-                
-
-
-                
-<td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
-    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1 block">Novedad</span>
-    <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
-        ${reg.Observaciones || 'Sin novedades registradas.'}
-    </p>
-</td>
-
+                <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
+                <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1 block">Novedad</span>
+                <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
+                ${reg.Observaciones || 'Sin novedades registradas.'}
+                </p>
+                </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Acciones</span>
                     <div class="flex gap-1.5 justify-end md:justify-center">
