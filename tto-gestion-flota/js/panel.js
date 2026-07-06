@@ -281,7 +281,7 @@ function renderizarMatriz(datos) {
         let filaHtml = `
             <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-200 dark:md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors shadow-sm dark:shadow-none">
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 text-slate-400 dark:text-slate-500 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">ID Registro:</span>
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">ID Registro:</span>
                     <span>${reg.ID_Registro}</span>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none">
@@ -298,14 +298,14 @@ function renderizarMatriz(datos) {
                         <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
                     </div>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none">
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none">
                     <span class="md:hidden text-[12px] uppercase font-bold text-slate-400">Avance (%):</span>
                     <div class="flex items-center justify-end md:justify-start">
                         <span class="font-mono text-[12px] font-black text-blue-400 bg-blue-950/50 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-800/30 md:border-none md:w-40">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Estatus</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none md:w-40">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Estatus</span>
                     <div class="flex justify-end md:justify-start">
                         ${badgeEstatus}
                     </div>
