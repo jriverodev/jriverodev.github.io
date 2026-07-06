@@ -261,13 +261,11 @@ function renderizarVisor(datos) {
                             </p>
                 </td>
 
-                
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Fechas</span>
                     <div class="text-right md:text-left font-mono text-[12px] font-black tracking-tighter">
                     <div class="text-blue-600 dark:text-blue-500/90"><i class="fa-solid fa-calendar-day text-[12px]"></i> ${reg.Fecha_Registro}</div>
-                ${reg.Fecha_Salida ? `<div class="text-emerald-600 dark:text-emerald-500/90 mt-0.5"><i class="fa-solid fa-circle-check text-[12px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+                    ${reg.Fecha_Salida ? `<div class="text-emerald-600 dark:text-emerald-500/90 mt-0.5"><i class="fa-solid fa-circle-check text-[12px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
                 </td>
 
