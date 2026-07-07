@@ -773,4 +773,4 @@ async function confirmarEliminarRegistro() {
         TTOCC_UI.error("Error de Red", "No se pudo completar la eliminación debido a un fallo de conexión.");
         modalContent.innerHTML = originalContentHtml;
     }
-}
+
