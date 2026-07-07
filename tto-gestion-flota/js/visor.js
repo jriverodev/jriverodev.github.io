@@ -210,8 +210,9 @@ function renderizarVisor(datos) {
         }
 
         let fila = `
-            <tr class="block md:table-row ${colorFila} border-b border-slate-200 dark:border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-white dark:bg-transparent rounded-2xl md:rounded-none shadow-sm dark:shadow-none">
-
+            <!--tr class="block md:table-row ${colorFila} border-b border-slate-200 dark:border-slate-800/20 transition-colors p-4 md:p-0 mb-4 md:mb-0 bg-white dark:bg-transparent rounded-2xl md:rounded-none shadow-sm dark:shadow-none"-->
+            <tr id="fila-${reg.ID_Registro}" 
+    class="block md:table-row ${colorFila} bg-white dark:bg-transparent md:bg-transparent border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
              <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[10px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
               <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Registro</span>
     
