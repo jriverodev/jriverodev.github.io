@@ -208,14 +208,14 @@ function renderizarVisor(datos) {
             badgeColor = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
             colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
         }*/
-        let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
+        let badgeColor = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-950/40";
 
         if (reg.Estatus === "En Proceso") {
-            badgeEstatus = `<span class="bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
+            badgeColor = `<span class="bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
             colorFila = "bg-blue-500/[0.02] dark:bg-blue-900/10 border-blue-500/10 dark:border-blue-500/20 hover:bg-blue-500/[0.05] dark:hover:bg-blue-900/20";
         } else if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Listo</span>`;
+            badgeColor = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Listo</span>`;
             colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
         } else if (reg.Estatus === "Por Atender") {
             colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
