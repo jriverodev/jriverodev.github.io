@@ -279,8 +279,9 @@ function renderizarMatriz(datos) {
         }
 
         let filaHtml = `
-            <tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-200 dark:md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors shadow-sm dark:shadow-none">
-                
+            <!--tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-200 dark:md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors shadow-sm dark:shadow-none"-->
+             <tr id="fila-${reg.ID_Registro}" 
+    class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">   
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Registro:</span>
                     <div class="text-right md:text-left">
