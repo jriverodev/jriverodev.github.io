@@ -244,17 +244,33 @@ function renderizarVisor(datos) {
                     <span class="text-slate-800 dark:text-slate-300 font-black text-right md:text-left text-[10px] uppercase tracking-wider transition-colors">${nombreTallerFinal}</span>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">
+                        Avance
+                    </span>
                     <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[12px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+                    <span class="font-mono text-[12px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded-md transition-colors">
+                        ${reg.Avance}%
+                    </span>
                     </div>
                 </td>
 
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
+                <!--td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Estatus</span>
                     <div class="text-right md:text-left">
                         <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${badgeColor}">${reg.Estatus}</span>
+                    </div>
+                </td-->
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">
+                        Estatus
+                    </span>
+    
+                    <div class="flex items-center justify-end md:justify-start">
+                    <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${badgeColor}">
+                        ${reg.Estatus}
+                    </span>
                     </div>
                 </td>
 
