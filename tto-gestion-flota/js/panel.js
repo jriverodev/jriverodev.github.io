@@ -322,12 +322,15 @@ function renderizarMatriz(datos) {
                 ${reg.Observaciones || 'Sin novedades registradas.'}
                 </p>
                 </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-400">Acciones</span>
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center transition-colors">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Acciones</span>
+    
                     <div class="flex gap-1.5 justify-end md:justify-center">
-                        <button onclick="abrirModalEditar('${reg.ID_Registro}')" class="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white p-1.5 rounded-lg transition-all border border-slate-700/60 hover:border-blue-500 shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold" title="Planificación y Control Avanzado">
-                            <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
-                        </button>
+                    <button onclick="abrirModalEditar('${reg.ID_Registro}')" 
+                      class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95" 
+                        title="Planificación y Control Avanzado">
+                        <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
+                    </button>
                     </div>
                 </td>
             </tr>
