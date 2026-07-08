@@ -1,0 +1,31 @@
+[changelog]
+header = """
+# Historial de Cambios — TTOCC System\n
+Todos los cambios notables en este proyecto serán documentados automáticamente en este archivo.\n
+"""
+body = """
+{% if version %}\
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## [Próxima Versión]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.scope %}**{{ commit.scope }}**: {% endif %}{{ commit.message | upper_first }} ({{ commit.id | truncate(length=7, end="") }})\
+    {% endfor %}
+{% endfor %}\n
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+commit_parsers = [
+    { message = "^feat", group = "🚀 Nuevas Características" },
+    { message = "^fix", group = "🛠️ Corrección de Errores" },
+    { message = "^style", group = "🎨 Diseño y UI" },
+    { message = "^doc", group = "📑 Documentación" },
+    { message = ".*", group = "⚙️ Otros Cambios" },
+]
