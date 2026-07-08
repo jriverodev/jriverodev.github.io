@@ -13,20 +13,28 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
         .stats-card { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
-    <div id="app" class="max-w-xl mx-auto min-h-screen pb-40 flex flex-col justify-between">
+    <div id="app" class="max-w-xl mx-auto min-h-screen pb-24 flex flex-col justify-between relative">
         
+        <div class="absolute top-6 right-6 z-40">
+            <button @click="menuAcciones = true" class="bg-white text-slate-700 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all text-xl border border-slate-100">
+                ⚙️
+            </button>
+        </div>
+
         <div>
-            <section v-if="trabajadores.length > 0" class="p-6">
-                <div class="flex justify-between items-center mb-4 gap-2">
-                    <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2">
-                        <button @click="cambiarDia(-1)" class="p-2 text-indigo-600">◀</button>
-                        <input type="date" v-model="fechaSeleccionada" class="bg-transparent py-2 rounded-xl text-sm font-bold text-indigo-600 border-none focus:ring-0">
-                        <button @click="cambiarDia(1)" class="p-2 text-indigo-600">▶</button>
+            <section v-if="trabajadores.length > 0" class="p-6 pr-20">
+                <div class="flex flex-col mb-4 gap-2">
+                    <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2 w-fit">
+                        <button @click="cambiarDia(-1)" class="p-2 text-indigo-600 font-bold">◀</button>
+                        <input type="date" v-model="fechaSeleccionada" class="bg-transparent py-2 rounded-xl text-sm font-bold text-indigo-600 border-none focus:ring-0 cursor-pointer">
+                        <button @click="cambiarDia(1)" class="p-2 text-indigo-600 font-bold">▶</button>
                     </div>
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right flex-1">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
                         {{ fechaLegible }}
                         <span v-if="isSyncing" class="ml-2 animate-spin inline-block">⏳</span>
                         <span v-else-if="lastSync" class="ml-2 opacity-50 text-[8px]">Sync: {{ lastSync }}</span>
@@ -70,7 +78,7 @@
                     </button>
                     <button v-if="filtroArea !== 'Todos'" 
                         @click="marcarAreaPresente" 
-                        class="px-5 py-2 rounded-full text-xs font-bold bg-emerald-500 text-white whitespace-nowrap shadow-lg shadow-emerald-100 animate-pulse">
+                        class="px-5 py-2 rounded-full text-xs font-bold bg-emerald-500 text-white whitespace-nowrap shadow-lg shadow-emerald-100">
                         ✅ Marcar todo {{ filtroArea }}
                     </button>
                 </div>
@@ -118,7 +126,7 @@
                     <div class="text-6xl mb-6">📁</div>
                     <h3 class="text-xl font-black text-slate-800 mb-2">Sin base de trabajadores</h3>
                     <p class="text-slate-400 text-sm mb-8">Importe el archivo Excel para comenzar el control.</p>
-                    <label class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold cursor-pointer shadow-xl shadow-indigo-100 block">
+                    <label class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold cursor-pointer shadow-xl shadow-indigo-100 block text-center">
                         Cargar Plantilla
                         <input type="file" @change="importar" class="hidden">
                     </label>
@@ -132,36 +140,42 @@
                 Desarrollado por <span class="text-indigo-600 font-extrabold">RIVEROJDU</span>
             </p>
             <p class="text-[8px] text-slate-400 font-medium mt-0.5 opacity-60">
-                &copy; {{ new Date().getFullYear() }} TTOCC Asistencia • Todos los derechos reservados
+                &copy; {{ new Date().getFullYear() }} Nexus Asistencia • Todos los derechos reservados
             </p>
         </footer>
 
-        <nav class="fixed bottom-6 left-6 right-6 flex gap-2">
-            <button @click="exportarExcel" class="flex-1 bg-emerald-500 text-white py-5 rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
-                📊
-            </button>
-            <button @click="sincronizarGoogleSheets" class="flex-1 bg-indigo-600 text-white py-5 rounded-[1.8rem] flex items-center justify-center shadow-2xl active:scale-95 transition-all text-xl">
-                ☁️
-            </button>
-            <button @click="menuConfig = true" class="flex-1 bg-white border border-slate-100 text-slate-400 py-5 rounded-[1.8rem] flex items-center justify-center active:scale-95 transition-all text-xl shadow-lg">
-                ⚙️
-            </button>
-        </nav>
+        <div v-if="menuAcciones" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuAcciones = false">
+            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-black text-slate-800">Acciones de Datos</h3>
+                    <button @click="menuAcciones = false" class="text-slate-400 text-xl font-bold p-2">✕</button>
+                </div>
+                <div class="space-y-3">
+                    <button @click="exportarExcel(); menuAcciones = false" class="w-full bg-emerald-500 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 active:scale-95 transition-all font-bold text-sm">
+                        <span>📊</span> Exportar Reporte Local (.xlsx)
+                    </button>
+                    <button @click="sincronizarGoogleSheets(); menuAcciones = false" class="w-full bg-indigo-600 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 active:scale-95 transition-all font-bold text-sm">
+                        <span>☁️</span> Sincronizar en la Nube (Sheets)
+                    </button>
+                    <button @click="menuConfig = true; menuAcciones = false" class="w-full bg-slate-100 text-slate-700 py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all font-bold text-sm">
+                        <span>🔧</span> Configurar URL Web App
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuConfig = false">
+            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-2xl font-black text-slate-800">Configuración</h3>
                     <button @click="menuConfig = false" class="text-slate-400 text-2xl">✕</button>
                 </div>
-
                 <div class="space-y-4">
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Google Sheet Script URL</label>
                         <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec"
                                class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
                     </div>
-
                     <div class="pt-4 space-y-3">
                         <button @click="guardarConfig" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all">
                             Guardar Cambios
@@ -173,8 +187,8 @@
                 </div>
             </div>
         </div>
-    </div>
 
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
