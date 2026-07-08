@@ -1,0 +1,46 @@
+name: Generate Changelog
+
+on:
+  push:
+    branches:
+      - main
+    # Evita bucles infinitos: no lances el workflow si el commit lo hizo el propio bot del changelog
+    paths-ignore:
+      - 'CHANGELOG.md'
+
+# Otorga permisos explícitos de escritura para que el workflow pueda modificar y subir archivos
+permissions:
+  contents: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Trae todo el historial de commits obligatorio para git-cliff
+
+      - name: Generate Changelog Based on Commits
+        uses: orhun/git-cliff-action@v3 # Actualizado a la última versión estable v3
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+
+      - name: Commit and Push Changes
+        run: |
+          # Configura el usuario del bot nativo de GitHub Actions
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Verifica si el archivo CHANGELOG.md realmente cambió para evitar commits vacíos
+          if git status --porcelain | grep -q "CHANGELOG.md"; then
+            echo "Detectados cambios en CHANGELOG.md. Procediendo con el commit..."
+            git add CHANGELOG.md
+            git commit -m "docs(changelog): actualizar historial de cambios automatizado [skip ci]"
+            git push origin main
+          else
+            echo "El CHANGELOG.md ya está actualizado. Nada que subir."
+          fi
