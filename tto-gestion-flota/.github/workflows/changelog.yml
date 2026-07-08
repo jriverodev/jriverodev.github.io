@@ -3,11 +3,9 @@ name: Generate Changelog
 on:
   push:
     branches: [ main ]
-    # Evita bucles infinitos: no lances el workflow si el commit lo hizo el propio bot del changelog
     paths-ignore:
       - 'tto-gestion-flota/CHANGELOG.md'
 
-# Otorga permisos explícitos de escritura para que el workflow pueda modificar y subir archivos
 permissions:
   contents: write
 
@@ -18,28 +16,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Trae todo el historial de commits obligatorio para git-cliff
+          fetch-depth: 0
+          persist-credentials: true # <- necesario para que git push desde la Action funcione
 
       - name: Generate Changelog Based on Commits
-        uses: orhun/git-cliff-action@v3 # Actualizado a la última versión estable v3
+        uses: orhun/git-cliff-action@v3
         with:
           config: tto-gestion-flota/cliff.toml
           args: --verbose
         env:
           OUTPUT: tto-gestion-flota/CHANGELOG.md
 
+      - name: Debug: show generated file and git status
+        run: |
+          echo "=== Lista de archivos tto-gestion-flota ==="
+          ls -la tto-gestion-flota || true
+          echo "=== Mostrar CHANGELOG si existe ==="
+          if [ -f tto-gestion-flota/CHANGELOG.md ]; then
+            echo "---- tto-gestion-flota/CHANGELOG.md ----"
+            sed -n '1,200p' tto-gestion-flota/CHANGELOG.md || true
+            echo "---- fin ----"
+          else
+            echo "No existe tto-gestion-flota/CHANGELOG.md"
+          fi
+          echo "=== git status ==="
+          git status --porcelain || true
+          git -c user.email="github-actions[bot]@users.noreply.github.com" -c user.name="github-actions[bot]" status
+
       - name: Commit and Push Changes
         run: |
-          # Configura el usuario del bot nativo de GitHub Actions
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
-          # Verifica si el archivo CHANGELOG.md realmente cambió para evitar commits vacíos
           if git status --porcelain | grep -q "tto-gestion-flota/CHANGELOG.md"; then
             echo "Detectados cambios en tto-gestion-flota/CHANGELOG.md. Procediendo con el commit..."
             git add tto-gestion-flota/CHANGELOG.md
             git commit -m "docs(changelog): actualizar historial de cambios automatizado [skip ci]"
             git push origin main
           else
-            echo "El CHANGELOG.md ya está actualizado. Nada que subir."
+            echo "El CHANGELOG.md ya está actualizado o no existe. Nada que subir."
           fi
