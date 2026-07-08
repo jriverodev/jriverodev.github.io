@@ -16,6 +16,7 @@ createApp({
             searchQuery: '',
             filtroArea: 'Todos',
             menuConfig: false,
+            menuAcciones: false, // Variable reactiva para controlar el panel inferior de acciones
             isSyncing: false,
             lastSync: null
         }
@@ -23,7 +24,7 @@ createApp({
     mounted() {
         if (this.config.googleSheetUrl) {
             this.fetchFromSheets();
-            // Polling cada 30 segundos para actualización real-time entre dispositivos
+            // Sincronización pasiva en tiempo real (Polling cada 30 segundos)
             setInterval(() => this.fetchFromSheets(), 30000);
         }
     },
@@ -75,7 +76,7 @@ createApp({
             this.asistencias[this.fechaSeleccionada][cedula] = nuevoEstado;
             this.save();
 
-            // Sincronización automática
+            // Sincronización inmediata al cambiar estado
             const t = this.trabajadores.find(x => x.cedula === cedula);
             if (this.config.googleSheetUrl && t) {
                 await this.syncToSheets('attendance', {
@@ -219,6 +220,7 @@ createApp({
         guardarConfig() { 
             localStorage.setItem('nexus_final_cfg', JSON.stringify(this.config));
             this.menuConfig = false;
+            if (this.config.googleSheetUrl) this.fetchFromSheets();
         }
     }
 }).mount('#app');
