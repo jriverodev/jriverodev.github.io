@@ -8,7 +8,7 @@ createApp({
         return {
             // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
             usuariosAutorizados: {
-                "WILMAY GONZALEZ": "wg123",
+               "WILMAY GONZALEZ": "wg123",
                 "JOSE HURTADO": "jh456",
                 "CARLOS PAZ": "cp789"
             },
@@ -326,11 +326,12 @@ createApp({
                 didOpen: () => { Swal.showLoading(); }
             });
 
+            // CORRECCIÓN APLICADA AQUÍ: Enviar el operador actual de la sesión activa para firmar el lote
             const dataToSync = this.trabajadores.map(t => ({
                 ...t,
                 asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
                 fecha: this.fechaSeleccionada,
-                modificado_por: this.obtenerOperadorModifico(t.cedula) || 'SIN ESPECIFICAR'
+                modificado_por: this.operadorActual || 'SISTEMA'
             }));
 
             await this.syncToSheets('attendance', dataToSync);
@@ -368,8 +369,8 @@ createApp({
             });
         },
         save() {
-            localStorage.setItem('asistenciatp_workers', JSON.stringify(this.trabajadores));
-    localStorage.setItem('asistenciatp_attendance', JSON.stringify(this.asistencias));
+            localStorage.setItem('asistenciamem_workers', JSON.stringify(this.trabajadores));
+            localStorage.setItem('asistenciamem_attendance', JSON.stringify(this.asistencias));
         },
         async resetearDatos() {
             // Cuadro de diálogo de confirmación crítica de seguridad
