@@ -6,25 +6,37 @@ createApp({
         const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const savedConfig = JSON.parse(localStorage.getItem('nexus_final_cfg') || '{}');
         return {
+            // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
+            usuariosAutorizados: {
+                "ORLANDO VELAZQUEZ": "ov123",
+                "EDECIO QUERO": "eq456",
+                "MERVIN GUTIERREZ": "mg789"
+            },
+            operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
+            loginForm: {
+                operador: "",
+                password: "",
+                error: false
+            },
             trabajadores: JSON.parse(localStorage.getItem('nexus_workers') || localStorage.getItem('nexus_final_db') || '[]'),
+            // Estructura de asistencia: { "YYYY-MM-DD": { "CEDULA": { estado: true/false, modificado_por: "OPERADOR" } } }
             asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: '',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzP9eQEmgn_ZB7mtjwiQjzTwRasIYcjwnFTN50Hzr9XGNGbbbHxMgtU4cTiBM4Sb4yjCA/exec',
                 ...savedConfig
             },
             searchQuery: '',
             filtroArea: 'Todos',
             menuConfig: false,
-            menuAcciones: false, // Variable reactiva para controlar el panel inferior de acciones
+            menuAcciones: false, 
             isSyncing: false,
             lastSync: null
         }
     },
     mounted() {
-        if (this.config.googleSheetUrl) {
+        if (this.operadorActual && this.config.googleSheetUrl) {
             this.fetchFromSheets();
-            // Sincronización pasiva en tiempo real (Polling cada 30 segundos)
             setInterval(() => this.fetchFromSheets(), 30000);
         }
     },
@@ -49,7 +61,10 @@ createApp({
         },
         conteoPresentes() {
             const hoyAsis = this.asistencias[this.fechaSeleccionada] || {};
-            return this.trabajadores.filter(t => hoyAsis[t.cedula]).length;
+            return this.trabajadores.filter(t => {
+                const registro = hoyAsis[t.cedula];
+                return registro && (registro === true || registro.estado === true);
+            }).length;
         },
         conteoAusentes() { 
             return this.trabajadores.length - this.conteoPresentes; 
@@ -60,34 +75,82 @@ createApp({
         }
     },
     methods: {
+        confirmarIdentidad() {
+            const opSanitizado = this.loginForm.operador.toUpperCase().trim();
+            const passSanitizado = this.loginForm.password.toLowerCase().trim();
+
+            if (this.usuariosAutorizados[opSanitizado] && this.usuariosAutorizados[opSanitizado] === passSanitizado) {
+                this.operadorActual = opSanitizado;
+                sessionStorage.setItem("TTOCC_OPERADOR", opSanitizado);
+                this.loginForm.error = false;
+                this.loginForm.password = "";
+                
+                // Ejecutar sincronización inicial tras loguearse
+                if (this.config.googleSheetUrl) {
+                    this.fetchFromSheets();
+                }
+            } else {
+                this.loginForm.error = true;
+                this.loginForm.password = "";
+            }
+        },
+        cerrarSesion() {
+            sessionStorage.removeItem("TTOCC_OPERADOR");
+            this.operadorActual = null;
+            this.menuAcciones = false;
+        },
+        abrirMenuAcciones() {
+            const password = prompt("Por favor, introduce la clave de acceso de administrador para gestionar las acciones:");
+            if (password === "Raida1") {
+                this.menuAcciones = true;
+            } else if (password !== null) {
+                alert("❌ Clave incorrecta. Acceso denegado.");
+            }
+        },
         cambiarDia(delta) {
             const d = new Date(this.fechaSeleccionada + 'T12:00:00');
             d.setDate(d.getDate() + delta);
             this.fechaSeleccionada = d.toISOString().slice(0, 10);
         },
         estaPresente(cedula) {
-            return !!(this.asistencias[this.fechaSeleccionada] && this.asistencias[this.fechaSeleccionada][cedula]);
+            const hoyAsis = this.asistencias[this.fechaSeleccionada] || {};
+            const registro = hoyAsis[cedula];
+            if (!registro) return false;
+            return registro === true || registro.estado === true;
+        },
+        obtenerOperadorModifico(cedula) {
+            const hoyAsis = this.asistencias[this.fechaSeleccionada] || {};
+            const registro = hoyAsis[cedula];
+            if (registro && registro.modificado_por) return registro.modificado_por;
+            return null;
         },
         async toggleAsistencia(cedula) {
             if (!this.asistencias[this.fechaSeleccionada]) {
                 this.asistencias[this.fechaSeleccionada] = {};
             }
-            const nuevoEstado = !this.asistencias[this.fechaSeleccionada][cedula];
-            this.asistencias[this.fechaSeleccionada][cedula] = nuevoEstado;
+            
+            const estadoActual = this.estaPresente(cedula);
+            const nuevoEstado = !estadoActual;
+            
+            // Se encapsula el estado junto con el Operador Auditor
+            this.asistencias[this.fechaSeleccionada][cedula] = {
+                estado: nuevoEstado,
+                modificado_por: this.operadorActual
+            };
             this.save();
 
-            // Sincronización inmediata al cambiar estado
             const t = this.trabajadores.find(x => x.cedula === cedula);
             if (this.config.googleSheetUrl && t) {
                 await this.syncToSheets('attendance', {
                     ...t,
                     fecha: this.fechaSeleccionada,
-                    asistencia: nuevoEstado ? 'PRESENTE' : 'AUSENTE'
+                    asistencia: nuevoEstado ? 'PRESENTE' : 'AUSENTE',
+                    modificado_por: this.operadorActual // Columna enviada a la nube
                 });
             }
         },
         marcarAreaPresente() {
-            if(this.filtroArea === 'Todos') return;
+            if(this.filtroArea === 'Todos' || !this.operadorActual) return;
 
             const confirmacion = confirm(`¿Marcar como PRESENTES a todos los trabajadores de ${this.filtroArea} para el día ${this.fechaSeleccionada}?`);
 
@@ -98,11 +161,15 @@ createApp({
                 const aSincronizar = [];
                 this.trabajadores.forEach(t => {
                     if(t.area === this.filtroArea) {
-                        this.asistencias[this.fechaSeleccionada][t.cedula] = true;
+                        this.asistencias[this.fechaSeleccionada][t.cedula] = {
+                            estado: true,
+                            modificado_por: this.operadorActual
+                        };
                         aSincronizar.push({
                             ...t,
                             fecha: this.fechaSeleccionada,
-                            asistencia: 'PRESENTE'
+                            asistencia: 'PRESENTE',
+                            modificado_por: this.operadorActual
                         });
                     }
                 });
@@ -111,7 +178,6 @@ createApp({
                 if (this.config.googleSheetUrl && aSincronizar.length > 0) {
                     this.syncToSheets('attendance', aSincronizar);
                 }
-
                 alert(`Personal de ${this.filtroArea} actualizado.`);
             }
         },
@@ -137,7 +203,7 @@ createApp({
             reader.readAsArrayBuffer(e.target.files[0]);
         },
         async fetchFromSheets() {
-            if (!this.config.googleSheetUrl || this.isSyncing) return;
+            if (!this.config.googleSheetUrl || this.isSyncing || !this.operadorActual) return;
             this.isSyncing = true;
             try {
                 const res = await fetch(`${this.config.googleSheetUrl}?action=all`);
@@ -151,7 +217,10 @@ createApp({
                     const formatted = {};
                     data.attendance.forEach(a => {
                         if (!formatted[a.fecha]) formatted[a.fecha] = {};
-                        formatted[a.fecha][a.cedula] = (a.asistencia === 'PRESENTE');
+                        formatted[a.fecha][a.cedula] = {
+                            estado: (a.asistencia === 'PRESENTE'),
+                            modificado_por: a.modificado_por || 'SISTEMA'
+                        };
                     });
                     this.asistencias = formatted;
                 }
@@ -185,17 +254,25 @@ createApp({
             const dataToSync = this.trabajadores.map(t => ({
                 ...t,
                 asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
-                fecha: this.fechaSeleccionada
+                fecha: this.fechaSeleccionada,
+                modificado_por: this.obtenerOperadorModifico(t.cedula) || 'SIN ESPECIFICAR'
             }));
 
             await this.syncToSheets('attendance', dataToSync);
             alert("✅ Sincronización completa");
         },
         exportarExcel() {
+            // Se añade la columna 'modificado_por' explícitamente en el mapa del excel
             const dataExport = this.trabajadores.map(t => ({
-                ...t,
-                asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
-                fecha: this.fechaSeleccionada
+                Fecha: this.fechaSeleccionada,
+                Cedula: t.cedula,
+                Nombre: t.nombre,
+                Cargo: t.cargo,
+                Area: t.area,
+                Ubicacion: t.ubicacion,
+                Nomina: t.nomina,
+                Asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
+                modificado_por: this.obtenerOperadorModifico(t.cedula) || 'SIN MODIFICACIÓN'
             }));
             const ws = XLSX.utils.json_to_sheet(dataExport);
             const wb = XLSX.utils.book_new();
