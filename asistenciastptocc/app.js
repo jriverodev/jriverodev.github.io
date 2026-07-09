@@ -18,9 +18,9 @@ createApp({
                 password: "",
                 error: false
             },
-            trabajadores: JSON.parse(localStorage.getItem('nexus_workers') || localStorage.getItem('nexus_final_db') || '[]'),
+            trabajadores: JSON.parse(localStorage.getItem('asistenciatp_workers') || '[]'),
             // Estructura de asistencia: { "YYYY-MM-DD": { "CEDULA": { estado: true/false, modificado_por: "OPERADOR" } } }
-            asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
+            asistencias: JSON.parse(localStorage.getItem('asistenciatp_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
                 googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzP9eQEmgn_ZB7mtjwiQjzTwRasIYcjwnFTN50Hzr9XGNGbbbHxMgtU4cTiBM4Sb4yjCA/exec',
@@ -368,8 +368,8 @@ createApp({
             });
         },
         save() {
-            localStorage.setItem('nexus_workers', JSON.stringify(this.trabajadores));
-            localStorage.setItem('nexus_attendance', JSON.stringify(this.asistencias));
+            localStorage.setItem('asistenciatp_workers', JSON.stringify(this.trabajadores));
+    localStorage.setItem('asistenciatp_attendance', JSON.stringify(this.asistencias));
         },
         async resetearDatos() {
             // Cuadro de diálogo de confirmación crítica de seguridad
@@ -387,9 +387,8 @@ createApp({
             if (resultado.isConfirmed) {
                 this.trabajadores = [];
                 this.asistencias = {};
-                localStorage.removeItem('nexus_workers');
-                localStorage.removeItem('nexus_attendance');
-                localStorage.removeItem('nexus_final_db');
+                localStorage.removeItem('asistenciatp_workers');
+                localStorage.removeItem('asistenciatp_attendance');
                 
                 await Swal.fire({
                     title: 'Datos Eliminados',
