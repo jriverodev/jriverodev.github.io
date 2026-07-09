@@ -4,13 +4,13 @@ createApp({
     data() {
         const now = new Date();
         const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const savedConfig = JSON.parse(localStorage.getItem('nexus_final_cfg') || '{}');
+        const savedConfig = JSON.parse(localStorage.getItem('ttoccmem_final_cfg') || '{}');
         return {
             // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
             usuariosAutorizados: {
-                "ORLANDO VELAZQUEZ": "ov123",
-                "EDECIO QUERO": "eq456",
-                "MERVIN GUTIERREZ": "mg789"
+                "WILMAY GONZALEZ": "wg123",
+                "JOSE HURTADO": "jh456",
+                "CARLOS PAZ": "cp789"
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
@@ -18,9 +18,9 @@ createApp({
                 password: "",
                 error: false
             },
-            trabajadores: JSON.parse(localStorage.getItem('asistenciatp_workers') || '[]'),
+            trabajadores: JSON.parse(localStorage.getItem('asistenciamem_workers') || '[]'),
             // Estructura de asistencia: { "YYYY-MM-DD": { "CEDULA": { estado: true/false, modificado_por: "OPERADOR" } } }
-            asistencias: JSON.parse(localStorage.getItem('asistenciatp_attendance') || '{}'),
+            asistencias: JSON.parse(localStorage.getItem('asistenciamem_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
                 googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzP9eQEmgn_ZB7mtjwiQjzTwRasIYcjwnFTN50Hzr9XGNGbbbHxMgtU4cTiBM4Sb4yjCA/exec',
@@ -387,8 +387,8 @@ createApp({
             if (resultado.isConfirmed) {
                 this.trabajadores = [];
                 this.asistencias = {};
-                localStorage.removeItem('asistenciatp_workers');
-                localStorage.removeItem('asistenciatp_attendance');
+                localStorage.removeItem('asistenciamem_workers');
+                localStorage.removeItem('asistenciamem_attendance');
                 
                 await Swal.fire({
                     title: 'Datos Eliminados',
