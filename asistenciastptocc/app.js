@@ -326,11 +326,12 @@ createApp({
                 didOpen: () => { Swal.showLoading(); }
             });
 
+            // CORRECCIÓN APLICADA AQUÍ: Enviar el operador actual de la sesión activa para firmar el lote
             const dataToSync = this.trabajadores.map(t => ({
                 ...t,
                 asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
                 fecha: this.fechaSeleccionada,
-                modificado_por: this.obtenerOperadorModifico(t.cedula) || 'SIN ESPECIFICAR'
+                modificado_por: this.operadorActual || 'SISTEMA'
             }));
 
             await this.syncToSheets('attendance', dataToSync);
@@ -369,7 +370,7 @@ createApp({
         },
         save() {
             localStorage.setItem('asistenciatp_workers', JSON.stringify(this.trabajadores));
-    localStorage.setItem('asistenciatp_attendance', JSON.stringify(this.asistencias));
+            localStorage.setItem('asistenciatp_attendance', JSON.stringify(this.asistencias));
         },
         async resetearDatos() {
             // Cuadro de diálogo de confirmación crítica de seguridad
