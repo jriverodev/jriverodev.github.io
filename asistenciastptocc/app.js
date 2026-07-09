@@ -4,7 +4,7 @@ createApp({
     data() {
         const now = new Date();
         const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const savedConfig = JSON.parse(localStorage.getItem('nexus_final_cfg') || '{}');
+        const savedConfig = JSON.parse(localStorage.getItem('asistenciatp_final_cfg') || '{}');
         return {
             // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
             usuariosAutorizados: {
@@ -389,6 +389,7 @@ createApp({
                 this.asistencias = {};
                 localStorage.removeItem('asistenciatp_workers');
                 localStorage.removeItem('asistenciatp_attendance');
+                localStorage.removeItem('asistenciatp_final_db');
                 
                 await Swal.fire({
                     title: 'Datos Eliminados',
@@ -400,7 +401,7 @@ createApp({
             }
         },
         guardarConfig() { 
-            localStorage.setItem('nexus_final_cfg', JSON.stringify(this.config));
+            localStorage.setItem('asistenciatp_final_cfg', JSON.stringify(this.config));
             this.menuConfig = false;
             if (this.config.googleSheetUrl) this.fetchFromSheets();
             
