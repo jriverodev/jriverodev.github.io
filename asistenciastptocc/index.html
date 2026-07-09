@@ -20,118 +20,213 @@
 <body class="bg-[#f8fafc] text-slate-900">
     <div id="app" class="max-w-xl mx-auto min-h-screen pb-24 flex flex-col justify-between relative">
         
-        <div class="absolute top-6 right-6 z-40">
-            <button @click="menuAcciones = true" class="bg-white text-slate-700 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all text-xl border border-slate-100">
-                ⚙️
-            </button>
+        <div v-if="!operadorActual" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+            <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+                <div class="text-center mb-6">
+                    <div class="text-4xl mb-2">🔐</div>
+                    <h3 class="text-2xl font-black text-slate-800">Identificación</h3>
+                    <p class="text-slate-400 text-xs mt-1">Acceso exclusivo para operadores TTOCC</p>
+                </div>
+                
+                <form @submit.prevent="confirmarIdentidad" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Operador</label>
+                        <select v-model="loginForm.operador" required class="w-full p-4 rounded-2xl bg-slate-50 border-none text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer">
+                            <option value="" disabled selected hidden>Seleccione Operador...</option>
+                            <option value="ORLANDO VELAZQUEZ">ORLANDO VELAZQUEZ</option>
+                            <option value="EDECIO QUERO">EDECIO QUERO</option>
+                            <option value="MERVIN GUTIERREZ">MERVIN GUTIERREZ</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Contraseña</label>
+                        <input v-model="loginForm.password" type="password" required maxlength="5" pattern="[a-z0-9]{5}" placeholder="•••••" title="La contraseña debe tener exactamente 5 caracteres alfanuméricos en minúsculas."
+                               class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono tracking-widest text-center">
+                    </div>
+
+                    <div v-if="loginForm.error" class="bg-red-50 text-red-500 text-xs font-bold p-3 rounded-xl text-center">
+                        ⚠️ Clave o usuario incorrecto
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all text-sm">
+                        Ingresar al Sistema
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <div>
-            <section v-if="trabajadores.length > 0" class="p-6 pr-20">
-                <div class="flex flex-col mb-4 gap-2">
-                    <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2 w-fit">
-                        <button @click="cambiarDia(-1)" class="p-2 text-indigo-600 font-bold">◀</button>
-                        <input type="date" v-model="fechaSeleccionada" class="bg-transparent py-2 rounded-xl text-sm font-bold text-indigo-600 border-none focus:ring-0 cursor-pointer">
-                        <button @click="cambiarDia(1)" class="p-2 text-indigo-600 font-bold">▶</button>
-                    </div>
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
-                        {{ fechaLegible }}
-                        <span v-if="isSyncing" class="ml-2 animate-spin inline-block">⏳</span>
-                        <span v-else-if="lastSync" class="ml-2 opacity-50 text-[8px]">Sync: {{ lastSync }}</span>
-                    </p>
-                </div>
+        <div v-if="operadorActual">
+            <div class="absolute top-6 right-6 z-40">
+                <button @click="abrirMenuAcciones" class="bg-white text-slate-700 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all text-xl border border-slate-100">
+                    ⚙️
+                </button>
+            </div>
 
-                <div class="stats-card rounded-[2.5rem] p-6 text-white shadow-2xl shadow-indigo-200 mb-6">
-                    <div class="flex justify-between items-start mb-4">
+            <div>
+                <section v-if="trabajadores.length > 0" class="p-6 pr-20">
+                    <div class="flex flex-col mb-4 gap-2">
+                        <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2 w-fit">
+                            <button @click="cambiarDia(-1)" class="p-2 text-indigo-600 font-bold">◀</button>
+                            <input type="date" v-model="fechaSeleccionada" class="bg-transparent py-2 rounded-xl text-sm font-bold text-indigo-600 border-none focus:ring-0 cursor-pointer">
+                            <button @click="cambiarDia(1)" class="p-2 text-indigo-600 font-bold">▶</button>
+                        </div>
+                        <div class="flex flex-col gap-0.5 mt-1">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                {{ fechaLegible }}
+                                <span v-if="isSyncing" class="ml-2 animate-spin inline-block">⏳</span>
+                                <span v-else-if="lastSync" class="ml-2 opacity-50 text-[8px]">Sync: {{ lastSync }}</span>
+                            </p>
+                            <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-wider">
+                                👤 Operador: {{ operadorActual }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="stats-card rounded-[2.5rem] p-6 text-white shadow-2xl shadow-indigo-200 mb-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-indigo-100 text-xs font-bold uppercase tracking-widest">Asistencia Total</p>
+                                <h2 class="text-4xl font-black">{{ porcentajeAsistencia }}%</h2>
+                            </div>
+                            <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md text-2xl">📈</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white/10 rounded-2xl p-3">
+                                <p class="text-[10px] uppercase font-bold opacity-70 text-indigo-100">Presentes</p>
+                                <p class="text-xl font-bold">{{ conteoPresentes }}</p>
+                            </div>
+                            <div class="bg-white/10 rounded-2xl p-3">
+                                <p class="text-[10px] uppercase font-bold opacity-70 text-indigo-100">Ausentes</p>
+                                <p class="text-xl font-bold">{{ conteoAusentes }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-5 h-2 w-full bg-white/20 rounded-full overflow-hidden">
+                            <div class="h-full bg-white transition-all duration-500" :style="{ width: porcentajeAsistencia + '%' }"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+                        <button @click="filtroArea = 'Todos'" 
+                                :class="filtroArea === 'Todos' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'"
+                                class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                            Todos
+                        </button>
+                        <button v-for="area in areas" :key="area" 
+                                @click="filtroArea = area"
+                                :class="filtroArea === area ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'"
+                                class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                            {{ area }}
+                        </button>
+                        <button v-if="filtroArea !== 'Todos'" 
+                            @click="marcarAreaPresente" 
+                            class="px-5 py-2 rounded-full text-xs font-bold bg-emerald-500 text-white whitespace-nowrap shadow-lg shadow-emerald-100">
+                            ✅ Marcar todo {{ filtroArea }}
+                        </button>
+                    </div>
+                </section>
+
+                <main class="px-6">
+                    <div class="relative mb-6" v-if="trabajadores.length > 0">
+                        <input v-model="searchQuery" type="text" placeholder="Buscar trabajador..." 
+                               class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 glass transition-all text-sm">
+                        <span class="absolute left-4 top-4 opacity-30 text-sm">🔍</span>
+                    </div>
+
+                    <div class="grid gap-3">
+                        <div v-for="t in filtrados" :key="t.cedula" 
+                             @click="toggleAsistencia(t.cedula)"
+                             :class="estaPresente(t.cedula) ? 'bg-indigo-600 border-indigo-500 scale-[0.98]' : 'bg-white border-white'"
+                             class="flex items-center p-5 rounded-[2rem] border-2 transition-all duration-200 cursor-pointer shadow-sm">
+                            
+                            <div class="flex-1">
+                                <p :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-800'" class="font-bold text-base tracking-tight mb-1" v-text="t.nombre"></p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span :class="estaPresente(t.cedula) ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.cargo"></span>
+                                    <span :class="estaPresente(t.cedula) ? 'bg-indigo-800/30 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.area"></span>
+                                    <span :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'" class="text-[9px] font-mono leading-relaxed">C.I. {{t.cedula}}</span>
+                                </div>
+                                
+                                <div class="mt-2 text-[8px] font-bold" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'" v-if="obtenerOperadorModifico(t.cedula)">
+                                    ✏️ Modificado por: {{ obtenerOperadorModifico(t.cedula) }}
+                                </div>
+
+                                <div v-if="t.ubicacion || t.nomina" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 opacity-80">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">📍</span>
+                                        <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.ubicacion"></span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">💳</span>
+                                        <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.nomina"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-if="estaPresente(t.cedula)" class="bg-white rounded-full p-1.5 ml-2 shadow-lg">
+                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="trabajadores.length === 0" class="text-center py-20 px-10">
+                        <div class="text-6xl mb-6">📁</div>
+                        <h3 class="text-xl font-black text-slate-800 mb-2">Sin base de trabajadores</h3>
+                        <p class="text-slate-400 text-sm mb-8">Importe el archivo Excel para comenzar el control.</p>
+                        <label class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold cursor-pointer shadow-xl shadow-indigo-100 block text-center">
+                            Cargar Plantilla
+                            <input type="file" @change="importar" class="hidden">
+                        </label>
+                    </div>
+                </main>
+            </div>
+
+            <div v-if="menuAcciones" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuAcciones = false">
+                <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl border border-slate-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-black text-slate-800">Acciones de Datos</h3>
+                        <button @click="menuAcciones = false" class="text-slate-400 text-xl font-bold p-2">✕</button>
+                    </div>
+                    <div class="space-y-3">
+                        <button @click="exportarExcel(); menuAcciones = false" class="w-full bg-emerald-500 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 active:scale-95 transition-all font-bold text-sm">
+                            <span>📊</span> Exportar Reporte Local (.xlsx)
+                        </button>
+                        <button @click="sincronizarGoogleSheets(); menuAcciones = false" class="w-full bg-indigo-600 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 active:scale-95 transition-all font-bold text-sm">
+                            <span>☁️</span> Sincronizar en la Nube (Sheets)
+                        </button>
+                        <button @click="menuConfig = true; menuAcciones = false" class="w-full bg-slate-100 text-slate-700 py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all font-bold text-sm">
+                            <span>🔧</span> Configurar URL Web App
+                        </button>
+                        <button @click="cerrarSesion" class="w-full bg-red-50 text-red-500 py-3 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all font-bold text-xs">
+                            🚪 Cerrar Sesión del Operador
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuConfig = false">
+                <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-slate-800">Configuración</h3>
+                        <button @click="menuConfig = false" class="text-slate-400 text-2xl">✕</button>
+                    </div>
+                    <div class="space-y-4">
                         <div>
-                            <p class="text-indigo-100 text-xs font-bold uppercase tracking-widest">Asistencia Total</p>
-                            <h2 class="text-4xl font-black">{{ porcentajeAsistencia }}%</h2>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Google Sheet Script URL</label>
+                            <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec"
+                                   class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
                         </div>
-                        <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md text-2xl">📈</div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white/10 rounded-2xl p-3">
-                            <p class="text-[10px] uppercase font-bold opacity-70 text-indigo-100">Presentes</p>
-                            <p class="text-xl font-bold">{{ conteoPresentes }}</p>
-                        </div>
-                        <div class="bg-white/10 rounded-2xl p-3">
-                            <p class="text-[10px] uppercase font-bold opacity-70 text-indigo-100">Ausentes</p>
-                            <p class="text-xl font-bold">{{ conteoAusentes }}</p>
-                        </div>
-                    </div>
-                    <div class="mt-5 h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                        <div class="h-full bg-white transition-all duration-500" :style="{ width: porcentajeAsistencia + '%' }"></div>
-                    </div>
-                </div>
-
-                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
-                    <button @click="filtroArea = 'Todos'" 
-                            :class="filtroArea === 'Todos' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'"
-                            class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
-                        Todos
-                    </button>
-                    <button v-for="area in areas" :key="area" 
-                            @click="filtroArea = area"
-                            :class="filtroArea === area ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'"
-                            class="px-5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-sm">
-                        {{ area }}
-                    </button>
-                    <button v-if="filtroArea !== 'Todos'" 
-                        @click="marcarAreaPresente" 
-                        class="px-5 py-2 rounded-full text-xs font-bold bg-emerald-500 text-white whitespace-nowrap shadow-lg shadow-emerald-100">
-                        ✅ Marcar todo {{ filtroArea }}
-                    </button>
-                </div>
-            </section>
-
-            <main class="px-6">
-                <div class="relative mb-6" v-if="trabajadores.length > 0">
-                    <input v-model="searchQuery" type="text" placeholder="Buscar trabajador..." 
-                           class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-indigo-500 glass transition-all text-sm">
-                    <span class="absolute left-4 top-4 opacity-30 text-sm">🔍</span>
-                </div>
-
-                <div class="grid gap-3">
-                    <div v-for="t in filtrados" :key="t.cedula" 
-                         @click="toggleAsistencia(t.cedula)"
-                         :class="estaPresente(t.cedula) ? 'bg-indigo-600 border-indigo-500 scale-[0.98]' : 'bg-white border-white'"
-                         class="flex items-center p-5 rounded-[2rem] border-2 transition-all duration-200 cursor-pointer shadow-sm">
-                        
-                        <div class="flex-1">
-                            <p :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-800'" class="font-bold text-base tracking-tight mb-1" v-text="t.nombre"></p>
-                            <div class="flex flex-wrap gap-2">
-                                <span :class="estaPresente(t.cedula) ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.cargo"></span>
-                                <span :class="estaPresente(t.cedula) ? 'bg-indigo-800/30 text-white' : 'bg-slate-100 text-slate-500'" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest" v-text="t.area"></span>
-                                <span :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'" class="text-[9px] font-mono leading-relaxed">C.I. {{t.cedula}}</span>
-                            </div>
-                            <div v-if="t.ubicacion || t.nomina" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 opacity-80">
-                                <div class="flex items-center gap-1">
-                                    <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">📍</span>
-                                    <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.ubicacion"></span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="text-[7px] font-black uppercase tracking-tighter" :class="estaPresente(t.cedula) ? 'text-indigo-200' : 'text-slate-400'">💳</span>
-                                    <span class="text-[9px] font-bold" :class="estaPresente(t.cedula) ? 'text-white' : 'text-slate-600'" v-text="t.nomina"></span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div v-if="estaPresente(t.cedula)" class="bg-white rounded-full p-1.5 ml-2 shadow-lg">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M5 13l4 4L19 7"></path></svg>
+                        <div class="pt-4 space-y-3">
+                            <button @click="guardarConfig" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all">
+                                Guardar Cambios
+                            </button>
+                            <button @click="resetearDatos" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold active:scale-95 transition-all text-sm">
+                                Limpiar Base de Datos
+                            </button>
                         </div>
                     </div>
                 </div>
-
-                <div v-if="trabajadores.length === 0" class="text-center py-20 px-10">
-                    <div class="text-6xl mb-6">📁</div>
-                    <h3 class="text-xl font-black text-slate-800 mb-2">Sin base de trabajadores</h3>
-                    <p class="text-slate-400 text-sm mb-8">Importe el archivo Excel para comenzar el control.</p>
-                    <label class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold cursor-pointer shadow-xl shadow-indigo-100 block text-center">
-                        Cargar Plantilla
-                        <input type="file" @change="importar" class="hidden">
-                    </label>
-                </div>
-            </main>
+            </div>
         </div>
 
         <footer class="mt-12 mb-4 text-center px-6">
@@ -143,50 +238,6 @@
                 &copy; {{ new Date().getFullYear() }} Nexus Asistencia • Todos los derechos reservados
             </p>
         </footer>
-
-        <div v-if="menuAcciones" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuAcciones = false">
-            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl border border-slate-100">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-black text-slate-800">Acciones de Datos</h3>
-                    <button @click="menuAcciones = false" class="text-slate-400 text-xl font-bold p-2">✕</button>
-                </div>
-                <div class="space-y-3">
-                    <button @click="exportarExcel(); menuAcciones = false" class="w-full bg-emerald-500 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 active:scale-95 transition-all font-bold text-sm">
-                        <span>📊</span> Exportar Reporte Local (.xlsx)
-                    </button>
-                    <button @click="sincronizarGoogleSheets(); menuAcciones = false" class="w-full bg-indigo-600 text-white py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 active:scale-95 transition-all font-bold text-sm">
-                        <span>☁️</span> Sincronizar en la Nube (Sheets)
-                    </button>
-                    <button @click="menuConfig = true; menuAcciones = false" class="w-full bg-slate-100 text-slate-700 py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all font-bold text-sm">
-                        <span>🔧</span> Configurar URL Web App
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuConfig = false">
-            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-black text-slate-800">Configuración</h3>
-                    <button @click="menuConfig = false" class="text-slate-400 text-2xl">✕</button>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Google Sheet Script URL</label>
-                        <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec"
-                               class="w-full p-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-mono">
-                    </div>
-                    <div class="pt-4 space-y-3">
-                        <button @click="guardarConfig" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all">
-                            Guardar Cambios
-                        </button>
-                        <button @click="resetearDatos" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold active:scale-95 transition-all text-sm">
-                            Limpiar Base de Datos
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
     </div>
     <script src="app.js"></script>
