@@ -23,7 +23,7 @@ createApp({
             asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzP9eQEmgn_ZB7mtjwiQjzTwRasIYcjwnFTN50Hzr9XGNGbbbHxMgtU4cTiBM4Sb4yjCA/exec',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbw0Z3-EtLTWgW9aQvwhYfyx6BqnViK8K8gn3HiYc6g7VEZmrQH77-Iup8Ik-qd7sC1hEw/exec',
                 ...savedConfig
             },
             searchQuery: '',
