@@ -23,7 +23,7 @@ createApp({
             asistencias: JSON.parse(localStorage.getItem('nexus_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbw0Z3-EtLTWgW9aQvwhYfyx6BqnViK8K8gn3HiYc6g7VEZmrQH77-Iup8Ik-qd7sC1hEw/exec',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzP9eQEmgn_ZB7mtjwiQjzTwRasIYcjwnFTN50Hzr9XGNGbbbHxMgtU4cTiBM4Sb4yjCA/exec',
                 ...savedConfig
             },
             searchQuery: '',
@@ -85,10 +85,19 @@ createApp({
                 this.loginForm.error = false;
                 this.loginForm.password = "";
                 
-                // Ejecutar sincronización inicial tras loguearse
                 if (this.config.googleSheetUrl) {
                     this.fetchFromSheets();
                 }
+                
+                // Aviso de bienvenida elegante con SweetAlert2
+                Swal.fire({
+                    title: `¡Bienvenido!`,
+                    text: `Sesión iniciada como ${opSanitizado}`,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    borderRadius: '2rem'
+                });
             } else {
                 this.loginForm.error = true;
                 this.loginForm.password = "";
@@ -98,13 +107,41 @@ createApp({
             sessionStorage.removeItem("TTOCC_OPERADOR");
             this.operadorActual = null;
             this.menuAcciones = false;
+            
+            Swal.fire({
+                title: 'Sesión Cerrada',
+                text: 'Has salido del sistema correctamente.',
+                icon: 'info',
+                timer: 1500,
+                showConfirmButton: false
+            });
         },
-        abrirMenuAcciones() {
-            const password = prompt("Por favor, introduce la clave de acceso de administrador para gestionar las acciones:");
+        async abrirMenuAcciones() {
+            // Reemplazo del prompt nativo por un modal input de SweetAlert2 para la clave Raida1
+            const { value: password } = await Swal.fire({
+                title: 'Acceso de Administrador',
+                input: 'password',
+                inputLabel: 'Introduce la clave para gestionar las acciones:',
+                inputPlaceholder: '•••••',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonText: 'Cancelar',
+                confirmButtonText: 'Verificar',
+                inputAttributes: {
+                    autocapitalize: 'off',
+                    autocorrect: 'off'
+                }
+            });
+
             if (password === "Raida1") {
                 this.menuAcciones = true;
-            } else if (password !== null) {
-                alert("❌ Clave incorrecta. Acceso denegado.");
+            } else if (password !== undefined) { // Si no canceló la operación
+                Swal.fire({
+                    title: 'Error de acceso',
+                    text: '❌ Clave incorrecta. Acceso denegado.',
+                    icon: 'error',
+                    confirmButtonColor: '#4f46e5'
+                });
             }
         },
         cambiarDia(delta) {
@@ -132,7 +169,7 @@ createApp({
             const estadoActual = this.estaPresente(cedula);
             const nuevoEstado = !estadoActual;
             
-            // Se encapsula el estado junto con el Operador Auditor
+            // Se encapsula el estado junto con el Operador Auditor activo
             this.asistencias[this.fechaSeleccionada][cedula] = {
                 estado: nuevoEstado,
                 modificado_por: this.operadorActual
@@ -145,16 +182,26 @@ createApp({
                     ...t,
                     fecha: this.fechaSeleccionada,
                     asistencia: nuevoEstado ? 'PRESENTE' : 'AUSENTE',
-                    modificado_por: this.operadorActual // Columna enviada a la nube
+                    modificado_por: this.operadorActual
                 });
             }
         },
-        marcarAreaPresente() {
+        async marcarAreaPresente() {
             if(this.filtroArea === 'Todos' || !this.operadorActual) return;
 
-            const confirmacion = confirm(`¿Marcar como PRESENTES a todos los trabajadores de ${this.filtroArea} para el día ${this.fechaSeleccionada}?`);
+            // Reemplazo del confirm nativo por SweetAlert2
+            const resultado = await Swal.fire({
+                title: `¿Marcar todo ${this.filtroArea}?`,
+                text: `Se registrará como PRESENTE a todo el personal del área para el día ${this.fechaSeleccionada}.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, marcar todos',
+                cancelButtonText: 'Cancelar'
+            });
 
-            if(confirmacion) {
+            if (resultado.isConfirmed) {
                 if (!this.asistencias[this.fechaSeleccionada]) {
                     this.asistencias[this.fechaSeleccionada] = {};
                 }
@@ -178,7 +225,13 @@ createApp({
                 if (this.config.googleSheetUrl && aSincronizar.length > 0) {
                     this.syncToSheets('attendance', aSincronizar);
                 }
-                alert(`Personal de ${this.filtroArea} actualizado.`);
+                
+                Swal.fire({
+                    title: 'Actualizado',
+                    text: `Personal de ${this.filtroArea} actualizado con éxito.`,
+                    icon: 'success',
+                    confirmButtonColor: '#4f46e5'
+                });
             }
         },
         async importar(e) {
@@ -199,6 +252,13 @@ createApp({
                 if (this.config.googleSheetUrl) {
                     await this.syncToSheets('workers', this.trabajadores);
                 }
+                
+                Swal.fire({
+                    title: 'Plantilla Importada',
+                    text: `Se han cargado ${this.trabajadores.length} trabajadores a la base de datos.`,
+                    icon: 'success',
+                    confirmButtonColor: '#4f46e5'
+                });
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         },
@@ -249,7 +309,22 @@ createApp({
             }
         },
         async sincronizarGoogleSheets() {
-            if(!this.config.googleSheetUrl) return alert("Configura la URL de Google Sheets primero");
+            if(!this.config.googleSheetUrl) {
+                return Swal.fire({
+                    title: 'Falta Configuración',
+                    text: 'Configura la URL de Google Sheets primero.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4f46e5'
+                });
+            }
+
+            // Alerta visual de loading interactivo de SweetAlert2 durante el envío
+            Swal.fire({
+                title: 'Sincronizando...',
+                text: 'Enviando datos de asistencia a la nube.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
 
             const dataToSync = this.trabajadores.map(t => ({
                 ...t,
@@ -259,10 +334,16 @@ createApp({
             }));
 
             await this.syncToSheets('attendance', dataToSync);
-            alert("✅ Sincronización completa");
+            
+            Swal.fire({
+                title: '¡Sincronizado!',
+                text: 'Los datos en la nube están al día.',
+                icon: 'success',
+                confirmButtonColor: '#4f46e5'
+            });
         },
         exportarExcel() {
-            // Se añade la columna 'modificado_por' explícitamente en el mapa del excel
+            // Se incluye explícitamente el operador que realizó el cambio en el mapa del Excel local
             const dataExport = this.trabajadores.map(t => ({
                 Fecha: this.fechaSeleccionada,
                 Cedula: t.cedula,
@@ -272,25 +353,50 @@ createApp({
                 Ubicacion: t.ubicacion,
                 Nomina: t.nomina,
                 Asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
-                modificado_por: this.obtenerOperadorModifico(t.cedula) || 'SIN MODIFICACIÓN'
+                'Modificado Por': this.obtenerOperadorModifico(t.cedula) || 'SIN MODIFICACIÓN'
             }));
             const ws = XLSX.utils.json_to_sheet(dataExport);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
             XLSX.writeFile(wb, `Reporte_Nexus_${this.fechaSeleccionada}.xlsx`);
+
+            Swal.fire({
+                title: 'Reporte Descargado',
+                text: 'El archivo Excel se generó correctamente de forma local.',
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            });
         },
         save() {
             localStorage.setItem('nexus_workers', JSON.stringify(this.trabajadores));
             localStorage.setItem('nexus_attendance', JSON.stringify(this.asistencias));
         },
-        resetearDatos() {
-            if(confirm("¿Estás seguro de eliminar TODOS los trabajadores y el historial de asistencia? Esta acción no se puede deshacer.")) {
+        async resetearDatos() {
+            // Cuadro de diálogo de confirmación crítica de seguridad
+            const resultado = await Swal.fire({
+                title: '¿Estás completamente seguro?',
+                text: "Se eliminarán TODOS los trabajadores y el historial local. ¡Esta acción no se puede deshacer!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, borrar todo',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (resultado.isConfirmed) {
                 this.trabajadores = [];
                 this.asistencias = {};
                 localStorage.removeItem('nexus_workers');
                 localStorage.removeItem('nexus_attendance');
                 localStorage.removeItem('nexus_final_db');
-                alert("Datos eliminados correctamente.");
+                
+                await Swal.fire({
+                    title: 'Datos Eliminados',
+                    text: 'La base de datos se ha limpiado por completo.',
+                    icon: 'success',
+                    confirmButtonColor: '#ef4444'
+                });
                 location.reload();
             }
         },
@@ -298,6 +404,13 @@ createApp({
             localStorage.setItem('nexus_final_cfg', JSON.stringify(this.config));
             this.menuConfig = false;
             if (this.config.googleSheetUrl) this.fetchFromSheets();
+            
+            Swal.fire({
+                title: 'Configuración Guardada',
+                text: 'La URL de la Web App se actualizó correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#4f46e5'
+            });
         }
     }
 }).mount('#app');
