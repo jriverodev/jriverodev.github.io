@@ -10,8 +10,9 @@ createApp({
             usuariosAutorizados: {
                "YURVIN NAVA": "yn123",
                 "JOSE SALAZAR": "js456",
-                "DANILO CASTELLANO": "dc789",
-                "DANIEL MANRIQUE": "dm012"
+                "EDECIO AGREDA": "ea789",
+                "DANILO CASTELLANO": "dc012",
+                "DANIEL MANRIQUE": "dm345"
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
