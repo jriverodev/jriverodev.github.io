@@ -9,9 +9,9 @@ createApp({
             // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
             usuariosAutorizados: {
                "YURVIN NAVA": "yn123",
-                "JOSE SALAZAR": "jS456",
+                "JOSE SALAZAR": "js456",
                 "DANILO CASTELLANO": "dc789",
-                "DANIEL MANRIQUE": "dM012"
+                "DANIEL MANRIQUE": "dm012"
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
@@ -24,7 +24,7 @@ createApp({
             asistencias: JSON.parse(localStorage.getItem('asistenciasactlg_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzwy4xw1uFmbhHtbTVRx1nuBAof0WQtuAgGulowOZdq6qs1iFYrs2a45H5C79RnfaxmrQ/exec',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzV5S1CV8FjzaAUV1ycdDR3NZkAdApC2-i-7wOjLzlw41z8Uss8F9AsW7CPTojNiXqc5g/exec',
                 ...savedConfig
             },
             searchQuery: '',
