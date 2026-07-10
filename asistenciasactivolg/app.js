@@ -4,13 +4,14 @@ createApp({
     data() {
         const now = new Date();
         const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const savedConfig = JSON.parse(localStorage.getItem('asistenciamem_final_cfg') || '{}');
+        const savedConfig = JSON.parse(localStorage.getItem('asistenciasactlg_final_cfg') || '{}');
         return {
             // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
             usuariosAutorizados: {
-               "WILMAY GONZALEZ": "wg123",
-                "JOSE HURTADO": "jh456",
-                "CARLOS PAZ": "cp789"
+               "YURVIN NAVA": "yn123",
+                "JOSE SALAZAR": "jS456",
+                "DANILO CASTELLANO": "dc789",
+                "DANIEL MANRIQUE": "dM012"
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
@@ -18,9 +19,9 @@ createApp({
                 password: "",
                 error: false
             },
-            trabajadores: JSON.parse(localStorage.getItem('asistenciamem_workers') || '[]'),
+            trabajadores: JSON.parse(localStorage.getItem('asistenciasactlg_workers') || '[]'),
             // Estructura de asistencia: { "YYYY-MM-DD": { "CEDULA": { estado: true/false, modificado_por: "OPERADOR" } } }
-            asistencias: JSON.parse(localStorage.getItem('asistenciamem_attendance') || '{}'),
+            asistencias: JSON.parse(localStorage.getItem('asistenciasactlg_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
                 googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzwy4xw1uFmbhHtbTVRx1nuBAof0WQtuAgGulowOZdq6qs1iFYrs2a45H5C79RnfaxmrQ/exec',
@@ -369,8 +370,8 @@ createApp({
             });
         },
         save() {
-            localStorage.setItem('asistenciamem_workers', JSON.stringify(this.trabajadores));
-            localStorage.setItem('asistenciamem_attendance', JSON.stringify(this.asistencias));
+            localStorage.setItem('asistenciasactlg_workers', JSON.stringify(this.trabajadores));
+            localStorage.setItem('asistenciasactlg_attendance', JSON.stringify(this.asistencias));
         },
         async resetearDatos() {
             // Cuadro de diálogo de confirmación crítica de seguridad
@@ -388,9 +389,9 @@ createApp({
             if (resultado.isConfirmed) {
                 this.trabajadores = [];
                 this.asistencias = {};
-                localStorage.removeItem('asistenciamem_workers');
-                localStorage.removeItem('asistenciamem_attendance');
-                localStorage.removeItem('asistenciamem_final_db');
+                localStorage.removeItem('asistenciasactlg_workers');
+                localStorage.removeItem('asistenciasactlg_attendance');
+                localStorage.removeItem('asistenciasactlg_final_db');
                 
                 await Swal.fire({
                     title: 'Datos Eliminados',
@@ -402,7 +403,7 @@ createApp({
             }
         },
         guardarConfig() { 
-            localStorage.setItem('asistenciamem_final_cfg', JSON.stringify(this.config));
+            localStorage.setItem('asistenciasactlg_final_cfg', JSON.stringify(this.config));
             this.menuConfig = false;
             if (this.config.googleSheetUrl) this.fetchFromSheets();
             
