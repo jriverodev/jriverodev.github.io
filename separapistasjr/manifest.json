@@ -1,0 +1,26 @@
+{
+  "short_name": "GuitarSep",
+  "name": "Guitar Audio Separator PWA",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#121212",
+  "theme_color": "#00adb5",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "Separa pistas de guitarra eléctrica de tus archivos de audio WAV directamente en tu navegador usando Inteligencia Artificial local con WebGPU.",
+  "lang": "es",
+  "categories": ["music", "utilities"]
+}
