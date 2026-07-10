@@ -11,8 +11,10 @@ createApp({
                "YURVIN NAVA": "yn123",
                 "JOSE SALAZAR": "js456",
                 "EDECIO AGREDA": "ea789",
-                "DANILO CASTELLANO": "dc012",
-                "DANIEL MANRIQUE": "dm345"
+                "DANILO CASTELLANO": "dc118",
+                "DANIEL MANRIQUE": "dm227",
+                "ENDER TORRES": "et114",
+                "DELVIN MARRERO": "dm131"
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
