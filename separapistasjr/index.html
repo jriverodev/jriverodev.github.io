@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Audio Guitar Separator</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 8px; }
+        .status-box { background: #2d2d2d; padding: 10px; border-left: 4px solid #00adb5; margin-bottom: 20px; }
+        .control-group { margin-bottom: 15px; }
+        button { background: #00adb5; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .mixer-channel { margin: 15px 0; background: #2a2a2a; padding: 10px; border-radius: 4px; }
+        audio { width: 100%; margin-top: 5px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #2d2d2d; padding: 10px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Separador de Guitarra Eléctrica con IA</h2>
+    
+    <div class="status-box" id="status">Inicializando entorno...</div>
+
+    <div class="control-group">
+        <label for="file-input">Selecciona un audio (.wav):</label><br><br>
+        <input type="file" id="file-input" accept="audio/wav, audio/mpeg" disabled>
+    </div>
+
+    <div class="control-group">
+        <button id="btn-procesar" disabled>Separar Guitarra Eléctrica</button>
+    </div>
+
+    <div id="mixer" style="display: none;">
+        <h3>Consola de Audio (Mixer)</h3>
+        
+        <div class="mixer-channel">
+            <label>🎸 Solo Guitarra Eléctrica:</label>
+            <audio id="audio-guitarra" controls></audio>
+        </div>
+
+        <div class="mixer-channel">
+            <label>🥁 Resto de la Banda (Acompañamiento):</label>
+            <audio id="audio-resto" controls></audio>
+        </div>
+
+        <div class="mixer-channel">
+            <label>📻 Audio Original Completo:</label>
+            <audio id="audio-original" controls></audio>
+        </div>
+    </div>
+
+    <hr style="border-color: #444; margin: 25px 0;">
+
+    <h3>Tus Proyectos Locales (Guardados en dispositivo)</h3>
+    <ul id="lista-proyectos"></ul>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
