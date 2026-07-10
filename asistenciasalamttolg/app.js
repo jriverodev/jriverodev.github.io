@@ -24,7 +24,7 @@ createApp({
             asistencias: JSON.parse(localStorage.getItem('asistenciassalamttolg_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzwy4xw1uFmbhHtbTVRx1nuBAof0WQtuAgGulowOZdq6qs1iFYrs2a45H5C79RnfaxmrQ/exec',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbyUFynnO17TUkAYtorj5rLSSZiR0OvdgYvfJE5qE5l92niMeCfC2T4u5pf182Ix1cdb/exec',
                 ...savedConfig
             },
             searchQuery: '',
