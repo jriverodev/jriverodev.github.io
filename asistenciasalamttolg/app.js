@@ -9,7 +9,7 @@ createApp({
             // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
             usuariosAutorizados: {
                "ANTONIO POLANCO": "ap123",
-                "JUAN CARIELES": "jC456",
+                "JUAN CARIELES": "jc456",
                 "CARLOS ROJAS": "cr789",
                 "FERNANDO AGUSTIN": "fa012"
             },
