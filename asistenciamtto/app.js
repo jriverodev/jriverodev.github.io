@@ -12,7 +12,6 @@ createApp({
                "DEIBI TUDARES": "dt137",
                "VANESSA ROMERO": "vr061",
                "EDGAR DELMORA": "ed110"
-
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
