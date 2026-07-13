@@ -13,7 +13,6 @@ createApp({
                "VANESSA ROMERO": "vr061",
                "EDGAR DELMORAL": "ed110"
 
-                
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
