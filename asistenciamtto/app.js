@@ -11,7 +11,7 @@ createApp({
                "JEAN PIRELA": "jp775",
                "DEIBI TUDARES": "dt137",
                "VANESSA ROMERO": "vr061",
-               "EDGAR DELMORA": "ed111"
+               "EDGAR DELMORAL": "ed110"
                 
             },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
