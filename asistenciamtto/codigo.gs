@@ -1,5 +1,5 @@
-// Backend para Nexus Asistencia con soporte para Sincronización Real-time y Upsert
-// ==============================================================================
+// Backend para Nexus Asistencia con soporte para Sincronización Real-time, Upsert y Auditoría de Operadores
+// =======================================================================================================
 
 const SHEETS = {
   ASISTENCIA: 'Asistencia',
@@ -9,7 +9,7 @@ const SHEETS = {
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
-    lock.waitLock(3000); // Esperar hasta 10 segundos por el bloqueo
+    lock.waitLock(3000); // Esperar hasta 3 segundos por el bloqueo
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const payload = JSON.parse(e.postData.contents);
@@ -18,8 +18,9 @@ function doPost(e) {
     const timestamp = new Date();
 
     if (type === 'attendance') {
+      // MODIFICADO: Se añade la columna 'Modificado Por' al inicializar la hoja (10 columnas en total)
       const sheet = getOrCreateSheet(ss, SHEETS.ASISTENCIA, [
-        'Timestamp', 'Fecha Asistencia', 'Cédula', 'Nombre', 'Cargo', 'Área', 'Ubicación', 'Nómina', 'Estado'
+        'Timestamp', 'Fecha Asistencia', 'Cédula', 'Nombre', 'Cargo', 'Área', 'Ubicación', 'Nómina', 'Estado', 'Modificado Por'
       ]);
 
       const existingData = sheet.getDataRange().getValues();
@@ -29,7 +30,6 @@ function doPost(e) {
 
       recordsToProcess.forEach(record => {
         // Buscar por Fecha (Col B) y Cédula (Col C)
-        // Nota: Las fechas en Sheets pueden venir como objetos Date, hay que normalizar
         let rowIndex = -1;
         for (let i = 0; i < existingData.length; i++) {
           const sheetDate = formatDate(existingData[i][1]);
@@ -40,6 +40,7 @@ function doPost(e) {
           }
         }
 
+        // MODIFICADO: Se añade 'record.modificado_por' como el décimo elemento del arreglo
         const rowData = [
           timestamp,
           record.fecha,
@@ -49,11 +50,13 @@ function doPost(e) {
           record.area,
           record.ubicacion,
           record.nomina,
-          record.asistencia
+          record.asistencia,
+          record.modificado_por || 'SISTEMA'
         ];
 
         if (rowIndex > 0) {
-          sheet.getRange(rowIndex, 1, 1, 9).setValues([rowData]);
+          // MODIFICADO: Cambiado el parámetro de ancho de celda de 9 a 10 columnas
+          sheet.getRange(rowIndex, 1, 1, 10).setValues([rowData]);
         } else {
           sheet.appendRow(rowData);
           // Actualizar existingData para evitar duplicados en el mismo lote
@@ -69,7 +72,6 @@ function doPost(e) {
         'Cédula', 'Nombre', 'Cargo', 'Área', 'Ubicación', 'Nómina', 'Ultima_Actualizacion'
       ]);
 
-      // Para trabajadores, solemos sobreescribir o hacer upsert por Cédula
       const existingData = sheet.getDataRange().getValues();
       existingData.shift();
 
@@ -102,7 +104,7 @@ function doPost(e) {
         }
       });
 
-      return response({ result: 'success', message: 'Trabajadores sincronizados' });
+      return response({ result: 'success', message: 'Trabajadores synchronized' });
     }
 
     return response({ result: 'error', message: 'Tipo de operación no válida' });
@@ -158,7 +160,7 @@ function sheetToObjects(sheet) {
   if (data.length <= 1) return [];
   const headers = data.shift();
 
-  // Mapeo de cabeceras de la hoja a claves de objeto JS
+  // MODIFICADO: Se añade la traducción de la cabecera 'Modificado Por' a la clave 'modificado_por' de JS
   const headerMap = {
     'Cédula': 'cedula',
     'Nombre': 'nombre',
@@ -169,7 +171,8 @@ function sheetToObjects(sheet) {
     'Fecha Asistencia': 'fecha',
     'Estado': 'asistencia',
     'Ultima_Actualizacion': 'updated_at',
-    'Timestamp': 'timestamp'
+    'Timestamp': 'timestamp',
+    'Modificado Por': 'modificado_por'
   };
 
   return data.map(row => {
@@ -201,3 +204,5 @@ function response(data) {
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+
