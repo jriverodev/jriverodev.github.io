@@ -17,7 +17,8 @@ createApp({
             asistencias: JSON.parse(localStorage.getItem('asistenciasmtto_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: atob('aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3YTk1UFgtODBUZ1BVSGc5MkplLTl0Wi12OU5WUFlGdmtjN1NpSGJKanhiTGNZd0JNZWgwRGZxcmJ4a3ZWNGdrVDBWZy9leGVj'),
+                // Reemplaza esta URL con la dirección de tu nueva Web App de Google Apps Script tras publicar el nuevo codigo.gs
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbwa95PX-80TgPUHg92Je-9tZ-v9NVPYFvkc7SiHbJjxbLcYwBMeh0DfqrbxkvV4gkT0Vg/exec',
                 ...savedConfig
             },
             searchQuery: '',
