@@ -6,14 +6,6 @@ createApp({
         const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const savedConfig = JSON.parse(localStorage.getItem('asistenciasmtto_final_cfg') || '{}');
         return {
-            // Base de datos de autenticación configurada para tus 3 operadores (claves de 5 caracteres alfanuméricos)
-            usuariosAutorizados: {
-               "JEAN PIRELA": "jp775",
-               "DEIBI TUDARES": "dt137",
-               "VANESSA ROMERO": "vr061",
-               "EDGAR DELMORAL": "ed110"
-
-            },
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
             loginForm: {
                 operador: "",
@@ -25,7 +17,7 @@ createApp({
             asistencias: JSON.parse(localStorage.getItem('asistenciasmtto_attendance') || '{}'),
             fechaSeleccionada: hoy,
             config: {
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbwa95PX-80TgPUHg92Je-9tZ-v9NVPYFvkc7SiHbJjxbLcYwBMeh0DfqrbxkvV4gkT0Vg/exec',
+                googleSheetUrl: atob('aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3YTk1UFgtODBUZ1BVSGc5MkplLTl0Wi12OU5WUFlGdmtjN1NpSGJKanhiTGNZd0JNZWgwRGZxcmJ4a3ZWNGdrVDBWZy9leGVj'),
                 ...savedConfig
             },
             searchQuery: '',
@@ -77,32 +69,74 @@ createApp({
         }
     },
     methods: {
-        confirmarIdentidad() {
+        async confirmarIdentidad() {
             const opSanitizado = this.loginForm.operador.toUpperCase().trim();
             const passSanitizado = this.loginForm.password.toLowerCase().trim();
 
-            if (this.usuariosAutorizados[opSanitizado] && this.usuariosAutorizados[opSanitizado] === passSanitizado) {
-                this.operadorActual = opSanitizado;
-                sessionStorage.setItem("TTOCC_OPERADOR", opSanitizado);
-                this.loginForm.error = false;
-                this.loginForm.password = "";
-                
-                if (this.config.googleSheetUrl) {
-                    this.fetchFromSheets();
-                }
-                
-                // Aviso de bienvenida elegante con SweetAlert2
+            if (!this.config.googleSheetUrl) {
                 Swal.fire({
-                    title: `¡Bienvenido!`,
-                    text: `Sesión iniciada como ${opSanitizado}`,
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    borderRadius: '2rem'
+                    title: 'Falta Configuración',
+                    text: 'Configura la URL de Google Sheets primero.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4f46e5'
                 });
-            } else {
-                this.loginForm.error = true;
+                return;
+            }
+
+            Swal.fire({
+                title: 'Verificando...',
+                text: 'Comprobando credenciales con el servidor...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const res = await fetch(this.config.googleSheetUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'login',
+                        operador: opSanitizado,
+                        password: passSanitizado
+                    })
+                });
+                const data = await res.json();
+
+                if (data && data.autorizado) {
+                    this.operadorActual = opSanitizado;
+                    sessionStorage.setItem("TTOCC_OPERADOR", opSanitizado);
+                    this.loginForm.error = false;
+                    this.loginForm.password = "";
+
+                    this.fetchFromSheets();
+
+                    // Aviso de bienvenida elegante con SweetAlert2
+                    Swal.fire({
+                        title: `¡Bienvenido!`,
+                        text: `Sesión iniciada como ${opSanitizado}`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        borderRadius: '2rem'
+                    });
+                } else {
+                    this.loginForm.error = true;
+                    this.loginForm.password = "";
+                    Swal.fire({
+                        title: 'Error de acceso',
+                        text: '❌ Contraseña incorrecta para el operador.',
+                        icon: 'error',
+                        confirmButtonColor: '#4f46e5'
+                    });
+                }
+            } catch (error) {
+                console.error("Error en login:", error);
                 this.loginForm.password = "";
+                Swal.fire({
+                    title: 'Error de conexión',
+                    text: 'No se pudo conectar con el servidor de autenticación.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
             }
         },
         cerrarSesion() {
@@ -135,15 +169,54 @@ createApp({
                 }
             });
 
-            if (password === "Raida1") {
-                this.menuAcciones = true;
-            } else if (password !== undefined) { // Si no canceló la operación
+            if (password !== undefined && password !== "") {
+                if (!this.config.googleSheetUrl) {
+                    Swal.fire({
+                        title: 'Falta Configuración',
+                        text: 'Configura la URL de Google Sheets primero.',
+                        icon: 'warning',
+                        confirmButtonColor: '#4f46e5'
+                    });
+                    return;
+                }
+
                 Swal.fire({
-                    title: 'Error de acceso',
-                    text: '❌ Clave incorrecta. Acceso denegado.',
-                    icon: 'error',
-                    confirmButtonColor: '#4f46e5'
+                    title: 'Verificando...',
+                    text: 'Comprobando clave de administrador...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
                 });
+
+                try {
+                    const res = await fetch(this.config.googleSheetUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'verificarAdmin',
+                            password: password
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (data && data.autorizado) {
+                        Swal.close();
+                        this.menuAcciones = true;
+                    } else {
+                        Swal.fire({
+                            title: 'Error de acceso',
+                            text: '❌ Clave incorrecta. Acceso denegado.',
+                            icon: 'error',
+                            confirmButtonColor: '#4f46e5'
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error en verificación de admin:", error);
+                    Swal.fire({
+                        title: 'Error de conexión',
+                        text: 'No se pudo conectar con el servidor de autenticación.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
             }
         },
         cambiarDia(delta) {

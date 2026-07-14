@@ -6,6 +6,16 @@ const SHEETS = {
   TRABAJADORES: 'Trabajadores'
 };
 
+// Credenciales seguras del lado del servidor
+const USUARIOS_AUTORIZADOS = {
+  "JEAN PIRELA": "jp775",
+  "DEIBI TUDARES": "dt137",
+  "VANESSA ROMERO": "vr061",
+  "EDGAR DELMORAL": "ed110"
+};
+
+const ADMIN_PASSWORD = "Raida1";
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
@@ -13,6 +23,27 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const payload = JSON.parse(e.postData.contents);
+
+    // Soporte para autenticación y verificación de roles
+    if (payload.action === 'login') {
+      const op = (payload.operador || '').toUpperCase().trim();
+      const pass = (payload.password || '').toLowerCase().trim();
+      if (USUARIOS_AUTORIZADOS[op] && USUARIOS_AUTORIZADOS[op] === pass) {
+        return response({ autorizado: true });
+      } else {
+        return response({ autorizado: false, message: 'Credenciales inválidas' });
+      }
+    }
+
+    if (payload.action === 'verificarAdmin') {
+      const pass = payload.password || '';
+      if (pass === ADMIN_PASSWORD) {
+        return response({ autorizado: true });
+      } else {
+        return response({ autorizado: false, message: 'Clave de administrador incorrecta' });
+      }
+    }
+
     const type = payload.type; // 'attendance' o 'workers'
     const data = payload.data;
     const timestamp = new Date();
