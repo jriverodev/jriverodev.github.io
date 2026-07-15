@@ -18,7 +18,7 @@ createApp({
             fechaSeleccionada: hoy,
             config: {
                 // Reemplaza esta URL con la dirección de tu nueva Web App de Google Apps Script tras publicar el nuevo codigo.gs
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbzVAszU4RFbFeBgBEF0i5HU5GUrVRFeU2YdtgfPXhMGwjMs9zLB4NrggGZ6NvTXls6mkw/exec',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbxRed5gBurFs_RF7RmB2EdujfDu1SjYHll9UgfujZ6mYLacN63HRviE3uImaYbKQQt6QQ/exec',
                 ...savedConfig
             },
             searchQuery: '',
