@@ -7,6 +7,7 @@ createApp({
         const savedConfig = JSON.parse(localStorage.getItem('asistenciasactlg_final_cfg') || '{}');
         return {
             operadorActual: sessionStorage.getItem("TTOCC_OPERADOR") || null,
+            rolActual: sessionStorage.getItem("TTOCC_ROL") || null, // Almacena el rol ('editor' o 'lector')
             loginForm: {
                 operador: "",
                 password: "",
@@ -18,7 +19,7 @@ createApp({
             fechaSeleccionada: hoy,
             config: {
                 // Reemplaza esta URL con la dirección de tu nueva Web App de Google Apps Script tras publicar el nuevo codigo.gs
-                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbw2KadjtEfMjko5TsPg-kFhVsE6AmDTlnY-k9eVMGP9eyOfuAU16Y6GzYhznopf6Vr4cg/exec',
+                googleSheetUrl: 'https://script.google.com/macros/s/AKfycbxSarc2i1wsUzBwjH7Lon1asPuoEwaZTy8uNQ3e01T5jUDSD9hxdmV7mL4TjJDTzFaLjQ/exec',
                 ...savedConfig
             },
             searchQuery: '',
@@ -36,6 +37,9 @@ createApp({
         }
     },
     computed: {
+        esLector() {
+            return this.rolActual === 'lector';
+        },
         fechaLegible() {
             const d = new Date(this.fechaSeleccionada + 'T12:00:00');
             return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -104,20 +108,23 @@ createApp({
 
                 if (data && data.autorizado) {
                     this.operadorActual = opSanitizado;
+                    this.rolActual = data.rol || 'lector'; // Asigna el rol recibido (por defecto 'lector')
+                    
                     sessionStorage.setItem("TTOCC_OPERADOR", opSanitizado);
+                    sessionStorage.setItem("TTOCC_ROL", this.rolActual); // Guarda el rol en la sesión
+                    
                     this.loginForm.error = false;
                     this.loginForm.password = "";
 
                     this.fetchFromSheets();
 
-                    // Aviso de bienvenida elegante con SweetAlert2
+                    // Aviso de bienvenida elegante con SweetAlert2 mostrando el rol asignado
                     Swal.fire({
                         title: `¡Bienvenido!`,
-                        text: `Sesión iniciada como ${opSanitizado}`,
+                        text: `Sesión iniciada como ${opSanitizado} (${this.rolActual.toUpperCase()})`,
                         icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        borderRadius: '2rem'
+                        timer: 2500,
+                        showConfirmButton: false
                     });
                 } else {
                     this.loginForm.error = true;
@@ -134,7 +141,7 @@ createApp({
                 this.loginForm.password = "";
                 Swal.fire({
                     title: 'Error de conexión',
-                    text: 'No se pudo conectar con el servidor de autenticación.',
+                    text: 'No se pudo conectar con el servidor de de autenticación.',
                     icon: 'error',
                     confirmButtonColor: '#ef4444'
                 });
@@ -142,7 +149,9 @@ createApp({
         },
         cerrarSesion() {
             sessionStorage.removeItem("TTOCC_OPERADOR");
+            sessionStorage.removeItem("TTOCC_ROL"); // Limpia el rol de la sesión
             this.operadorActual = null;
+            this.rolActual = null;
             this.menuAcciones = false;
             
             Swal.fire({
@@ -238,6 +247,17 @@ createApp({
             return null;
         },
         async toggleAsistencia(cedula) {
+            // Protección: Bloquear la edición si el rol es 'lector'
+            if (this.esLector) {
+                Swal.fire({
+                    title: 'Acceso Denegado',
+                    text: 'Tu cuenta tiene un rol de solo lectura. No puedes cambiar la asistencia.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4f46e5'
+                });
+                return;
+            }
+
             if (!this.asistencias[this.fechaSeleccionada]) {
                 this.asistencias[this.fechaSeleccionada] = {};
             }
@@ -263,6 +283,17 @@ createApp({
             }
         },
         async marcarAreaPresente() {
+            // Protección: Bloquear acciones grupales si el rol es 'lector'
+            if (this.esLector) {
+                Swal.fire({
+                    title: 'Acceso Denegado',
+                    text: 'No tienes permisos para modificar asistencias en bloque.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4f46e5'
+                });
+                return;
+            }
+
             if(this.filtroArea === 'Todos' || !this.operadorActual) return;
 
             // Reemplazo del confirm nativo por SweetAlert2
@@ -311,6 +342,19 @@ createApp({
             }
         },
         async importar(e) {
+            // Protección: Impedir importar bases de datos si es lector
+            if (this.esLector) {
+                Swal.fire({
+                    title: 'Acceso Denegado',
+                    text: 'No tienes permisos para importar bases de datos.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4f46e5'
+                });
+                // Limpiar el input file
+                e.target.value = '';
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = async (f) => {
                 const wb = XLSX.read(f.target.result, { type: 'array' });
@@ -372,9 +416,9 @@ createApp({
             if (!this.config.googleSheetUrl) return;
             this.isSyncing = true;
             try {
+                // Se removió 'mode: no-cors' para permitir la correcta comunicación bidireccional y lectura de respuestas JSON
                 await fetch(this.config.googleSheetUrl, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ type, data })
                 });
@@ -385,6 +429,17 @@ createApp({
             }
         },
         async sincronizarGoogleSheets() {
+            // Protección: Impedir sincronización manual destructiva desde clientes lectores
+            if (this.esLector) {
+                Swal.fire({
+                    title: 'Acceso Denegado',
+                    text: 'Los lectores no pueden sincronizar ni sobrescribir datos en el servidor.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4f46e5'
+                });
+                return;
+            }
+
             if(!this.config.googleSheetUrl) {
                 return Swal.fire({
                     title: 'Falta Configuración',
@@ -402,7 +457,6 @@ createApp({
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // CORRECCIÓN APLICADA AQUÍ: Enviar el operador actual de la sesión activa para firmar el lote
             const dataToSync = this.trabajadores.map(t => ({
                 ...t,
                 asistencia: this.estaPresente(t.cedula) ? 'PRESENTE' : 'AUSENTE',
@@ -420,7 +474,7 @@ createApp({
             });
         },
         exportarExcel() {
-            // Se incluye explícitamente el operador que realizó el cambio en el mapa del Excel local
+            // Los lectores SÍ pueden descargar reportes en Excel de manera local
             const dataExport = this.trabajadores.map(t => ({
                 Fecha: this.fechaSeleccionada,
                 Cedula: t.cedula,
@@ -449,6 +503,17 @@ createApp({
             localStorage.setItem('asistenciasactlg_attendance', JSON.stringify(this.asistencias));
         },
         async resetearDatos() {
+            // Protección: Evitar limpieza de datos local por parte de lectores
+            if (this.esLector) {
+                Swal.fire({
+                    title: 'Acceso Denegado',
+                    text: 'No tienes permisos de administrador para limpiar las bases de datos.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+
             // Cuadro de diálogo de confirmación crítica de seguridad
             const resultado = await Swal.fire({
                 title: '¿Estás completamente seguro?',
@@ -478,6 +543,7 @@ createApp({
             }
         },
         guardarConfig() { 
+            // Los lectores pueden guardar configuraciones locales técnicas si es necesario, pero proteges la escritura global
             localStorage.setItem('asistenciasactlg_final_cfg', JSON.stringify(this.config));
             this.menuConfig = false;
             if (this.config.googleSheetUrl) this.fetchFromSheets();
