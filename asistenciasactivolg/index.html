@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TTOCC Control de Asistencias Personal (ACTIVO LAGUNILLAS) Dashboard</title>
     <link rel="manifest" href="manifest.json">
+    
+    <!-- Optimización de carga para Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
@@ -21,6 +28,7 @@
 <body class="bg-[#f8fafc] text-slate-900">
     <div id="app" class="max-w-xl mx-auto min-h-screen pb-24 flex flex-col justify-between relative">
         
+        <!-- Modal de Identificación -->
         <div v-if="!operadorActual" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
             <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
                 <div class="text-center mb-6">
@@ -39,8 +47,9 @@
                             <option value="EDECIO AGREDA">EDECIO AGREDA</option>
                             <option value="DANILO CASTELLANO">DANILO CASTELLANO</option>
                             <option value="DANIEL MANRIQUE">DANIEL MANRIQUE</option>
+                            <option value="JUAN ESCALONA">JUAN ESCALONA</option>
+                            <option value="DEXCYBEL SALAZAR">DEXCYBEL SALAZAR</option>
                             <option value="ENDER TORRES">ENDER TORRES</option>
-                            
                             <option value="DELVIN MARRERO">DELVIN MARRERO</option>
                         </select>
                     </div>
@@ -62,7 +71,9 @@
             </div>
         </div>
 
+        <!-- Dashboard de Usuario Identificado -->
         <div v-if="operadorActual">
+            <!-- Botón de Configuración Rápida -->
             <div class="absolute top-6 right-6 z-40">
                 <button @click="abrirMenuAcciones" class="bg-white text-slate-700 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all text-xl border border-slate-100">
                     ⚙️
@@ -70,6 +81,7 @@
             </div>
 
             <div>
+                <!-- Header y Stats -->
                 <section v-if="trabajadores.length > 0" class="p-6 pr-20">
                     <div class="flex flex-col mb-4 gap-2">
                         <div class="flex items-center gap-1 bg-white rounded-xl shadow-sm px-2 w-fit">
@@ -89,6 +101,7 @@
                         </div>
                     </div>
 
+                    <!-- Tarjeta de Asistencia -->
                     <div class="stats-card rounded-[2.5rem] p-6 text-white shadow-2xl shadow-indigo-200 mb-6">
                         <div class="flex justify-between items-start mb-4">
                             <div>
@@ -112,6 +125,7 @@
                         </div>
                     </div>
 
+                    <!-- Filtros por Área -->
                     <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
                         <button @click="filtroArea = 'Todos'" 
                                 :class="filtroArea === 'Todos' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'"
@@ -132,6 +146,7 @@
                     </div>
                 </section>
 
+                <!-- Listado de Trabajadores -->
                 <main class="px-6">
                     <div class="relative mb-6" v-if="trabajadores.length > 0">
                         <input v-model="searchQuery" type="text" placeholder="Buscar trabajador..." 
@@ -175,6 +190,7 @@
                         </div>
                     </div>
 
+                    <!-- Estado Vacío (Sin Datos) -->
                     <div v-if="trabajadores.length === 0" class="text-center py-20 px-10">
                         <div class="text-6xl mb-6">📁</div>
                         <h3 class="text-xl font-black text-slate-800 mb-2">Sin base de trabajadores</h3>
@@ -187,6 +203,7 @@
                 </main>
             </div>
 
+            <!-- Menú de Acciones de Datos -->
             <div v-if="menuAcciones" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuAcciones = false">
                 <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl border border-slate-100">
                     <div class="flex justify-between items-center mb-6">
@@ -210,6 +227,7 @@
                 </div>
             </div>
 
+            <!-- Menú de Configuración -->
             <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-slate-900/40 backdrop-blur-sm" @click.self="menuConfig = false">
                 <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -235,6 +253,7 @@
             </div>
         </div>
 
+        <!-- Footer -->
         <footer class="mt-12 mb-4 text-center px-6">
             <div class="h-[1px] w-4/5 mx-auto bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-4"></div>
             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -246,6 +265,8 @@
         </footer>
 
     </div>
+
+    <!-- Scripts de la Aplicación -->
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -256,6 +277,5 @@
             });
         }
     </script>
-</body>
 </body>
 </html>
