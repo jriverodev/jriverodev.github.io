@@ -249,12 +249,12 @@ createApp({
         async toggleAsistencia(cedula) {
             // Protección: Bloquear la edición si el rol es 'lector'
             if (this.esLector) {
-                Swal.fire({
+              /*  Swal.fire({
                     title: 'Acceso Denegado',
                     text: 'Tu cuenta tiene un rol de solo lectura. No puedes cambiar la asistencia.',
                     icon: 'warning',
                     confirmButtonColor: '#4f46e5'
-                });
+                }); */
                 return;
             }
 
@@ -285,12 +285,12 @@ createApp({
         async marcarAreaPresente() {
             // Protección: Bloquear acciones grupales si el rol es 'lector'
             if (this.esLector) {
-                Swal.fire({
+              /*  Swal.fire({
                     title: 'Acceso Denegado',
                     text: 'No tienes permisos para modificar asistencias en bloque.',
                     icon: 'warning',
                     confirmButtonColor: '#4f46e5'
-                });
+                }); */
                 return;
             }
 
@@ -432,12 +432,12 @@ createApp({
         async sincronizarGoogleSheets() {
             // Protección: Impedir sincronización manual destructiva desde clientes lectores
             if (this.esLector) {
-                Swal.fire({
+             /*   Swal.fire({
                     title: 'Acceso Denegado',
                     text: 'Los lectores no pueden sincronizar ni sobrescribir datos en el servidor.',
                     icon: 'warning',
                     confirmButtonColor: '#4f46e5'
-                });
+                }); */
                 return;
             }
 
