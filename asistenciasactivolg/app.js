@@ -413,21 +413,22 @@ createApp({
             }
         },
         async syncToSheets(type, data) {
-            if (!this.config.googleSheetUrl) return;
-            this.isSyncing = true;
-            try {
-                // Se removió 'mode: no-cors' para permitir la correcta comunicación bidireccional y lectura de respuestas JSON
-                await fetch(this.config.googleSheetUrl, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type, data })
-                });
-            } catch (e) {
-                console.error("Error syncing data:", e);
-            } finally {
-                this.isSyncing = false;
-            }
-        },
+    if (!this.config.googleSheetUrl) return;
+    this.isSyncing = true;
+    try {
+        // Al enviar como 'text/plain', el navegador evita el Preflight de CORS,
+        // pero el servidor de Google igual recibirá el JSON de forma correcta.
+        await fetch(this.config.googleSheetUrl, {
+            method: 'POST',
+            headers: { "Content-Type": "text/plain" }, 
+            body: JSON.stringify({ type, data })
+        });
+    } catch (e) {
+        console.error("Error syncing data:", e);
+    } finally {
+        this.isSyncing = false;
+    }
+},
         async sincronizarGoogleSheets() {
             // Protección: Impedir sincronización manual destructiva desde clientes lectores
             if (this.esLector) {
