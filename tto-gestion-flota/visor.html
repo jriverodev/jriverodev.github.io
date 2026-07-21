@@ -107,7 +107,7 @@
                 <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Búsqueda Predictiva</label>
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 text-xs"></i>
-                    <input type="text" id="visor-busqueda" oninput="filtrarVisor()" placeholder="Unidad, Marca, ID..."
+                    <input type="text" id="visor-busqueda" oninput="filtrarVisor()" placeholder="Unidad, Marca, Gerencia..."
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all">
                 </div>
             </div>
@@ -144,29 +144,7 @@
                 <i class="fa-solid fa-filter-circle-xmark"></i>
             </button>
         </div>
-
-        <!--div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <div onclick="filtrarPorKpi('')" class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-                <span class="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-white uppercase tracking-[0.2em] transition-colors">Unidades Totales</span>
-                <span id="kpiTotal" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-            </div>
-            
-            <div onclick="filtrarPorKpi('Por Atender')" class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-amber-500 cursor-pointer transition-all group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-                <span class="text-[9px] md:text-[10px] font-black text-amber-600 dark:text-amber-500/80 group-hover:text-amber-400 uppercase tracking-[0.2em] transition-colors">Por Atender</span>
-                <span id="kpiEspera" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-            </div>
-            
-            <div onclick="filtrarPorKpi('En Proceso')" class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-blue-500 cursor-pointer transition-all group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-                <span class="text-[9px] md:text-[10px] font-black text-blue-600 dark:text-blue-500/80 group-hover:text-blue-500 uppercase tracking-[0.2em] transition-colors">En Proceso</span>
-                <span id="kpiProceso" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-            </div>
-            
-            <div onclick="filtrarPorKpi('Listo')" class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-emerald-500 cursor-pointer transition-all group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-                <span class="text-[9px] md:text-[10px] font-black text-emerald-600 dark:text-emerald-500/80 group-hover:text-emerald-500 uppercase tracking-[0.2em] transition-colors">Flota Disponible</span>
-                <span id="kpiDispo" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-            </div>
-        </div-->
-
+    
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 p-0.5">
     <div onclick="filtrarPorKpi('')" 
          class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
@@ -202,21 +180,6 @@
 </div>
 
         <!-- GRÁFICOS (Ocultos por defecto) -->
-        <!--div id="visor-graficos-contenedor" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 transition-all">
-            <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl min-h-[260px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors">
-                <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-blue-500"></i> Distribución por Fosa</h3>
-                <div class="w-full h-48 relative flex justify-center items-center">
-                    <canvas id="chartTalleres"></canvas>
-                </div>
-            </div>
-            <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl min-h-[220px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors">
-                <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-300 mb-3"><i class="fa-solid fa-chart-bar mr-1 text-blue-500"></i> Balance Crítico de Operación</h3>
-                <div class="w-full h-48 relative flex justify-center items-center">
-                    <canvas id="chartEstatus"></canvas>
-                </div>
-            </div>
-        </div-->
-
         <div id="visor-graficos-contenedor" class="hidden grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 p-0.5 transition-all duration-300">
     
     <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl min-h-[260px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700">
@@ -343,14 +306,6 @@
 
                         <div class="space-y-3">
                             <h4 class="text-[10px] uppercase font-black tracking-widest text-slate-400">Evidencias Fotográficas</h4>
-                            <!--div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
-                                    <span class="text-[9px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-wider transition-colors">SIN FOTO ANTES</span>
-                                </div>
-                                <div id="det-foto-despues-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
-                                    <span class="text-[9px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-wider transition-colors">SIN FOTO DESPUÉS</span>
-                                </div>
-                             </div-->
                             <div class="grid grid-cols-2 gap-3">
     <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
         <span class="text-[9px] max-[360px]:text-[8px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-normal sm:tracking-wider text-center px-1 transition-colors">SIN FOTO ANTES</span>
