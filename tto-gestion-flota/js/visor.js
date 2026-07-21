@@ -135,7 +135,7 @@ function filtrarVisor() {
         const matchesBusqueda = !query ||
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Marca || "").toLowerCase().includes(query) ||
-            String(reg.ID_Registro || "").toLowerCase().includes(query);
+            String(reg.Gerencia || "").toLowerCase().includes(query);
 
         const matchesEstatus = !estatus || reg.Estatus === estatus;
         const matchesUbicacion = !ubicacion || reg.Nombre_Taller === ubicacion;
