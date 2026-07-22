@@ -49,7 +49,10 @@ function doPost(e) {
         var item = {};
         for (var j = 0; j < encabezados.length; j++) {
           if (fila[j] instanceof Date) {
-            item[encabezados[j]] = Utilities.formatDate(fila[j], Session.getScriptTimeZone(), "dd-MM-yyyy");
+            // Si la fecha contiene información de hora y minutos distinta de las 00:00, la incluimos
+            var tieneHora = (fila[j].getHours() !== 0 || fila[j].getMinutes() !== 0);
+            var patronFormato = tieneHora ? "dd-MM-yyyy HH:mm" : "dd-MM-yyyy";
+            item[encabezados[j]] = Utilities.formatDate(fila[j], Session.getScriptTimeZone(), patronFormato);
           } else {
             item[encabezados[j]] = fila[j];
           }
@@ -130,7 +133,7 @@ function doPost(e) {
         }
       }
 
-      var fechaIngresoFinal = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy");
+      var fechaIngresoFinal = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy HH:mm");
 
       // Procesar Foto Antes en Google Drive si viene en Base64
       var urlFotoDrive = "";

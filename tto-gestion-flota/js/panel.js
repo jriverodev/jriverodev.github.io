@@ -398,8 +398,16 @@ function actualizarSelectGerencias() {
  */
 function abrirModalNuevo() {
     document.getElementById("formNuevoRegistro").reset(); 
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById("add-fecha-ingreso").value = hoy;
+    // Obtener la fecha y hora local para rellenar el input datetime-local
+    const ahora = new Date();
+    const anio = ahora.getFullYear();
+    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+    const dia = String(ahora.getDate()).padStart(2, '0');
+    const horas = String(ahora.getHours()).padStart(2, '0');
+    const minutos = String(ahora.getMinutes()).padStart(2, '0');
+    const valorDefecto = `${anio}-${mes}-${dia}T${horas}:${minutos}`;
+
+    document.getElementById("add-fecha-ingreso").value = valorDefecto;
     document.getElementById("wrapper-externo").classList.add("hidden"); 
     limpiarPrevia('add-foto-antes', 'preview-add-antes');
     document.getElementById("modalNuevoRegistro").classList.remove("hidden");
@@ -455,11 +463,18 @@ async function guardarNuevoRegistro(event) {
         fotoBase64 = await transformarABase64(fileInput.files[0]);
     }
 
-    let fechaRaw = document.getElementById("add-fecha-ingreso").value;
+    let fechaRaw = document.getElementById("add-fecha-ingreso").value; // Formato: YYYY-MM-DDTHH:mm
     let fechaFormateada = "";
     if(fechaRaw) {
-        const parts = fechaRaw.split("-");
-        fechaFormateada = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        // Formato esperado por el backend: DD-MM-YYYY HH:mm
+        const [fechaParte, horaParte] = fechaRaw.split("T");
+        if (fechaParte) {
+            const parts = fechaParte.split("-");
+            fechaFormateada = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            if (horaParte) {
+                fechaFormateada += ` ${horaParte}`;
+            }
+        }
     }
 
     const payload = {
