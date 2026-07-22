@@ -146,68 +146,68 @@
         </div>
     
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 p-0.5">
-    <div onclick="filtrarPorKpi('')" 
-         class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-        <span class="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 uppercase tracking-[0.2em] transition-colors">
-            Unidades Totales
-        </span>
-        <span id="kpiTotal" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-    </div>
-    
-    <div onclick="filtrarPorKpi('Por Atender')" 
-         class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-l-4 border-l-amber-500 dark:border-l-amber-400 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-        <span class="text-[9px] md:text-[10px] font-black text-amber-600 dark:text-amber-500/80 group-hover:text-amber-700 dark:group-hover:text-amber-400 uppercase tracking-[0.2em] transition-colors">
-            Por Atender
-        </span>
-        <span id="kpiEspera" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-    </div>
-    
-    <div onclick="filtrarPorKpi('En Proceso')" 
-         class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-l-4 border-l-blue-500 dark:border-l-blue-400 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-        <span class="text-[9px] md:text-[10px] font-black text-blue-600 dark:text-blue-500/80 group-hover:text-blue-700 dark:group-hover:text-blue-400 uppercase tracking-[0.2em] transition-colors">
-            En Proceso
-        </span>
-        <span id="kpiProceso" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-    </div>
-    
-    <div onclick="filtrarPorKpi('Listo')" 
-         class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-l-4 border-l-emerald-500 dark:border-l-emerald-400 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
-        <span class="text-[9px] md:text-[10px] font-black text-emerald-600 dark:text-emerald-500/80 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 uppercase tracking-[0.2em] transition-colors">
-            Flota Disponible
-        </span>
-        <span id="kpiDispo" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
-    </div>
-</div>
+            <div onclick="filtrarPorKpi('')" 
+                 class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
+                <span class="text-[9px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 uppercase tracking-[0.2em] transition-colors">
+                    Unidades Totales
+                </span>
+                <span id="kpiTotal" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
+            </div>
+            
+            <div onclick="filtrarPorKpi('Por Atender')" 
+                 class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-l-4 border-l-amber-500 dark:border-l-amber-400 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
+                <span class="text-[9px] md:text-[10px] font-black text-amber-600 dark:text-amber-500/80 group-hover:text-amber-700 dark:group-hover:text-amber-400 uppercase tracking-[0.2em] transition-colors">
+                    Por Atender
+                </span>
+                <span id="kpiEspera" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
+            </div>
+            
+            <div onclick="filtrarPorKpi('En Proceso')" 
+                 class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-l-4 border-l-blue-500 dark:border-l-blue-400 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
+                <span class="text-[9px] md:text-[10px] font-black text-blue-600 dark:text-blue-500/80 group-hover:text-blue-700 dark:group-hover:text-blue-400 uppercase tracking-[0.2em] transition-colors">
+                    En Proceso
+                </span>
+                <span id="kpiProceso" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
+            </div>
+            
+            <div onclick="filtrarPorKpi('Listo')" 
+                 class="bg-white dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-l-4 border-l-emerald-500 dark:border-l-emerald-400 p-4 md:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all duration-200 group hover:scale-[1.02] active:scale-[0.98] shadow-sm dark:shadow-none">
+                <span class="text-[9px] md:text-[10px] font-black text-emerald-600 dark:text-emerald-500/80 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 uppercase tracking-[0.2em] transition-colors">
+                    Flota Disponible
+                </span>
+                <span id="kpiDispo" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-2">0</span>
+            </div>
+        </div>
 
         <!-- GRÁFICOS (Ocultos por defecto) -->
         <div id="visor-graficos-contenedor" class="hidden grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 p-0.5 transition-all duration-300">
-    
-    <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl min-h-[260px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700">
-        <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 transition-colors">
-            <i class="fa-solid fa-chart-pie mr-1 text-blue-600 dark:text-blue-500"></i> Distribución por Fosa
-        </h3>
-        <div class="w-full h-48 relative flex justify-center items-center">
-            <canvas id="chartTalleres"></canvas>
+            <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl min-h-[260px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700">
+                <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 transition-colors">
+                    <i class="fa-solid fa-chart-pie mr-1 text-blue-600 dark:text-blue-500"></i> Distribución por Fosa
+                </h3>
+                <div class="w-full h-48 relative flex justify-center items-center">
+                    <canvas id="chartTalleres"></canvas>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl min-h-[260px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700">
+                <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 transition-colors">
+                    <i class="fa-solid fa-chart-bar mr-1 text-blue-600 dark:text-blue-500"></i> Balance Crítico de Operación
+                </h3>
+                <div class="w-full h-48 relative flex justify-center items-center">
+                    <canvas id="chartEstatus"></canvas>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl min-h-[260px] flex flex-col justify-between shadow-sm dark:shadow-none transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700">
-        <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 transition-colors">
-            <i class="fa-solid fa-chart-bar mr-1 text-blue-600 dark:text-blue-500"></i> Balance Crítico de Operación
-        </h3>
-        <div class="w-full h-48 relative flex justify-center items-center">
-            <canvas id="chartEstatus"></canvas>
-        </div>
-    </div>
-</div>
 
+        <!-- TABLA PRINCIPAL DE REPORTES -->
         <div id="contenedorTablaReporte" class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm dark:shadow-xl transition-colors">
             <div class="px-4 py-3 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center transition-colors">
                 <h3 class="text-[11px] md:text-xs font-black uppercase tracking-widest text-slate-600 dark:text-white"><i class="fa-solid fa-list-check mr-1 text-blue-500"></i> Historial Activo de Mantenimiento</h3>
                 <span class="text-[9px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800/80 px-2 py-0.5 rounded font-mono uppercase tracking-wider border border-blue-100 dark:border-slate-700/50 transition-colors">Modo Monitor</span>
             </div>
             <div class="overflow-x-auto w-full antialiased chunk-touch-scrolling">
-                <table id="tablaLogistica" class="w-full text-left border-collapse md:min-w-[900px]">
+                <table id="tablaLogistica" class="w-full text-left border-collapse md:min-w-[1000px]">
                     <thead class="hidden md:table-header-group">
                         <tr class="bg-slate-50 dark:bg-slate-900 text-[9px] font-black tracking-[0.15em] text-slate-600 dark:text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase transition-colors">
                             <th class="p-4">ID Registro</th>
@@ -217,6 +217,7 @@
                             <th class="p-4">Ubicación Taller</th>
                             <th class="p-4">Avance</th>
                             <th class="p-4">Estatus</th>
+                            <th class="p-4">Tiempo Transcurrido</th>
                             <th class="p-4">Observaciones Técnicas</th>
                             <th class="p-4 w-36">Fechas</th>
                             <th class="p-4 text-center">Detalle</th>
@@ -224,7 +225,7 @@
                     </thead>
                     <tbody id="tablaCuerpo" class="block md:table-row-group divide-y divide-slate-200 dark:divide-slate-800/50 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors">
                         <tr>
-                            <td colspan="9" class="p-6 text-center text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px] font-bold">Conectando con repositorio central...</td>
+                            <td colspan="11" class="p-6 text-center text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px] font-bold">Conectando con repositorio central...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -265,6 +266,7 @@
                         <span class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1">Marca / Flota</span>
                         <span id="det-marca-flota" class="text-xs font-bold uppercase"></span>
                     </div>
+                    
                     <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/60 transition-colors">
                         <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1 transition-colors">Fecha Ingreso</span>
                         <span id="det-fecha-ingr" class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 transition-colors"></span>
@@ -276,6 +278,13 @@
                     </div>
 
                     <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/60 transition-colors">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tiempo Transcurrido</span>
+                        <span id="det-tiempo-transcurrido" class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 transition-colors">
+                            <i class="fa-regular fa-clock text-[10px]"></i> <span id="det-tiempo-texto">--</span>
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/60 transition-colors col-span-2 md:col-span-3">
                         <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1 transition-colors">Responsable</span>
                         <span id="det-usuario" class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase truncate block transition-colors"></span>
                     </div>
@@ -287,10 +296,10 @@
                         <h4 class="text-[10px] uppercase font-black tracking-widest text-blue-600 dark:text-blue-500 flex items-center gap-2 transition-colors">
                             <i class="fa-solid fa-list-check"></i> Tareas de Mantenimiento
                         </h4>
-                    <div id="det-container-tareas" class="bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800/40 p-4 space-y-2 min-h-[100px] transition-colors">
-                    <!-- Dinamico -->
+                        <div id="det-container-tareas" class="bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800/40 p-4 space-y-2 min-h-[100px] transition-colors">
+                        <!-- Dinámico -->
+                        </div>
                     </div>
-                </div>
 
                     <!-- Sección Auditoría y Fotos -->
                     <div class="space-y-4">
@@ -307,14 +316,14 @@
                         <div class="space-y-3">
                             <h4 class="text-[10px] uppercase font-black tracking-widest text-slate-400">Evidencias Fotográficas</h4>
                             <div class="grid grid-cols-2 gap-3">
-    <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
-        <span class="text-[9px] max-[360px]:text-[8px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-normal sm:tracking-wider text-center px-1 transition-colors">SIN FOTO ANTES</span>
-    </div>
-    
-    <div id="det-foto-despues-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
-        <span class="text-[9px] max-[360px]:text-[8px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-normal sm:tracking-wider text-center px-1 transition-colors">SIN FOTO DESPUÉS</span>
-    </div>
-</div>
+                                <div id="det-foto-antes-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
+                                    <span class="text-[9px] max-[360px]:text-[8px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-normal sm:tracking-wider text-center px-1 transition-colors">SIN FOTO ANTES</span>
+                                </div>
+                                
+                                <div id="det-foto-despues-container" class="relative group cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 aspect-video flex items-center justify-center transition-colors">
+                                    <span class="text-[9px] max-[360px]:text-[8px] font-black uppercase text-slate-400 dark:text-slate-600 tracking-normal sm:tracking-wider text-center px-1 transition-colors">SIN FOTO DESPUÉS</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -344,9 +353,11 @@
           Desarrollado por <span class="font-bold text-slate-600 dark:text-slate-400">RIVEROJDU</span> &copy; 2026
         </p>
      </footer>
+
 <!-- Vercel Speed Insights -->
 <script type="module">
   import { injectSpeedInsights } from 'https://cdn.jsdelivr.net/npm/@vercel/speed-insights@1/dist/index.mjs';
   injectSpeedInsights();
-</script></body>
+</script>
+</body>
 </html>
