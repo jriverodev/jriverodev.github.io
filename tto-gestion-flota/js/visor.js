@@ -7,6 +7,84 @@ let instanciaChartEstatus = null;
 document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
 
 /**
+ * Convierte una fecha/hora a un formato relativo estilo red social (ej. "hace 40 min", "ayer a las 5:00 pm")
+ * @param {string|Date} fechaInput - Fecha ISO, string ejecutable o Date
+ * @returns {string} Texto formateado con tiempo relativo
+ */
+function tiempoTranscurrido(fechaInput) {
+    if (!fechaInput) return 'S/I';
+
+    let fecha;
+    if (fechaInput instanceof Date) {
+        fecha = fechaInput;
+    } else if (typeof fechaInput === 'string') {
+        // Soporte para formato latino dd-mm-yyyy hh:mm o dd-mm-yyyy
+        const partesFechaHora = fechaInput.trim().split(" ");
+        const partesFecha = partesFechaHora[0].split("-");
+        if (partesFecha.length === 3) {
+            const dia = parseInt(partesFecha[0], 10);
+            const mes = parseInt(partesFecha[1], 10) - 1; // 0-indexed
+            const anio = parseInt(partesFecha[2], 10);
+
+            let horas = 0;
+            let minutos = 0;
+            if (partesFechaHora[1]) {
+                const partesHora = partesFechaHora[1].split(":");
+                horas = parseInt(partesHora[0], 10) || 0;
+                minutos = parseInt(partesHora[1], 10) || 0;
+            }
+            fecha = new Date(anio, mes, dia, horas, minutos);
+        } else {
+            fecha = new Date(fechaInput);
+        }
+    } else {
+        fecha = new Date(fechaInput);
+    }
+
+    if (isNaN(fecha.getTime())) return fechaInput; // Retorna original si la fecha es inválida
+
+    const ahora = new Date();
+    const diferenciaMs = ahora - fecha;
+    const diferenciaSeg = Math.floor(diferenciaMs / 1000);
+    const diferenciaMin = Math.floor(diferenciaSeg / 60);
+    const diferenciaHoras = Math.floor(diferenciaMin / 60);
+    const diferenciaDias = Math.floor(diferenciaHoras / 24);
+
+    // Formatear hora (ej. "5:00 pm")
+    const formatoHora = fecha.toLocaleTimeString('es-ES', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    }).toLowerCase();
+
+    // Comprobar si fue "Ayer"
+    const ayer = new Date(ahora);
+    ayer.setDate(ahora.getDate() - 1);
+    const esAyer = fecha.getDate() === ayer.getDate() &&
+                   fecha.getMonth() === ayer.getMonth() &&
+                   fecha.getFullYear() === ayer.getFullYear();
+
+    // Reglas estilo redes sociales
+    if (diferenciaSeg < 60) {
+        return 'hace un momento';
+    } else if (diferenciaMin < 60) {
+        return `hace ${diferenciaMin} min`;
+    } else if (diferenciaHoras < 24 && fecha.getDate() === ahora.getDate()) {
+        return `hace ${diferenciaHoras} ${diferenciaHoras === 1 ? 'hora' : 'horas'}`;
+    } else if (esAyer) {
+        return `ayer a las ${formatoHora}`;
+    } else if (diferenciaDias < 30) {
+        return `hace ${diferenciaDias} ${diferenciaDias === 1 ? 'día' : 'días'}`;
+    } else if (diferenciaDias < 365) {
+        const meses = Math.floor(diferenciaDias / 30);
+        return `hace ${meses} ${meses === 1 ? 'mes' : 'meses'}`;
+    } else {
+        const años = Math.floor(diferenciaDias / 365);
+        return `hace ${años} ${años === 1 ? 'año' : 'años'}`;
+    }
+}
+
+/**
  * Alterna la visibilidad de secciones (Filtros y Gráficos)
  */
 function toggleSeccion(id) {
@@ -142,7 +220,9 @@ function filtrarVisor() {
 
         let matchesFecha = true;
         if (fechaDesde || fechaHasta) {
-            const [d, m, y] = reg.Fecha_Registro.split("-").map(Number);
+            // reg.Fecha_Registro podría ser "dd-mm-yyyy hh:mm" o "dd-mm-yyyy"
+            const partesFechaHora = reg.Fecha_Registro.split(" ");
+            const [d, m, y] = partesFechaHora[0].split("-").map(Number);
             const fechaReg = new Date(y, m - 1, d);
 
             if (fechaDesde) {
@@ -293,7 +373,8 @@ function renderizarVisor(datos) {
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Fechas</span>
                     <div class="text-right md:text-left font-mono text-[12px] font-black tracking-tighter">
                     <div class="text-blue-600 dark:text-blue-500/90"><i class="fa-solid fa-calendar-day text-[12px]"></i> ${reg.Fecha_Registro}</div>
-                    ${reg.Fecha_Salida ? `<div class="text-emerald-600 dark:text-emerald-500/90 mt-0.5"><i class="fa-solid fa-circle-check text-[12px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+                    <div class="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-tight mt-0.5"><i class="fa-solid fa-clock text-[10px]"></i> ${tiempoTranscurrido(reg.Fecha_Registro)}</div>
+                    ${reg.Fecha_Salida ? `<div class="text-emerald-600 dark:text-emerald-500/90 mt-1"><i class="fa-solid fa-circle-check text-[12px]"></i> ${reg.Fecha_Salida}</div>` : ''}
                     </div>
                 </td>
 
@@ -327,7 +408,7 @@ function abrirModalDetalle(id) {
     document.getElementById("det-estatus").textContent = reg.Estatus;
     document.getElementById("det-ubicacion").textContent = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? reg.Nombre_Taller_Ext : reg.Nombre_Taller;
     document.getElementById("det-marca-flota").textContent = `${reg.Marca} (${reg.Tipo_Flota})`;
-    document.getElementById("det-fecha-ingr").textContent = reg.Fecha_Registro;
+    document.getElementById("det-fecha-ingr").innerHTML = `${reg.Fecha_Registro} <span class="text-[10px] text-slate-400 dark:text-slate-500 lowercase font-normal ml-1">(${tiempoTranscurrido(reg.Fecha_Registro)})</span>`;
     document.getElementById("det-fecha-salida").textContent = reg.Fecha_Salida || "PENDIENTE";
     document.getElementById("det-usuario").textContent = reg.Usuario;
     document.getElementById("det-modificado-por").textContent = reg.Modificado_Por;
