@@ -8,7 +8,10 @@
 // ==========================================
 
 // URL de despliegue Web App de Google Apps Script
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwM17iGCVD7YZpQj4fsD-pVBaip7ny5t5iIhuLluRLOVuLJNbTPjctopePliFIcjTFwLg/exec'; 
+const APP_CONFIG = {
+    // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
+    URL_API: "https://script.google.com/macros/s/AKfycbwM17iGCVD7YZpQj4fsD-pVBaip7ny5t5iIhuLluRLOVuLJNbTPjctopePliFIcjTFwLg/exec"
+};
 // Claves de almacenamiento en localStorage
 const CACHE_KEY = 'ttocc_mantenimientos';
 const SYNC_QUEUE_KEY = 'ttocc_sync_queue';
