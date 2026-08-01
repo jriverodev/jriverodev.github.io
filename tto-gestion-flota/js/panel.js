@@ -1,10 +1,14 @@
-// js/panel.js - Controlador Unificado de Patio, Edición Inline, Checklist Automatizado y Manejo de Imágenes en Base64
+// js/panel.js - Controlador Unificado de Patio, Edición Inline, Checklist Automatizado, Manejo de Imágenes en Base64 y Módulo Offline/Respaldo
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
-    // initTheme(); // Ahora manejado por tema.js
+    // initTheme(); // Manejado por tema.js
     cargarTablaEditable();
-    // Esperar un breve instante para asegurar que Select2 esté disponible si hay latencia en carga defer
+    
+    // Escuchador de conectividad para procesar cola offline al reconectar
+    window.addEventListener("online", procesarColaOffline);
+    
+    // Esperar a jQuery / Select2
     if (typeof $ !== 'undefined') {
         inicializarSelects();
     } else {
@@ -26,7 +30,7 @@ function inicializarSelects() {
     $('#edit-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalEditarRegistro') }));
 }
 
-// Almacenes de control en memoria global
+// Almacenes de control en memoria global (INTACTOS)
 var listaRegistrosPanel = [];
 var tareasModalActual = [];
 var OPERADOR_ACTUAL = "";
@@ -36,12 +40,61 @@ var FILTROS_ACTIVOS = {
     ubicacion: ""
 };
 
-// Base de datos de usuarios autorizados
+// Base de datos de usuarios autorizados (INTACTA)
 const USUARIOS_AUTORIZADOS = {
     "WILLIAM RIOS": "wr123", 
     "VANNESA ROMERO": "vr456",
     "PEDRO POLANCO": "pp789"
 };
+
+/**
+ * LÓGICA DE COLA OFFLINE Y RESPALDO EN LA NUBE / LOCAL
+ */
+const CLAVE_COLA_OFFLINE = "TTOCC_COLA_PETICIONES_OFFLINE";
+const CLAVE_RESPALDO_MATRIZ = "TTOCC_RESPALDO_LOCAL_MATRIZ";
+
+function encolarPeticionOffline(payload) {
+    const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
+    cola.push({
+        id: Date.now(),
+        fecha: new Date().toISOString(),
+        payload: payload
+    });
+    localStorage.setItem(CLAVE_COLA_OFFLINE, JSON.stringify(cola));
+}
+
+async function procesarColaOffline() {
+    if (!navigator.onLine) return;
+    
+    const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
+    if (cola.length === 0) return;
+
+    if (window.TTOCC_UI) {
+        TTOCC_UI.info("Sincronizando...", `Enviando ${cola.length} operación(es) guardada(s) sin conexión.`);
+    }
+
+    const colaPendiente = [...cola];
+    localStorage.setItem(CLAVE_COLA_OFFLINE, JSON.stringify([]));
+
+    for (const item of colaPendiente) {
+        try {
+            const response = await fetch(APP_CONFIG.URL_API, {
+                method: "POST",
+                body: JSON.stringify(item.payload)
+            });
+            const res = await response.json();
+            if (res.status !== "SUCCESS") {
+                console.error("Fallo reintentando petición offline:", item, res);
+            }
+        } catch (e) {
+            console.error("Error crítico retransmitiendo petición offline:", e);
+            // Si vuelve a fallar la conexión, re-encolar
+            encolarPeticionOffline(item.payload);
+        }
+    }
+
+    await cargarTablaEditable();
+}
 
 /**
  * Lógica de Identificación y Auditoría
@@ -64,11 +117,9 @@ function confirmarIdentidad(event) {
 
     if (!selectOperador || !inputPassword) return;
 
-    // Sanitización estricta contra inyección de código
     const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
     const passwordSanitizado = inputPassword.value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    // Validación de credenciales
     if (USUARIOS_AUTORIZADOS[operadorSanitizado] && USUARIOS_AUTORIZADOS[operadorSanitizado] === passwordSanitizado) {
         OPERADOR_ACTUAL = operadorSanitizado;
         window.operadorActivo = operadorSanitizado; 
@@ -79,13 +130,14 @@ function confirmarIdentidad(event) {
         
         console.log(`Acceso concedido a: ${operadorSanitizado}`);
 
+        // Intentar procesar cola pendiente tras validar operador
+        procesarColaOffline();
     } else {
         if (divError) divError.classList.remove('hidden');
         inputPassword.value = ''; 
         inputPassword.focus();
     }
 }
-
 
 /**
  * Lógica de Búsqueda y Filtros (Matriz Operativa)
@@ -151,7 +203,7 @@ function filtrarMatriz() {
 }
 
 /**
- * Consulta y despliega la matriz operativa en tiempo real
+ * Consulta y despliega la matriz operativa en tiempo real (con respaldo local)
  */
 async function cargarTablaEditable() {
     const tbody = document.getElementById("tablaEditableCuerpo");
@@ -225,6 +277,9 @@ async function cargarTablaEditable() {
             };
         });
 
+        // Guardar respaldo local para consulta offline de contingencia
+        localStorage.setItem(CLAVE_RESPALDO_MATRIZ, JSON.stringify(listaRegistrosPanel));
+
         actualizarSelectGerencias();
 
         if (listaRegistrosPanel.length === 0) {
@@ -235,13 +290,24 @@ async function cargarTablaEditable() {
         renderizarMatriz(listaRegistrosPanel);
 
     } catch (err) {
-        console.error(err);
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error crítico de enlace de datos.</td></tr>`;
+        console.error("Error al cargar datos remotos, recurriendo a respaldo local:", err);
+        
+        // Fallback local en modo offline
+        const respaldoLocal = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
+        if (respaldoLocal) {
+            listaRegistrosPanel = JSON.parse(respaldoLocal);
+            renderizarMatriz(listaRegistrosPanel);
+            if (window.TTOCC_UI) {
+                TTOCC_UI.warning("Modo Offline Activo", "Mostrando datos guardados localmente en caché.");
+            }
+        } else {
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error crítico de enlace de datos y sin respaldo local.</td></tr>`;
+        }
     }
 }
 
 /**
- * Renderiza la matriz operativa basándose en un set de datos
+ * Renderiza la matriz operativa
  */
 function renderizarMatriz(datos) {
     const tbody = document.getElementById("tablaEditableCuerpo");
@@ -279,7 +345,6 @@ function renderizarMatriz(datos) {
         }
 
         let filaHtml = `
-            <!--tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} md:bg-transparent border md:border-b md:border-slate-200 dark:md:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 transition-colors shadow-sm dark:shadow-none"-->
              <tr id="fila-${reg.ID_Registro}" 
     class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">   
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
@@ -398,7 +463,6 @@ function actualizarSelectGerencias() {
  */
 function abrirModalNuevo() {
     document.getElementById("formNuevoRegistro").reset(); 
-    // Obtener la fecha y hora local para rellenar el input datetime-local
     const ahora = new Date();
     const anio = ahora.getFullYear();
     const mes = String(ahora.getMonth() + 1).padStart(2, '0');
@@ -429,7 +493,7 @@ function previsualizarImagen(input, idContenedor) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            img.src = e.target.result;
+            img.src = e.result;
             container.classList.remove("hidden");
         };
         reader.readAsDataURL(input.files[0]);
@@ -463,10 +527,9 @@ async function guardarNuevoRegistro(event) {
         fotoBase64 = await transformarABase64(fileInput.files[0]);
     }
 
-    let fechaRaw = document.getElementById("add-fecha-ingreso").value; // Formato: YYYY-MM-DDTHH:mm
+    let fechaRaw = document.getElementById("add-fecha-ingreso").value;
     let fechaFormateada = "";
     if(fechaRaw) {
-        // Formato esperado por el backend: DD-MM-YYYY HH:mm
         const [fechaParte, horaParte] = fechaRaw.split("T");
         if (fechaParte) {
             const parts = fechaParte.split("-");
@@ -492,6 +555,15 @@ async function guardarNuevoRegistro(event) {
         modificado_por: OPERADOR_ACTUAL
     };
 
+    if (!navigator.onLine) {
+        encolarPeticionOffline(payload);
+        cerrarModalNuevo();
+        TTOCC_UI.warning("Sin Conexión", "El registro se guardó en la cola offline y se subirá automáticamente cuando vuelvas a tener internet.");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
+        return;
+    }
+
     try {
         const response = await fetch(APP_CONFIG.URL_API, {
             method: "POST",
@@ -506,8 +578,10 @@ async function guardarNuevoRegistro(event) {
             TTOCC_UI.error("Error de Servidor", res.message);
         }
     } catch (err) {
-        console.error(err);
-        TTOCC_UI.error("Fallo de Red", "No se pudo establecer comunicación con el servidor. Verifique su conexión.");
+        console.warn("Fallo de red durante guardado. Encolando offline...", err);
+        encolarPeticionOffline(payload);
+        cerrarModalNuevo();
+        TTOCC_UI.warning("Modo Offline Activado", "Error de comunicación. La solicitud fue encolada para respaldarse en la nube al conectarse.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
@@ -554,7 +628,6 @@ function renderizarTareasModal() {
     } else {
         tareasModalActual.forEach((tarea, index) => {
             const itemHtml = `
-            
                 <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800/60 gap-2 transition-colors">
                 <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
                 <input type="checkbox" ${tarea.hecho ? "checked" : ""} 
@@ -573,8 +646,6 @@ function renderizarTareasModal() {
         });
     }
    
-    
-    // 1. Calcular el avance real según las tareas
     let avanceCalculado = 0;
     if (tareasModalActual.length > 0) {
         const total = tareasModalActual.length;
@@ -585,25 +656,20 @@ function renderizarTareasModal() {
     const selectorEstatus = document.getElementById("edit-estatus");
     
     if (selectorEstatus) {
-        // 2. Si el avance llegó a 100% de forma natural, asegurar que pase a "Listo"
         if (tareasModalActual.length > 0 && avanceCalculado === 100) {
             selectorEstatus.value = "Listo";
         } 
-        // 3. ¡La clave! Si el usuario desmarcó una tarea y el estatus quedó huérfano en "Listo"
         else if (avanceCalculado < 100 && (selectorEstatus.value === "Listo" || selectorEstatus.value === "Reparado")) {
             selectorEstatus.value = "En Proceso";
         }
         
-        // 4. Si el operador fuerza manualmente "Listo" sin tareas, el avance se da por completado
         if (selectorEstatus.value === "Listo") {
             avanceCalculado = 100;
         }
     }
     
-    // 5. Actualizar los gráficos y la visibilidad de la foto "Después"
     actualizarInterfazAvanceModal(avanceCalculado);
 }
-
 
 function agregarTareaModal() {
     const input = document.getElementById("edit-nueva-tarea");
@@ -701,6 +767,15 @@ async function guardarEdicionModal(event) {
         modificado_por: OPERADOR_ACTUAL
     };
 
+    if (!navigator.onLine) {
+        encolarPeticionOffline(payload);
+        cerrarModalEditar();
+        TTOCC_UI.warning("Sin Conexión", "La edición se guardó localmente. Se respaldará en la nube automáticamente al restablecerse la conexión.");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
+        return;
+    }
+
     try {
         const response = await fetch(APP_CONFIG.URL_API, {
             method: "POST",
@@ -715,8 +790,10 @@ async function guardarEdicionModal(event) {
             TTOCC_UI.error("Error al Guardar", res.message);
         }
     } catch (err) {
-        console.error(err);
-        TTOCC_UI.error("Error Crítico", "Fallo de comunicación durante la sincronización de datos.");
+        console.warn("Fallo de red en edición. Guardando en cola offline...", err);
+        encolarPeticionOffline(payload);
+        cerrarModalEditar();
+        TTOCC_UI.warning("Sin Conexión", "Cambios retenidos en dispositivo. Se sincronizarán en la nube al detectar internet.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
@@ -739,7 +816,6 @@ async function confirmarEliminarRegistro() {
 
     if (!confirmacion) return;
 
-    // Segundo paso de seguridad para acciones críticas
     const confirmacionFinal = await TTOCC_UI.confirm(
         "Confirmación Final",
         "¿Está absolutamente seguro? Esta operación no se puede deshacer.",
@@ -752,7 +828,6 @@ async function confirmarEliminarRegistro() {
     const modalContent = document.querySelector("#modalEditarRegistro > div");
     const originalContentHtml = modalContent.innerHTML;
 
-    // Bloqueo visual del modal durante la eliminación
     modalContent.innerHTML = `
         <div class="flex flex-col items-center justify-center py-12 text-center">
             <i class="fa-solid fa-trash-can animate-bounce text-red-500 text-5xl mb-4"></i>
@@ -761,21 +836,30 @@ async function confirmarEliminarRegistro() {
         </div>
     `;
 
+    const payload = {
+        accion: "eliminar",
+        id_registro: id,
+        modificado_por: OPERADOR_ACTUAL
+    };
+
+    if (!navigator.onLine) {
+        encolarPeticionOffline(payload);
+        cerrarModalEditar();
+        modalContent.innerHTML = originalContentHtml;
+        TTOCC_UI.warning("Eliminación Encolada", "Se procesará el borrado en cuanto se restablezca el acceso a la red.");
+        return;
+    }
+
     try {
         const response = await fetch(APP_CONFIG.URL_API, {
             method: "POST",
-            body: JSON.stringify({
-                accion: "eliminar",
-                id_registro: id,
-                modificado_por: OPERADOR_ACTUAL
-            })
+            body: JSON.stringify(payload)
         });
 
         const res = await response.json();
 
         if (res.status === "SUCCESS") {
             cerrarModalEditar();
-            // Restaurar el contenido original para el siguiente uso del modal
             setTimeout(() => { modalContent.innerHTML = originalContentHtml; }, 500);
             await cargarTablaEditable();
             TTOCC_UI.success("Registro Eliminado", "La unidad y sus archivos asociados han sido removidos con éxito.");
@@ -784,9 +868,10 @@ async function confirmarEliminarRegistro() {
             modalContent.innerHTML = originalContentHtml;
         }
     } catch (err) {
-        console.error(err);
-        TTOCC_UI.error("Error de Red", "No se pudo completar la eliminación debido a un fallo de conexión.");
+        console.warn("Fallo de red en borrado. Guardando en cola offline...", err);
+        encolarPeticionOffline(payload);
+        cerrarModalEditar();
         modalContent.innerHTML = originalContentHtml;
+        TTOCC_UI.warning("Sin Conexión", "La eliminación se enviará automáticamente al reconectarse a internet.");
     }
 }
-
