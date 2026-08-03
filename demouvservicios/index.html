@@ -1,1 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unión Venezuela Servicios | Compromiso con la Excelencia Energética</title>
 
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bh: {
+              deep: '#05322b',    // Baker Hughes Deep Pine Teal
+              accent: '#018374',  // Medium Pine Teal
+              mint: '#02bc94',    // Bright Mint Green
+              charcoal: '#111827', // Dark gray for secondary typography
+              slate: '#f3f4f6'     // Light gray backgrounds
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome for Premium Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Premium smooth transition utilities */
+    .transition-premium {
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Dynamic active indicators mimicking Baker Hughes */
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background-color: #02bc94;
+      transition: width 0.3s ease;
+    }
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Mega menu active state */
+    .mega-menu-panel {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+    }
+    .group:hover .mega-menu-panel {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* Slick scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #05322b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #018374;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #02bc94;
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 font-sans selection:bg-bh-mint selection:text-bh-deep overflow-x-hidden">
+
+  <!-- ================= TOP UTILITY BAR (Baker Hughes Style) ================= -->
+  <div class="bg-bh-deep text-white/80 border-b border-bh-accent/30 text-xs py-2 px-4 sm:px-8 hidden md:block">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <!-- Contact Info & Fast Links -->
+      <div class="flex items-center space-x-6">
+        <span class="flex items-center space-x-2">
+          <i class="fa-solid fa-phone text-bh-mint"></i>
+          <span>0265-4152162 / 0424-6743868</span>
+        </span>
+        <span class="flex items-center space-x-2">
+          <i class="fa-solid fa-envelope text-bh-mint"></i>
+          <a href="mailto:uvservicios@uvservicios.com.ve" class="hover:text-bh-mint transition">uvservicios@uvservicios.com.ve</a>
+        </span>
+      </div>
+
+      <!-- Premium Utility Navigation -->
+      <div class="flex items-center space-x-6">
+        <a href="#faq" class="hover:text-bh-mint transition-colors">FAQ</a>
+        <a href="#nosotros" class="hover:text-bh-mint transition-colors">Nosotros</a>
+        <a href="#contacto" class="hover:text-bh-mint transition-colors">Contacto</a>
+        <span class="text-bh-mint">|</span>
+        <div class="relative inline-block text-left group">
+          <button class="flex items-center space-x-1 hover:text-white transition-colors">
+            <span>Español</span>
+            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </button>
+          <!-- Language dropdown (pure CSS hover or logic) -->
+          <div class="absolute right-0 mt-1 w-24 bg-bh-deep border border-bh-accent/30 rounded shadow-xl hidden group-hover:block z-50">
+            <a href="#" class="block px-3 py-1.5 hover:bg-bh-accent/30 text-white transition-colors">Español</a>
+            <a href="#" class="block px-3 py-1.5 hover:bg-bh-accent/30 text-white/70 transition-colors">English</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PRIMARY HEADER & NAVIGATION ================= -->
+  <header class="sticky top-0 bg-bh-deep text-white border-b border-bh-accent/20 z-40 transition-all duration-300 shadow-md" id="main-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+
+      <!-- Brand Logo / Identity -->
+      <a href="#" class="flex items-center space-x-3 group py-2">
+        <div class="bg-white p-1.5 rounded shadow-sm">
+          <img src="https://uvservicios.com/wp-content/uploads/2025/10/Logo-Vectorizado-UV-SERVICIOS_Mesa-de-trabajo-1-2-scaled.png"
+               alt="Unión Venezuela Servicios Logo"
+               class="h-10 w-auto object-contain transition-transform group-hover:scale-105">
+        </div>
+        <div class="flex flex-col">
+          <span class="text-lg font-extrabold tracking-wider leading-none text-white">UNIÓN VENEZUELA</span>
+          <span class="text-[10px] uppercase font-bold tracking-widest text-bh-mint mt-0.5">SERVICIOS</span>
+        </div>
+      </a>
+
+      <!-- Desktop Mega Navigation Menu -->
+      <nav class="hidden lg:flex items-center space-x-8">
+
+        <!-- INICIO LINK -->
+        <a href="#inicio" class="text-sm font-semibold tracking-wide hover:text-bh-mint transition-colors relative py-2">Inicio</a>
+
+        <!-- NOSOTROS MEGA MENU -->
+        <div class="relative group">
+          <button class="flex items-center space-x-1 text-sm font-semibold tracking-wide hover:text-bh-mint transition-colors py-2">
+            <span>Nosotros</span>
+            <i class="fa-solid fa-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
+          </button>
+
+          <!-- MEGA MENU PANEL -->
+          <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-[600px] bg-bh-deep border border-bh-accent/40 rounded-xl shadow-2xl p-6 mega-menu-panel z-50 grid grid-cols-12 gap-6">
+            <div class="col-span-5 bg-bh-accent/20 p-4 rounded-lg border border-bh-accent/30 flex flex-col justify-between">
+              <div>
+                <span class="text-xs uppercase font-extrabold text-bh-mint tracking-widest">Nuestra Historia</span>
+                <p class="text-xs text-white/80 mt-2 leading-relaxed">Más de 20 años de liderazgo indiscutible impulsando soluciones de ingeniería para la industria petrolera venezolana.</p>
+              </div>
+              <a href="#experiencia" class="text-xs text-bh-mint font-semibold hover:underline flex items-center space-x-1 mt-4">
+                <span>Ver Más</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+
+            <div class="col-span-7 space-y-4">
+              <span class="text-xs uppercase font-extrabold text-white tracking-widest block border-b border-bh-accent/20 pb-2">Sobre Nosotros</span>
+              <div class="grid grid-cols-2 gap-4">
+                <a href="#experiencia" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Experiencia</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Nuestra trayectoria sólida.</span>
+                </a>
+                <a href="#compromiso" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Tecnología</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Innovación y punta.</span>
+                </a>
+                <a href="#testimonios" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Testimonios</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Nuestros clientes opinan.</span>
+                </a>
+                <a href="#beneficios" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Diferenciador</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Por qué elegirnos.</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUCTOS MEGA MENU -->
+        <div class="relative group">
+          <button class="flex items-center space-x-1 text-sm font-semibold tracking-wide hover:text-bh-mint transition-colors py-2">
+            <span>Productos</span>
+            <i class="fa-solid fa-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
+          </button>
+
+          <!-- MEGA MENU PANEL -->
+          <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-[700px] bg-bh-deep border border-bh-accent/40 rounded-xl shadow-2xl p-6 mega-menu-panel z-50 grid grid-cols-12 gap-6">
+            <div class="col-span-4 bg-bh-accent/20 p-4 rounded-lg border border-bh-accent/30 flex flex-col justify-between">
+              <div>
+                <span class="text-xs uppercase font-extrabold text-bh-mint tracking-widest">Equipos Industriales</span>
+                <p class="text-xs text-white/80 mt-2 leading-relaxed">Suministro calificado de herramientas y materiales con certificación API internacional para operaciones rigurosas.</p>
+              </div>
+              <a href="#soluciones" class="text-xs text-bh-mint font-semibold hover:underline flex items-center space-x-1 mt-4">
+                <span>Ver Catálogo</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+
+            <div class="col-span-8 space-y-4">
+              <span class="text-xs uppercase font-extrabold text-white tracking-widest block border-b border-bh-accent/20 pb-2">Nuestras Líneas de Productos</span>
+              <div class="grid grid-cols-2 gap-4">
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Tuberías y Conexiones</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Sistemas de transporte de alta presión.</span>
+                </a>
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Válvulas de Control</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Seguridad y modulación de flujo continuo.</span>
+                </a>
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Bombas Industriales</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Manejo eficiente de crudo y fluidos pesados.</span>
+                </a>
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Instrumentación Avanzada</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Medición exacta para evitar riesgos.</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICIOS MEGA MENU -->
+        <div class="relative group">
+          <button class="flex items-center space-x-1 text-sm font-semibold tracking-wide hover:text-bh-mint transition-colors py-2">
+            <span>Servicios</span>
+            <i class="fa-solid fa-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
+          </button>
+
+          <!-- MEGA MENU PANEL -->
+          <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-[700px] bg-bh-deep border border-bh-accent/40 rounded-xl shadow-2xl p-6 mega-menu-panel z-50 grid grid-cols-12 gap-6">
+            <div class="col-span-4 bg-bh-accent/20 p-4 rounded-lg border border-bh-accent/30 flex flex-col justify-between">
+              <div>
+                <span class="text-xs uppercase font-extrabold text-bh-mint tracking-widest font-bold">Asistencia 24/7</span>
+                <p class="text-xs text-white/80 mt-2 leading-relaxed">Optimización operativa, mantenimiento predictivo, preventivo y correctivo para evitar costosas inactividades.</p>
+              </div>
+              <a href="#beneficios" class="text-xs text-bh-mint font-semibold hover:underline flex items-center space-x-1 mt-4">
+                <span>Ver Beneficios</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+
+            <div class="col-span-8 space-y-4">
+              <span class="text-xs uppercase font-extrabold text-white tracking-widest block border-b border-bh-accent/20 pb-2">Servicios Técnicos Especializados</span>
+              <div class="grid grid-cols-2 gap-4">
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Mantenimiento Preventivo</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Evite el costoso tiempo de inactividad.</span>
+                </a>
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Optimización de Procesos</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Soluciones de flujo e inyección avanzada.</span>
+                </a>
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Consultoría Estratégica</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Diagnósticos precisos para toma de decisión.</span>
+                </a>
+                <a href="#soluciones" class="block p-2 hover:bg-bh-accent/20 rounded-lg transition-colors group/item">
+                  <span class="text-xs font-bold text-white block group-hover/item:text-bh-mint">Garantía Normativa</span>
+                  <span class="text-[10px] text-white/60 block mt-0.5">Cumplimiento total con regulaciones de ley.</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <a href="#contacto" class="text-sm font-semibold tracking-wide hover:text-bh-mint transition-colors relative py-2">Contacto</a>
+      </nav>
+
+      <!-- Search and Header Action Button -->
+      <div class="hidden lg:flex items-center space-x-6">
+        <!-- Search Trigger -->
+        <button onclick="toggleSearch()" class="text-white hover:text-bh-mint transition-colors py-2" aria-label="Buscar">
+          <i class="fa-solid fa-magnifying-glass text-lg"></i>
+        </button>
+        <!-- Contact CTA Button -->
+        <a href="#contacto" class="bg-bh-mint hover:bg-white text-bh-deep hover:text-bh-deep font-bold text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all shadow-md hover:shadow-lg active:scale-95">
+          Consultoría Gratuita
+        </a>
+      </div>
+
+      <!-- Mobile Hamburger Button -->
+      <button onclick="toggleMobileMenu()" class="lg:hidden text-white hover:text-bh-mint focus:outline-none py-2" aria-label="Abrir Menú">
+        <i id="hamburger-icon" class="fa-solid fa-bars text-2xl"></i>
+      </button>
+
+    </div>
+
+    <!-- Active Search Bar Row -->
+    <div id="search-overlay" class="bg-bh-accent/95 border-t border-bh-mint/20 px-8 py-3 hidden transition-premium">
+      <div class="max-w-4xl mx-auto flex items-center space-x-4">
+        <i class="fa-solid fa-magnifying-glass text-white text-lg"></i>
+        <input type="text" id="search-input" placeholder="Buscar servicios, soluciones petroleras o productos..." class="w-full bg-transparent border-none text-white placeholder-white/60 focus:outline-none focus:ring-0 text-sm">
+        <button onclick="toggleSearch()" class="text-white hover:text-bh-mint text-xs uppercase font-bold tracking-wider">Cerrar</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MOBILE DRAWER NAVIGATION MENU (Baker Hughes-styled sidebar) ================= -->
+  <div id="mobile-menu" class="fixed inset-0 bg-bh-deep/95 backdrop-blur-md z-50 transform translate-x-full transition-transform duration-300 lg:hidden">
+    <div class="flex flex-col h-full p-6">
+      <!-- Close & Identity Header -->
+      <div class="flex justify-between items-center pb-6 border-b border-bh-accent/30">
+        <div class="flex items-center space-x-2">
+          <img src="https://uvservicios.com/wp-content/uploads/2025/10/Logo-Vectorizado-UV-SERVICIOS_Mesa-de-trabajo-1-2-scaled.png" alt="UV" class="h-8 w-auto bg-white p-1 rounded">
+          <span class="text-white font-bold tracking-wider text-sm">U.V. SERVICIOS</span>
+        </div>
+        <button onclick="toggleMobileMenu()" class="text-white hover:text-bh-mint">
+          <i class="fa-solid fa-xmark text-2xl"></i>
+        </button>
+      </div>
+
+      <!-- Navigation List (Interactive Dropdowns / Accordions) -->
+      <div class="flex-1 overflow-y-auto py-6 space-y-6">
+        <div>
+          <a href="#inicio" onclick="toggleMobileMenu()" class="block text-lg font-bold text-white hover:text-bh-mint transition-colors">Inicio</a>
+        </div>
+
+        <!-- Accordion Nosotros -->
+        <div>
+          <button onclick="toggleMobileAccordion('mob-nosotros')" class="flex justify-between items-center w-full text-lg font-bold text-white hover:text-bh-mint focus:outline-none">
+            <span>Nosotros</span>
+            <i id="mob-nosotros-chevron" class="fa-solid fa-chevron-down text-sm transition-transform"></i>
+          </button>
+          <div id="mob-nosotros" class="hidden mt-2 ml-4 space-y-2 text-white/80 text-sm border-l border-bh-accent/30 pl-4">
+            <a href="#experiencia" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Trayectoria & Experiencia</a>
+            <a href="#testimonios" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Nuestros Clientes</a>
+            <a href="#compromiso" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Compromiso Tecnológico</a>
+          </div>
+        </div>
+
+        <!-- Accordion Productos -->
+        <div>
+          <button onclick="toggleMobileAccordion('mob-productos')" class="flex justify-between items-center w-full text-lg font-bold text-white hover:text-bh-mint focus:outline-none">
+            <span>Productos</span>
+            <i id="mob-productos-chevron" class="fa-solid fa-chevron-down text-sm transition-transform"></i>
+          </button>
+          <div id="mob-productos" class="hidden mt-2 ml-4 space-y-2 text-white/80 text-sm border-l border-bh-accent/30 pl-4">
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Tuberías Industriales</a>
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Válvulas de Seguridad</a>
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Sistemas de Bombeo</a>
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Herramientas Certificadas</a>
+          </div>
+        </div>
+
+        <!-- Accordion Servicios -->
+        <div>
+          <button onclick="toggleMobileAccordion('mob-servicios')" class="flex justify-between items-center w-full text-lg font-bold text-white hover:text-bh-mint focus:outline-none">
+            <span>Servicios</span>
+            <i id="mob-servicios-chevron" class="fa-solid fa-chevron-down text-sm transition-transform"></i>
+          </button>
+          <div id="mob-servicios" class="hidden mt-2 ml-4 space-y-2 text-white/80 text-sm border-l border-bh-accent/30 pl-4">
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Mantenimiento Predictivo</a>
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Optimización Operativa</a>
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Consultorías Estratégicas</a>
+            <a href="#soluciones" onclick="toggleMobileMenu()" class="block py-1 hover:text-bh-mint">Garantía Normativa Ambiental</a>
+          </div>
+        </div>
+
+        <div>
+          <a href="#contacto" onclick="toggleMobileMenu()" class="block text-lg font-bold text-white hover:text-bh-mint transition-colors">Contacto</a>
+        </div>
+      </div>
+
+      <!-- Quick Contact Info -->
+      <div class="border-t border-bh-accent/30 pt-6 space-y-4 text-xs text-white/70">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-phone text-bh-mint"></i>
+          <span>0265-4152162 / 0424-6743868</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-envelope text-bh-mint"></i>
+          <span>uvservicios@uvservicios.com.ve</span>
+        </div>
+        <a href="#contacto" onclick="toggleMobileMenu()" class="block w-full text-center bg-bh-mint text-bh-deep font-bold uppercase tracking-widest py-3 rounded-full shadow-lg">
+          Solicitar Consultoría
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= HERO SECTION (Baker Hughes Premium Slider Style) ================= -->
+  <section id="inicio" class="relative bg-bh-deep text-white min-h-[85vh] flex items-center justify-center overflow-hidden pt-12">
+    <!-- Sophisticated Abstract Background Pattern -->
+    <div class="absolute inset-0 z-0 opacity-15">
+      <div class="absolute inset-0 bg-cover bg-center mix-blend-overlay" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1920');"></div>
+      <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-bh-deep via-bh-accent to-transparent"></div>
+    </div>
+
+    <!-- Fine Geometric Accents like Baker Hughes Guidelines -->
+    <div class="absolute right-0 bottom-0 w-1/3 h-1/2 bg-bh-accent/20 rounded-tl-full blur-3xl z-0"></div>
+    <div class="absolute left-12 top-24 w-40 h-40 border border-bh-mint/20 rounded-full animate-pulse z-0"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <!-- Main Copy Text Column -->
+      <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+        <!-- Small animated Badge -->
+        <div class="inline-flex items-center space-x-2 bg-bh-accent/30 border border-bh-mint/30 px-3.5 py-1.5 rounded-full text-bh-mint font-extrabold uppercase tracking-widest text-[10px] animate-bounce">
+          <i class="fa-solid fa-circle text-[6px] animate-ping"></i>
+          <span>Compromiso con la Excelencia Energética</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
+          Innovación y Eficiencia en <span class="text-bh-mint block lg:inline">Servicios Petroleros</span>
+        </h1>
+
+        <p class="text-base sm:text-lg text-white/80 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
+          En <span class="font-semibold text-white">U.V. SERVICIOS</span>, nos dedicamos a proporcionar soluciones robustas y efectivas que impulsan la industria petrolera hacia un futuro más eficiente y sostenible.
+        </p>
+
+        <!-- CTA Buttons Row -->
+        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+          <a href="#soluciones" class="w-full sm:w-auto bg-bh-mint hover:bg-white text-bh-deep hover:text-bh-deep font-extrabold uppercase tracking-widest text-xs px-8 py-4.5 rounded-full shadow-lg transition-premium hover:-translate-y-1 text-center">
+            Conoce Nuestros Servicios
+          </a>
+          <a href="#contacto" class="w-full sm:w-auto border border-white/40 hover:border-bh-mint text-white hover:text-bh-mint font-extrabold uppercase tracking-widest text-xs px-8 py-4.5 rounded-full transition-premium hover:-translate-y-1 text-center">
+            Solicitar Consultoría Gratis
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero Visual Interactive Widget Card -->
+      <div class="lg:col-span-5 relative">
+        <div class="bg-bh-accent/20 backdrop-blur-md border border-bh-accent/40 p-8 rounded-[32px] shadow-2xl relative z-10 transition-premium hover:border-bh-mint/50">
+          <h3 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+            <i class="fa-solid fa-chart-line text-bh-mint"></i>
+            <span>Indicador de Eficiencia Energética</span>
+          </h3>
+          <p class="text-xs text-white/70 mb-6">Visualice de forma en vivo cómo optimizar sus operaciones con nuestra asesoría integral de más de 20 años en la industria nacional.</p>
+
+          <!-- interactive metrics bar -->
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-white/80">Reducción de Inactividad</span>
+                <span class="text-bh-mint font-bold">+30%</span>
+              </div>
+              <div class="w-full bg-bh-deep/50 rounded-full h-2">
+                <div class="bg-bh-mint h-2 rounded-full transition-all duration-1000" style="width: 85%;"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-white/80">Eficiencia Operativa Total</span>
+                <span class="text-bh-mint font-bold">98.2%</span>
+              </div>
+              <div class="w-full bg-bh-deep/50 rounded-full h-2">
+                <div class="bg-bh-mint h-2 rounded-full transition-all duration-1000" style="width: 98%;"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-white/80">Disminución de Costos</span>
+                <span class="text-bh-mint font-bold">-25%</span>
+              </div>
+              <div class="w-full bg-bh-deep/50 rounded-full h-2">
+                <div class="bg-bh-mint h-2 rounded-full transition-all duration-1000" style="width: 75%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-bh-accent/30 flex justify-between items-center text-xs text-white/60">
+            <span>Ubicación de Soporte:</span>
+            <span class="text-white font-bold flex items-center space-x-1">
+              <i class="fa-solid fa-location-dot text-bh-mint text-[10px]"></i>
+              <span>Cobertura Nacional, Venezuela</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================= PROBLEMS AND SOLUTIONS SECTION (Premium Horizontal Split Cards) ================= -->
+  <section id="soluciones" class="py-24 bg-bh-slate relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Section Header -->
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-bh-accent">Desafíos y Respuestas del Sector</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-bh-deep">
+          Problemas y Soluciones en el Sector Petrolero
+        </h2>
+        <div class="w-16 h-1 bg-bh-mint mx-auto rounded-full"></div>
+        <p class="text-gray-600 font-light text-sm sm:text-base">
+          Abordamos con maestría e innovación técnica los principales cuellos de botella que limitan el rendimiento y la seguridad de las operaciones energéticas.
+        </p>
+      </div>
+
+      <!-- Solutions 4-Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+        <!-- CARD 1: Operational Inefficiency -->
+        <div class="bg-white rounded-[24px] border border-gray-200 shadow-sm hover:shadow-xl p-8 flex flex-col justify-between transition-premium hover:-translate-y-1.5 group">
+          <div>
+            <div class="w-14 h-14 bg-bh-deep/5 rounded-2xl flex items-center justify-center text-bh-accent mb-6 group-hover:bg-bh-deep group-hover:text-bh-mint transition-premium">
+              <i class="fa-solid fa-screwdriver-wrench text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-bh-deep mb-3">Ineficiencias Operativas</h3>
+            <p class="text-gray-600 text-sm leading-relaxed mb-6">
+              Las operaciones ineficientes pueden llevar a pérdidas significativas. Nuestro enfoque innovador optimiza cada proceso para maximizar la productividad.
+            </p>
+          </div>
+          <a href="#contacto" class="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-bh-accent group-hover:text-bh-mint transition-colors">
+            <span>Descubre Cómo</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- CARD 2: Downtime -->
+        <div class="bg-white rounded-[24px] border border-gray-200 shadow-sm hover:shadow-xl p-8 flex flex-col justify-between transition-premium hover:-translate-y-1.5 group">
+          <div>
+            <div class="w-14 h-14 bg-bh-deep/5 rounded-2xl flex items-center justify-center text-bh-accent mb-6 group-hover:bg-bh-deep group-hover:text-bh-mint transition-premium">
+              <i class="fa-solid fa-hourglass-half text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-bh-deep mb-3">Tiempo de Inactividad</h3>
+            <p class="text-gray-600 text-sm leading-relaxed mb-6">
+              El tiempo de inactividad no planificado puede ser costoso. Ofrecemos mantenimiento preventivo riguroso para asegurar un funcionamiento continuo.
+            </p>
+          </div>
+          <a href="#contacto" class="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-bh-accent group-hover:text-bh-mint transition-colors">
+            <span>Más Información</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- CARD 3: Compliance -->
+        <div class="bg-white rounded-[24px] border border-gray-200 shadow-sm hover:shadow-xl p-8 flex flex-col justify-between transition-premium hover:-translate-y-1.5 group">
+          <div>
+            <div class="w-14 h-14 bg-bh-deep/5 rounded-2xl flex items-center justify-center text-bh-accent mb-6 group-hover:bg-bh-deep group-hover:text-bh-mint transition-premium">
+              <i class="fa-solid fa-shield-halved text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-bh-deep mb-3">Cumplimiento Normativo</h3>
+            <p class="text-gray-600 text-sm leading-relaxed mb-6">
+              El incumplimiento de normativas puede resultar en sanciones críticas. Garantizamos soluciones que cumplen rigurosamente con los estándares legales.
+            </p>
+          </div>
+          <a href="#contacto" class="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-bh-accent group-hover:text-bh-mint transition-colors">
+            <span>Ver Soluciones</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <!-- CARD 4: High Costs -->
+        <div class="bg-white rounded-[24px] border border-gray-200 shadow-sm hover:shadow-xl p-8 flex flex-col justify-between transition-premium hover:-translate-y-1.5 group">
+          <div>
+            <div class="w-14 h-14 bg-bh-deep/5 rounded-2xl flex items-center justify-center text-bh-accent mb-6 group-hover:bg-bh-deep group-hover:text-bh-mint transition-premium">
+              <i class="fa-solid fa-hand-holding-dollar text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-bh-deep mb-3">Costos Elevados</h3>
+            <p class="text-gray-600 text-sm leading-relaxed mb-6">
+              Los costos operativos altos reducen la rentabilidad del pozo. Nuestras soluciones están diseñadas para reducir gastos y mejorar el margen de beneficio.
+            </p>
+          </div>
+          <a href="#contacto" class="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-bh-accent group-hover:text-bh-mint transition-colors">
+            <span>Optimiza Ahora</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ================= BENEFITS SECTION (Interactive Grid of 18 points) ================= -->
+  <section id="beneficios" class="py-24 bg-white relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Section Header -->
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-bh-accent">¿Por Qué Nosotros?</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-bh-deep">
+          Beneficios de Nuestros Servicios
+        </h2>
+        <div class="w-16 h-1 bg-bh-mint mx-auto rounded-full"></div>
+        <p class="text-gray-600 font-light text-sm sm:text-base">
+          Desplegamos un conjunto completo de ventajas diseñadas estratégicamente para aportar valor continuo en cada etapa de la producción.
+        </p>
+      </div>
+
+      <!-- 18 Benefits Grid Structure -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- BENEFIT 1 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Mayor Productividad</h4>
+            <p class="text-gray-500 text-xs mt-1">Sistemas optimizados para obtener el mayor rendimiento operativo continuo.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 2 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-percent text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Reducción de Costos Operativos</h4>
+            <p class="text-gray-500 text-xs mt-1">Estrategias de control térmico e inyección que disminuyen los recursos dilapidados.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 3 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-circle-check text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Cumplimiento de Normativas Ambientales</h4>
+            <p class="text-gray-500 text-xs mt-1">Supervisión ecológica que evita multas y cuida nuestro entorno.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 4 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-headset text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Soporte y Asistencia Técnica 24/7</h4>
+            <p class="text-gray-500 text-xs mt-1">Un equipo de guardia disponible a cualquier hora ante imprevistos.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 5 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-microchip text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Innovación Tecnológica</h4>
+            <p class="text-gray-500 text-xs mt-1">Aplicamos constantemente software y herramientas modernas.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 6 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-sliders text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Soluciones Personalizadas</h4>
+            <p class="text-gray-500 text-xs mt-1">Adaptamos cada producto al tipo de crudo y geología específica.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 7 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-arrows-spin text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Mejora Continua</h4>
+            <p class="text-gray-500 text-xs mt-1">Ciclo de retroalimentación constante para elevar estándares.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 8 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-user-gear text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Equipo Experto</h4>
+            <p class="text-gray-500 text-xs mt-1">Ingenieros e instaladores acreditados nacional e internacionalmente.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 9 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-earth-americas text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Cobertura Nacional</h4>
+            <p class="text-gray-500 text-xs mt-1">Presencia inmediata en las principales cuencas petroleras del país.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 10 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-brain text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Consultoría Estratégica</h4>
+            <p class="text-gray-500 text-xs mt-1">Guías detalladas para optimizar inversiones de capital en infraestructuras.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 11 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-bolt text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Ejecución Eficiente</h4>
+            <p class="text-gray-500 text-xs mt-1">Mínimos tiempos de montaje y calibración de herramental.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 12 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-crosshairs text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Diagnóstico Preciso</h4>
+            <p class="text-gray-500 text-xs mt-1">Ultrasonidos y sensores de fondo para conocer el estado real.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 13 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-chart-pie text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Evaluación Integral</h4>
+            <p class="text-gray-500 text-xs mt-1">Inspección de punta a punta del ciclo productivo del gas y crudo.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 14 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Mantenimiento Preventivo</h4>
+            <p class="text-gray-500 text-xs mt-1">Planificación programada para evitar paradas indeseables.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 15 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-reply text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Respuesta Rápida</h4>
+            <p class="text-gray-500 text-xs mt-1">Despliegue inmediato de cuadrillas en sitio para incidencias.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 16 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-award text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Calidad Garantizada</h4>
+            <p class="text-gray-500 text-xs mt-1">Rigurosos ensayos no destructivos antes de cada entrega de obra.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 17 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-face-smile text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Satisfacción del Cliente</h4>
+            <p class="text-gray-500 text-xs mt-1">Altos porcentajes de renovación de contratos marcos industriales.</p>
+          </div>
+        </div>
+
+        <!-- BENEFIT 18 -->
+        <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-bh-slate transition-all border border-transparent hover:border-gray-200">
+          <div class="bg-bh-deep/10 text-bh-accent p-3 rounded-xl">
+            <i class="fa-solid fa-leaf text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-bh-deep">Compromiso Ambiental</h4>
+            <p class="text-gray-500 text-xs mt-1">Optimización de emisiones para una huella de carbono minimizada.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ================= NO TE QUEDES ATRÁS SECTION (Middle CTA Section) ================= -->
+  <section class="relative bg-bh-deep text-white py-20 overflow-hidden">
+    <!-- Overlay decorations -->
+    <div class="absolute inset-0 z-0 opacity-10 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920');"></div>
+    <div class="absolute left-0 right-0 top-0 bottom-0 bg-gradient-to-r from-bh-deep via-bh-accent/80 to-bh-deep z-0"></div>
+
+    <div class="max-w-5xl mx-auto text-center px-4 sm:px-6 relative z-10 space-y-6">
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+        No te quedes atrás en la eficiencia operativa
+      </h2>
+      <p class="text-base sm:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
+        Únase a las corporaciones energéticas líderes que han transformado sus índices de disponibilidad y producción de hidrocarburos.
+      </p>
+      <div class="pt-4">
+        <a href="#contacto" class="inline-block bg-bh-mint hover:bg-white text-bh-deep hover:text-bh-deep font-extrabold uppercase tracking-widest text-xs px-10 py-5 rounded-full shadow-2xl transition-premium hover:-translate-y-1">
+          Solicitá una Consultoría Gratuita Ahora
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================= OUR EXPERIENCE & TECHNOLOGY (Two Column Split Layout) ================= -->
+  <section id="experiencia" class="py-24 bg-bh-slate relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+
+      <!-- Copy Text Column -->
+      <div class="lg:col-span-6 space-y-6">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-bh-accent">Trayectoria Consolidada</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-bh-deep leading-tight">
+          Nuestra Experiencia y Tecnología
+        </h2>
+        <div class="w-16 h-1 bg-bh-mint rounded-full"></div>
+
+        <p class="text-gray-700 leading-relaxed font-light text-sm sm:text-base">
+          Con <span class="font-bold text-bh-deep">más de 20 años</span> en la industria, <span class="font-semibold text-bh-deep">U.V. SERVICIOS</span> se destaca por su equipo de expertos altamente capacitados y el uso de tecnología de punta. Nos comprometemos a ofrecer soluciones innovadoras que cumplen con los estándares internacionales, asegurando la máxima eficiencia y seguridad en todas nuestras operaciones.
+        </p>
+
+        <!-- KPI highlights -->
+        <div class="grid grid-cols-3 gap-6 pt-6 border-t border-gray-200">
+          <div>
+            <span class="block text-3xl sm:text-4xl font-extrabold text-bh-accent">20+</span>
+            <span class="block text-xs text-gray-500 uppercase font-semibold tracking-wider mt-1">Años Activos</span>
+          </div>
+          <div>
+            <span class="block text-3xl sm:text-4xl font-extrabold text-bh-accent">100%</span>
+            <span class="block text-xs text-gray-500 uppercase font-semibold tracking-wider mt-1">Garantía</span>
+          </div>
+          <div>
+            <span class="block text-3xl sm:text-4xl font-extrabold text-bh-accent">24/7</span>
+            <span class="block text-xs text-gray-500 uppercase font-semibold tracking-wider mt-1">Asistencia</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video / Interactive Poster Column -->
+      <div class="lg:col-span-6 relative">
+        <div class="relative rounded-[32px] overflow-hidden shadow-2xl border border-gray-200 group">
+          <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=1200"
+               alt="Plataforma de Ingeniería"
+               class="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-700">
+
+          <!-- Absolute Card for extra detail -->
+          <div class="absolute inset-0 bg-gradient-to-t from-bh-deep/90 via-bh-deep/30 to-transparent flex flex-col justify-end p-8 text-white">
+            <span class="text-xs uppercase font-extrabold tracking-widest text-bh-mint mb-1">Tecnología de Punta</span>
+            <h4 class="text-lg font-bold">Certificaciones API e ISO</h4>
+            <p class="text-xs text-white/80 mt-1 leading-relaxed">Trabajamos bajo marcos regulatorios internacionales para garantizar cero accidentes y máxima confiabilidad en pozos complejos.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ================= CLIENTS TESTIMONIALS (Premium Slider Carousel) ================= -->
+  <section id="testimonios" class="py-24 bg-white relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Section Header -->
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-bh-accent">La voz de la industria</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-bh-deep">
+          Lo Que Dicen Nuestros Clientes
+        </h2>
+        <div class="w-16 h-1 bg-bh-mint mx-auto rounded-full"></div>
+      </div>
+
+      <!-- Testimonials grid (2-columns matching original portrait images) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+
+        <!-- Testimonial 1 -->
+        <div class="bg-bh-slate p-8 sm:p-10 rounded-[32px] border border-gray-200 flex flex-col justify-between shadow-sm relative group hover:shadow-md transition-premium">
+          <div class="absolute top-8 right-8 text-bh-accent/10 text-6xl font-serif">“</div>
+          <div class="space-y-6">
+            <p class="text-gray-700 italic text-base leading-relaxed relative z-10">
+              "Gracias a U.V. SERVICIOS, hemos logrado reducir el tiempo de inactividad en un 30%. Su equipo de expertos técnicos es excepcional."
+            </p>
+            <div class="flex items-center space-x-4">
+              <img src="https://uvservicios.com/wp-content/uploads/2025/10/new-portrait-12-800x800-1-800x800.jpg"
+                   alt="María González"
+                   class="w-14 h-14 rounded-full object-cover border-2 border-bh-accent">
+              <div>
+                <h4 class="text-base font-bold text-bh-deep">María González</h4>
+                <p class="text-xs text-bh-accent font-semibold">Gerente de Operaciones, PetroVenezuela</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 2 -->
+        <div class="bg-bh-slate p-8 sm:p-10 rounded-[32px] border border-gray-200 flex flex-col justify-between shadow-sm relative group hover:shadow-md transition-premium">
+          <div class="absolute top-8 right-8 text-bh-accent/10 text-6xl font-serif">“</div>
+          <div class="space-y-6">
+            <p class="text-gray-700 italic text-base leading-relaxed relative z-10">
+              "La tecnología avanzada de U.V. SERVICIOS ha transformado por completo nuestra eficiencia operativa. Altamente recomendados."
+            </p>
+            <div class="flex items-center space-x-4">
+              <img src="https://uvservicios.com/wp-content/uploads/2025/10/new-portrait-9-800x800-1-800x800.jpg"
+                   alt="Carlos Ramírez"
+                   class="w-14 h-14 rounded-full object-cover border-2 border-bh-accent">
+              <div>
+                <h4 class="text-base font-bold text-bh-deep">Carlos Ramírez</h4>
+                <p class="text-xs text-bh-accent font-semibold">Director Técnico, Energía Global</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ================= INTERACTIVE FAQ SECTION (Accordions) ================= -->
+  <section id="faq" class="py-24 bg-bh-slate relative">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Section Header -->
+      <div class="text-center mb-16 space-y-4">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-bh-accent">Resolvemos tus dudas</span>
+        <h2 class="text-3xl font-extrabold tracking-tight text-bh-deep">
+          Preguntas Frecuentes (FAQ)
+        </h2>
+        <div class="w-16 h-1 bg-bh-mint mx-auto rounded-full"></div>
+      </div>
+
+      <!-- FAQ Accordion List -->
+      <div class="space-y-4">
+
+        <!-- Accordion 1 -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <button onclick="toggleFaq(1)" class="w-full flex justify-between items-center p-6 text-left focus:outline-none group">
+            <span class="text-base font-bold text-bh-deep group-hover:text-bh-accent transition-colors">¿Qué tipo de servicios ofrece U.V. SERVICIOS?</span>
+            <i id="faq-chevron-1" class="fa-solid fa-chevron-down text-bh-accent transition-transform"></i>
+          </button>
+          <div id="faq-content-1" class="hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+            Ofrecemos servicios de optimización operativa, mantenimiento preventivo de pozos y líneas de transporte, soluciones de cumplimiento normativo legal, consultoría técnica estratégica e instrumentación avanzada para toda la cadena del crudo y gas.
+          </div>
+        </div>
+
+        <!-- Accordion 2 -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <button onclick="toggleFaq(2)" class="w-full flex justify-between items-center p-6 text-left focus:outline-none group">
+            <span class="text-base font-bold text-bh-deep group-hover:text-bh-accent transition-colors">¿Tienen cobertura técnica las 24 horas del día?</span>
+            <i id="faq-chevron-2" class="fa-solid fa-chevron-down text-bh-accent transition-transform"></i>
+          </button>
+          <div id="faq-content-2" class="hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+            Sí, garantizamos asistencia técnica, operativa y de monitoreo 24/7 de forma ininterrumpida a nivel nacional con ingenieros listos para actuar ante contingencias críticas.
+          </div>
+        </div>
+
+        <!-- Accordion 3 -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <button onclick="toggleFaq(3)" class="w-full flex justify-between items-center p-6 text-left focus:outline-none group">
+            <span class="text-base font-bold text-bh-deep group-hover:text-bh-accent transition-colors">¿Cómo garantizan el cumplimiento de normativas ambientales?</span>
+            <i id="faq-chevron-3" class="fa-solid fa-chevron-down text-bh-accent transition-transform"></i>
+          </button>
+          <div id="faq-content-3" class="hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+            Nuestros procesos de ingeniería aplican estándares ecológicos rigurosos y metodologías de contención y reducción de emisiones, garantizando que su operación cumpla al 100% con la ley de ambiente venezolana.
+          </div>
+        </div>
+
+        <!-- Accordion 4 -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <button onclick="toggleFaq(4)" class="w-full flex justify-between items-center p-6 text-left focus:outline-none group">
+            <span class="text-base font-bold text-bh-deep group-hover:text-bh-accent transition-colors">¿Sus productos e instrumentales cuentan con certificaciones?</span>
+            <i id="faq-chevron-4" class="fa-solid fa-chevron-down text-bh-accent transition-transform"></i>
+          </button>
+          <div id="faq-content-4" class="hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+            Por supuesto. Todas nuestras tuberías, válvulas, bombas y piezas de instrumentación cuentan con sellos de certificación API e ISO, asegurando la robustez exigida en entornos industriales hostiles.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ================= CONTACT FORM SECTION (Baker Hughes Deep Teal Styling) ================= -->
+  <section id="contacto" class="py-24 bg-white relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-16">
+
+      <!-- Contact Info Sidebar Column -->
+      <div class="lg:col-span-5 space-y-8 bg-bh-deep text-white p-10 rounded-[32px] shadow-xl relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-bh-accent/30 rounded-bl-full blur-xl"></div>
+
+        <div class="space-y-3">
+          <span class="text-xs uppercase tracking-widest text-bh-mint font-extrabold">Canales de Atención</span>
+          <h3 class="text-2xl font-extrabold">Conéctate con Nosotros</h3>
+          <p class="text-sm text-white/70 leading-relaxed font-light">Estamos listos para estructurar su próxima consultoría u optimización en campo. Agende hoy una cita técnica con nosotros.</p>
+        </div>
+
+        <div class="space-y-6 pt-4">
+          <!-- Phone link -->
+          <div class="flex items-center space-x-4">
+            <div class="bg-bh-accent/40 p-3.5 rounded-xl text-bh-mint">
+              <i class="fa-solid fa-phone-volume text-lg"></i>
+            </div>
+            <div>
+              <span class="block text-xs text-white/50 uppercase font-semibold">Líneas Directas</span>
+              <span class="block text-sm font-bold">0265-4152162 / 0424-6743868</span>
+            </div>
+          </div>
+
+          <!-- Email Link -->
+          <div class="flex items-center space-x-4">
+            <div class="bg-bh-accent/40 p-3.5 rounded-xl text-bh-mint">
+              <i class="fa-solid fa-envelope-open-text text-lg"></i>
+            </div>
+            <div>
+              <span class="block text-xs text-white/50 uppercase font-semibold">Correo Electrónico</span>
+              <span class="block text-sm font-bold">uvservicios@uvservicios.com.ve</span>
+            </div>
+          </div>
+
+          <!-- Coverage location link -->
+          <div class="flex items-center space-x-4">
+            <div class="bg-bh-accent/40 p-3.5 rounded-xl text-bh-mint">
+              <i class="fa-solid fa-location-dot text-lg"></i>
+            </div>
+            <div>
+              <span class="block text-xs text-white/50 uppercase font-semibold">Sede Principal</span>
+              <span class="block text-sm font-bold">Zona Industrial, Oriente - Venezuela</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-bh-accent/30 pt-6 flex justify-between items-center text-xs text-white/50">
+          <span>U.V. Servicios Petroleros S.A.</span>
+          <span>© 2026</span>
+        </div>
+      </div>
+
+      <!-- Live Interactive Contact Form Column -->
+      <div class="lg:col-span-7 space-y-6">
+        <h3 class="text-2xl font-bold text-bh-deep">Solicitar una Consultoría Gratuita</h3>
+        <p class="text-sm text-gray-500 font-light">Rellene el formulario a continuación para que uno de nuestros ingenieros de planta se comunique con usted en menos de 24 horas.</p>
+
+        <form id="contact-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label for="name" class="block text-xs uppercase font-extrabold tracking-wider text-bh-deep mb-2">Nombre Completo</label>
+              <input type="text" id="name" required placeholder="Ej. Juan Pérez"
+                     class="w-full bg-bh-slate border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-bh-accent focus:bg-white transition-all">
+            </div>
+            <div>
+              <label for="company" class="block text-xs uppercase font-extrabold tracking-wider text-bh-deep mb-2">Empresa / Organización</label>
+              <input type="text" id="company" required placeholder="Ej. PetroOriente S.A."
+                     class="w-full bg-bh-slate border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-bh-accent focus:bg-white transition-all">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label for="email" class="block text-xs uppercase font-extrabold tracking-wider text-bh-deep mb-2">Correo Electrónico</label>
+              <input type="email" id="email" required placeholder="correo@empresa.com"
+                     class="w-full bg-bh-slate border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-bh-accent focus:bg-white transition-all">
+            </div>
+            <div>
+              <label for="phone" class="block text-xs uppercase font-extrabold tracking-wider text-bh-deep mb-2">Teléfono de Contacto</label>
+              <input type="tel" id="phone" placeholder="+58 (424) 123-4567"
+                     class="w-full bg-bh-slate border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-bh-accent focus:bg-white transition-all">
+            </div>
+          </div>
+
+          <div>
+            <label for="service-interest" class="block text-xs uppercase font-extrabold tracking-wider text-bh-deep mb-2">Servicio de Interés</label>
+            <select id="service-interest" class="w-full bg-bh-slate border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-bh-accent focus:bg-white transition-all">
+              <option value="operaciones">Optimización Operativa de Campo</option>
+              <option value="mantenimiento">Mantenimiento Predictivo & Preventivo</option>
+              <option value="normas">Garantías Normativas Ambientales</option>
+              <option value="productos">Suministro de Tuberías y Válvulas</option>
+              <option value="otros">Consultorías Estratégicas Personalizadas</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="message" class="block text-xs uppercase font-extrabold tracking-wider text-bh-deep mb-2">Detalles del Requerimiento</label>
+            <textarea id="message" rows="4" placeholder="Describa brevemente el estado de su instalación..."
+                      class="w-full bg-bh-slate border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-bh-accent focus:bg-white transition-all"></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-bh-accent hover:bg-bh-deep text-white font-extrabold uppercase tracking-widest text-xs py-4 rounded-xl shadow-lg transition-all active:scale-98">
+            Enviar Solicitud de Consultoría
+          </button>
+        </form>
+
+        <!-- Feedback Success Alert Widget -->
+        <div id="form-feedback" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-xl text-sm flex items-center space-x-3 transition-all duration-300">
+          <i class="fa-solid fa-circle-check text-xl text-emerald-600"></i>
+          <div>
+            <span class="font-bold">¡Solicitud recibida con éxito!</span> Un ingeniero de guardia se comunicará con usted en el transcurso del día.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ================= PREMIUM DEEP TEAL FOOTER (Baker Hughes Style) ================= -->
+  <footer class="bg-bh-deep text-white/80 border-t border-bh-accent/30 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 pb-12 border-b border-bh-accent/20">
+
+      <!-- Brand column -->
+      <div class="space-y-4">
+        <div class="flex items-center space-x-2 bg-white p-1.5 rounded inline-block max-w-[180px]">
+          <img src="https://uvservicios.com/wp-content/uploads/2025/10/Logo-Vectorizado-UV-SERVICIOS_Mesa-de-trabajo-1-2-scaled.png" alt="UV Logo" class="h-8 w-auto">
+        </div>
+        <p class="text-xs text-white/60 leading-relaxed">
+          Unión Venezuela Servicios. Soluciones robustas y eficientes para optimizar y resguardar la productividad de la infraestructura de gas y crudo del país.
+        </p>
+      </div>
+
+      <!-- Fast Links Column -->
+      <div class="space-y-4">
+        <h4 class="text-sm uppercase font-extrabold text-bh-mint tracking-wider">Enlaces de Interés</h4>
+        <ul class="space-y-2 text-xs">
+          <li><a href="#soluciones" class="hover:text-bh-mint transition-colors">Productos Industriales</a></li>
+          <li><a href="#soluciones" class="hover:text-bh-mint transition-colors">Servicios Petroleros</a></li>
+          <li><a href="#experiencia" class="hover:text-bh-mint transition-colors">Trayectoria Técnica</a></li>
+          <li><a href="#faq" class="hover:text-bh-mint transition-colors">Preguntas Frecuentes</a></li>
+        </ul>
+      </div>
+
+      <!-- Secondary Navigation -->
+      <div class="space-y-4">
+        <h4 class="text-sm uppercase font-extrabold text-bh-mint tracking-wider">Sectores Claves</h4>
+        <ul class="space-y-2 text-xs">
+          <li><a href="#soluciones" class="hover:text-bh-mint transition-colors">Optimización de Gas</a></li>
+          <li><a href="#soluciones" class="hover:text-bh-mint transition-colors">Inyección de Crudos</a></li>
+          <li><a href="#soluciones" class="hover:text-bh-mint transition-colors">Evaluación de Riesgo</a></li>
+          <li><a href="#soluciones" class="hover:text-bh-mint transition-colors">Ingeniería Hidráulica</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact direct column -->
+      <div class="space-y-4">
+        <h4 class="text-sm uppercase font-extrabold text-bh-mint tracking-wider">Contacto Rápido</h4>
+        <ul class="space-y-2 text-xs">
+          <li class="flex items-center space-x-2">
+            <i class="fa-solid fa-phone text-bh-mint"></i>
+            <span>0265-4152162</span>
+          </li>
+          <li class="flex items-center space-x-2">
+            <i class="fa-solid fa-phone text-bh-mint"></i>
+            <span>0424-6743868</span>
+          </li>
+          <li class="flex items-center space-x-2">
+            <i class="fa-solid fa-envelope-open text-bh-mint"></i>
+            <span>uvservicios@uvservicios.com.ve</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Copyright and Legal footer links -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col sm:flex-row justify-between items-center text-xs text-white/50 space-y-4 sm:space-y-0">
+      <div>
+        <span>Copyright © 2026 UV Servicios. Todos los derechos reservados.</span>
+      </div>
+      <div class="flex space-x-6">
+        <a href="#" class="hover:text-bh-mint transition-colors">Términos de Uso</a>
+        <a href="#" class="hover:text-bh-mint transition-colors">Política de Privacidad</a>
+        <a href="#" class="hover:text-bh-mint transition-colors">Cookies</a>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // Toggle primary navigation search row
+    function toggleSearch() {
+      const searchOverlay = document.getElementById('search-overlay');
+      const searchInput = document.getElementById('search-input');
+
+      if (searchOverlay.classList.contains('hidden')) {
+        searchOverlay.classList.remove('hidden');
+        searchInput.focus();
+      } else {
+        searchOverlay.classList.add('hidden');
+      }
+    }
+
+    // Toggle mobile navigation sidebar drawer
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      if (menu.classList.contains('translate-x-full')) {
+        menu.classList.remove('translate-x-full');
+      } else {
+        menu.classList.add('translate-x-full');
+      }
+    }
+
+    // Toggle mobile menu accordions dynamically
+    function toggleMobileAccordion(id) {
+      const el = document.getElementById(id);
+      const chevron = document.getElementById(id + '-chevron');
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+      } else {
+        el.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+      }
+    }
+
+    // FAQ Accordion management
+    function toggleFaq(index) {
+      const content = document.getElementById(`faq-content-${index}`);
+      const chevron = document.getElementById(`faq-chevron-${index}`);
+
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+      } else {
+        content.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+      }
+    }
+
+    // Contact form submit logic with animations
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      const form = document.getElementById('contact-form');
+      const feedback = document.getElementById('form-feedback');
+
+      // Simulate submission success animation
+      feedback.classList.remove('hidden');
+      form.reset();
+
+      setTimeout(() => {
+        feedback.classList.add('hidden');
+      }, 5000);
+    }
+
+    // Elegant header transparency/shrink on scroll
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('main-header');
+      if (window.scrollY > 50) {
+        header.classList.add('py-1', 'shadow-lg');
+        header.classList.remove('py-0');
+      } else {
+        header.classList.remove('py-1', 'shadow-lg');
+      }
+    });
+  </script>
+
+</body>
+</html>
