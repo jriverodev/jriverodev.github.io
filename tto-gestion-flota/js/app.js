@@ -8,7 +8,9 @@
 // ==========================================
 
 // URL de despliegue Web App de Google Apps Script
-const APP_CONFIG = {
+/*const APP_CONFIG = {*/
+  const SCRIPT_URL = {
+    
     // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
     URL_API: "https://script.google.com/macros/s/AKfycbwM17iGCVD7YZpQj4fsD-pVBaip7ny5t5iIhuLluRLOVuLJNbTPjctopePliFIcjTFwLg/exec"
 };
