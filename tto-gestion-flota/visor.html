@@ -27,11 +27,11 @@
     <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.min.css"-->
     <link rel="stylesheet" href="css/photoswipe.css">
     <script type="module">
-        import PhotoSwipeLightbox from 'js/photoswipe/photoswipe-lightbox.esm.min.js';
+        import PhotoSwipeLightbox from './js/photoswipe/photoswipe-lightbox.esm.min.js';
         const lightbox = new PhotoSwipeLightbox({
             gallery: '#modalDetalleRegistro, #tablaCuerpo',
             children: 'a.pswp-link',
-            pswpModule: () => import('js/photoswipe/photoswipe.esm.min.js')
+            pswpModule: () => import('./js/photoswipe/photoswipe.esm.min.js')
         });
 
         // Manejar dimensiones dinámicamente si no están presentes
