@@ -43,11 +43,11 @@
     </script-->
 
     <script type="module">
-        import PhotoSwipeLightbox from 'js/photoswipe/photoswipe-lightbox.esm.min.js';
+        import PhotoSwipeLightbox from './js/photoswipe/photoswipe-lightbox.esm.min.js';
         const lightbox = new PhotoSwipeLightbox({
             gallery: '#tablaEditableCuerpo',
             children: 'a.pswp-link',
-            pswpModule: () => import('js/photoswipe/photoswipe.esm.min.js')
+            pswpModule: () => import('./js/photoswipe/photoswipe.esm.min.js')
         });
 
         lightbox.addFilter('itemData', (itemData, index) => {
