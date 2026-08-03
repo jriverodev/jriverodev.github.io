@@ -13,9 +13,9 @@
         extend: {
           colors: {
             bh: {
-              deep: '#05322b',    // Baker Hughes Deep Pine Teal
-              accent: '#018374',  // Medium Pine Teal
-              mint: '#02bc94',    // Bright Mint Green
+              deep: '#05322b',     // Baker Hughes Deep Pine Teal
+              accent: '#018374',   // Medium Pine Teal
+              mint: '#02bc94',     // Bright Mint Green
               charcoal: '#111827', // Dark gray for secondary typography
               slate: '#f3f4f6'     // Light gray backgrounds
             }
@@ -84,6 +84,14 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #02bc94;
     }
+
+    /* Glassmorphism utility */
+    .glass-card {
+      background: rgba(5, 50, 43, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(2, 188, 148, 0.2);
+    }
   </style>
 </head>
 <body class="bg-white text-gray-900 font-sans selection:bg-bh-mint selection:text-bh-deep overflow-x-hidden">
@@ -114,7 +122,7 @@
             <span>Español</span>
             <i class="fa-solid fa-chevron-down text-[10px]"></i>
           </button>
-          <!-- Language dropdown (pure CSS hover or logic) -->
+          <!-- Language dropdown -->
           <div class="absolute right-0 mt-1 w-24 bg-bh-deep border border-bh-accent/30 rounded shadow-xl hidden group-hover:block z-50">
             <a href="#" class="block px-3 py-1.5 hover:bg-bh-accent/30 text-white transition-colors">Español</a>
             <a href="#" class="block px-3 py-1.5 hover:bg-bh-accent/30 text-white/70 transition-colors">English</a>
@@ -325,7 +333,7 @@
         </button>
       </div>
 
-      <!-- Navigation List (Interactive Dropdowns / Accordions) -->
+      <!-- Navigation List -->
       <div class="flex-1 overflow-y-auto py-6 space-y-6">
         <div>
           <a href="#inicio" onclick="toggleMobileMenu()" class="block text-lg font-bold text-white hover:text-bh-mint transition-colors">Inicio</a>
@@ -395,33 +403,40 @@
   </div>
 
 
-  <!-- ================= HERO SECTION (Baker Hughes Premium Slider Style) ================= -->
-  <section id="inicio" class="relative bg-bh-deep text-white min-h-[85vh] flex items-center justify-center overflow-hidden pt-12">
-    <!-- Sophisticated Abstract Background Pattern -->
-    <div class="absolute inset-0 z-0 opacity-15">
-      <div class="absolute inset-0 bg-cover bg-center mix-blend-overlay" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1920');"></div>
-      <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-bh-deep via-bh-accent to-transparent"></div>
+  <!-- ================= HERO SECTION (Baker Hughes Premium Slider & Video Loop Style) ================= -->
+  <section id="inicio" class="relative bg-bh-deep text-white min-h-[92vh] flex items-center justify-center overflow-hidden">
+
+    <!-- HIGH-TECH LOOPS: Multiple Fallback Sources of Cinematic Energy background loop -->
+    <div class="absolute inset-0 z-0">
+      <div class="absolute inset-0 bg-bh-deep/80 z-10 mix-blend-multiply"></div>
+      <video autoplay loop muted playsinline class="w-full h-full object-cover opacity-35">
+        <!-- 1st Fallback: High Quality Industrial loop (Pexels / Tech abstract) -->
+        <source src="https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c022273eec0885a04373ae1e37deaccc&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+        <!-- 2nd Fallback: abstract technological networking loop -->
+        <source src="https://player.vimeo.com/external/459389137.sd.mp4?s=993997c251963e1c667efb31cb15a9ffdf2ec3be&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+      </video>
     </div>
 
     <!-- Fine Geometric Accents like Baker Hughes Guidelines -->
-    <div class="absolute right-0 bottom-0 w-1/3 h-1/2 bg-bh-accent/20 rounded-tl-full blur-3xl z-0"></div>
-    <div class="absolute left-12 top-24 w-40 h-40 border border-bh-mint/20 rounded-full animate-pulse z-0"></div>
+    <div class="absolute right-0 bottom-0 w-1/3 h-1/2 bg-bh-accent/25 rounded-tl-full blur-3xl z-0"></div>
+    <div class="absolute left-12 top-24 w-40 h-40 border border-bh-mint/10 rounded-full animate-pulse z-0"></div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 py-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
       <!-- Main Copy Text Column -->
-      <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+      <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
         <!-- Small animated Badge -->
-        <div class="inline-flex items-center space-x-2 bg-bh-accent/30 border border-bh-mint/30 px-3.5 py-1.5 rounded-full text-bh-mint font-extrabold uppercase tracking-widest text-[10px] animate-bounce">
+        <div class="inline-flex items-center space-x-2 bg-bh-accent/45 border border-bh-mint/30 px-3.5 py-1.5 rounded-full text-bh-mint font-extrabold uppercase tracking-widest text-[10px] animate-bounce">
           <i class="fa-solid fa-circle text-[6px] animate-ping"></i>
-          <span>Compromiso con la Excelencia Energética</span>
+          <span>Compromiso con la Excelencia Energética e IA</span>
         </div>
 
         <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
           Innovación y Eficiencia en <span class="text-bh-mint block lg:inline">Servicios Petroleros</span>
         </h1>
 
-        <p class="text-base sm:text-lg text-white/80 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
-          En <span class="font-semibold text-white">U.V. SERVICIOS</span>, nos dedicamos a proporcionar soluciones robustas y efectivas que impulsan la industria petrolera hacia un futuro más eficiente y sostenible.
+        <p class="text-base sm:text-lg text-white/90 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
+          En <span class="font-semibold text-white text-shadow">U.V. SERVICIOS</span>, proporcionamos soluciones robustas de ingeniería de fluidos, inyección avanzada e instrumentación inteligente bajo rigurosas normas internacionales.
         </p>
 
         <!-- CTA Buttons Row -->
@@ -435,14 +450,61 @@
         </div>
       </div>
 
-      <!-- Hero Visual Interactive Widget Card -->
-      <div class="lg:col-span-5 relative">
-        <div class="bg-bh-accent/20 backdrop-blur-md border border-bh-accent/40 p-8 rounded-[32px] shadow-2xl relative z-10 transition-premium hover:border-bh-mint/50">
-          <h3 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
-            <i class="fa-solid fa-chart-line text-bh-mint"></i>
-            <span>Indicador de Eficiencia Energética</span>
-          </h3>
-          <p class="text-xs text-white/70 mb-6">Visualice de forma en vivo cómo optimizar sus operaciones con nuestra asesoría integral de más de 20 años en la industria nacional.</p>
+      <!-- Hero Visual Premium Video/Image CAROUSEL Widget -->
+      <div class="lg:col-span-6 relative">
+        <div class="glass-card p-6 sm:p-8 rounded-[32px] shadow-2xl relative z-10 transition-premium hover:border-bh-mint/50 overflow-hidden">
+
+          <!-- Carousel Slides Container -->
+          <div class="relative h-64 sm:h-72 w-full overflow-hidden rounded-2xl mb-6">
+
+            <!-- Slide 1 (Video Preview: Oil / Industrial Plant) -->
+            <div id="hero-slide-1" class="absolute inset-0 w-full h-full transition-all duration-700 opacity-100 z-10">
+              <div class="absolute inset-0 bg-bh-deep/45 z-10 flex flex-col justify-end p-5">
+                <span class="text-[10px] uppercase font-bold text-bh-mint tracking-widest">Optimización & IA en Tiempo Real</span>
+                <h4 class="text-base sm:text-lg font-bold text-white mt-1">Mantenimiento Predictivo Integrado</h4>
+              </div>
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="https://player.vimeo.com/external/435674703.sd.mp4?s=cfb63a920be048866e4a2b91807659357d620576&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+              </video>
+            </div>
+
+            <!-- Slide 2 (Video Preview: Mechanical Engineering) -->
+            <div id="hero-slide-2" class="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 z-0">
+              <div class="absolute inset-0 bg-bh-deep/45 z-10 flex flex-col justify-end p-5">
+                <span class="text-[10px] uppercase font-bold text-bh-mint tracking-widest">Tecnología de Flujo e Inyección</span>
+                <h4 class="text-base sm:text-lg font-bold text-white mt-1">Instrumentación y Válvulas de Seguridad API</h4>
+              </div>
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c022273eec0885a04373ae1e37deaccc&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+              </video>
+            </div>
+
+            <!-- Slide 3 (Video Preview: Energy grid) -->
+            <div id="hero-slide-3" class="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 z-0">
+              <div class="absolute inset-0 bg-bh-deep/45 z-10 flex flex-col justify-end p-5">
+                <span class="text-[10px] uppercase font-bold text-bh-mint tracking-widest">Reducción de Inactividad</span>
+                <h4 class="text-base sm:text-lg font-bold text-white mt-1">Asistencia Técnica de Emergencia 24/7</h4>
+              </div>
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="https://player.vimeo.com/external/459389137.sd.mp4?s=993997c251963e1c667efb31cb15a9ffdf2ec3be&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+              </video>
+            </div>
+
+            <!-- Carousel Nav Buttons -->
+            <button onclick="prevHeroSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-bh-deep/70 hover:bg-bh-mint hover:text-bh-deep text-white w-8 h-8 rounded-full flex items-center justify-center transition-all text-xs" aria-label="Slide anterior">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button onclick="nextHeroSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-bh-deep/70 hover:bg-bh-mint hover:text-bh-deep text-white w-8 h-8 rounded-full flex items-center justify-center transition-all text-xs" aria-label="Siguiente slide">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Carousel Dots Navigation -->
+          <div class="flex justify-center space-x-2.5 mb-6">
+            <span onclick="setHeroSlide(1)" id="hero-dot-1" class="w-2.5 h-2.5 rounded-full bg-bh-mint cursor-pointer transition-colors"></span>
+            <span onclick="setHeroSlide(2)" id="hero-dot-2" class="w-2.5 h-2.5 rounded-full bg-white/40 cursor-pointer transition-colors"></span>
+            <span onclick="setHeroSlide(3)" id="hero-dot-3" class="w-2.5 h-2.5 rounded-full bg-white/40 cursor-pointer transition-colors"></span>
+          </div>
 
           <!-- interactive metrics bar -->
           <div class="space-y-4">
@@ -464,18 +526,9 @@
                 <div class="bg-bh-mint h-2 rounded-full transition-all duration-1000" style="width: 98%;"></div>
               </div>
             </div>
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-white/80">Disminución de Costos</span>
-                <span class="text-bh-mint font-bold">-25%</span>
-              </div>
-              <div class="w-full bg-bh-deep/50 rounded-full h-2">
-                <div class="bg-bh-mint h-2 rounded-full transition-all duration-1000" style="width: 75%;"></div>
-              </div>
-            </div>
           </div>
 
-          <div class="mt-6 pt-6 border-t border-bh-accent/30 flex justify-between items-center text-xs text-white/60">
+          <div class="mt-6 pt-5 border-t border-bh-accent/30 flex justify-between items-center text-xs text-white/60">
             <span>Ubicación de Soporte:</span>
             <span class="text-white font-bold flex items-center space-x-1">
               <i class="fa-solid fa-location-dot text-bh-mint text-[10px]"></i>
@@ -807,14 +860,18 @@
   <!-- ================= NO TE QUEDES ATRÁS SECTION (Middle CTA Section) ================= -->
   <section class="relative bg-bh-deep text-white py-20 overflow-hidden">
     <!-- Overlay decorations -->
-    <div class="absolute inset-0 z-0 opacity-10 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920');"></div>
-    <div class="absolute left-0 right-0 top-0 bottom-0 bg-gradient-to-r from-bh-deep via-bh-accent/80 to-bh-deep z-0"></div>
+    <div class="absolute inset-0 z-0 opacity-15">
+      <video autoplay loop muted playsinline class="w-full h-full object-cover">
+        <source src="https://player.vimeo.com/external/435674703.sd.mp4?s=cfb63a920be048866e4a2b91807659357d620576&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+      </video>
+    </div>
+    <div class="absolute left-0 right-0 top-0 bottom-0 bg-gradient-to-r from-bh-deep via-bh-accent/80 to-bh-deep z-10"></div>
 
-    <div class="max-w-5xl mx-auto text-center px-4 sm:px-6 relative z-10 space-y-6">
+    <div class="max-w-5xl mx-auto text-center px-4 sm:px-6 relative z-20 space-y-6">
       <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
         No te quedes atrás en la eficiencia operativa
       </h2>
-      <p class="text-base sm:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
+      <p class="text-base sm:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
         Únase a las corporaciones energéticas líderes que han transformado sus índices de disponibilidad y producción de hidrocarburos.
       </p>
       <div class="pt-4">
@@ -1200,6 +1257,61 @@
 
   <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
+    // Hero Carousel Navigation State
+    let currentHeroSlide = 1;
+    const totalHeroSlides = 3;
+
+    function setHeroSlide(slideIndex) {
+      currentHeroSlide = slideIndex;
+
+      // Update Slide Opacities
+      for (let i = 1; i <= totalHeroSlides; i++) {
+        const slide = document.getElementById(`hero-slide-${i}`);
+        const dot = document.getElementById(`hero-dot-${i}`);
+
+        if (i === slideIndex) {
+          slide.classList.remove('opacity-0', 'z-0');
+          slide.classList.add('opacity-100', 'z-10');
+          dot.classList.remove('bg-white/40');
+          dot.classList.add('bg-bh-mint');
+        } else {
+          slide.classList.remove('opacity-100', 'z-10');
+          slide.classList.add('opacity-0', 'z-0');
+          dot.classList.remove('bg-bh-mint');
+          dot.classList.add('bg-white/40');
+        }
+      }
+    }
+
+    function nextHeroSlide() {
+      let nextIndex = currentHeroSlide + 1;
+      if (nextIndex > totalHeroSlides) nextIndex = 1;
+      setHeroSlide(nextIndex);
+    }
+
+    function prevHeroSlide() {
+      let prevIndex = currentHeroSlide - 1;
+      if (prevIndex < 1) prevIndex = totalHeroSlides;
+      setHeroSlide(prevIndex);
+    }
+
+    // Auto Advance Carousel Slides every 8 seconds
+    let slideTimer = setInterval(nextHeroSlide, 8000);
+
+    // Reset timer on user interaction
+    function resetSlideTimer() {
+      clearInterval(slideTimer);
+      slideTimer = setInterval(nextHeroSlide, 8000);
+    }
+
+    // Wrap slides trigger in helper to reset timers
+    const originalSetSlide = setHeroSlide;
+    setHeroSlide = function(idx) {
+      originalSetSlide(idx);
+      resetSlideTimer();
+    }
+
+
     // Toggle primary navigation search row
     function toggleSearch() {
       const searchOverlay = document.getElementById('search-overlay');
