@@ -14,14 +14,14 @@ const ASSETS = [
   './js/ui.js',
   './js/tema.js',
   // CDN externas utilizadas por tu app
-  'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  './js/libs/browser@4.js',
+  'css/font-awesome/6.4.0/css/all.min.css',
+  './js/chart.js',
+  './js/xlsx.full.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe-lightbox.umd.min.js'
+  './css/photoswipe/photoswipe.css',
+  './js/photoswipe/photoswipe.umd.min.js',
+  './js/photoswipe/photoswipe-lightbox.umd.min.js'
 ];
 
 // Instalación
