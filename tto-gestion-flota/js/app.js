@@ -8,8 +8,7 @@
 // ==========================================
 
 // URL de despliegue Web App de Google Apps Script
-/*const APP_CONFIG = {*/
-  const SCRIPT_URL = {
+const APP_CONFIG = {
     
     // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
     URL_API: "https://script.google.com/macros/s/AKfycbwM17iGCVD7YZpQj4fsD-pVBaip7ny5t5iIhuLluRLOVuLJNbTPjctopePliFIcjTFwLg/exec"
@@ -167,9 +166,9 @@ async function obtenerRegistrosFlota(callbackRender) {
     }
 
     // 2. CONSULTA EN SEGUNDO PLANO (Si hay conexión)
-    if (navigator.onLine && SCRIPT_URL) {
+    if (navigator.onLine && APP_CONFIG) {
         try {
-            const response = await fetch(`${SCRIPT_URL}?action=OBTENER_TODOS`);
+            const response = await fetch(`${APP_CONFIG}?action=OBTENER_TODOS`);
             if (response.ok) {
                 const datosServidor = await response.json();
                 
@@ -211,7 +210,7 @@ function encolarOperacionOffline(accion, payload) {
  * Procesa y envía los cambios acumulados al backend de Google Apps Script
  */
 async function procesarSincronizacionPendiente() {
-    if (!navigator.onLine || !SCRIPT_URL) return;
+    if (!navigator.onLine || !APP_CONFIG) return;
 
     let queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
     if (queue.length === 0) return;
@@ -230,7 +229,7 @@ async function procesarSincronizacionPendiente() {
             if (item.payload.fotoAntes) formData.append('fotoAntes', item.payload.fotoAntes);
             if (item.payload.fotoDespues) formData.append('fotoDespues', item.payload.fotoDespues);
 
-            const response = await fetch(SCRIPT_URL, {
+            const response = await fetch(APP_CONFIG, {
                 method: 'POST',
                 body: formData
             });
