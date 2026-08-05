@@ -166,9 +166,9 @@ async function obtenerRegistrosFlota(callbackRender) {
     }
 
     // 2. CONSULTA EN SEGUNDO PLANO (Si hay conexión)
-    if (navigator.onLine && APP_CONFIG) {
+    if (navigator.onLine && APP_CONFIG && APP_CONFIG.URL_API) {
         try {
-            const response = await fetch(`${APP_CONFIG}?action=OBTENER_TODOS`);
+            const response = await fetch(`${APP_CONFIG.URL_API}?action=OBTENER_TODOS`);
             if (response.ok) {
                 const datosServidor = await response.json();
                 
@@ -210,7 +210,7 @@ function encolarOperacionOffline(accion, payload) {
  * Procesa y envía los cambios acumulados al backend de Google Apps Script
  */
 async function procesarSincronizacionPendiente() {
-    if (!navigator.onLine || !APP_CONFIG) return;
+    if (!navigator.onLine || !APP_CONFIG || !APP_CONFIG.URL_API) return;
 
     let queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
     if (queue.length === 0) return;
@@ -229,7 +229,7 @@ async function procesarSincronizacionPendiente() {
             if (item.payload.fotoAntes) formData.append('fotoAntes', item.payload.fotoAntes);
             if (item.payload.fotoDespues) formData.append('fotoDespues', item.payload.fotoDespues);
 
-            const response = await fetch(APP_CONFIG, {
+            const response = await fetch(APP_CONFIG.URL_API, {
                 method: 'POST',
                 body: formData
             });

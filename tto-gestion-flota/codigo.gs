@@ -13,13 +13,27 @@ function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName("Historial_Mantenimiento");
 
+    // Obtener o crear 'Historial_Mantenimiento'
+    var sheet = ss.getSheetByName("Historial_Mantenimiento");
     if (!sheet) {
-      return retornarJSON({ status: "ERROR", message: "La pestaña 'Historial_Mantenimiento' no fue encontrada." });
+      sheet = ss.insertSheet("Historial_Mantenimiento");
+      sheet.appendRow([
+        "ID_Registro", "ID_Unidad", "Tipo_Flota", "Nombre_Taller", "Avance",
+        "Estatus", "Observaciones", "Fecha_Ingreso", "Fecha_Salida", "Marca",
+        "Foto_Antes", "Foto_Despues", "Nombre_Taller_Ext", "Gerencia",
+        "Usuario", "Tareas", "Modificado_Por"
+      ]);
     }
 
-    // MAPEO DE COLUMNAS (Estructura expandida a 17 columnas)
+    // Obtener o crear 'Maestro_Activos'
+    var sheetActivos = ss.getSheetByName("Maestro_Activos");
+    if (!sheetActivos) {
+      sheetActivos = ss.insertSheet("Maestro_Activos");
+      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Tipo_Flota"]);
+    }
+
+    // MAPEO DE COLUMNAS (Estructura expandida a 17 columnas de Historial_Mantenimiento)
     var COL_ID_REGISTRO = 1;   // A
     var COL_UNIDAD = 2;        // B
     var COL_FLOTA = 3;         // C
@@ -38,9 +52,99 @@ function doPost(e) {
     var COL_TAREAS = 16;       // P
     var COL_MODIFICADO_POR = 17; // Q
 
-    // ==========================================
-    // ACCIÓN 1: LEER DATOS
-    // ==========================================
+    // =========================================================================
+    // MODULO: MAESTRO DE ACTIVOS
+    // =========================================================================
+
+    // 1. LEER ACTIVOS
+    if (payload.accion === "leer_activos") {
+      var rango = sheetActivos.getDataRange();
+      var valores = rango.getValues();
+      var encabezados = valores[0];
+      var listaObjetos = [];
+
+      for (var i = 1; i < valores.length; i++) {
+        var fila = valores[i];
+        var item = {};
+        for (var j = 0; j < encabezados.length; j++) {
+          item[encabezados[j]] = fila[j];
+        }
+        listaObjetos.push(item);
+      }
+      return retornarJSON({ status: "SUCCESS", datos: listaObjetos });
+    }
+
+    // 2. CREAR ACTIVO
+    if (payload.accion === "crear_activo") {
+      var idUnidad = String(payload.id_unidad).toUpperCase().trim();
+
+      // Evitar duplicados por ID Unidad
+      var datosActivos = sheetActivos.getDataRange().getValues();
+      for (var i = 1; i < datosActivos.length; i++) {
+        if (String(datosActivos[i][0]).toUpperCase().trim() === idUnidad) {
+          return retornarJSON({ status: "ERROR", message: "La unidad '" + idUnidad + "' ya está registrada en el Maestro de Activos." });
+        }
+      }
+
+      var nuevaFilaActivo = [
+        idUnidad,
+        payload.placa || "",
+        payload.serial || "",
+        payload.marca || "",
+        payload.flota || "Liviana"
+      ];
+
+      sheetActivos.appendRow(nuevaFilaActivo);
+      SpreadsheetApp.flush();
+
+      return retornarJSON({ status: "SUCCESS", message: "Vehículo registrado con éxito en el Maestro de Activos." });
+    }
+
+    // 3. EDITAR ACTIVO
+    if (payload.accion === "editar_activo") {
+      var idUnidad = String(payload.id_unidad).toUpperCase().trim();
+      var datosActivos = sheetActivos.getDataRange().getValues();
+
+      for (var k = 1; k < datosActivos.length; k++) {
+        if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
+          var numeroFila = k + 1;
+
+          sheetActivos.getRange(numeroFila, 2).setValue(payload.placa || "");
+          sheetActivos.getRange(numeroFila, 3).setValue(payload.serial || "");
+          sheetActivos.getRange(numeroFila, 4).setValue(payload.marca || "");
+          sheetActivos.getRange(numeroFila, 5).setValue(payload.flota || "Liviana");
+
+          SpreadsheetApp.flush();
+          return retornarJSON({ status: "SUCCESS", message: "Activo técnico actualizado correctamente." });
+        }
+      }
+      return retornarJSON({ status: "ERROR", message: "ID de Unidad no encontrado en el Maestro de Activos." });
+    }
+
+    // 4. ELIMINAR ACTIVO
+    if (payload.accion === "eliminar_activo") {
+      var idUnidad = String(payload.id_unidad).toUpperCase().trim();
+      var datosActivos = sheetActivos.getDataRange().getValues();
+
+      for (var k = 1; k < datosActivos.length; k++) {
+        if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
+          var numeroFila = k + 1;
+
+          sheetActivos.deleteRow(numeroFila);
+          SpreadsheetApp.flush();
+
+          return retornarJSON({ status: "SUCCESS", message: "Vehículo removido del Maestro de Activos." });
+        }
+      }
+      return retornarJSON({ status: "ERROR", message: "ID de Unidad no encontrado para eliminar." });
+    }
+
+
+    // =========================================================================
+    // MODULO: HISTORIAL DE MANTENIMIENTO / TALLERES
+    // =========================================================================
+
+    // 1. LEER HISTORIAL
     if (payload.accion === "leer") {
       var rango = sheet.getDataRange();
       var valores = rango.getValues();
@@ -52,7 +156,6 @@ function doPost(e) {
         var item = {};
         for (var j = 0; j < encabezados.length; j++) {
           if (fila[j] instanceof Date) {
-            // CAMBIO 1: Incluir hora al leer las fechas guardadas como objeto Date en Google Sheets
             item[encabezados[j]] = Utilities.formatDate(fila[j], Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
           } else {
             item[encabezados[j]] = fila[j];
@@ -63,9 +166,7 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", datos: listaObjetos });
     }
 
-    // ==========================================
-    // ACCIÓN 2: EDITAR REGISTRO (Modal y Checklists)
-    // ==========================================
+    // 2. EDITAR HISTORIAL
     if (payload.accion === "editar") {
       var datos = sheet.getDataRange().getValues();
       var idBuscado = String(payload.id_registro);
@@ -74,7 +175,7 @@ function doPost(e) {
         if (String(datos[k][COL_ID_REGISTRO - 1]) === idBuscado) {
           var numeroFila = k + 1;
 
-          // Procesar Foto Después en Google Drive si viene en Base64 desde el panel
+          // Procesar Foto Después en Google Drive si viene en Base64
           var urlFotoDespuesFinal = payload.foto_despues || "";
           if (payload.foto_despues_base64 && payload.foto_despues_base64 !== "") {
             urlFotoDespuesFinal = guardarFotoEnDrive(
@@ -83,7 +184,6 @@ function doPost(e) {
             );
           }
 
-          // Inyección de campos en la fila correspondiente
           sheet.getRange(numeroFila, COL_MARCA).setValue(payload.marca);
           sheet.getRange(numeroFila, COL_ESTATUS).setValue(payload.estatus);
           sheet.getRange(numeroFila, COL_OBSERVA).setValue(payload.observaciones);
@@ -94,20 +194,16 @@ function doPost(e) {
           sheet.getRange(numeroFila, COL_USUARIO).setValue(payload.usuario);
           sheet.getRange(numeroFila, COL_MODIFICADO_POR).setValue(payload.modificado_por || "");
 
-          // Sincronizar el estado del string JSON de las tareas del checklist
           if (payload.tareas) {
             sheet.getRange(numeroFila, COL_TAREAS).setValue(payload.tareas);
           }
 
-          // CONTROL INTELIGENTE DE FECHAS DE SALIDA
           if (payload.fecha_salida && payload.fecha_salida !== "") {
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(payload.fecha_salida);
           } else if (payload.estatus === "Listo") {
-            // CAMBIO 2: Si pasa a 'Listo', genera la fecha con hora actual
             var fechaHoyConHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(fechaHoyConHora);
           } else {
-            // Si el estatus retrocede o cambia a otra cosa que no sea 'Listo', se limpia la salida
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue("");
           }
 
@@ -118,9 +214,7 @@ function doPost(e) {
       return retornarJSON({ status: "ERROR", message: "ID no encontrado." });
     }
 
-    // ==========================================
-    // ACCIÓN 3: CREAR NUEVO REGISTRO
-    // ==========================================
+    // 3. CREAR HISTORIAL
     if (payload.accion === "crear") {
       var ultimaFila = sheet.getLastRow();
       var nuevoId = 1;
@@ -134,10 +228,9 @@ function doPost(e) {
         }
       }
 
-      // CAMBIO 3: Asigna fecha e hora actual si no viene especificada
       var fechaIngresoFinal = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
 
-      // Procesar Foto Antes en Google Drive si viene en Base64
+      // Procesar Foto Antes en Google Drive
       var urlFotoDrive = "";
       if (payload.foto_antes_base64 && payload.foto_antes_base64 !== "") {
         urlFotoDrive = guardarFotoEnDrive(
@@ -146,7 +239,6 @@ function doPost(e) {
         );
       }
 
-      // Estructuración de la nueva fila mapeada perfectamente
       var nuevaFila = [];
       nuevaFila[COL_ID_REGISTRO - 1] = nuevoId;
       nuevaFila[COL_UNIDAD - 1] = payload.unidad || "S/I";
@@ -163,7 +255,7 @@ function doPost(e) {
       nuevaFila[COL_TALLER_EXT - 1] = payload.nombre_taller_ext || "";
       nuevaFila[COL_GERENCIA - 1] = payload.gerencia || "";
       nuevaFila[COL_USUARIO - 1] = payload.usuario || "";
-      nuevaFila[COL_TAREAS - 1] = "[]"; // Inicializa el checklist vacío
+      nuevaFila[COL_TAREAS - 1] = "[]";
       nuevaFila[COL_MODIFICADO_POR - 1] = payload.modificado_por || "";
 
       sheet.appendRow(nuevaFila);
@@ -172,9 +264,7 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", message: "Registrado con éxito.", id_asignado: nuevoId });
     }
 
-    // ==========================================
-    // ACCIÓN 4: ELIMINAR REGISTRO
-    // ==========================================
+    // 4. ELIMINAR HISTORIAL
     if (payload.accion === "eliminar") {
       var datos = sheet.getDataRange().getValues();
       var idBuscado = String(payload.id_registro);
@@ -183,14 +273,12 @@ function doPost(e) {
         if (String(datos[k][COL_ID_REGISTRO - 1]) === idBuscado) {
           var numeroFila = k + 1;
 
-          // Obtener URLs de fotos para eliminarlas de Drive
           var urlFotoAntes = datos[k][COL_FOTO_ANTES - 1];
           var urlFotoDespues = datos[k][COL_FOTO_DESPUES - 1];
 
           eliminarArchivoDrive(urlFotoAntes);
           eliminarArchivoDrive(urlFotoDespues);
 
-          // Eliminar la fila
           sheet.deleteRow(numeroFila);
           SpreadsheetApp.flush();
 
