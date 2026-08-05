@@ -6,6 +6,9 @@
 // ⚠️ CONFIGURACIÓN INICIAL:
 const CONFIG_DRIVE_FOLDER_ID = "1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg";
 
+// Formato de fecha y hora unificado
+const FORMATO_FECHA_HORA = "dd-MM-yyyy HH:mm:ss";
+
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
@@ -49,10 +52,8 @@ function doPost(e) {
         var item = {};
         for (var j = 0; j < encabezados.length; j++) {
           if (fila[j] instanceof Date) {
-            // Si la fecha contiene información de hora y minutos distinta de las 00:00, la incluimos
-            var tieneHora = (fila[j].getHours() !== 0 || fila[j].getMinutes() !== 0);
-            var patronFormato = tieneHora ? "dd-MM-yyyy HH:mm" : "dd-MM-yyyy";
-            item[encabezados[j]] = Utilities.formatDate(fila[j], Session.getScriptTimeZone(), patronFormato);
+            // CAMBIO 1: Incluir hora al leer las fechas guardadas como objeto Date en Google Sheets
+            item[encabezados[j]] = Utilities.formatDate(fila[j], Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
           } else {
             item[encabezados[j]] = fila[j];
           }
@@ -102,9 +103,9 @@ function doPost(e) {
           if (payload.fecha_salida && payload.fecha_salida !== "") {
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(payload.fecha_salida);
           } else if (payload.estatus === "Listo") {
-            // Si pasa a 'Listo' y no trae fecha, se le asigna la fecha actual automáticamente
-            var fechaHoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy");
-            sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(fechaHoy);
+            // CAMBIO 2: Si pasa a 'Listo', genera la fecha con hora actual
+            var fechaHoyConHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
+            sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue(fechaHoyConHora);
           } else {
             // Si el estatus retrocede o cambia a otra cosa que no sea 'Listo', se limpia la salida
             sheet.getRange(numeroFila, COL_FECHA_SALIDA).setValue("");
@@ -133,7 +134,8 @@ function doPost(e) {
         }
       }
 
-      var fechaIngresoFinal = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy HH:mm");
+      // CAMBIO 3: Asigna fecha e hora actual si no viene especificada
+      var fechaIngresoFinal = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
 
       // Procesar Foto Antes en Google Drive si viene en Base64
       var urlFotoDrive = "";
