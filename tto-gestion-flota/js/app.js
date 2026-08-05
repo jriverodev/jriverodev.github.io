@@ -11,7 +11,7 @@
 const APP_CONFIG = {
     
     // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
-    URL_API: "https://script.google.com/macros/s/AKfycbwM17iGCVD7YZpQj4fsD-pVBaip7ny5t5iIhuLluRLOVuLJNbTPjctopePliFIcjTFwLg/exec"
+    URL_API: "https://script.google.com/macros/s/AKfycbzhxjrcw8si6T32FiJ6UYax6ylPFREykfuVgOFQzAlJABUg1xY76AFRnjXn43_tSyOeWg/exec"
 };
 // Claves de almacenamiento en localStorage
 const CACHE_KEY = 'ttocc_mantenimientos';
