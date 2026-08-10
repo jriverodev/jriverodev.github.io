@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Control de Asistencia PWA</title>
+  
+  <!-- Manifest embebido para PWA -->
+  <link rel="manifest" href='data:application/json,{"name":"Control Asistencia","short_name":"Asistencia","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a"}'>
+  <meta name="theme-color" content="#0f172a">
+
+  <!-- CDN Tailwind CSS & SheetJS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    /* Ocultar flechas de inputs numéricos en pantallas táctiles */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-20 select-none">
+
+  <!-- Header Fijo -->
+  <header class="sticky top-0 z-50 bg-slate-800/95 backdrop-blur border-b border-slate-700 px-4 py-3 flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" id="statusDot"></div>
+      <h1 class="font-bold text-base sm:text-lg tracking-wide text-emerald-400">Control Asistencia</h1>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <!-- Botón Importar Excel -->
+      <label class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-white text-xs font-semibold px-2.5 py-2 rounded-lg flex items-center gap-1 cursor-pointer shadow transition">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span class="hidden sm:inline">Importar</span>
+        <input type="file" id="inputImportExcel" accept=".xlsx, .xls" class="hidden">
+      </label>
+
+      <!-- Botón Exportar Excel -->
+      <button id="btnExport" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold px-2.5 py-2 rounded-lg flex items-center gap-1 shadow transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="hidden sm:inline">Exportar</span> Excel
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    
+    <!-- Selección de Fecha y Día -->
+    <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm space-y-3">
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="block text-xs text-slate-400 mb-1">Fecha de Registro</label>
+          <input type="date" id="inputFecha" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div class="w-1/3">
+          <label class="block text-xs text-slate-400 mb-1">Día</label>
+          <input type="text" id="inputDia" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm font-bold text-emerald-400 text-center uppercase">
+        </div>
+      </div>
+    </section>
+
+    <!-- Formulario / Acordeón -->
+    <form id="attendanceForm" class="space-y-3">
+      
+      <!-- Acordeón 1: Áreas Operativas -->
+      <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <button type="button" onclick="toggleAccordion('secAreas')" class="w-full p-4 text-left font-semibold text-sm flex justify-between items-center bg-slate-800 hover:bg-slate-750">
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            Procesos y Áreas Operativas (10)
+          </span>
+          <svg id="arrow-secAreas" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="secAreas" class="p-4 pt-0 space-y-3 border-t border-slate-700/50">
+          <div id="areasContainer" class="space-y-3 pt-3">
+            <!-- Inyectado dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Acordeón 2: Cargas Adicionales -->
+      <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <button type="button" onclick="toggleAccordion('secAdicionales')" class="w-full p-4 text-left font-semibold text-sm flex justify-between items-center bg-slate-800 hover:bg-slate-750">
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            Cargas Adicionales / Novedades
+          </span>
+          <svg id="arrow-secAdicionales" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="secAdicionales" class="p-4 pt-0 space-y-3 border-t border-slate-700/50 hidden">
+          <div id="adicionalesContainer" class="space-y-3 pt-3">
+            <!-- Inyectado dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Previa de Totales Dinámicos -->
+      <section class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Resumen de Cálculo</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-xs text-slate-400 block">Subtotal Áreas</span>
+            <span id="lblSubtotal" class="font-bold text-slate-200">0</span>
+          </div>
+          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-xs text-slate-400 block">Ajuste Guaira (-240)</span>
+            <span id="lblAjusteGuaira" class="font-bold text-amber-400">0</span>
+          </div>
+          <div class="col-span-2 bg-emerald-950/40 border border-emerald-800/50 p-3 rounded-lg flex justify-between items-center">
+            <span class="font-semibold text-emerald-300">TOTAL GENERAL</span>
+            <span id="lblTotalGeneral" class="font-black text-xl text-emerald-400">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Botón Guardar -->
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold p-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        Guardar Registro Local
+      </button>
+
+    </form>
+
+    <!-- Lista de Registros Guardados -->
+    <section class="mt-6 space-y-2">
+      <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Historial Guardado</h3>
+      <div id="historyContainer" class="space-y-2">
+        <!-- Inyectado dinámicamente desde IndexedDB -->
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // --- CONFIGURACIÓN DE ESTRUCTURA Y CONSTANTES ---
+    const AREAS = [
+      "MEM", "TLA", "TP", "SALA DE OP", "MTTO", 
+      "ACTIVOS", "PPYG", "CONTRTOS/SIHO", "ESPECIFICACIONES", "SUPERINTENDENTES"
+    ];
+
+    const ADICIONALES = [
+      { id: "VACACIONES", label: "VACACIONES" },
+      { id: "SUSPENDIDOS", label: "SUSPENDIDOS" },
+      { id: "ASIGNACION_GUAIRA", label: "ASIGNACION GUAIRA" },
+      { id: "ASIGNACION_TP_OTRAS", label: "ASIGNACION TP A OTRAS GERENCIAS" }
+    ];
+
+    const UBICACIONES = ["LL", "LS", "MBO", "BCH"];
+    const DIAS_SEMANA = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
+
+    // --- INDEXEDDB ARCHITECTURE ---
+    const DB_NAME = "ControlAsistenciaDB";
+    const DB_VERSION = 1;
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const dbRef = e.target.result;
+          if (!dbRef.objectStoreNames.contains("registros")) {
+            dbRef.createObjectStore("registros", { keyPath: "fecha" });
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        request.onerror = (e) => reject("Error indexDB: " + e.target.error);
+      });
+    }
+
+    async function guardarDB(registro) {
+      const tx = db.transaction("registros", "readwrite");
+      const store = tx.objectStore("registros");
+      await store.put(registro);
+      renderHistorial();
+    }
+
+    async function obtenerTodosDB() {
+      return new Promise((resolve) => {
+        const tx = db.transaction("registros", "readonly");
+        const store = tx.objectStore("registros");
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+      });
+    }
+
+    async function eliminarDB(fecha) {
+      const tx = db.transaction("registros", "readwrite");
+      const store = tx.objectStore("registros");
+      await store.delete(fecha);
+      renderHistorial();
+    }
+
+    // --- RENDERIZADO DE INTERFAZ TÁCTIL ---
+    function renderFormulario() {
+      // Áreas
+      const areasContainer = document.getElementById("areasContainer");
+      areasContainer.innerHTML = AREAS.map((area, idx) => `
+        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60">
+          <div class="text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span>${idx + 1}. ${area}</span>
+            <span id="tot-area-${idx}" class="text-emerald-400 font-semibold">0</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5">
+            ${UBICACIONES.map(ub => `
+              <div>
+                <label class="block text-[10px] text-slate-500 text-center mb-0.5">${ub}</label>
+                <input type="number" min="0" data-area="${area}" data-ub="${ub}" value="0" 
+                  class="num-input w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-center text-sm font-semibold text-white focus:border-emerald-500 focus:outline-none"
+                  onfocus="this.select()" oninput="calcularTotales()">
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      // Adicionales
+      const adicionalesContainer = document.getElementById("adicionalesContainer");
+      adicionalesContainer.innerHTML = ADICIONALES.map(item => `
+        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60 flex items-center justify-between gap-3">
+          <label class="text-xs font-semibold text-slate-300 flex-1">${item.label}</label>
+          <input type="number" min="0" id="input-${item.id}" value="0" 
+            class="num-input w-24 bg-slate-950 border border-slate-700 rounded p-2 text-center text-sm font-bold text-amber-400 focus:border-amber-500 focus:outline-none"
+            onfocus="this.select()" oninput="calcularTotales()">
+        </div>
+      `).join('');
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      const arrow = document.getElementById(`arrow-${id}`);
+      el.classList.toggle("hidden");
+      arrow.classList.toggle("rotate-180");
+    }
+
+    function actualizarDia() {
+      const fechaVal = document.getElementById("inputFecha").value;
+      if (fechaVal) {
+        const [year, month, day] = fechaVal.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        document.getElementById("inputDia").value = DIAS_SEMANA[date.getDay()];
+      }
+    }
+
+    // --- LÓGICA DE CÁLCULO DINÁMICO ---
+    function calcularTotales() {
+      let subtotalAreas = 0;
+
+      // Totales por Fila de Área
+      AREAS.forEach((area, idx) => {
+        let sumFila = 0;
+        UBICACIONES.forEach(ub => {
+          const input = document.querySelector(`input[data-area="${area}"][data-ub="${ub}"]`);
+          sumFila += Number(input?.value || 0);
+        });
+        document.getElementById(`tot-area-${idx}`).textContent = sumFila;
+        subtotalAreas += sumFila;
+      });
+
+      // Cargas adicionales
+      const vac = Number(document.getElementById("input-VACACIONES").value || 0);
+      const sus = Number(document.getElementById("input-SUSPENDIDOS").value || 0);
+      const guaira = Number(document.getElementById("input-ASIGNACION_GUAIRA").value || 0);
+      
+      const totalGeneral = subtotalAreas + vac + sus + guaira;
+      const ajusteGuaira = guaira - 240;
+
+      document.getElementById("lblSubtotal").textContent = subtotalAreas;
+      document.getElementById("lblAjusteGuaira").textContent = ajusteGuaira;
+      document.getElementById("lblTotalGeneral").textContent = totalGeneral;
+
+      return { subtotalAreas, totalGeneral, ajusteGuaira, vac, sus, guaira };
+    }
+
+    // --- RECOPILACIÓN Y GUARDADO ---
+    document.getElementById("attendanceForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fecha = document.getElementById("inputFecha").value;
+      const dia = document.getElementById("inputDia").value;
+
+      if (!fecha) return alert("Selecciona una fecha válida.");
+
+      const areasData = {};
+      AREAS.forEach(area => {
+        areasData[area] = {};
+        UBICACIONES.forEach(ub => {
+          const input = document.querySelector(`input[data-area="${area}"][data-ub="${ub}"]`);
+          areasData[area][ub] = Number(input?.value || 0);
+        });
+      });
+
+      const adicionalesData = {};
+      ADICIONALES.forEach(item => {
+        const input = document.getElementById(`input-${item.id}`);
+        adicionalesData[item.id] = Number(input?.value || 0);
+      });
+
+      const registro = {
+        fecha,
+        dia,
+        areas: areasData,
+        adicionales: adicionalesData,
+        timestamp: Date.now()
+      };
+
+      await guardarDB(registro);
+      alert(`Registro del ${fecha} guardado localmente.`);
+    });
+
+    async function renderHistorial() {
+      const registros = await obtenerTodosDB();
+      const container = document.getElementById("historyContainer");
+      
+      if (registros.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No hay registros guardados localmente.</p>`;
+        return;
+      }
+
+      registros.sort((a,b) => b.fecha.localeCompare(a.fecha));
+
+      container.innerHTML = registros.map(r => `
+        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center text-xs">
+          <div>
+            <span class="font-bold text-white">${r.fecha}</span>
+            <span class="text-emerald-400 font-semibold ml-2">${r.dia}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="cargarEnFormulario('${r.fecha}')" class="bg-blue-600/30 text-blue-400 hover:bg-blue-600/50 px-2 py-1 rounded">Cargar</button>
+            <button onclick="eliminarDB('${r.fecha}')" class="bg-rose-600/30 text-rose-400 hover:bg-rose-600/50 px-2 py-1 rounded">Eliminar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function cargarEnFormulario(fecha) {
+      const registros = await obtenerTodosDB();
+      const reg = registros.find(r => r.fecha === fecha);
+      if (!reg) return;
+
+      document.getElementById("inputFecha").value = reg.fecha;
+      document.getElementById("inputDia").value = reg.dia;
+
+      AREAS.forEach(area => {
+        UBICACIONES.forEach(ub => {
+          const input = document.querySelector(`input[data-area="${area}"][data-ub="${ub}"]`);
+          if (input) input.value = reg.areas[area]?.[ub] ?? 0;
+        });
+      });
+
+      ADICIONALES.forEach(item => {
+        const input = document.getElementById(`input-${item.id}`);
+        if (input) input.value = reg.adicionales[item.id] ?? 0;
+      });
+
+      calcularTotales();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // --- IMPORTACIÓN DESDE ARCHIVO EXCEL (.XLSX) ---
+    document.getElementById("inputImportExcel").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          let importados = 0;
+
+          // Procesar cada hoja del libro
+          for (const sheetName of workbook.SheetNames) {
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+            if (json.length < 5) continue; // Si la hoja no tiene la estructura mínima, saltar
+
+            // Extraer Fecha y Día del encabezado (Fila 2)
+            const filaFecha = json[1] || [];
+            let rawFecha = filaFecha[0] ? String(filaFecha[0]).replace('FECHA:', '').trim() : '';
+            let rawDia = filaFecha[1] ? String(filaFecha[1]).replace('DIA:', '').trim() : '';
+
+            // Validar/Formatear Fecha
+            if (!rawFecha || !/^\d{4}-\d{2}-\d{2}$/.exec(rawFecha)) {
+              // Intentar rescatar la fecha del nombre de la pestaña si no está en la celda
+              if (/^\d{4}-\d{2}-\d{2}$/.exec(sheetName)) {
+                rawFecha = sheetName;
+              } else {
+                continue; // Omitir hoja si la fecha no es válida
+              }
+            }
+
+            if (!rawDia) {
+              const [y, m, d] = rawFecha.split('-').map(Number);
+              rawDia = DIAS_SEMANA[new Date(y, m - 1, d).getDay()];
+            }
+
+            // Mapear Áreas y Ubicaciones (Filas 5 a 14, índice base 0: filas 4 a 13)
+            const areasData = {};
+            AREAS.forEach((area, i) => {
+              const filaArea = json[4 + i] || [];
+              areasData[area] = {
+                LL: Number(filaArea[2]) || 0,
+                LS: Number(filaArea[3]) || 0,
+                MBO: Number(filaArea[4]) || 0,
+                BCH: Number(filaArea[5]) || 0
+              };
+            });
+
+            // Mapear Cargas Adicionales (Filas 16 a 19, índice base 0: filas 15 a 18)
+            const adicionalesData = {
+              VACACIONES: Number(json[15]?.[2]) || 0,
+              SUSPENDIDOS: Number(json[16]?.[2]) || 0,
+              ASIGNACION_GUAIRA: Number(json[17]?.[2]) || 0,
+              ASIGNACION_TP_OTRAS: Number(json[18]?.[2]) || 0
+            };
+
+            const registroImportado = {
+              fecha: rawFecha,
+              dia: rawDia,
+              areas: areasData,
+              adicionales: adicionalesData,
+              timestamp: Date.now()
+            };
+
+            await guardarDB(registroImportado);
+            importados++;
+          }
+
+          alert(`Importación completada con éxito. Se importaron ${importados} registro(s) diario(s).`);
+          
+          // Cargar el último registro importado en la interfaz
+          const registros = await obtenerTodosDB();
+          if (registros.length > 0) {
+            registros.sort((a,b) => b.fecha.localeCompare(a.fecha));
+            cargarEnFormulario(registros[0].fecha);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Error al procesar el archivo de Excel. Asegúrate de que posee el formato estructurado de la plantilla.");
+        } finally {
+          e.target.value = ''; // Limpiar input file
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+
+    // --- LÓGICA DE EXPORTACIÓN EXCEL CON SHEETJS Y FÓRMULAS ---
+    document.getElementById("btnExport").addEventListener("click", async () => {
+      const registros = await obtenerTodosDB();
+      if (registros.length === 0) return alert("No hay datos guardados en IndexedDB para exportar.");
+
+      const wb = XLSX.utils.book_new();
+
+      // Exportamos cada día guardado como una Hoja de Excel
+      registros.forEach(reg => {
+        const wsData = [];
+
+        // Encabezado
+        wsData.push(["CONTROL DE ASISTENCIA DIARIO"]);
+        wsData.push([`FECHA: ${reg.fecha}`, `DIA: ${reg.dia}`]);
+        wsData.push([]);
+        wsData.push(["RESUMEN", "AREA", "LL", "LS", "MBO", "BCH", "TOTAL"]);
+
+        // Inserción de Áreas (Filas 5 a 14 en Excel)
+        AREAS.forEach((area, i) => {
+          const filaNum = 5 + i;
+          const row = [
+            i === 0 ? "PROCESOS" : "",
+            area,
+            reg.areas[area]?.LL || 0,
+            reg.areas[area]?.LS || 0,
+            reg.areas[area]?.MBO || 0,
+            reg.areas[area]?.BCH || 0,
+            { f: `SUM(C${filaNum}:F${filaNum})` } // FÓRMULA POR FILA DE ÁREA
+          ];
+          wsData.push(row);
+        });
+
+        // Fila SUBTOTAL (Fila 15 en Excel)
+        wsData.push([
+          "",
+          "SUBTOTAL",
+          { f: "SUM(C5:C14)" },
+          { f: "SUM(D5:D14)" },
+          { f: "SUM(E5:E14)" },
+          { f: "SUM(F5:F14)" },
+          { f: "SUM(G5:G14)" } // FÓRMULA SUBTOTAL GENERAL
+        ]);
+
+        // Cargas Adicionales (Filas 16 a 19)
+        wsData.push(["", "VACACIONES", reg.adicionales?.VACACIONES || 0, "", "", "", ""]);
+        wsData.push(["", "SUSPENDIDOS", reg.adicionales?.SUSPENDIDOS || 0, "", "", "", ""]);
+        wsData.push(["", "ASIGNACION GUAIRA", reg.adicionales?.ASIGNACION_GUAIRA || 0, "", "", "", ""]);
+        wsData.push(["", "ASIGNACION TP A OTRAS GERENCIAS", reg.adicionales?.ASIGNACION_TP_OTRAS || 0, "", "", "", ""]);
+
+        // Fila TOTAL GENERAL (Fila 20 en Excel)
+        wsData.push([
+          "",
+          "TOTAL GENERAL",
+          "", "", "", "",
+          { f: "G15+C16+C17+C18" } // FÓRMULA TOTAL GENERAL
+        ]);
+
+        // Fila Ajuste Guaira (Fila 21 en Excel)
+        wsData.push([
+          "",
+          "AJUSTE GUAIRA (-240)",
+          "", "", "", "",
+          { f: "C18-240" } // FÓRMULA AJUSTE GUAIRA
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Anchos de Columna
+        ws['!cols'] = [
+          { wch: 15 }, // RESUMEN
+          { wch: 30 }, // AREA
+          { wch: 10 }, // LL
+          { wch: 10 }, // LS
+          { wch: 10 }, // MBO
+          { wch: 10 }, // BCH
+          { wch: 12 }  // TOTAL
+        ];
+
+        // Nombre de la pestaña limpia (AÑO-MES-DIA)
+        const sheetName = reg.fecha.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      });
+
+      // Descargar libro .xlsx
+      XLSX.writeFile(wb, `Control_Asistencia_Reporte_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+
+    // --- REGISTRO DEL SERVICE WORKER (PWA OFFLINE) ---
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        const swCode = `
+          const CACHE_NAME = 'asistencia-v2';
+          const ASSETS = [
+            './',
+            'https://cdn.tailwindcss.com',
+            'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+          ];
+          self.addEventListener('install', e => {
+            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+          });
+          self.addEventListener('fetch', e => {
+            e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+          });
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch(console.error);
+      }
+    }
+
+    // Indicador de estado en línea/offline
+    function updateOnlineStatus() {
+      const dot = document.getElementById('statusDot');
+      if (navigator.onLine) {
+        dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+      } else {
+        dot.className = "w-3 h-3 rounded-full bg-amber-500";
+      }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // --- INICIALIZACIÓN DE LA APP ---
+    window.addEventListener("DOMContentLoaded", async () => {
+      await initDB();
+      renderFormulario();
+      
+      // Establecer fecha de hoy por defecto
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("inputFecha").value = today;
+      actualizarDia();
+      
+      document.getElementById("inputFecha").addEventListener("change", actualizarDia);
+
+      calcularTotales();
+      renderHistorial();
+      registerServiceWorker();
+      updateOnlineStatus();
+    });
+  </script>
+</body>
+</html>
