@@ -1,7 +1,8 @@
 /**
  * TTOCC - Gestión de Flota
- * app.js - Lógica Global, Utilidades, Gestión Offline y Sincronización
+ * app.js - Lógica Global, Utilidades, Sanitización XSS, Gestión de Sesión y Sincronización
  */
+"use strict";
 
 // ==========================================
 // 1. CONFIGURACIÓN GLOBAL Y SERVIDOR
@@ -9,31 +10,95 @@
 
 // URL de despliegue Web App de Google Apps Script
 const APP_CONFIG = {
-    
-    // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
     URL_API: "https://script.google.com/macros/s/AKfycbzhxjrcw8si6T32FiJ6UYax6ylPFREykfuVgOFQzAlJABUg1xY76AFRnjXn43_tSyOeWg/exec"
 };
-// Claves de almacenamiento en localStorage
+
+// Claves de almacenamiento local y sesión
 const CACHE_KEY = 'ttocc_mantenimientos';
 const SYNC_QUEUE_KEY = 'ttocc_sync_queue';
+const SESSION_TOKEN_KEY = 'TTOCC_SESSION_TOKEN';
+const OPERADOR_KEY = 'TTOCC_OPERADOR';
 
 
 // ==========================================
-// 2. UTILIDADES DE FORMATO Y FECHAS
+// 2. SEGURIDAD Y UTILIDADES DE SANITIZACIÓN (XSS & ARCHIVOS)
+// ==========================================
+
+/**
+ * Función helper para prevenir XSS sanitizando caracteres especiales HTML
+ * @param {string|number} str - Cadena de entrada a sanitizar
+ * @returns {string} Cadena escapada de forma segura
+ */
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/**
+ * Validador en cliente para archivos adjuntos
+ * @param {File} file - Objeto de archivo a validar
+ * @param {Array<string>} tiposPermitidos - Lista de tipos MIME válidos
+ * @param {number} maxTamanoBytes - Tamaño máximo permitido en bytes (por defecto 5MB)
+ * @returns {Object} Objeto { valido: boolean, mensaje?: string }
+ */
+function validarArchivoAdjunto(file, tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], maxTamanoBytes = 5 * 1024 * 1024) {
+    if (!file) return { valido: true };
+    if (!tiposPermitidos.includes(file.type)) {
+        return {
+            valido: false,
+            mensaje: 'Formato no permitido. Utilice solo imágenes JPG/PNG/WebP o archivos PDF.'
+        };
+    }
+    if (file.size > maxTamanoBytes) {
+        const maxMB = (maxTamanoBytes / (1024 * 1024)).toFixed(0);
+        return {
+            valido: false,
+            mensaje: `El archivo excede el tamaño máximo permitido de ${maxMB} MB.`
+        };
+    }
+    return { valido: true };
+}
+
+// ==========================================
+// 3. MANEJO DE SESIÓN Y AUTENTICACIÓN
+// ==========================================
+
+function obtenerTokenSesion() {
+    return sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
+}
+
+function guardarSesion(token, usuario) {
+    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    sessionStorage.setItem(OPERADOR_KEY, usuario);
+}
+
+function cerrarSesion() {
+    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    sessionStorage.removeItem(OPERADOR_KEY);
+}
+
+
+// ==========================================
+// 4. UTILIDADES DE FORMATO Y FECHAS
 // ==========================================
 
 function formatearFecha(fechaStr) {
     if (!fechaStr) return '-';
     try {
         const fecha = new Date(fechaStr);
-        if (isNaN(fecha.getTime())) return fechaStr;
+        if (isNaN(fecha.getTime())) return escapeHTML(fechaStr);
         return fecha.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
         });
     } catch (e) {
-        return fechaStr;
+        return escapeHTML(fechaStr);
     }
 }
 
@@ -47,7 +112,7 @@ function calcularDiasTranscurridos(fechaIngresoStr) {
 
 
 // ==========================================
-// 3. COMPONENTES DE INTERFAZ (NOTIFICACIONES Y MODALES)
+// 5. COMPONENTES DE INTERFAZ (NOTIFICACIONES Y MODALES)
 // ==========================================
 
 function mostrarNotificacion(mensaje, tipo = 'info') {
@@ -87,7 +152,7 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     toast.innerHTML = `
         <div class="flex items-center">
             ${icono}
-            <span>${mensaje}</span>
+            <span>${escapeHTML(mensaje)}</span>
         </div>
         <button onclick="this.parentElement.remove()" class="ml-4 text-slate-400 hover:text-white transition-colors">
             <i class="fa-solid fa-xmark"></i>
@@ -96,12 +161,10 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
 
     contenedor.appendChild(toast);
 
-    // Animación de entrada
     requestAnimationFrame(() => {
         toast.classList.remove('translate-y-2', 'opacity-0');
     });
 
-    // Auto eliminar a los 4 segundos
     setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
@@ -117,9 +180,9 @@ function mostrarConfirmacion(titulo, mensaje, callbackAceptar) {
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl transform transition-all">
             <h3 class="text-lg font-semibold text-slate-100 mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-                ${titulo}
+                ${escapeHTML(titulo)}
             </h3>
-            <p class="text-sm text-slate-400 mb-6">${mensaje}</p>
+            <p class="text-sm text-slate-400 mb-6">${escapeHTML(mensaje)}</p>
             <div class="flex justify-end gap-3">
                 <button id="btn-confirm-cancelar" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors">
                     Cancelar
@@ -149,15 +212,10 @@ function mostrarConfirmacion(titulo, mensaje, callbackAceptar) {
 
 
 // ==========================================
-// 4. LECTURA OFFLINE-FIRST (STALE-WHILE-REVALIDATE)
+// 6. LECTURA OFFLINE-FIRST (STALE-WHILE-REVALIDATE)
 // ==========================================
 
-/**
- * Obtiene los registros de la flota aplicando la estrategia Offline-First.
- * Renderiza inmediatamente el caché local y actualiza desde el servidor si hay red.
- */
 async function obtenerRegistrosFlota(callbackRender) {
-    // 1. CARGA INMEDIATA DESDE CACHÉ LOCAL (0ms de espera)
     const datosLocales = localStorage.getItem(CACHE_KEY);
     let registros = datosLocales ? JSON.parse(datosLocales) : [];
 
@@ -165,17 +223,12 @@ async function obtenerRegistrosFlota(callbackRender) {
         callbackRender(registros);
     }
 
-    // 2. CONSULTA EN SEGUNDO PLANO (Si hay conexión)
     if (navigator.onLine && APP_CONFIG && APP_CONFIG.URL_API) {
         try {
             const response = await fetch(`${APP_CONFIG.URL_API}?action=OBTENER_TODOS`);
             if (response.ok) {
                 const datosServidor = await response.json();
-                
-                // Actualizar caché local
                 localStorage.setItem(CACHE_KEY, JSON.stringify(datosServidor));
-                
-                // Actualizar interfaz con datos frescos del servidor
                 if (typeof callbackRender === 'function') {
                     callbackRender(datosServidor);
                 }
@@ -188,12 +241,9 @@ async function obtenerRegistrosFlota(callbackRender) {
 
 
 // ==========================================
-// 5. GESTIÓN DE COLA OFFLINE Y SINCRONIZACIÓN
+// 7. GESTIÓN DE COLA OFFLINE Y SINCRONIZACIÓN
 // ==========================================
 
-/**
- * Registra una acción de escritura en la cola local cuando no hay conexión
- */
 function encolarOperacionOffline(accion, payload) {
     let queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
     queue.push({
@@ -206,9 +256,6 @@ function encolarOperacionOffline(accion, payload) {
     console.warn(`[Offline Queue] Operación '${accion}' guardada en cola local.`);
 }
 
-/**
- * Procesa y envía los cambios acumulados al backend de Google Apps Script
- */
 async function procesarSincronizacionPendiente() {
     if (!navigator.onLine || !APP_CONFIG || !APP_CONFIG.URL_API) return;
 
@@ -221,47 +268,45 @@ async function procesarSincronizacionPendiente() {
 
     for (const item of queue) {
         try {
-            const formData = new FormData();
-            formData.append('action', item.accion);
-            formData.append('data', JSON.stringify(item.payload));
-
-            // Si la tarea incluye imágenes adjuntas
-            if (item.payload.fotoAntes) formData.append('fotoAntes', item.payload.fotoAntes);
-            if (item.payload.fotoDespues) formData.append('fotoDespues', item.payload.fotoDespues);
+            // Incluir token de sesión si está disponible
+            const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
 
             const response = await fetch(APP_CONFIG.URL_API, {
                 method: 'POST',
-                body: formData
+                body: JSON.stringify(payloadConToken)
             });
 
             if (response.ok) {
-                // Eliminar elemento enviado con éxito
-                pendienteSincronizar = pendienteSincronizar.filter(q => q.idSync !== item.idSync);
-                localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(pendienteSincronizar));
-                console.log(`[Sync Exitoso] Registro ${item.idSync} sincronizado.`);
+                const res = await response.json();
+                if (res.status === 'SUCCESS') {
+                    pendienteSincronizar = pendienteSincronizar.filter(q => q.idSync !== item.idSync);
+                    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(pendienteSincronizar));
+                    console.log(`[Sync Exitoso] Registro ${item.idSync} sincronizado.`);
+                } else {
+                    console.warn('[Sync] Servidor devolvió error:', res.message);
+                    break;
+                }
             } else {
-                console.warn('[Sync] Servidor devolvió respuesta no OK. Se reintentará luego.');
+                console.warn('[Sync] Servidor devolvió respuesta no OK.');
                 break;
             }
         } catch (error) {
             console.error('[Sync] Error de red durante la sincronización:', error);
-            break; // Detener para preservar el orden estricto de ejecuciones
+            break;
         }
     }
 
     if (pendienteSincronizar.length === 0) {
         console.log('[Sync Complete] Todos los registros locales están en la nube.');
         mostrarNotificacion('Sincronización con la nube completada.', 'exito');
-        if (typeof cargarDatos === 'function') cargarDatos();
     }
 }
 
 
 // ==========================================
-// 6. INICIALIZACIÓN DE EVENTOS Y SERVICE WORKER
+// 8. INICIALIZACIÓN DE EVENTOS Y SERVICE WORKER
 // ==========================================
 
-// Escuchar reconexión a Internet
 window.addEventListener('online', () => {
     console.log('[Red] Conexión restablecida.');
     mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'info');
@@ -273,7 +318,6 @@ window.addEventListener('offline', () => {
     mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');
 });
 
-// Registrar Service Worker para PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')

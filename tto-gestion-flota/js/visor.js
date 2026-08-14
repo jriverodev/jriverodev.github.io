@@ -1,4 +1,5 @@
 // js/visor.js - Consola de Solo Lectura y Métricas Estadísticas para Pantalla Gerencial
+"use strict";
 
 let datosUnidadesGlobal = [];
 let instanciaChartTalleres = null;
@@ -7,7 +8,7 @@ let instanciaChartEstatus = null;
 document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
 
 /**
- * Convierte una fecha/hora a un formato relativo estilo red social (ej. "hace 40 min", "ayer a las 5:00 pm")
+ * Convierte una fecha/hora a un formato relativo estilo red social
  * @param {string|Date} fechaInput - Fecha ISO, string ejecutable o Date
  * @returns {string} Texto formateado con tiempo relativo
  */
@@ -18,12 +19,11 @@ function tiempoTranscurrido(fechaInput) {
     if (fechaInput instanceof Date) {
         fecha = fechaInput;
     } else if (typeof fechaInput === 'string') {
-        // Soporte para formato latino dd-mm-yyyy hh:mm o dd-mm-yyyy
         const partesFechaHora = fechaInput.trim().split(" ");
         const partesFecha = partesFechaHora[0].split("-");
         if (partesFecha.length === 3) {
             const dia = parseInt(partesFecha[0], 10);
-            const mes = parseInt(partesFecha[1], 10) - 1; // 0-indexed
+            const mes = parseInt(partesFecha[1], 10) - 1;
             const anio = parseInt(partesFecha[2], 10);
 
             let horas = 0;
@@ -41,7 +41,7 @@ function tiempoTranscurrido(fechaInput) {
         fecha = new Date(fechaInput);
     }
 
-    if (isNaN(fecha.getTime())) return fechaInput; // Retorna original si la fecha es inválida
+    if (isNaN(fecha.getTime())) return escapeHTML(String(fechaInput));
 
     const ahora = new Date();
     const diferenciaMs = ahora - fecha;
@@ -50,21 +50,18 @@ function tiempoTranscurrido(fechaInput) {
     const diferenciaHoras = Math.floor(diferenciaMin / 60);
     const diferenciaDias = Math.floor(diferenciaHoras / 24);
 
-    // Formatear hora (ej. "5:00 pm")
     const formatoHora = fecha.toLocaleTimeString('es-ES', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
     }).toLowerCase();
 
-    // Comprobar si fue "Ayer"
     const ayer = new Date(ahora);
     ayer.setDate(ahora.getDate() - 1);
     const esAyer = fecha.getDate() === ayer.getDate() &&
                    fecha.getMonth() === ayer.getMonth() &&
                    fecha.getFullYear() === ayer.getFullYear();
 
-    // Reglas estilo redes sociales
     if (diferenciaSeg < 60) {
         return 'hace un momento';
     } else if (diferenciaMin < 60) {
@@ -84,21 +81,16 @@ function tiempoTranscurrido(fechaInput) {
     }
 }
 
-/**
- * Alterna la visibilidad de secciones (Filtros y Gráficos)
- */
 function toggleSeccion(id) {
     const el = document.getElementById(id);
     if (el) {
         el.classList.toggle("hidden");
-        // Si se muestran los gráficos, forzar redibujado para evitar glitches de tamaño
         if (id === 'visor-graficos-contenedor' && !el.classList.contains("hidden")) {
             setTimeout(actualizarGraficosVivos, 50);
         }
     }
 }
 
-// EXTRAER REGISTROS DESDE LA PESTAÑA HISTORIAL_MANTENIMIENTO
 async function cargarDatosAnaliticos() {
     const tbody = document.getElementById("tablaCuerpo");
     try {
@@ -115,18 +107,16 @@ async function cargarDatosAnaliticos() {
         const res = await response.json();
 
         if (res.status !== "SUCCESS") {
-            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${res.message}</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="9" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
         let filasCrudas = res.datos || [];
 
-        // MAPEADOR TOLERANTE (Garantiza lectura sin importar mayúsculas/minúsculas de la cabecera)
         datosUnidadesGlobal = filasCrudas.map(u => {
             let normalized = {};
             for (let key in u) {
                 let val = u[key];
-                // Limpieza de URLs de Drive para evitar CORB
                 if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
                     const id = val.split('id=')[1]?.split('&')[0];
                     if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
@@ -134,13 +124,11 @@ async function cargarDatosAnaliticos() {
                 normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = val;
             }
             
-            // Buscador flexible para campos específicos
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
                 return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
-            // Procesamiento de tareas (JSON)
             let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
             let tareasArray = [];
             try {
@@ -170,10 +158,7 @@ async function cargarDatosAnaliticos() {
             };
         });
 
-        // 1. Cómputo de KPIs fijos globales con toda la data descargada
         calcularKpisGlobales(datosUnidadesGlobal);
-
-        // 2. Renderizado inicial del visor
         renderizarVisor(datosUnidadesGlobal);
 
     } catch (err) {
@@ -182,26 +167,18 @@ async function cargarDatosAnaliticos() {
     }
 }
 
-/**
- * Calcula e inyecta las estadísticas fijas basadas en el set inicial de datos globales
- * @param {Array} datos - El array completo con todos los registros del historial
- */
 function calcularKpisGlobales(datos) {
     let total = datos.length;
     let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
     let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
     let listos = total - (porAtender + enProceso);
 
-    // Los contenedores ahora retienen de forma persistente los totales generales
     document.getElementById("kpiTotal").textContent = total;
     document.getElementById("kpiEspera").textContent = porAtender;
     document.getElementById("kpiProceso").textContent = enProceso;
     document.getElementById("kpiDispo").textContent = listos;
 }
 
-/**
- * Lógica de Filtrado Multicriterio (Visor)
- */
 function filtrarVisor() {
     const query = document.getElementById("visor-busqueda").value.toLowerCase().trim();
     const estatus = document.getElementById("visor-filtro-estatus").value;
@@ -220,7 +197,6 @@ function filtrarVisor() {
 
         let matchesFecha = true;
         if (fechaDesde || fechaHasta) {
-            // reg.Fecha_Registro podría ser "dd-mm-yyyy hh:mm" o "dd-mm-yyyy"
             const partesFechaHora = reg.Fecha_Registro.split(" ");
             const [d, m, y] = partesFechaHora[0].split("-").map(Number);
             const fechaReg = new Date(y, m - 1, d);
@@ -250,9 +226,6 @@ function limpiarFiltrosVisor() {
     renderizarVisor(datosUnidadesGlobal);
 }
 
-/**
- * Renderiza la tabla y gráficos basándose en el set de datos proporcionado
- */
 function renderizarVisor(datos) {
     const tbody = document.getElementById("tablaCuerpo");
     if (!tbody) return;
@@ -268,16 +241,15 @@ function renderizarVisor(datos) {
     tbody.innerHTML = "";
     let conteoTalleres = {};
     
-    // Recalcular métricas contextuales locales únicamente para actualizar los gráficos dinámicos
     let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
     let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
     let listos = total - (porAtender + enProceso);
 
     [...datos].reverse().forEach(reg => {
-        let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
+        let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${escapeHTML(reg.Nombre_Taller_Ext)}` : escapeHTML(reg.Nombre_Taller);
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
-       let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500";
+        let badgeColor = "bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500";
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-950/40";
 
         if (reg.Estatus === "En Proceso") {
@@ -291,33 +263,32 @@ function renderizarVisor(datos) {
         }
 
         let fila = `
-            <!--tr id="fila-${reg.ID_Registro}" class="block md:table-row ${colorFila} bg-white dark:bg-transparent md:bg-transparent border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors"-->
-            <tr id="fila-${reg.ID_Registro}" 
+            <tr id="fila-${escapeHTML(reg.ID_Registro)}"
     class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">   
     
              <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[10px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
               <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Registro</span>
     
-              <span class="text-right md:text-left font-black tracking-widest text-slate-700 dark:text-slate-400 transition-colors">#${reg.ID_Registro}</span>
+              <span class="text-right md:text-left font-black tracking-widest text-slate-700 dark:text-slate-400 transition-colors">#${escapeHTML(reg.ID_Registro)}</span>
              </td>
 
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Unidad</span>
                     <div class="text-right md:text-left">
-                    <span class="font-black text-slate-900 dark:text-white tracking-widest font-mono block text-xs transition-colors">${reg.ID_Unidad}</span>
-                    <span class="text-[9px] text-slate-500 dark:text-slate-400 block font-sans font-black uppercase tracking-[0.1em] transition-colors">${reg.Marca}</span>
+                    <span class="font-black text-slate-900 dark:text-white tracking-widest font-mono block text-xs transition-colors">${escapeHTML(reg.ID_Unidad)}</span>
+                    <span class="text-[9px] text-slate-500 dark:text-slate-400 block font-sans font-black uppercase tracking-[0.1em] transition-colors">${escapeHTML(reg.Marca)}</span>
                     </div>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Gerencia / Usuario</span>
                     <div class="text-right md:text-left">
-                    <span class="text-slate-800 dark:text-white block font-black uppercase text-[10px] tracking-tight transition-colors">${reg.Gerencia}</span>
-                    <span class="text-slate-500 dark:text-slate-400 block text-[9px] uppercase tracking-widest font-black transition-colors">${reg.Usuario}</span>
+                    <span class="text-slate-800 dark:text-white block font-black uppercase text-[10px] tracking-tight transition-colors">${escapeHTML(reg.Gerencia)}</span>
+                    <span class="text-slate-500 dark:text-slate-400 block text-[9px] uppercase tracking-widest font-black transition-colors">${escapeHTML(reg.Usuario)}</span>
                     </div>
                 </td>
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Flota</span>
-                    <span class="text-slate-700 dark:text-slate-400 font-black text-right md:text-left text-[10px] uppercase tracking-widest transition-colors">${reg.Tipo_Flota}</span>
+                    <span class="text-slate-700 dark:text-slate-400 font-black text-right md:text-left text-[10px] uppercase tracking-widest transition-colors">${escapeHTML(reg.Tipo_Flota)}</span>
                  </td>
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Ubicación</span>
@@ -335,13 +306,6 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
 
-                <!--td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Estatus</span>
-                    <div class="text-right md:text-left">
-                        <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${badgeColor}">${reg.Estatus}</span>
-                    </div>
-                </td-->
-
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">
                         Estatus
@@ -349,39 +313,32 @@ function renderizarVisor(datos) {
     
                     <div class="flex items-center justify-end md:justify-start">
                     <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${badgeColor}">
-                        ${reg.Estatus}
+                        ${escapeHTML(reg.Estatus)}
                     </span>
                     </div>
                 </td>
 
-                <!--td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto transition-colors">
-                   <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-500 mb-1 block transition-colors">Obs:</span>
-                    <p class="text-[11px] text-slate-700 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed text-right md:text-left transition-colors" title="${reg.Observaciones}">
-                    ${reg.Observaciones || 'Sin observaciones.'}
-                    </p>
-                </td-->
-
                 <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 block transition-colors">Obs:</span>
     
-                    <p class="text-[11px] text-slate-700 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed text-left transition-colors" title="${reg.Observaciones}">
-                        ${reg.Observaciones || 'Sin observaciones.'}
+                    <p class="text-[11px] text-slate-700 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed text-left transition-colors" title="${escapeHTML(reg.Observaciones)}">
+                        ${escapeHTML(reg.Observaciones) || 'Sin observaciones.'}
                     </p>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Fechas</span>
                     <div class="text-right md:text-left font-mono text-[12px] font-black tracking-tighter">
-                    <div class="text-blue-600 dark:text-blue-500/90"><i class="fa-solid fa-calendar-day text-[12px]"></i> ${reg.Fecha_Registro}</div>
+                    <div class="text-blue-600 dark:text-blue-500/90"><i class="fa-solid fa-calendar-day text-[12px]"></i> ${escapeHTML(reg.Fecha_Registro)}</div>
                     <div class="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-tight mt-0.5"><i class="fa-solid fa-clock text-[10px]"></i> ${tiempoTranscurrido(reg.Fecha_Registro)}</div>
-                    ${reg.Fecha_Salida ? `<div class="text-emerald-600 dark:text-emerald-500/90 mt-1"><i class="fa-solid fa-circle-check text-[12px]"></i> ${reg.Fecha_Salida}</div>` : ''}
+                    ${reg.Fecha_Salida ? `<div class="text-emerald-600 dark:text-emerald-500/90 mt-1"><i class="fa-solid fa-circle-check text-[12px]"></i> ${escapeHTML(reg.Fecha_Salida)}</div>` : ''}
                     </div>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 md:w-28 text-center transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Detalle</span>
                     <div class="flex justify-end md:justify-center">
-                        <button onclick="abrirModalDetalle('${reg.ID_Registro}')" 
+                        <button onclick="abrirModalDetalle('${escapeHTML(reg.ID_Registro)}')"
                         class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer shadow-md shadow-slate-200 dark:shadow-black/20 transition-all active:scale-95">
                         Detalle
                         </button>
@@ -395,9 +352,6 @@ function renderizarVisor(datos) {
     renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
 }
 
-// ==========================================
-// CONTROLADORES DE MODAL DETALLE
-// ==========================================
 function abrirModalDetalle(id) {
     const reg = datosUnidadesGlobal.find(r => String(r.ID_Registro) === String(id));
     if (!reg) return;
@@ -408,41 +362,37 @@ function abrirModalDetalle(id) {
     document.getElementById("det-estatus").textContent = reg.Estatus;
     document.getElementById("det-ubicacion").textContent = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? reg.Nombre_Taller_Ext : reg.Nombre_Taller;
     document.getElementById("det-marca-flota").textContent = `${reg.Marca} (${reg.Tipo_Flota})`;
-    document.getElementById("det-fecha-ingr").innerHTML = `${reg.Fecha_Registro} <span class="text-[10px] text-slate-400 dark:text-slate-500 lowercase font-normal ml-1">(${tiempoTranscurrido(reg.Fecha_Registro)})</span>`;
+    document.getElementById("det-fecha-ingr").innerHTML = `${escapeHTML(reg.Fecha_Registro)} <span class="text-[10px] text-slate-400 dark:text-slate-500 lowercase font-normal ml-1">(${tiempoTranscurrido(reg.Fecha_Registro)})</span>`;
     document.getElementById("det-fecha-salida").textContent = reg.Fecha_Salida || "PENDIENTE";
     document.getElementById("det-usuario").textContent = reg.Usuario;
     document.getElementById("det-modificado-por").textContent = reg.Modificado_Por;
     document.getElementById("det-observaciones").textContent = reg.Observaciones;
 
-    // Renderizar Checklist en el modal
-const tareasContainer = document.getElementById("det-container-tareas");
-tareasContainer.innerHTML = "";
+    const tareasContainer = document.getElementById("det-container-tareas");
+    tareasContainer.innerHTML = "";
 
-if (reg.Tareas && reg.Tareas.length > 0) {
-    reg.Tareas.forEach(t => {
-        const item = document.createElement("div");
-        // Ajuste de contenedor: Fondo y borde dinámicos con transición suave
-        item.className = "flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800/40 transition-colors";
-        
-        item.innerHTML = `
-            <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-400 dark:text-slate-600'} text-sm transition-colors"></i>
-            <span class="text-xs ${t.hecho ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'} font-medium transition-colors">${t.texto}</span>
-        `;
-        tareasContainer.appendChild(item);
-    });
-} else {
-    // Texto de "No se asignaron tareas" con colores corregidos para modo claro y oscuro
-    tareasContainer.innerHTML = `<p class="text-[10px] text-slate-500 dark:text-slate-600 italic text-center py-4 transition-colors">No se asignaron tareas específicas en el diagnóstico.</p>`;
-}
+    if (reg.Tareas && reg.Tareas.length > 0) {
+        reg.Tareas.forEach(t => {
+            const item = document.createElement("div");
+            item.className = "flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800/40 transition-colors";
 
-    // Renderizar Fotos
+            item.innerHTML = `
+                <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-400 dark:text-slate-600'} text-sm transition-colors"></i>
+                <span class="text-xs ${t.hecho ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'} font-medium transition-colors">${escapeHTML(t.texto)}</span>
+            `;
+            tareasContainer.appendChild(item);
+        });
+    } else {
+        tareasContainer.innerHTML = `<p class="text-[10px] text-slate-500 dark:text-slate-600 italic text-center py-4 transition-colors">No se asignaron tareas específicas en el diagnóstico.</p>`;
+    }
+
     const fotoAntes = document.getElementById("det-foto-antes-container");
     const fotoDespues = document.getElementById("det-foto-despues-container");
 
     if (reg.Foto_Antes) {
         fotoAntes.innerHTML = `
-            <a href="${reg.Foto_Antes}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
-                <img src="${reg.Foto_Antes}" class="w-full h-full object-contain">
+            <a href="${escapeHTML(reg.Foto_Antes)}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
+                <img src="${escapeHTML(reg.Foto_Antes)}" class="w-full h-full object-contain">
             </a>`;
         fotoAntes.onclick = null;
     } else {
@@ -452,8 +402,8 @@ if (reg.Tareas && reg.Tareas.length > 0) {
 
     if (reg.Foto_Despues) {
         fotoDespues.innerHTML = `
-            <a href="${reg.Foto_Despues}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
-                <img src="${reg.Foto_Despues}" class="w-full h-full object-contain">
+            <a href="${escapeHTML(reg.Foto_Despues)}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
+                <img src="${escapeHTML(reg.Foto_Despues)}" class="w-full h-full object-contain">
             </a>`;
         fotoDespues.onclick = null;
     } else {
@@ -468,7 +418,6 @@ function cerrarModalDetalle() {
     document.getElementById("modalDetalleRegistro").classList.add("hidden");
 }
 
-// INYECCIÓN DE RENDIMIENTO GRÁFICO (ChartJS)
 function renderizarGraficos(talleresData, espera, proceso, listos) {
     const canvasTalleres = document.getElementById("chartTalleres");
     const canvasEstatus = document.getElementById("chartEstatus");
@@ -532,7 +481,6 @@ function actualizarGraficosVivos() {
     if (instanciaChartEstatus) instanciaChartEstatus.resize();
 }
 
-// UTILERÍAS DE EXPORTACIÓN
 function exportarAExcel() {
     if (datosUnidadesGlobal.length === 0) return TTOCC_UI.error("Error de Exportación", "No hay datos disponibles en el visor para generar el archivo Excel.");
 
@@ -577,10 +525,6 @@ function exportarAPDF() {
     }).from(elemento).save();
 }
 
-/**
- * Filtra el visor de forma rápida haciendo clic en las tarjetas de KPI
- * @param {string} estatus - El estatus seleccionado ('Por Atender', 'En Proceso', 'Listo' o '')
- */
 function filtrarPorKpi(estatus) {
     const selectEstatus = document.getElementById('visor-filtro-estatus');
     if (selectEstatus) {
