@@ -10,7 +10,7 @@
 
 // URL de despliegue Web App de Google Apps Script
 const APP_CONFIG = {
-    URL_API: "https://script.google.com/macros/s/AKfycbxwniuJd6-bpk8xlJlY58TmPo1ImSJh2X_UvDmmVsGUZLP6JhRbhvFOjouKvEXVi7YFWA/exec"
+    URL_API: "https://script.google.com/macros/s/AKfycbxsTpKVIxmzu4xARAiSkwpBcHnPGwrpdteYqGqmUr33NSNyWdIj07yBBvISNCHexF8cPQ/exec"
 };
 
 // Claves de almacenamiento local y sesión
