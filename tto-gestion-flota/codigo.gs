@@ -222,7 +222,7 @@ function doPost(e) {
     var sheetActivos = ss.getSheetByName("Maestro_Activos");
     if (!sheetActivos) {
       sheetActivos = ss.insertSheet("Maestro_Activos");
-      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Tipo_Flota"]);
+      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Tipo_Flota", "Documento_Url"]);
     }
 
     // MAPEO DE COLUMNAS (17 columnas en Historial_Mantenimiento)
@@ -320,12 +320,21 @@ function doPost(e) {
         }
       }
 
+      var urlDocumento = "";
+      if (payload.documento_base64 && payload.documento_base64 !== "") {
+        urlDocumento = guardarDocumentoEnDrive(
+          payload.documento_base64,
+          "DOC_" + idUnidad + "_" + (payload.documento_nombre || "documento")
+        );
+      }
+
       var nuevaFilaActivo = [
         idUnidad,
         payload.placa || "",
         payload.serial || "",
         payload.marca || "",
-        payload.flota || "Liviana"
+        payload.flota || "Liviana",
+        urlDocumento
       ];
 
       sheetActivos.appendRow(nuevaFilaActivo);
@@ -343,10 +352,28 @@ function doPost(e) {
         if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
           var numeroFila = k + 1;
 
+          var urlDocumentoFinal = datosActivos[k][5] || "";
+
+          if (payload.documento_eliminar) {
+            eliminarArchivoDrive(urlDocumentoFinal);
+            urlDocumentoFinal = "";
+          }
+
+          if (payload.documento_base64 && payload.documento_base64 !== "") {
+            if (urlDocumentoFinal) {
+              eliminarArchivoDrive(urlDocumentoFinal);
+            }
+            urlDocumentoFinal = guardarDocumentoEnDrive(
+              payload.documento_base64,
+              "DOC_" + idUnidad + "_" + (payload.documento_nombre || "documento")
+            );
+          }
+
           sheetActivos.getRange(numeroFila, 2).setValue(payload.placa || "");
           sheetActivos.getRange(numeroFila, 3).setValue(payload.serial || "");
           sheetActivos.getRange(numeroFila, 4).setValue(payload.marca || "");
           sheetActivos.getRange(numeroFila, 5).setValue(payload.flota || "Liviana");
+          sheetActivos.getRange(numeroFila, 6).setValue(urlDocumentoFinal);
 
           SpreadsheetApp.flush();
           return retornarJSON({ status: "SUCCESS", message: "Activo técnico actualizado correctamente." });
@@ -363,6 +390,9 @@ function doPost(e) {
       for (var k = 1; k < datosActivos.length; k++) {
         if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
           var numeroFila = k + 1;
+
+          var urlDoc = datosActivos[k][5];
+          eliminarArchivoDrive(urlDoc);
 
           sheetActivos.deleteRow(numeroFila);
           SpreadsheetApp.flush();
@@ -537,7 +567,7 @@ function doPost(e) {
 }
 
 /**
- * Genera el archivo físico en Google Drive y retorna el stream directo
+ * Genera el archivo físico en Google Drive (Imagen) y retorna el stream directo
  */
 function guardarFotoEnDrive(base64Data, nombreArchivo) {
   try {
@@ -558,6 +588,41 @@ function guardarFotoEnDrive(base64Data, nombreArchivo) {
 
   } catch (e) {
     return "Error al guardar en Drive: " + e.toString();
+  }
+}
+
+/**
+ * Genera un documento (PDF o Imagen) en Google Drive y retorna el enlace de visualización
+ */
+function guardarDocumentoEnDrive(base64Data, nombreArchivo) {
+  try {
+    if (CONFIG_DRIVE_FOLDER_ID === "TU_ID_DE_CARPETA_DE_GOOGLE_DRIVE_AQUI" || !CONFIG_DRIVE_FOLDER_ID) {
+      return "Error: ID de carpeta de Drive no configurado en Código.gs";
+    }
+
+    var mimeType = "image/jpeg";
+    if (base64Data.indexOf("data:application/pdf") === 0 || (nombreArchivo && nombreArchivo.toLowerCase().indexOf(".pdf") !== -1)) {
+      mimeType = "application/pdf";
+    } else if (base64Data.indexOf("data:image/png") === 0) {
+      mimeType = "image/png";
+    }
+
+    var partes = base64Data.split(",");
+    var rawData = partes.length > 1 ? partes[1] : partes[0];
+
+    var blob = Utilities.newBlob(Utilities.base64Decode(rawData), mimeType, nombreArchivo);
+    var carpeta = DriveApp.getFolderById(CONFIG_DRIVE_FOLDER_ID);
+    var archivo = carpeta.createFile(blob);
+
+    archivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    if (mimeType === "application/pdf") {
+      return "https://drive.google.com/uc?export=view&id=" + archivo.getId();
+    }
+    return "https://drive.google.com/thumbnail?id=" + archivo.getId() + "&sz=w1200";
+
+  } catch (e) {
+    return "Error al guardar documento en Drive: " + e.toString();
   }
 }
 

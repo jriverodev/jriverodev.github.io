@@ -21,7 +21,7 @@ async function cargarDatosAnaliticos() {
     const tbody = document.getElementById("tablaCuerpo");
     try {
         if (tbody) {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="5" class="block md:table-cell p-6 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando catálogo de Activos...</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando catálogo de Activos...</td></tr>`;
         }
 
         const response = await fetch(APP_CONFIG.URL_API, {
@@ -33,7 +33,7 @@ async function cargarDatosAnaliticos() {
         const res = await response.json();
 
         if (res.status !== "SUCCESS") {
-            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="5" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${escapeHTML(res.message)}</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -55,7 +55,8 @@ async function cargarDatosAnaliticos() {
                 Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
                 Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
+                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
+                Documento_Url: getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || ""
             };
         });
 
@@ -64,7 +65,7 @@ async function cargarDatosAnaliticos() {
 
     } catch (err) {
         console.error("Error analítico en visor de flota:", err);
-        if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="5" class="block md:table-cell p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
     }
 }
 
@@ -108,7 +109,7 @@ function renderizarVisor(datos) {
     if (!tbody) return;
 
     if (datos.length === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="5" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen activos que coincidan con los filtros</td></tr>`;
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen activos que coincidan con los filtros</td></tr>`;
         renderizarGraficos(0, 0, {});
         return;
     }
@@ -124,6 +125,12 @@ function renderizarVisor(datos) {
         conteoMarcas[reg.Marca || "S/I"] = (conteoMarcas[reg.Marca || "S/I"] || 0) + 1;
 
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
+
+        let badgeDocumento = reg.Documento_Url
+            ? `<a href="${escapeHTML(reg.Documento_Url)}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-wider hover:underline transition-all">
+                <i class="fa-solid fa-file-pdf"></i> Ver / Descargar
+               </a>`
+            : `<span class="text-[9px] text-slate-400 dark:text-slate-600 italic">Sin Documento</span>`;
 
         let fila = `
             <tr id="fila-${escapeHTML(reg.ID_Unidad)}"
@@ -152,6 +159,11 @@ function renderizarVisor(datos) {
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Tipo de Flota</span>
                     <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">${escapeHTML(reg.Tipo_Flota)}</span>
+                 </td>
+
+                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Documentación</span>
+                    <div>${badgeDocumento}</div>
                  </td>
             </tr>
         `;
@@ -232,7 +244,8 @@ function exportarAExcel() {
         "Placa": reg.Placa,
         "Serial Chasis": reg.Serial,
         "Marca": reg.Marca,
-        "Tipo de Flota": reg.Tipo_Flota
+        "Tipo de Flota": reg.Tipo_Flota,
+        "Link Documento": reg.Documento_Url
     }));
 
     const hoja = XLSX.utils.json_to_sheet(exportData);
