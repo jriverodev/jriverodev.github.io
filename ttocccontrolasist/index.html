@@ -9,12 +9,13 @@
   <link rel="manifest" href='data:application/json,{"name":"Control Asistencia","short_name":"Asistencia","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a"}'>
   <meta name="theme-color" content="#0f172a">
 
-  <!-- CDN Tailwind CSS & SheetJS -->
+  <!-- CDN Tailwind CSS, SheetJS & Dexie.js -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
 
   <style>
-    /* Ocultar flechas de inputs numéricos en pantallas táctiles */
+    /* Ocultar flechas de inputs numéricos */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
       -webkit-appearance: none; 
@@ -55,7 +56,7 @@
       <div class="flex gap-3">
         <div class="flex-1">
           <label class="block text-xs text-slate-400 mb-1">Fecha de Registro</label>
-          <input type="date" id="inputFecha" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+          <input type="date" id="inputFecha" onchange="actualizarDia()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
         </div>
         <div class="w-1/3">
           <label class="block text-xs text-slate-400 mb-1">Día</label>
@@ -130,7 +131,7 @@
     <section class="mt-6 space-y-2">
       <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Historial Guardado</h3>
       <div id="historyContainer" class="space-y-2">
-        <!-- Inyectado dinámicamente desde IndexedDB -->
+        <!-- Inyectado dinámicamente desde Dexie.js -->
       </div>
     </section>
 
@@ -153,49 +154,24 @@
     const UBICACIONES = ["LL", "LS", "MBO", "BCH"];
     const DIAS_SEMANA = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
 
-    // --- INDEXEDDB ARCHITECTURE ---
-    const DB_NAME = "ControlAsistenciaDB";
-    const DB_VERSION = 1;
-    let db;
-
-    function initDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-          const dbRef = e.target.result;
-          if (!dbRef.objectStoreNames.contains("registros")) {
-            dbRef.createObjectStore("registros", { keyPath: "fecha" });
-          }
-        };
-        request.onsuccess = (e) => {
-          db = e.target.result;
-          resolve(db);
-        };
-        request.onerror = (e) => reject("Error indexDB: " + e.target.error);
-      });
-    }
+    // --- BASE DE DATOS CON DEXIE.JS ---
+    const db = new Dexie("ControlAsistenciaDB");
+    db.version(1).stores({
+      registros: "fecha, dia, timestamp" // "fecha" es la clave primaria
+    });
 
     async function guardarDB(registro) {
-      const tx = db.transaction("registros", "readwrite");
-      const store = tx.objectStore("registros");
-      await store.put(registro);
-      renderHistorial();
+      await db.registros.put(registro);
+      await renderHistorial();
     }
 
     async function obtenerTodosDB() {
-      return new Promise((resolve) => {
-        const tx = db.transaction("registros", "readonly");
-        const store = tx.objectStore("registros");
-        const req = store.getAll();
-        req.onsuccess = () => resolve(req.result);
-      });
+      return await db.registros.toArray();
     }
 
     async function eliminarDB(fecha) {
-      const tx = db.transaction("registros", "readwrite");
-      const store = tx.objectStore("registros");
-      await store.delete(fecha);
-      renderHistorial();
+      await db.registros.delete(fecha);
+      await renderHistorial();
     }
 
     // --- RENDERIZADO DE INTERFAZ TÁCTIL ---
@@ -253,7 +229,6 @@
     function calcularTotales() {
       let subtotalAreas = 0;
 
-      // Totales por Fila de Área
       AREAS.forEach((area, idx) => {
         let sumFila = 0;
         UBICACIONES.forEach(ub => {
@@ -264,7 +239,6 @@
         subtotalAreas += sumFila;
       });
 
-      // Cargas adicionales
       const vac = Number(document.getElementById("input-VACACIONES").value || 0);
       const sus = Number(document.getElementById("input-SUSPENDIDOS").value || 0);
       const guaira = Number(document.getElementById("input-ASIGNACION_GUAIRA").value || 0);
@@ -279,7 +253,7 @@
       return { subtotalAreas, totalGeneral, ajusteGuaira, vac, sus, guaira };
     }
 
-    // --- RECOPILACIÓN Y GUARDADO ---
+    // --- GUARDAR FORMULARIO ---
     document.getElementById("attendanceForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fecha = document.getElementById("inputFecha").value;
@@ -332,16 +306,15 @@
             <span class="text-emerald-400 font-semibold ml-2">${r.dia}</span>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="cargarEnFormulario('${r.fecha}')" class="bg-blue-600/30 text-blue-400 hover:bg-blue-600/50 px-2 py-1 rounded">Cargar</button>
-            <button onclick="eliminarDB('${r.fecha}')" class="bg-rose-600/30 text-rose-400 hover:bg-rose-600/50 px-2 py-1 rounded">Eliminar</button>
+            <button type="button" onclick="cargarEnFormulario('${r.fecha}')" class="bg-blue-600/30 text-blue-400 hover:bg-blue-600/50 px-2 py-1 rounded">Cargar</button>
+            <button type="button" onclick="eliminarDB('${r.fecha}')" class="bg-rose-600/30 text-rose-400 hover:bg-rose-600/50 px-2 py-1 rounded">Eliminar</button>
           </div>
         </div>
       `).join('');
     }
 
     async function cargarEnFormulario(fecha) {
-      const registros = await obtenerTodosDB();
-      const reg = registros.find(r => r.fecha === fecha);
+      const reg = await db.registros.get(fecha);
       if (!reg) return;
 
       document.getElementById("inputFecha").value = reg.fecha;
@@ -376,25 +349,21 @@
 
           let importados = 0;
 
-          // Procesar cada hoja del libro
           for (const sheetName of workbook.SheetNames) {
             const sheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            if (json.length < 5) continue; // Si la hoja no tiene la estructura mínima, saltar
+            if (json.length < 5) continue;
 
-            // Extraer Fecha y Día del encabezado (Fila 2)
             const filaFecha = json[1] || [];
             let rawFecha = filaFecha[0] ? String(filaFecha[0]).replace('FECHA:', '').trim() : '';
             let rawDia = filaFecha[1] ? String(filaFecha[1]).replace('DIA:', '').trim() : '';
 
-            // Validar/Formatear Fecha
             if (!rawFecha || !/^\d{4}-\d{2}-\d{2}$/.exec(rawFecha)) {
-              // Intentar rescatar la fecha del nombre de la pestaña si no está en la celda
               if (/^\d{4}-\d{2}-\d{2}$/.exec(sheetName)) {
                 rawFecha = sheetName;
               } else {
-                continue; // Omitir hoja si la fecha no es válida
+                continue;
               }
             }
 
@@ -403,7 +372,6 @@
               rawDia = DIAS_SEMANA[new Date(y, m - 1, d).getDay()];
             }
 
-            // Mapear Áreas y Ubicaciones (Filas 5 a 14, índice base 0: filas 4 a 13)
             const areasData = {};
             AREAS.forEach((area, i) => {
               const filaArea = json[4 + i] || [];
@@ -415,7 +383,6 @@
               };
             });
 
-            // Mapear Cargas Adicionales (Filas 16 a 19, índice base 0: filas 15 a 18)
             const adicionalesData = {
               VACACIONES: Number(json[15]?.[2]) || 0,
               SUSPENDIDOS: Number(json[16]?.[2]) || 0,
@@ -435,9 +402,8 @@
             importados++;
           }
 
-          alert(`Importación completada con éxito. Se importaron ${importados} registro(s) diario(s).`);
+          alert(`Importación completada con éxito. Se importaron ${importados} registro(s).`);
           
-          // Cargar el último registro importado en la interfaz
           const registros = await obtenerTodosDB();
           if (registros.length > 0) {
             registros.sort((a,b) => b.fecha.localeCompare(a.fecha));
@@ -445,154 +411,21 @@
           }
         } catch (err) {
           console.error(err);
-          alert("Error al procesar el archivo de Excel. Asegúrate de que posee el formato estructurado de la plantilla.");
-        } finally {
-          e.target.value = ''; // Limpiar input file
+          alert("Error al procesar el archivo de Excel.");
         }
       };
-
       reader.readAsArrayBuffer(file);
     });
 
-    // --- LÓGICA DE EXPORTACIÓN EXCEL CON SHEETJS Y FÓRMULAS ---
-    document.getElementById("btnExport").addEventListener("click", async () => {
-      const registros = await obtenerTodosDB();
-      if (registros.length === 0) return alert("No hay datos guardados en IndexedDB para exportar.");
-
-      const wb = XLSX.utils.book_new();
-
-      // Exportamos cada día guardado como una Hoja de Excel
-      registros.forEach(reg => {
-        const wsData = [];
-
-        // Encabezado
-        wsData.push(["CONTROL DE ASISTENCIA DIARIO"]);
-        wsData.push([`FECHA: ${reg.fecha}`, `DIA: ${reg.dia}`]);
-        wsData.push([]);
-        wsData.push(["RESUMEN", "AREA", "LL", "LS", "MBO", "BCH", "TOTAL"]);
-
-        // Inserción de Áreas (Filas 5 a 14 en Excel)
-        AREAS.forEach((area, i) => {
-          const filaNum = 5 + i;
-          const row = [
-            i === 0 ? "PROCESOS" : "",
-            area,
-            reg.areas[area]?.LL || 0,
-            reg.areas[area]?.LS || 0,
-            reg.areas[area]?.MBO || 0,
-            reg.areas[area]?.BCH || 0,
-            { f: `SUM(C${filaNum}:F${filaNum})` } // FÓRMULA POR FILA DE ÁREA
-          ];
-          wsData.push(row);
-        });
-
-        // Fila SUBTOTAL (Fila 15 en Excel)
-        wsData.push([
-          "",
-          "SUBTOTAL",
-          { f: "SUM(C5:C14)" },
-          { f: "SUM(D5:D14)" },
-          { f: "SUM(E5:E14)" },
-          { f: "SUM(F5:F14)" },
-          { f: "SUM(G5:G14)" } // FÓRMULA SUBTOTAL GENERAL
-        ]);
-
-        // Cargas Adicionales (Filas 16 a 19)
-        wsData.push(["", "VACACIONES", reg.adicionales?.VACACIONES || 0, "", "", "", ""]);
-        wsData.push(["", "SUSPENDIDOS", reg.adicionales?.SUSPENDIDOS || 0, "", "", "", ""]);
-        wsData.push(["", "ASIGNACION GUAIRA", reg.adicionales?.ASIGNACION_GUAIRA || 0, "", "", "", ""]);
-        wsData.push(["", "ASIGNACION TP A OTRAS GERENCIAS", reg.adicionales?.ASIGNACION_TP_OTRAS || 0, "", "", "", ""]);
-
-        // Fila TOTAL GENERAL (Fila 20 en Excel)
-        wsData.push([
-          "",
-          "TOTAL GENERAL",
-          "", "", "", "",
-          { f: "G15+C16+C17+C18" } // FÓRMULA TOTAL GENERAL
-        ]);
-
-        // Fila Ajuste Guaira (Fila 21 en Excel)
-        wsData.push([
-          "",
-          "AJUSTE GUAIRA (-240)",
-          "", "", "", "",
-          { f: "C18-240" } // FÓRMULA AJUSTE GUAIRA
-        ]);
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-        // Anchos de Columna
-        ws['!cols'] = [
-          { wch: 15 }, // RESUMEN
-          { wch: 30 }, // AREA
-          { wch: 10 }, // LL
-          { wch: 10 }, // LS
-          { wch: 10 }, // MBO
-          { wch: 10 }, // BCH
-          { wch: 12 }  // TOTAL
-        ];
-
-        // Nombre de la pestaña limpia (AÑO-MES-DIA)
-        const sheetName = reg.fecha.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 31);
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      });
-
-      // Descargar libro .xlsx
-      XLSX.writeFile(wb, `Control_Asistencia_Reporte_${new Date().toISOString().slice(0,10)}.xlsx`);
-    });
-
-    // --- REGISTRO DEL SERVICE WORKER (PWA OFFLINE) ---
-    function registerServiceWorker() {
-      if ('serviceWorker' in navigator) {
-        const swCode = `
-          const CACHE_NAME = 'asistencia-v2';
-          const ASSETS = [
-            './',
-            'https://cdn.tailwindcss.com',
-            'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
-          ];
-          self.addEventListener('install', e => {
-            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
-          });
-          self.addEventListener('fetch', e => {
-            e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-          });
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).catch(console.error);
-      }
-    }
-
-    // Indicador de estado en línea/offline
-    function updateOnlineStatus() {
-      const dot = document.getElementById('statusDot');
-      if (navigator.onLine) {
-        dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
-      } else {
-        dot.className = "w-3 h-3 rounded-full bg-amber-500";
-      }
-    }
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
     // --- INICIALIZACIÓN DE LA APP ---
-    window.addEventListener("DOMContentLoaded", async () => {
-      await initDB();
+    document.addEventListener("DOMContentLoaded", () => {
       renderFormulario();
-      
-      // Establecer fecha de hoy por defecto
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById("inputFecha").value = today;
-      actualizarDia();
-      
-      document.getElementById("inputFecha").addEventListener("change", actualizarDia);
-
-      calcularTotales();
       renderHistorial();
-      registerServiceWorker();
-      updateOnlineStatus();
+
+      // Setear fecha de hoy por defecto si no hay una
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById("inputFecha").value = hoy;
+      actualizarDia();
     });
   </script>
 </body>
