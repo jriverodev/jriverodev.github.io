@@ -98,7 +98,11 @@ function inicializarUsuarios() {
   var usuariosSemilla = [
     { usuario: "WILLIAM RIOS", pass: "wr123" },
     { usuario: "VANNESA ROMERO", pass: "vr456" },
-    { usuario: "PEDRO POLANCO", pass: "pp789" }
+    { usuario: "PEDRO POLANCO", pass: "pp789" },
+    { usuario: "DEXCYBEL SALAZAR", pass: "ds123" },
+    { usuario: "JUAN ESCALONA", pass: "je456" },
+    { usuario: "IVANA SAEZ", pass: "is789" },
+    { usuario: "DELVIN MARRERO", pass: "dm012" }
   ];
 
   var actualizado = false;
