@@ -16,6 +16,7 @@ var FILTROS_ACTIVOS = {
     busqueda: "",
     flota: ""
 };
+var documentoEliminarFlag = false;
 
 const CLAVE_COLA_OFFLINE_FLOTA = "TTOCC_COLA_PETICIONES_OFFLINE_FLOTA";
 const CLAVE_RESPALDO_FLOTA = "TTOCC_RESPALDO_LOCAL_FLOTA";
@@ -216,7 +217,7 @@ async function cargarTablaActivos() {
 
     tbody.innerHTML = `
         <tr class="block md:table-row">
-            <td colspan="6" class="block md:table-cell p-8 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]">
+            <td colspan="7" class="block md:table-cell p-8 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]">
                 <i class="fa-solid fa-spinner animate-spin mr-2 text-xs"></i> Interconectando con Base de Datos Central...
             </td>
         </tr>
@@ -230,7 +231,7 @@ async function cargarTablaActivos() {
 
         const res = await response.json();
         if (res.status !== "SUCCESS") {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -252,14 +253,15 @@ async function cargarTablaActivos() {
                 Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
                 Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
+                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
+                Documento_Url: getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || ""
             };
         });
 
         localStorage.setItem(CLAVE_RESPALDO_FLOTA, JSON.stringify(listaActivosGlobal));
 
         if (listaActivosGlobal.length === 0) {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen activos registrados.</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen activos registrados.</td></tr>`;
             return;
         }
 
@@ -276,20 +278,20 @@ async function cargarTablaActivos() {
                 TTOCC_UI.warning("Modo Offline Activo", "Mostrando activos guardados localmente.");
             }
         } else {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error de enlace y sin respaldo local.</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error de enlace y sin respaldo local.</td></tr>`;
         }
     }
 }
 
 /**
- * Renderiza la lista de activos con sanitización
+ * Renderiza la lista de activos con sanitización y enlace a documento
  */
 function renderizarActivos(datos) {
     const tbody = document.getElementById("tablaEditableCuerpo");
     if (!tbody) return;
 
     if (datos.length === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin activos que coincidan con la búsqueda.</td></tr>`;
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin activos que coincidan con la búsqueda.</td></tr>`;
         return;
     }
 
@@ -297,6 +299,12 @@ function renderizarActivos(datos) {
 
     [...datos].reverse().forEach(reg => {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
+
+        let badgeDocumento = reg.Documento_Url
+            ? `<a href="${escapeHTML(reg.Documento_Url)}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-wider hover:underline transition-all">
+                <i class="fa-solid fa-file-pdf"></i> Ver / Descargar
+               </a>`
+            : `<span class="text-[9px] text-slate-400 dark:text-slate-600 italic">Sin Documento</span>`;
 
         let filaHtml = `
              <tr id="fila-${escapeHTML(reg.ID_Unidad)}"
@@ -327,6 +335,11 @@ function renderizarActivos(datos) {
                     <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase">${escapeHTML(reg.Tipo_Flota)}</span>
                 </td>
 
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Documentación:</span>
+                    <div>${badgeDocumento}</div>
+                </td>
+
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 text-center transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Acciones</span>
                     <div class="flex gap-1.5 justify-end md:justify-center">
@@ -343,11 +356,57 @@ function renderizarActivos(datos) {
     });
 }
 
+function previsualizarDocumento(input, idContenedor) {
+    const container = document.getElementById(idContenedor);
+    if (!container) return;
+
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const valRes = validarArchivoAdjunto(file);
+        if (!valRes.valido) {
+            TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            input.value = "";
+            container.classList.add("hidden");
+            return;
+        }
+
+        const nombreSpan = container.querySelector("span");
+        if (nombreSpan) nombreSpan.textContent = file.name;
+        container.classList.remove("hidden");
+    } else {
+        container.classList.add("hidden");
+    }
+}
+
+function limpiarPreviaDocumento(idInput, idContenedor) {
+    const input = document.getElementById(idInput);
+    if (input) input.value = "";
+    const container = document.getElementById(idContenedor);
+    if (container) container.classList.add("hidden");
+}
+
+function marcarEliminarDocumento() {
+    documentoEliminarFlag = true;
+    document.getElementById("wrapper-doc-actual").classList.add("hidden");
+    TTOCC_UI.info("Documento Marcado", "El documento actual se eliminará al guardar los cambios.");
+}
+
+function transformarABase64(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) resolve("");
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
 /**
  * CONTROLADORES DE MODAL 1: NUEVO ACTIVO
  */
 function abrirModalNuevo() {
     document.getElementById("formNuevoRegistro").reset();
+    limpiarPreviaDocumento('add-documento', 'preview-add-doc');
     document.getElementById("modalNuevoRegistro").classList.remove("hidden");
 }
 
@@ -358,9 +417,25 @@ function cerrarModalNuevo() {
 async function guardarNuevoRegistro(event) {
     event.preventDefault();
     const btn = document.getElementById("btn-crear-submit");
+    const docInput = document.getElementById("add-documento");
+
+    if (docInput && docInput.files.length > 0) {
+        const valRes = validarArchivoAdjunto(docInput.files[0]);
+        if (!valRes.valido) {
+            TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            return;
+        }
+    }
 
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Guardando...`;
+
+    let docBase64 = "";
+    let docNombre = "";
+    if (docInput && docInput.files.length > 0) {
+        docBase64 = await transformarABase64(docInput.files[0]);
+        docNombre = docInput.files[0].name;
+    }
 
     const payload = {
         accion: "crear_activo",
@@ -370,6 +445,8 @@ async function guardarNuevoRegistro(event) {
         serial: document.getElementById("add-serial").value.trim().toUpperCase(),
         marca: document.getElementById("add-marca").value.trim().toUpperCase(),
         flota: document.getElementById("add-flota").value,
+        documento_base64: docBase64,
+        documento_nombre: docNombre,
         modificado_por: OPERADOR_ACTUAL
     };
 
@@ -413,11 +490,24 @@ function abrirModalEditar(idUnidad) {
     const reg = listaActivosGlobal.find(r => String(r.ID_Unidad) === String(idUnidad));
     if (!reg) return;
 
+    documentoEliminarFlag = false;
+    limpiarPreviaDocumento('edit-documento', 'preview-edit-doc');
+
     document.getElementById("edit-id-unidad").value = reg.ID_Unidad;
     document.getElementById("edit-placa").value = reg.Placa;
     document.getElementById("edit-serial").value = reg.Serial;
     document.getElementById("edit-marca").value = reg.Marca;
     document.getElementById("edit-flota").value = reg.Tipo_Flota;
+
+    const wrapperDoc = document.getElementById("wrapper-doc-actual");
+    const linkDoc = document.getElementById("link-doc-actual");
+
+    if (reg.Documento_Url) {
+        linkDoc.href = reg.Documento_Url;
+        wrapperDoc.classList.remove("hidden");
+    } else {
+        wrapperDoc.classList.add("hidden");
+    }
 
     document.getElementById("modalEditarRegistro").classList.remove("hidden");
 }
@@ -430,9 +520,25 @@ async function guardarEdicionModal(event) {
     event.preventDefault();
     const idUnidad = document.getElementById("edit-id-unidad").value;
     const btn = document.getElementById("btn-editar-submit");
+    const docInput = document.getElementById("edit-documento");
+
+    if (docInput && docInput.files.length > 0) {
+        const valRes = validarArchivoAdjunto(docInput.files[0]);
+        if (!valRes.valido) {
+            TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            return;
+        }
+    }
 
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Guardando...`;
+
+    let docBase64 = "";
+    let docNombre = "";
+    if (docInput && docInput.files.length > 0) {
+        docBase64 = await transformarABase64(docInput.files[0]);
+        docNombre = docInput.files[0].name;
+    }
 
     const payload = {
         accion: "editar_activo",
@@ -442,6 +548,9 @@ async function guardarEdicionModal(event) {
         serial: document.getElementById("edit-serial").value.trim().toUpperCase(),
         marca: document.getElementById("edit-marca").value.trim().toUpperCase(),
         flota: document.getElementById("edit-flota").value,
+        documento_base64: docBase64,
+        documento_nombre: docNombre,
+        documento_eliminar: documentoEliminarFlag,
         modificado_por: OPERADOR_ACTUAL
     };
 
@@ -486,7 +595,7 @@ async function confirmarEliminarRegistro() {
 
     const confirmacion = await TTOCC_UI.confirm(
         "¿Eliminar Activo?",
-        `Esta acción borrará definitivamente la unidad ${escapeHTML(idUnidad)} del Maestro de Activos.`,
+        `Esta acción borrará definitivamente la unidad ${escapeHTML(idUnidad)} y sus documentos asociados del Maestro de Activos.`,
         "Eliminar",
         "Cancelar"
     );
@@ -509,7 +618,7 @@ async function confirmarEliminarRegistro() {
         <div class="flex flex-col items-center justify-center py-12 text-center">
             <i class="fa-solid fa-trash-can animate-bounce text-red-500 text-5xl mb-4"></i>
             <h3 class="text-white font-black uppercase tracking-widest">Eliminando Activo...</h3>
-            <p class="text-slate-500 text-[10px] mt-2 uppercase tracking-tighter">Limpiando Base de Datos</p>
+            <p class="text-slate-500 text-[10px] mt-2 uppercase tracking-tighter">Limpiando Base de Datos y Archivos en Drive</p>
         </div>
     `;
 

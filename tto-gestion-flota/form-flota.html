@@ -76,6 +76,7 @@
                             <th class="p-4">Serial del Activo</th>
                             <th class="p-4">Marca del Vehículo</th>
                             <th class="p-4">Tipo de Flota</th>
+                            <th class="p-4">Documentación</th>
                             <th class="p-4 text-center w-28">Acciones</th>
                         </tr>
                     </thead>
@@ -118,7 +119,7 @@
                     </div>
                 </div>
 
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
                         Tipo de Flota
                     </label>
@@ -126,6 +127,17 @@
                         <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
                         <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
                     </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                        <i class="fa-solid fa-file-pdf mr-1"></i> Documento de la Unidad (PDF o Imagen)
+                    </label>
+                    <input type="file" id="add-documento" accept="application/pdf,image/*" onchange="previsualizarDocumento(this, 'preview-add-doc')" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer transition-colors">
+                    <div id="preview-add-doc" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-mono text-slate-700 dark:text-slate-300 truncate max-w-[280px]" id="add-doc-nombre"></span>
+                        <button type="button" onclick="limpiarPreviaDocumento('add-documento', 'preview-add-doc')" class="text-red-500 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
@@ -171,12 +183,31 @@
                     </div>
                 </div>
 
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
                     <select id="edit-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
                         <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
                         <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
                     </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                        <i class="fa-solid fa-file-pdf mr-1"></i> Documento de la Unidad (PDF o Imagen)
+                    </label>
+                    <div id="wrapper-doc-actual" class="hidden mb-2 p-2.5 bg-emerald-950/10 border border-emerald-500/20 rounded-xl flex items-center justify-between">
+                        <a id="link-doc-actual" href="#" target="_blank" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 hover:underline">
+                            <i class="fa-solid fa-file-lines text-sm"></i> Ver / Descargar Documento
+                        </a>
+                        <button type="button" onclick="marcarEliminarDocumento()" class="text-xs text-red-500 hover:text-red-600 font-bold px-2 py-1 rounded bg-red-500/10 border border-red-500/20 cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i> Eliminar
+                        </button>
+                    </div>
+                    <input type="file" id="edit-documento" accept="application/pdf,image/*" onchange="previsualizarDocumento(this, 'preview-edit-doc')" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer transition-colors">
+                    <div id="preview-edit-doc" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-mono text-slate-700 dark:text-slate-300 truncate max-w-[280px]" id="edit-doc-nombre"></span>
+                        <button type="button" onclick="limpiarPreviaDocumento('edit-documento', 'preview-edit-doc')" class="text-red-500 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
 
                 <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4">
