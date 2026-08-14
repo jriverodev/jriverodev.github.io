@@ -1,4 +1,5 @@
 // js/visor-flota.js - Consola de Solo Lectura y Métricas de Catálogo de Flota
+"use strict";
 
 let datosActivosGlobal = [];
 let instanciaChartFlota = null;
@@ -6,9 +7,6 @@ let instanciaChartMarcas = null;
 
 document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
 
-/**
- * Alterna la visibilidad de secciones
- */
 function toggleSeccion(id) {
     const el = document.getElementById(id);
     if (el) {
@@ -35,7 +33,7 @@ async function cargarDatosAnaliticos() {
         const res = await response.json();
 
         if (res.status !== "SUCCESS") {
-            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="5" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${res.message}</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="5" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -75,7 +73,6 @@ function calcularKpisGlobales(datos) {
     let liviana = datos.filter(r => r.Tipo_Flota === "Liviana").length;
     let pesada = datos.filter(r => r.Tipo_Flota === "Pesada").length;
 
-    // Inyectar KPI
     document.getElementById("kpiTotal").textContent = total;
     document.getElementById("kpiLiviana").textContent = liviana;
     document.getElementById("kpiPesada").textContent = pesada;
@@ -129,32 +126,32 @@ function renderizarVisor(datos) {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
         let fila = `
-            <tr id="fila-${reg.ID_Unidad}"
+            <tr id="fila-${escapeHTML(reg.ID_Unidad)}"
                 class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
 
                  <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                      <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Unidad</span>
-                     <span class="font-black tracking-widest text-slate-800 dark:text-white text-xs uppercase">${reg.ID_Unidad}</span>
+                     <span class="font-black tracking-widest text-slate-800 dark:text-white text-xs uppercase">${escapeHTML(reg.ID_Unidad)}</span>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Placa</span>
-                    <span class="text-slate-700 dark:text-slate-300 font-bold uppercase">${reg.Placa}</span>
+                    <span class="text-slate-700 dark:text-slate-300 font-bold uppercase">${escapeHTML(reg.Placa)}</span>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Serial del Vehículo</span>
-                    <span class="text-slate-600 dark:text-slate-400 uppercase">${reg.Serial}</span>
+                    <span class="text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(reg.Serial)}</span>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Marca</span>
-                    <span class="text-slate-800 dark:text-slate-200 uppercase font-bold text-xs">${reg.Marca}</span>
+                    <span class="text-slate-800 dark:text-slate-200 uppercase font-bold text-xs">${escapeHTML(reg.Marca)}</span>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Tipo de Flota</span>
-                    <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">${reg.Tipo_Flota}</span>
+                    <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">${escapeHTML(reg.Tipo_Flota)}</span>
                  </td>
             </tr>
         `;

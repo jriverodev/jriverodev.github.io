@@ -1,4 +1,5 @@
 // js/form-flota.js - Controlador Unificado de Administración de Flota / Maestro de Activos
+"use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
@@ -14,13 +15,6 @@ var OPERADOR_ACTUAL = "";
 var FILTROS_ACTIVOS = {
     busqueda: "",
     flota: ""
-};
-
-// Base de datos de usuarios autorizados
-const USUARIOS_AUTORIZADOS = {
-    "WILLIAM RIOS": "wr123",
-    "VANNESA ROMERO": "vr456",
-    "PEDRO POLANCO": "pp789"
 };
 
 const CLAVE_COLA_OFFLINE_FLOTA = "TTOCC_COLA_PETICIONES_OFFLINE_FLOTA";
@@ -51,9 +45,10 @@ async function procesarColaOffline() {
 
     for (const item of colaPendiente) {
         try {
+            const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
             const response = await fetch(APP_CONFIG.URL_API, {
                 method: "POST",
-                body: JSON.stringify(item.payload)
+                body: JSON.stringify(payloadConToken)
             });
             const res = await response.json();
             if (res.status !== "SUCCESS") {
@@ -69,17 +64,37 @@ async function procesarColaOffline() {
 }
 
 /**
- * Lógica de Identificación y Auditoría
+ * Lógica de Identificación, Autenticación Backend y Auditoría
  */
-function verificarSesion() {
-    const sesion = sessionStorage.getItem("TTOCC_OPERADOR");
-    if (sesion) {
-        OPERADOR_ACTUAL = sesion;
-        document.getElementById("modalIdentificacion").classList.add("hidden");
+async function verificarSesion() {
+    const token = obtenerTokenSesion();
+    const sesionUser = sessionStorage.getItem("TTOCC_OPERADOR");
+
+    if (token && sesionUser) {
+        try {
+            const res = await fetch(APP_CONFIG.URL_API, {
+                method: "POST",
+                body: JSON.stringify({ accion: "validar_token", token: token })
+            });
+            const data = await res.json();
+            if (data.status === "SUCCESS" && data.valido) {
+                OPERADOR_ACTUAL = data.usuario || sesionUser;
+                document.getElementById("modalIdentificacion").classList.add("hidden");
+                return;
+            }
+        } catch (e) {
+            console.warn("No se pudo validar token en backend. Manteniendo estado local.", e);
+            OPERADOR_ACTUAL = sesionUser;
+            document.getElementById("modalIdentificacion").classList.add("hidden");
+            return;
+        }
     }
+
+    cerrarSesion();
+    document.getElementById("modalIdentificacion").classList.remove("hidden");
 }
 
-function confirmarIdentidad(event) {
+async function confirmarIdentidad(event) {
     event.preventDefault();
 
     const selectOperador = document.getElementById('input-operador');
@@ -89,20 +104,44 @@ function confirmarIdentidad(event) {
     if (!selectOperador || !inputPassword) return;
 
     const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
-    const passwordSanitizado = inputPassword.value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const passwordSanitizado = inputPassword.value.trim().toLowerCase();
 
-    if (USUARIOS_AUTORIZADOS[operadorSanitizado] && USUARIOS_AUTORIZADOS[operadorSanitizado] === passwordSanitizado) {
-        OPERADOR_ACTUAL = operadorSanitizado;
-        sessionStorage.setItem("TTOCC_OPERADOR", operadorSanitizado);
+    if (!operadorSanitizado || !passwordSanitizado) return;
 
-        if (divError) divError.classList.add('hidden');
-        document.getElementById('modalIdentificacion').classList.add('hidden');
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({
+                accion: "login",
+                usuario: operadorSanitizado,
+                password: passwordSanitizado
+            })
+        });
 
-        procesarColaOffline();
-    } else {
-        if (divError) divError.classList.remove('hidden');
-        inputPassword.value = '';
-        inputPassword.focus();
+        const res = await response.json();
+
+        if (res.status === "SUCCESS" && res.token) {
+            guardarSesion(res.token, res.usuario);
+            OPERADOR_ACTUAL = res.usuario;
+
+            if (divError) divError.classList.add('hidden');
+            document.getElementById('modalIdentificacion').classList.add('hidden');
+
+            procesarColaOffline();
+        } else {
+            if (divError) {
+                divError.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${escapeHTML(res.message || "Credenciales incorrectas")}`;
+                divError.classList.remove('hidden');
+            }
+            inputPassword.value = '';
+            inputPassword.focus();
+        }
+    } catch (err) {
+        console.error("Error al autenticar:", err);
+        if (divError) {
+            divError.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Error de conexión con el servidor.`;
+            divError.classList.remove('hidden');
+        }
     }
 }
 
@@ -191,7 +230,7 @@ async function cargarTablaActivos() {
 
         const res = await response.json();
         if (res.status !== "SUCCESS") {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${res.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -243,7 +282,7 @@ async function cargarTablaActivos() {
 }
 
 /**
- * Renderiza la lista de activos
+ * Renderiza la lista de activos con sanitización
  */
 function renderizarActivos(datos) {
     const tbody = document.getElementById("tablaEditableCuerpo");
@@ -260,38 +299,38 @@ function renderizarActivos(datos) {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
         let filaHtml = `
-             <tr id="fila-${reg.ID_Unidad}"
+             <tr id="fila-${escapeHTML(reg.ID_Unidad)}"
                  class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">ID Unidad:</span>
-                    <span class="text-slate-800 dark:text-white font-black tracking-widest text-xs uppercase">${reg.ID_Unidad}</span>
+                    <span class="text-slate-800 dark:text-white font-black tracking-widest text-xs uppercase">${escapeHTML(reg.ID_Unidad)}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Placa:</span>
-                    <span class="text-slate-700 dark:text-slate-300 font-bold uppercase">${reg.Placa}</span>
+                    <span class="text-slate-700 dark:text-slate-300 font-bold uppercase">${escapeHTML(reg.Placa)}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Serial:</span>
-                    <span class="text-slate-600 dark:text-slate-400 uppercase">${reg.Serial}</span>
+                    <span class="text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(reg.Serial)}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Marca:</span>
-                    <span class="text-slate-800 dark:text-slate-200 uppercase font-bold text-xs">${reg.Marca}</span>
+                    <span class="text-slate-800 dark:text-slate-200 uppercase font-bold text-xs">${escapeHTML(reg.Marca)}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Flota:</span>
-                    <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase">${reg.Tipo_Flota}</span>
+                    <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase">${escapeHTML(reg.Tipo_Flota)}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 text-center transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Acciones</span>
                     <div class="flex gap-1.5 justify-end md:justify-center">
-                        <button onclick="abrirModalEditar('${reg.ID_Unidad}')"
+                        <button onclick="abrirModalEditar('${escapeHTML(reg.ID_Unidad)}')"
                           class="bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-emerald-500 dark:hover:border-emerald-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
                             title="Editar Activo Técnico">
                             <i class="fa-solid fa-pen-to-square"></i> <span class="md:hidden">Editar</span>
@@ -325,6 +364,7 @@ async function guardarNuevoRegistro(event) {
 
     const payload = {
         accion: "crear_activo",
+        token: obtenerTokenSesion(),
         id_unidad: document.getElementById("add-unidad").value.trim().toUpperCase(),
         placa: document.getElementById("add-placa").value.trim().toUpperCase(),
         serial: document.getElementById("add-serial").value.trim().toUpperCase(),
@@ -396,6 +436,7 @@ async function guardarEdicionModal(event) {
 
     const payload = {
         accion: "editar_activo",
+        token: obtenerTokenSesion(),
         id_unidad: idUnidad,
         placa: document.getElementById("edit-placa").value.trim().toUpperCase(),
         serial: document.getElementById("edit-serial").value.trim().toUpperCase(),
@@ -445,7 +486,7 @@ async function confirmarEliminarRegistro() {
 
     const confirmacion = await TTOCC_UI.confirm(
         "¿Eliminar Activo?",
-        `Esta acción borrará definitivamente la unidad ${idUnidad} del Maestro de Activos.`,
+        `Esta acción borrará definitivamente la unidad ${escapeHTML(idUnidad)} del Maestro de Activos.`,
         "Eliminar",
         "Cancelar"
     );
@@ -474,6 +515,7 @@ async function confirmarEliminarRegistro() {
 
     const payload = {
         accion: "eliminar_activo",
+        token: obtenerTokenSesion(),
         id_unidad: idUnidad,
         modificado_por: OPERADOR_ACTUAL
     };

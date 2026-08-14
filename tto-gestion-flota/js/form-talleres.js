@@ -1,14 +1,12 @@
-// js/panel.js - Controlador Unificado de Patio, Edición Inline, Checklist Automatizado, Manejo de Imágenes en Base64 y Módulo Offline/Respaldo
+// js/form-talleres.js - Controlador Unificado de Talleres y Formulario
+"use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
-    // initTheme(); // Manejado por tema.js
     cargarTablaEditable();
 
-    // Escuchador de conectividad para procesar cola offline al reconectar
     window.addEventListener("online", procesarColaOffline);
 
-    // Esperar a jQuery / Select2
     if (typeof $ !== 'undefined') {
         inicializarSelects();
     } else {
@@ -30,7 +28,6 @@ function inicializarSelects() {
     $('#edit-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalEditarRegistro') }));
 }
 
-// Almacenes de control en memoria global (INTACTOS)
 var listaRegistrosPanel = [];
 var tareasModalActual = [];
 var OPERADOR_ACTUAL = "";
@@ -40,16 +37,6 @@ var FILTROS_ACTIVOS = {
     ubicacion: ""
 };
 
-// Base de datos de usuarios autorizados (INTACTA)
-const USUARIOS_AUTORIZADOS = {
-    "WILLIAM RIOS": "wr123",
-    "VANNESA ROMERO": "vr456",
-    "PEDRO POLANCO": "pp789"
-};
-
-/**
- * LÓGICA DE COLA OFFLINE Y RESPALDO EN LA NUBE / LOCAL
- */
 const CLAVE_COLA_OFFLINE = "TTOCC_COLA_PETICIONES_OFFLINE";
 const CLAVE_RESPALDO_MATRIZ = "TTOCC_RESPALDO_LOCAL_MATRIZ";
 
@@ -78,9 +65,10 @@ async function procesarColaOffline() {
 
     for (const item of colaPendiente) {
         try {
+            const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
             const response = await fetch(APP_CONFIG.URL_API, {
                 method: "POST",
-                body: JSON.stringify(item.payload)
+                body: JSON.stringify(payloadConToken)
             });
             const res = await response.json();
             if (res.status !== "SUCCESS") {
@@ -88,7 +76,6 @@ async function procesarColaOffline() {
             }
         } catch (e) {
             console.error("Error crítico retransmitiendo petición offline:", e);
-            // Si vuelve a fallar la conexión, re-encolar
             encolarPeticionOffline(item.payload);
         }
     }
@@ -97,18 +84,39 @@ async function procesarColaOffline() {
 }
 
 /**
- * Lógica de Identificación y Auditoría
+ * Lógica de Identificación y Autenticación Backend
  */
-function verificarSesion() {
-    const sesion = sessionStorage.getItem("TTOCC_OPERADOR");
-    if (sesion) {
-        OPERADOR_ACTUAL = sesion;
-        window.operadorActivo = sesion;
-        document.getElementById("modalIdentificacion").classList.add("hidden");
+async function verificarSesion() {
+    const token = obtenerTokenSesion();
+    const sesionUser = sessionStorage.getItem("TTOCC_OPERADOR");
+
+    if (token && sesionUser) {
+        try {
+            const res = await fetch(APP_CONFIG.URL_API, {
+                method: "POST",
+                body: JSON.stringify({ accion: "validar_token", token: token })
+            });
+            const data = await res.json();
+            if (data.status === "SUCCESS" && data.valido) {
+                OPERADOR_ACTUAL = data.usuario || sesionUser;
+                window.operadorActivo = OPERADOR_ACTUAL;
+                document.getElementById("modalIdentificacion").classList.add("hidden");
+                return;
+            }
+        } catch (e) {
+            console.warn("Error validando token en servidor. Se mantiene sesión local.", e);
+            OPERADOR_ACTUAL = sesionUser;
+            window.operadorActivo = sesionUser;
+            document.getElementById("modalIdentificacion").classList.add("hidden");
+            return;
+        }
     }
+
+    cerrarSesion();
+    document.getElementById("modalIdentificacion").classList.remove("hidden");
 }
 
-function confirmarIdentidad(event) {
+async function confirmarIdentidad(event) {
     event.preventDefault();
 
     const selectOperador = document.getElementById('input-operador');
@@ -118,29 +126,50 @@ function confirmarIdentidad(event) {
     if (!selectOperador || !inputPassword) return;
 
     const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
-    const passwordSanitizado = inputPassword.value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const passwordSanitizado = inputPassword.value.trim().toLowerCase();
 
-    if (USUARIOS_AUTORIZADOS[operadorSanitizado] && USUARIOS_AUTORIZADOS[operadorSanitizado] === passwordSanitizado) {
-        OPERADOR_ACTUAL = operadorSanitizado;
-        window.operadorActivo = operadorSanitizado;
-        sessionStorage.setItem("TTOCC_OPERADOR", operadorSanitizado);
+    if (!operadorSanitizado || !passwordSanitizado) return;
 
-        if (divError) divError.classList.add('hidden');
-        document.getElementById('modalIdentificacion').classList.add('hidden');
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({
+                accion: "login",
+                usuario: operadorSanitizado,
+                password: passwordSanitizado
+            })
+        });
 
-        console.log(`Acceso concedido a: ${operadorSanitizado}`);
+        const res = await response.json();
 
-        // Intentar procesar cola pendiente tras validar operador
-        procesarColaOffline();
-    } else {
-        if (divError) divError.classList.remove('hidden');
-        inputPassword.value = '';
-        inputPassword.focus();
+        if (res.status === "SUCCESS" && res.token) {
+            guardarSesion(res.token, res.usuario);
+            OPERADOR_ACTUAL = res.usuario;
+            window.operadorActivo = res.usuario;
+
+            if (divError) divError.classList.add('hidden');
+            document.getElementById('modalIdentificacion').classList.add('hidden');
+
+            procesarColaOffline();
+        } else {
+            if (divError) {
+                divError.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${escapeHTML(res.message || "Credenciales incorrectas")}`;
+                divError.classList.remove('hidden');
+            }
+            inputPassword.value = '';
+            inputPassword.focus();
+        }
+    } catch (err) {
+        console.error("Error al autenticar:", err);
+        if (divError) {
+            divError.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Error de conexión con el servidor.`;
+            divError.classList.remove('hidden');
+        }
     }
 }
 
 /**
- * Lógica de Búsqueda y Filtros (Matriz Operativa)
+ * Lógica de Búsqueda y Filtros
  */
 function abrirFiltros() {
     const sheet = document.getElementById("bottomSheetFiltros");
@@ -202,9 +231,6 @@ function filtrarMatriz() {
     renderizarMatriz(filtrados);
 }
 
-/**
- * Consulta y despliega la matriz operativa en tiempo real (con respaldo local)
- */
 async function cargarTablaEditable() {
     const tbody = document.getElementById("tablaEditableCuerpo");
     if (!tbody) return;
@@ -225,7 +251,7 @@ async function cargarTablaEditable() {
 
         const res = await response.json();
         if (res.status !== "SUCCESS") {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${res.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -277,7 +303,6 @@ async function cargarTablaEditable() {
             };
         });
 
-        // Guardar respaldo local para consulta offline de contingencia
         localStorage.setItem(CLAVE_RESPALDO_MATRIZ, JSON.stringify(listaRegistrosPanel));
 
         actualizarSelectGerencias();
@@ -292,7 +317,6 @@ async function cargarTablaEditable() {
     } catch (err) {
         console.error("Error al cargar datos remotos, recurriendo a respaldo local:", err);
 
-        // Fallback local en modo offline
         const respaldoLocal = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
         if (respaldoLocal) {
             listaRegistrosPanel = JSON.parse(respaldoLocal);
@@ -306,9 +330,6 @@ async function cargarTablaEditable() {
     }
 }
 
-/**
- * Renderiza la matriz operativa
- */
 function renderizarMatriz(datos) {
     const tbody = document.getElementById("tablaEditableCuerpo");
     if (!tbody) return;
@@ -321,14 +342,14 @@ function renderizarMatriz(datos) {
     tbody.innerHTML = "";
 
     [...datos].reverse().forEach(reg => {
-        let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${reg.Nombre_Taller_Ext}` : reg.Nombre_Taller;
+        let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${escapeHTML(reg.Nombre_Taller_Ext)}` : escapeHTML(reg.Nombre_Taller);
 
         let badgeFotoAntes = reg.Foto_Antes
-            ? `<a href="${reg.Foto_Antes}" target="_blank" class="pswp-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
+            ? `<a href="${escapeHTML(reg.Foto_Antes)}" target="_blank" class="pswp-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
             : '';
 
         let badgeFotoDespues = reg.Foto_Despues
-            ? `<a href="${reg.Foto_Despues}" target="_blank" class="pswp-link text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
+            ? `<a href="${escapeHTML(reg.Foto_Despues)}" target="_blank" class="pswp-link text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
             : '';
 
         let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
@@ -345,20 +366,20 @@ function renderizarMatriz(datos) {
         }
 
         let filaHtml = `
-             <tr id="fila-${reg.ID_Registro}"
+             <tr id="fila-${escapeHTML(reg.ID_Registro)}"
     class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Registro:</span>
                     <div class="text-right md:text-left">
-                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${reg.ID_Registro}</span>
+                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${escapeHTML(reg.ID_Registro)}</span>
                     </div>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Unidad / Marca:</span>
                     <div class="text-right md:text-left">
-                    <span class="font-black text-slate-900 dark:text-white tracking-wider font-mono block text-xs transition-colors">${reg.ID_Unidad}</span>
-                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wide transition-colors">${reg.Marca}</span>
+                    <span class="font-black text-slate-900 dark:text-white tracking-wider font-mono block text-xs transition-colors">${escapeHTML(reg.ID_Unidad)}</span>
+                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wide transition-colors">${escapeHTML(reg.Marca)}</span>
                     </div>
                 </td>
 
@@ -383,15 +404,15 @@ function renderizarMatriz(datos) {
                 </td>
                 <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
                 <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1 block">Novedad</span>
-                <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${reg.Observaciones}">
-                ${reg.Observaciones || 'Sin novedades registradas.'}
+                <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${escapeHTML(reg.Observaciones)}">
+                ${escapeHTML(reg.Observaciones) || 'Sin novedades registradas.'}
                 </p>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Acciones</span>
 
                     <div class="flex gap-1.5 justify-end md:justify-center">
-                    <button onclick="abrirModalEditar('${reg.ID_Registro}')"
+                    <button onclick="abrirModalEditar('${escapeHTML(reg.ID_Registro)}')"
                       class="bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-cyan-500 dark:hover:border-cyan-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
                         title="Planificación y Control Avanzado">
                         <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
@@ -458,9 +479,6 @@ function actualizarSelectGerencias() {
     }
 }
 
-/**
- * CONTROLADORES DE MODAL 1: NUEVO INGRESO
- */
 function abrirModalNuevo() {
     document.getElementById("formNuevoRegistro").reset();
     const ahora = new Date();
@@ -491,6 +509,15 @@ function previsualizarImagen(input, idContenedor) {
     const img = container.querySelector("img");
 
     if (input.files && input.files[0]) {
+        const valRes = validarArchivoAdjunto(input.files[0]);
+        if (!valRes.valido) {
+            TTOCC_UI.error("Archivo no válido", valRes.mensaje);
+            input.value = "";
+            img.src = "";
+            container.classList.add("hidden");
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
             img.src = e.result;
@@ -519,6 +546,14 @@ async function guardarNuevoRegistro(event) {
     const btn = document.getElementById("btn-crear-submit");
     const fileInput = document.getElementById("add-foto-antes");
 
+    if (fileInput.files.length > 0) {
+        const valRes = validarArchivoAdjunto(fileInput.files[0]);
+        if (!valRes.valido) {
+            TTOCC_UI.error("Archivo adjunto no válido", valRes.mensaje);
+            return;
+        }
+    }
+
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Procesando Imagen...`;
 
@@ -542,6 +577,7 @@ async function guardarNuevoRegistro(event) {
 
     const payload = {
         accion: "crear",
+        token: obtenerTokenSesion(),
         unidad: document.getElementById("add-unidad").value.trim(),
         marca: document.getElementById("add-marca").value.trim(),
         flota: document.getElementById("add-flota").value,
@@ -588,9 +624,6 @@ async function guardarNuevoRegistro(event) {
     }
 }
 
-/**
- * CONTROLADORES DE MODAL 2: DIAGNÓSTICO & CHECKLIST
- */
 function abrirModalEditar(id) {
     const registro = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
     if (!registro) return;
@@ -634,7 +667,7 @@ function renderizarTareasModal() {
                 onchange="alternarTareaModal(${index})"
                class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
                <span class="text-xs ${tarea.hecho ? "line-through text-slate-400 dark:text-slate-500 font-medium" : "text-slate-700 dark:text-slate-200 font-medium"} truncate max-w-[280px]">
-            ${tarea.texto}
+            ${escapeHTML(tarea.texto)}
             </span>
             </label>
             <button type="button" onclick="eliminarTareaModal(${index})" class="text-slate-400 dark:text-slate-600 hover:text-red-500 p-1 transition-colors">
@@ -724,6 +757,14 @@ async function guardarEdicionModal(event) {
     const btn = document.getElementById("btn-editar-submit");
     const fileInput = document.getElementById("edit-foto-despues");
 
+    if (fileInput && fileInput.files.length > 0) {
+        const valRes = validarArchivoAdjunto(fileInput.files[0]);
+        if (!valRes.valido) {
+            TTOCC_UI.error("Archivo adjunto no válido", valRes.mensaje);
+            return;
+        }
+    }
+
     const original = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
     const estatus = document.getElementById("edit-estatus").value;
 
@@ -751,6 +792,7 @@ async function guardarEdicionModal(event) {
 
     const payload = {
         accion: "editar",
+        token: obtenerTokenSesion(),
         id_registro: id,
         marca: document.getElementById("edit-marca").value.trim(),
         flota: document.getElementById("edit-flota").value,
@@ -800,16 +842,13 @@ async function guardarEdicionModal(event) {
     }
 }
 
-/**
- * ELIMINACIÓN DE REGISTROS
- */
 async function confirmarEliminarRegistro() {
     const id = document.getElementById("edit-id-registro").value;
     const unidad = document.getElementById("edit-unidad").value;
 
     const confirmacion = await TTOCC_UI.confirm(
         "¿Eliminar Registro?",
-        `Esta acción borrará la unidad ${unidad} (ID #${id}) de la base de datos y sus fotos en Drive.`,
+        `Esta acción borrará la unidad ${escapeHTML(unidad)} (ID #${escapeHTML(id)}) de la base de datos y sus fotos en Drive.`,
         "Eliminar",
         "Cancelar"
     );
@@ -838,6 +877,7 @@ async function confirmarEliminarRegistro() {
 
     const payload = {
         accion: "eliminar",
+        token: obtenerTokenSesion(),
         id_registro: id,
         modificado_por: OPERADOR_ACTUAL
     };
