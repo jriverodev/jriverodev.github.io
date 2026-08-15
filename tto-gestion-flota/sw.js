@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ttocc-flota-v7.2';
+const CACHE_NAME = 'ttocc-flota-v8';
 
 const ASSETS = [
   './',
