@@ -4,6 +4,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
     cargarTablaEditable();
+    initEventoUnidadFrecuente();
     
     // Escuchador de conectividad para procesar cola offline al reconectar
     window.addEventListener("online", procesarColaOffline);
@@ -33,12 +34,143 @@ function inicializarSelects() {
 // Almacenes de control en memoria global
 var listaRegistrosPanel = [];
 var tareasModalActual = [];
+var unidadesFlotaCache = [];
 var OPERADOR_ACTUAL = "";
 var FILTROS_ACTIVOS = {
     busqueda: "",
     estatus: [],
     ubicacion: ""
 };
+
+/**
+ * LÓGICA DE SELECCIÓN DE UNIDAD DESDE EL MAESTRO DE ACTIVOS
+ */
+function initEventoUnidadFrecuente() {
+    const btn = document.getElementById("btnUnidadFrecuente");
+    if (btn) {
+        btn.addEventListener("click", abrirModalSeleccionarUnidad);
+    }
+}
+
+async function abrirModalSeleccionarUnidad() {
+    const modal = document.getElementById("modalSeleccionarUnidad");
+    if (!modal) return;
+    const searchInput = document.getElementById("input-busqueda-unidad-modal");
+    if (searchInput) searchInput.value = "";
+
+    modal.classList.remove("hidden");
+    await cargarUnidadesFlotaModal();
+}
+
+function cerrarModalSeleccionarUnidad() {
+    const modal = document.getElementById("modalSeleccionarUnidad");
+    if (modal) modal.classList.add("hidden");
+}
+
+async function cargarUnidadesFlotaModal() {
+    const tbody = document.getElementById("tablaUnidadesFlotaCuerpo");
+    if (!tbody) return;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="p-4 text-center text-blue-400 font-bold uppercase text-[10px]">
+                <i class="fa-solid fa-spinner animate-spin mr-1"></i> Cargando Maestro de Activos...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "leer_activos" })
+        });
+        const res = await response.json();
+
+        if (res.status === "SUCCESS") {
+            let filasCrudas = res.datos || [];
+            unidadesFlotaCache = filasCrudas.map(u => {
+                let normalized = {};
+                for (let key in u) {
+                    normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
+                }
+                const getV = (terms) => {
+                    const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
+                    return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                };
+                return {
+                    ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
+                    Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
+                    Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
+                    Marca: normalized["MARCA"] || u["Marca"] || "",
+                    Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
+                };
+            });
+
+            renderizarUnidadesFlotaModal(unidadesFlotaCache);
+        } else {
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500 font-bold text-xs">${escapeHTML(res.message)}</td></tr>`;
+        }
+    } catch (e) {
+        console.error("Error leyendo activos para modal:", e);
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500 font-bold text-xs">Error de comunicación con la base de datos.</td></tr>`;
+    }
+}
+
+function renderizarUnidadesFlotaModal(unidades) {
+    const tbody = document.getElementById("tablaUnidadesFlotaCuerpo");
+    if (!tbody) return;
+
+    if (unidades.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500 font-bold text-xs uppercase">No hay unidades registradas o encontradas.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = "";
+    unidades.forEach(u => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+        tr.innerHTML = `
+            <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${escapeHTML(u.ID_Unidad)}</td>
+            <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
+            <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
+            <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${escapeHTML(u.Marca)}</td>
+            <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] font-black">${escapeHTML(u.Tipo_Flota)}</span></td>
+            <td class="p-3 text-center">
+                <button type="button" onclick="seleccionarUnidadFlota('${escapeHTML(u.ID_Unidad)}', '${escapeHTML(u.Marca)}', '${escapeHTML(u.Tipo_Flota)}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
+                    Seleccionar
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function filtrarUnidadesFlotaModal() {
+    const query = (document.getElementById("input-busqueda-unidad-modal")?.value || "").toLowerCase().trim();
+    const filtrados = unidadesFlotaCache.filter(u => {
+        return !query ||
+            String(u.ID_Unidad || "").toLowerCase().includes(query) ||
+            String(u.Placa || "").toLowerCase().includes(query) ||
+            String(u.Serial || "").toLowerCase().includes(query) ||
+            String(u.Marca || "").toLowerCase().includes(query);
+    });
+    renderizarUnidadesFlotaModal(filtrados);
+}
+
+function seleccionarUnidadFlota(idUnidad, marca, tipoFlota) {
+    const inputUnidad = document.getElementById("add-unidad");
+    const inputMarca = document.getElementById("add-marca");
+    const selectFlota = document.getElementById("add-flota");
+
+    if (inputUnidad) inputUnidad.value = idUnidad;
+    if (inputMarca) inputMarca.value = marca;
+    if (selectFlota) selectFlota.value = tipoFlota;
+
+    cerrarModalSeleccionarUnidad();
+    if (window.TTOCC_UI) {
+        TTOCC_UI.success("Unidad Seleccionada", `Se cargó la unidad ${idUnidad} (${marca}) al formulario.`);
+    }
+}
 
 /**
  * LÓGICA DE COLA OFFLINE Y RESPALDO EN LA NUBE / LOCAL
@@ -71,7 +203,6 @@ async function procesarColaOffline() {
 
     for (const item of colaPendiente) {
         try {
-            // Adjuntar token de sesión actual
             const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
             const response = await fetch(APP_CONFIG.URL_API, {
                 method: "POST",
@@ -119,7 +250,6 @@ async function verificarSesion() {
         }
     }
 
-    // Si no hay token o es inválido, forzar login
     cerrarSesion();
     document.getElementById("modalIdentificacion").classList.remove("hidden");
 }
@@ -247,7 +377,7 @@ function filtrarMatriz() {
 }
 
 /**
- * Consulta y despliega la matriz operativa en tiempo real (con respaldo local)
+ * Consulta y despliega la matriz operativa en tiempo real
  */
 async function cargarTablaEditable() {
     const tbody = document.getElementById("tablaEditableCuerpo");

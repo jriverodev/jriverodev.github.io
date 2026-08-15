@@ -179,6 +179,39 @@
         </div>
     </main>
 
+    <!-- MODAL BÚSQUEDA / SELECCIÓN DE UNIDAD DE FLOTA -->
+    <div id="modalSeleccionarUnidad" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[70] hidden p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[85vh] transition-colors">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-sm"></i> Seleccionar Unidad del Maestro de Activos
+                </h3>
+                <button type="button" onclick="cerrarModalSeleccionarUnidad()" class="text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="mb-4">
+                <input type="text" id="input-busqueda-unidad-modal" oninput="filtrarUnidadesFlotaModal()" placeholder="Buscar por ID Unidad, Placa, Serial o Marca..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium">
+            </div>
+
+            <div class="overflow-x-auto max-h-[50vh]">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[9px] uppercase font-black text-slate-500 bg-slate-50 dark:bg-slate-950/50">
+                            <th class="p-3 font-mono">ID Unidad</th>
+                            <th class="p-3">Placa</th>
+                            <th class="p-3">Serial</th>
+                            <th class="p-3">Marca</th>
+                            <th class="p-3">Flota</th>
+                            <th class="p-3 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUnidadesFlotaCuerpo" class="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs font-medium">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 transition-colors overflow-y-auto max-h-[95vh]">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
@@ -191,7 +224,12 @@
             <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">ID Unidad <span class="text-red-500">*</span></label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Unidad <span class="text-red-500">*</span></label>
+                            <button type="button" id="btnUnidadFrecuente" class="text-[9px] font-black uppercase text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-magnifying-glass"></i> Seleccionar Flota
+                            </button>
+                        </div>
                         <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
