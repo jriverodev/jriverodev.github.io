@@ -236,7 +236,7 @@ function actualizarGraficosVivos() {
     if (instanciaChartMarcas) instanciaChartMarcas.resize();
 }
 
-function exportarAExcel() {
+async function exportarAExcel() {
     if (datosActivosGlobal.length === 0) return TTOCC_UI.error("Error", "No hay datos para exportar.");
 
     const exportData = datosActivosGlobal.map(reg => ({
@@ -253,7 +253,37 @@ function exportarAExcel() {
     XLSX.utils.book_append_sheet(libro, hoja, "Catálogo de Activos");
 
     const fecha = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(libro, `TTOCC_Maestro_Activos_${fecha}.xlsx`);
+    const nombreArchivo = `TTOCC_Maestro_Activos_${fecha}.xlsx`;
+
+    // Detectar si la app corre como APK / Nativa
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            // 1. Generar la data del Excel en formato base64
+            const base64Data = XLSX.write(libro, { bookType: 'xlsx', type: 'base64' });
+
+            // 2. Escribir el archivo en el sistema de archivos del dispositivo
+            const guardado = await Capacitor.Plugins.Filesystem.writeFile({
+                path: nombreArchivo,
+                data: base64Data,
+                directory: 'DOCUMENTS'
+            });
+
+            // 3. Abrir la ventana para compartir/guardar el archivo
+            await Capacitor.Plugins.Share.share({
+                title: 'Maestro de Activos',
+                text: 'Catálogo de Activos exportado a Excel',
+                url: guardado.uri,
+                dialogTitle: 'Guardar o enviar Excel'
+            });
+
+        } catch (error) {
+            console.error("Error guardando Excel en APK:", error);
+            TTOCC_UI.error("Error de Exportación", "No se pudo guardar el archivo en el dispositivo.");
+        }
+    } else {
+        // Comportamiento normal para la versión Web
+        XLSX.writeFile(libro, nombreArchivo);
+    }
 }
 
 function exportarAPDF() {
