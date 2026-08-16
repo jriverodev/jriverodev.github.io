@@ -533,8 +533,10 @@ function actualizarGraficosVivos() {
 }
 
 // UTILERÍAS DE EXPORTACIÓN
-function exportarAExcel() {
-    if (datosUnidadesGlobal.length === 0) return TTOCC_UI.error("Error de Exportación", "No hay datos disponibles en el visor para generar el archivo Excel.");
+async function exportarAExcel() {
+    if (datosUnidadesGlobal.length === 0) {
+        return TTOCC_UI.error("Error de Exportación", "No hay datos disponibles en el visor para generar el archivo Excel.");
+    }
 
     const exportData = datosUnidadesGlobal.map(reg => ({
         "ID Registro": reg.ID_Registro,
@@ -561,7 +563,37 @@ function exportarAExcel() {
     XLSX.utils.book_append_sheet(libro, hoja, "Historial Completo");
 
     const fecha = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(libro, `TTOCC_Historial_Completo_${fecha}.xlsx`);
+    const nombreArchivo = `TTOCC_Historial_Completo_${fecha}.xlsx`;
+
+    // Detectar si estamos en APK / Capacitor Nativo
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            // 1. Convertir el libro a base64
+            const base64Data = XLSX.write(libro, { bookType: 'xlsx', type: 'base64' });
+
+            // 2. Guardar el archivo en el almacenamiento del dispositivo
+            const guardado = await Capacitor.Plugins.Filesystem.writeFile({
+                path: nombreArchivo,
+                data: base64Data,
+                directory: 'DOCUMENTS' // Se guarda en la carpeta Documentos
+            });
+
+            // 3. Abrir el menú nativo para compartir/descargar/guardar
+            await Capacitor.Plugins.Share.share({
+                title: 'Exportación a Excel',
+                text: 'Reporte generado con éxito',
+                url: guardado.uri,
+                dialogTitle: 'Guardar o enviar Excel'
+            });
+
+        } catch (error) {
+            console.error("Error guardando Excel en APK:", error);
+            TTOCC_UI.error("Error", "No se pudo guardar el archivo Excel en el dispositivo.");
+        }
+    } else {
+        // Modo Navegador Web Tradicional
+        XLSX.writeFile(libro, nombreArchivo);
+    }
 }
 
 function exportarAPDF() {
