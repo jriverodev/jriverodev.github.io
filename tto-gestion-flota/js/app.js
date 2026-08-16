@@ -8,12 +8,10 @@
 // 1. CONFIGURACIÓN GLOBAL Y SERVIDOR
 // ==========================================
 
-// URL de despliegue Web App de Google Apps Script
 const APP_CONFIG = {
     URL_API: "https://script.google.com/macros/s/AKfycbxsTpKVIxmzu4xARAiSkwpBcHnPGwrpdteYqGqmUr33NSNyWdIj07yBBvISNCHexF8cPQ/exec"
 };
 
-// Claves de almacenamiento local y sesión
 const CACHE_KEY = 'ttocc_mantenimientos';
 const SYNC_QUEUE_KEY = 'ttocc_sync_queue';
 const SESSION_TOKEN_KEY = 'TTOCC_SESSION_TOKEN';
@@ -24,11 +22,6 @@ const OPERADOR_KEY = 'TTOCC_OPERADOR';
 // 2. SEGURIDAD Y UTILIDADES DE SANITIZACIÓN (XSS & ARCHIVOS)
 // ==========================================
 
-/**
- * Función helper para prevenir XSS sanitizando caracteres especiales HTML
- * @param {string|number} str - Cadena de entrada a sanitizar
- * @returns {string} Cadena escapada de forma segura
- */
 function escapeHTML(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -39,13 +32,6 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-/**
- * Validador en cliente para archivos adjuntos
- * @param {File} file - Objeto de archivo a validar
- * @param {Array<string>} tiposPermitidos - Lista de tipos MIME válidos
- * @param {number} maxTamanoBytes - Tamaño máximo permitido en bytes (por defecto 5MB)
- * @returns {Object} Objeto { valido: boolean, mensaje?: string }
- */
 function validarArchivoAdjunto(file, tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], maxTamanoBytes = 5 * 1024 * 1024) {
     if (!file) return { valido: true };
     if (!tiposPermitidos.includes(file.type)) {
@@ -63,6 +49,7 @@ function validarArchivoAdjunto(file, tiposPermitidos = ['image/jpeg', 'image/png
     }
     return { valido: true };
 }
+
 
 // ==========================================
 // 3. MANEJO DE SESIÓN Y AUTENTICACIÓN
@@ -223,7 +210,8 @@ async function obtenerRegistrosFlota(callbackRender) {
         callbackRender(registros);
     }
 
-    if (navigator.onLine && APP_CONFIG && APP_CONFIG.URL_API) {
+    const hayConexion = await validarConexionRed();
+    if (hayConexion && APP_CONFIG && APP_CONFIG.URL_API) {
         try {
             const response = await fetch(`${APP_CONFIG.URL_API}?action=OBTENER_TODOS`);
             if (response.ok) {
@@ -256,8 +244,20 @@ function encolarOperacionOffline(accion, payload) {
     console.warn(`[Offline Queue] Operación '${accion}' guardada en cola local.`);
 }
 
+/**
+ * Validador universal de estado de red (Capacitor Nativo / Web API)
+ */
+async function validarConexionRed() {
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Network')) {
+        const status = await Capacitor.Plugins.Network.getStatus();
+        return status.connected;
+    }
+    return navigator.onLine;
+}
+
 async function procesarSincronizacionPendiente() {
-    if (!navigator.onLine || !APP_CONFIG || !APP_CONFIG.URL_API) return;
+    const hayConexion = await validarConexionRed();
+    if (!hayConexion || !APP_CONFIG || !APP_CONFIG.URL_API) return;
 
     let queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
     if (queue.length === 0) return;
@@ -268,7 +268,6 @@ async function procesarSincronizacionPendiente() {
 
     for (const item of queue) {
         try {
-            // Incluir token de sesión si está disponible
             const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
 
             const response = await fetch(APP_CONFIG.URL_API, {
@@ -304,27 +303,48 @@ async function procesarSincronizacionPendiente() {
 
 
 // ==========================================
-// 8. INICIALIZACIÓN DE EVENTOS Y SERVICE WORKER
+// 8. INICIALIZACIÓN DE EVENTOS Y DETECCIÓN DE RED
 // ==========================================
 
-window.addEventListener('online', () => {
-    console.log('[Red] Conexión restablecida.');
-    mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'info');
+function inicializarMonitoreoRed() {
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Network')) {
+        const { Network } = Capacitor.Plugins;
+
+        Network.addListener('networkStatusChange', status => {
+            if (status.connected) {
+                console.log('[Red Nativa] Conexión restablecida.');
+                mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'exito');
+                procesarSincronizacionPendiente();
+            } else {
+                console.warn('[Red Nativa] Conexión perdida. Operando en modo Offline.');
+                mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');
+            }
+        });
+    } else {
+        window.addEventListener('online', () => {
+            console.log('[Red Web] Conexión restablecida.');
+            mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'exito');
+            procesarSincronizacionPendiente();
+        });
+
+        window.addEventListener('offline', () => {
+            console.warn('[Red Web] Conexión perdida. Operando en modo Offline.');
+            mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');
+        });
+    }
+}
+
+// Inicialización de la aplicación al cargar el DOM
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarMonitoreoRed();
     procesarSincronizacionPendiente();
 });
 
-window.addEventListener('offline', () => {
-    console.warn('[Red] Conexión perdida. Operando en modo Offline.');
-    mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');
-});
-
-if ('serviceWorker' in navigator) {
+// Service Worker condicional exclusivo para navegadores Web (se omite en APK nativa)
+if ('serviceWorker' in navigator && (!window.Capacitor || !window.Capacitor.isNativePlatform())) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => {
-                console.log('Service Worker registrado correctamente con alcance:', reg.scope);
-                procesarSincronizacionPendiente();
-            })
+            .then(reg => console.log('Service Worker registrado correctamente con alcance:', reg.scope))
             .catch(err => console.error('Error al registrar Service Worker:', err));
     });
 }
