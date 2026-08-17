@@ -7,6 +7,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Sincronizar cola offline al volver a tener red
     window.addEventListener("online", procesarColaOffline);
+
+    const inputBusqueda = document.getElementById("input-busqueda");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", debounce(filtrarActivos, 250));
+    }
 });
 
 // Almacenes de control en memoria global
@@ -22,6 +27,10 @@ const CLAVE_COLA_OFFLINE_FLOTA = "TTOCC_COLA_PETICIONES_OFFLINE_FLOTA";
 const CLAVE_RESPALDO_FLOTA = "TTOCC_RESPALDO_LOCAL_FLOTA";
 
 function encolarPeticionOffline(payload) {
+    if (typeof encolarOperacionOffline === 'function') {
+        encolarOperacionOffline("flota_op", payload, CLAVE_COLA_OFFLINE_FLOTA);
+        return;
+    }
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE_FLOTA) || "[]");
     cola.push({
         id: Date.now(),
@@ -33,6 +42,11 @@ function encolarPeticionOffline(payload) {
 
 async function procesarColaOffline() {
     if (!navigator.onLine) return;
+    if (typeof procesarSincronizacionPendiente === 'function') {
+        await procesarSincronizacionPendiente(CLAVE_COLA_OFFLINE_FLOTA);
+        await cargarTablaActivos();
+        return;
+    }
 
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE_FLOTA) || "[]");
     if (cola.length === 0) return;
@@ -259,6 +273,9 @@ async function cargarTablaActivos() {
         });
 
         localStorage.setItem(CLAVE_RESPALDO_FLOTA, JSON.stringify(listaActivosGlobal));
+        if (typeof guardarActivosLocalSeguro === 'function') {
+            await guardarActivosLocalSeguro(listaActivosGlobal);
+        }
 
         if (listaActivosGlobal.length === 0) {
             tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen activos registrados.</td></tr>`;
@@ -270,9 +287,17 @@ async function cargarTablaActivos() {
     } catch (err) {
         console.error("Error al cargar activos remotos, recurriendo a respaldo local:", err);
 
-        const respaldoLocal = localStorage.getItem(CLAVE_RESPALDO_FLOTA);
-        if (respaldoLocal) {
-            listaActivosGlobal = JSON.parse(respaldoLocal);
+        let respaldoLocal = null;
+        if (typeof obtenerActivosLocalSeguro === 'function') {
+            respaldoLocal = await obtenerActivosLocalSeguro();
+        }
+        if (!respaldoLocal || respaldoLocal.length === 0) {
+            const localStr = localStorage.getItem(CLAVE_RESPALDO_FLOTA);
+            if (localStr) respaldoLocal = JSON.parse(localStr);
+        }
+
+        if (respaldoLocal && respaldoLocal.length > 0) {
+            listaActivosGlobal = respaldoLocal;
             renderizarActivos(listaActivosGlobal);
             if (window.TTOCC_UI) {
                 TTOCC_UI.warning("Modo Offline Activo", "Mostrando activos guardados localmente.");
@@ -295,9 +320,7 @@ function renderizarActivos(datos) {
         return;
     }
 
-    tbody.innerHTML = "";
-
-    [...datos].reverse().forEach(reg => {
+    const htmlFilas = [...datos].reverse().map(reg => {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
         let badgeDocumento = reg.Documento_Url
@@ -306,13 +329,15 @@ function renderizarActivos(datos) {
                </a>`
             : `<span class="text-[9px] text-slate-400 dark:text-slate-600 italic">Sin Documento</span>`;
 
-        let filaHtml = `
-             <tr id="fila-${escapeHTML(reg.ID_Unidad)}"
+        const idEscaped = escapeHTML(reg.ID_Unidad);
+
+        return `
+             <tr id="fila-${idEscaped}"
                  class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">ID Unidad:</span>
-                    <span class="text-slate-800 dark:text-white font-black tracking-widest text-xs uppercase">${escapeHTML(reg.ID_Unidad)}</span>
+                    <span class="text-slate-800 dark:text-white font-black tracking-widest text-xs uppercase">${idEscaped}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
@@ -343,7 +368,7 @@ function renderizarActivos(datos) {
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 text-center transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Acciones</span>
                     <div class="flex gap-1.5 justify-end md:justify-center">
-                        <button onclick="abrirModalEditar('${escapeHTML(reg.ID_Unidad)}')"
+                        <button onclick="abrirModalEditar('${idEscaped}')"
                           class="bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-emerald-500 dark:hover:border-emerald-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
                             title="Editar Activo Técnico">
                             <i class="fa-solid fa-pen-to-square"></i> <span class="md:hidden">Editar</span>
@@ -352,8 +377,9 @@ function renderizarActivos(datos) {
                 </td>
             </tr>
         `;
-        tbody.insertAdjacentHTML("beforeend", filaHtml);
     });
+
+    tbody.innerHTML = htmlFilas.join('');
 }
 
 function previsualizarDocumento(input, idContenedor) {
