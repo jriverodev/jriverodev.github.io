@@ -41,10 +41,10 @@
         <input type="file" id="inputImportExcel" accept=".xlsx, .xls" class="hidden">
       </label>
 
-      <!-- Botón Exportar Excel -->
+      <!-- Botón Compartir / Exportar Excel -->
       <button id="btnExport" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold px-2.5 py-2 rounded-lg flex items-center gap-1 shadow transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <span class="hidden sm:inline">Exportar</span> Excel
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        <span>Compartir / Exportar</span>
       </button>
     </div>
   </header>
@@ -335,6 +335,97 @@
       calcularTotales();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // --- EXPORTACIÓN OPTIMIZADA CON WEB SHARE API Y FALLBACK ---
+    document.getElementById("btnExport").addEventListener("click", async () => {
+      const registros = await obtenerTodosDB();
+      if (registros.length === 0) {
+        alert("No hay registros en la base de datos para exportar.");
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      registros.forEach(reg => {
+        const dataHoja = [
+          ["CONTROL DE ASISTENCIA DIARIA"],
+          [`FECHA: ${reg.fecha}`, `DIA: ${reg.dia}`],
+          [],
+          ["N°", "ÁREA / PROCESO", "LL", "LS", "MBO", "BCH", "TOTAL"]
+        ];
+
+        let subtotalAreas = 0;
+        AREAS.forEach((area, index) => {
+          const ll = reg.areas[area]?.LL || 0;
+          const ls = reg.areas[area]?.LS || 0;
+          const mbo = reg.areas[area]?.MBO || 0;
+          const bch = reg.areas[area]?.BCH || 0;
+          const totalArea = ll + ls + mbo + bch;
+          subtotalAreas += totalArea;
+
+          dataHoja.push([index + 1, area, ll, ls, mbo, bch, totalArea]);
+        });
+
+        dataHoja.push(["", "SUBTOTAL ÁREAS", "", "", "", "", subtotalAreas]);
+        dataHoja.push([]);
+
+        const vac = reg.adicionales?.VACACIONES || 0;
+        const sus = reg.adicionales?.SUSPENDIDOS || 0;
+        const guaira = reg.adicionales?.ASIGNACION_GUAIRA || 0;
+        const tpOtras = reg.adicionales?.ASIGNACION_TP_OTRAS || 0;
+
+        dataHoja.push(["", "VACACIONES", vac]);
+        dataHoja.push(["", "SUSPENDIDOS", sus]);
+        dataHoja.push(["", "ASIGNACION GUAIRA", guaira]);
+        dataHoja.push(["", "ASIGNACION TP A OTRAS GERENCIAS", tpOtras]);
+
+        const totalGeneral = subtotalAreas + vac + sus + guaira;
+        const ajusteGuaira = guaira - 240;
+
+        dataHoja.push([]);
+        dataHoja.push(["", "AJUSTE GUAIRA (-240)", ajusteGuaira]);
+        dataHoja.push(["", "TOTAL GENERAL", totalGeneral]);
+
+        const ws = XLSX.utils.aoa_to_sheet(dataHoja);
+        XLSX.utils.book_append_sheet(wb, ws, reg.fecha);
+      });
+
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { 
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+      });
+      
+      const fileName = `Control_Asistencia_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const file = new File([blob], fileName, { type: blob.type });
+
+      // Compartir con Web Share API (WhatsApp, carpetas, Drive, etc.)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Reporte de Asistencia',
+            text: 'Adjunto el reporte de asistencia exportado.'
+          });
+          return;
+        } catch (error) {
+          if (error.name !== "AbortError") {
+            console.error("Error al compartir:", error);
+          } else {
+            return;
+          }
+        }
+      }
+
+      // Descarga directa tradicional si la API no está soportada
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
 
     // --- IMPORTACIÓN DESDE ARCHIVO EXCEL (.XLSX) ---
     document.getElementById("inputImportExcel").addEventListener("change", async (e) => {
