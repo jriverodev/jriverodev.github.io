@@ -9,6 +9,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Escuchador de conectividad para procesar cola offline al reconectar
     window.addEventListener("online", procesarColaOffline);
     
+    // Asignar debounce al input de búsqueda para evitar filtrados excesivos en cada pulsación
+    const inputBusqueda = document.getElementById("input-busqueda");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", debounce(filtrarMatriz, 250));
+    }
+
+    const inputBusquedaUnidadModal = document.getElementById("input-busqueda-unidad-modal");
+    if (inputBusquedaUnidadModal) {
+        inputBusquedaUnidadModal.addEventListener("input", debounce(filtrarUnidadesFlotaModal, 250));
+    }
+
     // Esperar a jQuery / Select2
     if (typeof $ !== 'undefined') {
         inicializarSelects();
@@ -125,24 +136,27 @@ function renderizarUnidadesFlotaModal(unidades) {
         return;
     }
 
-    tbody.innerHTML = "";
-    unidades.forEach(u => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
-        tr.innerHTML = `
-            <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${escapeHTML(u.ID_Unidad)}</td>
-            <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
-            <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
-            <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${escapeHTML(u.Marca)}</td>
-            <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] font-black">${escapeHTML(u.Tipo_Flota)}</span></td>
-            <td class="p-3 text-center">
-                <button type="button" onclick="seleccionarUnidadFlota('${escapeHTML(u.ID_Unidad)}', '${escapeHTML(u.Marca)}', '${escapeHTML(u.Tipo_Flota)}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
-                    Seleccionar
-                </button>
-            </td>
+    const htmlArray = unidades.map(u => {
+        const idEscaped = escapeHTML(u.ID_Unidad);
+        const marcaEscaped = escapeHTML(u.Marca);
+        const tipoEscaped = escapeHTML(u.Tipo_Flota);
+        return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${idEscaped}</td>
+                <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
+                <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
+                <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${marcaEscaped}</td>
+                <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] font-black">${tipoEscaped}</span></td>
+                <td class="p-3 text-center">
+                    <button type="button" onclick="seleccionarUnidadFlota('${idEscaped}', '${marcaEscaped}', '${tipoEscaped}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
+                        Seleccionar
+                    </button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(tr);
     });
+
+    tbody.innerHTML = htmlArray.join('');
 }
 
 function filtrarUnidadesFlotaModal() {
@@ -179,6 +193,10 @@ const CLAVE_COLA_OFFLINE = "TTOCC_COLA_PETICIONES_OFFLINE";
 const CLAVE_RESPALDO_MATRIZ = "TTOCC_RESPALDO_LOCAL_MATRIZ";
 
 function encolarPeticionOffline(payload) {
+    if (typeof encolarOperacionOffline === 'function') {
+        encolarOperacionOffline("panel_op", payload, CLAVE_COLA_OFFLINE);
+        return;
+    }
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
     cola.push({
         id: Date.now(),
@@ -190,6 +208,11 @@ function encolarPeticionOffline(payload) {
 
 async function procesarColaOffline() {
     if (!navigator.onLine) return;
+    if (typeof procesarSincronizacionPendiente === 'function') {
+        await procesarSincronizacionPendiente(CLAVE_COLA_OFFLINE);
+        await cargarTablaEditable();
+        return;
+    }
     
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
     if (cola.length === 0) return;
@@ -452,6 +475,9 @@ async function cargarTablaEditable() {
         });
 
         localStorage.setItem(CLAVE_RESPALDO_MATRIZ, JSON.stringify(listaRegistrosPanel));
+        if (typeof guardarMantenimientosLocalSeguro === 'function') {
+            await guardarMantenimientosLocalSeguro(listaRegistrosPanel);
+        }
 
         actualizarSelectGerencias();
 
@@ -465,9 +491,17 @@ async function cargarTablaEditable() {
     } catch (err) {
         console.error("Error al cargar datos remotos, recurriendo a respaldo local:", err);
         
-        const respaldoLocal = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
-        if (respaldoLocal) {
-            listaRegistrosPanel = JSON.parse(respaldoLocal);
+        let respaldoLocal = null;
+        if (typeof obtenerMantenimientosLocalSeguro === 'function') {
+            respaldoLocal = await obtenerMantenimientosLocalSeguro();
+        }
+        if (!respaldoLocal || respaldoLocal.length === 0) {
+            const localStr = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
+            if (localStr) respaldoLocal = JSON.parse(localStr);
+        }
+
+        if (respaldoLocal && respaldoLocal.length > 0) {
+            listaRegistrosPanel = respaldoLocal;
             renderizarMatriz(listaRegistrosPanel);
             if (window.TTOCC_UI) {
                 TTOCC_UI.warning("Modo Offline Activo", "Mostrando datos guardados localmente en caché.");
@@ -490,9 +524,7 @@ function renderizarMatriz(datos) {
         return;
     }
 
-    tbody.innerHTML = "";
-
-    [...datos].reverse().forEach(reg => {
+    const htmlFilas = [...datos].reverse().map(reg => {
         let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${escapeHTML(reg.Nombre_Taller_Ext)}` : escapeHTML(reg.Nombre_Taller);
 
         let badgeFotoAntes = reg.Foto_Antes
@@ -516,13 +548,15 @@ function renderizarMatriz(datos) {
             colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
         }
 
-        let filaHtml = `
-             <tr id="fila-${escapeHTML(reg.ID_Registro)}"
+        const regIdEscaped = escapeHTML(reg.ID_Registro);
+
+        return `
+             <tr id="fila-${regIdEscaped}"
     class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">   
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Registro:</span>
                     <div class="text-right md:text-left">
-                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${escapeHTML(reg.ID_Registro)}</span>
+                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${regIdEscaped}</span>
                     </div>
                 </td>
 
@@ -563,7 +597,7 @@ function renderizarMatriz(datos) {
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Acciones</span>
     
                     <div class="flex gap-1.5 justify-end md:justify-center">
-                    <button onclick="abrirModalEditar('${escapeHTML(reg.ID_Registro)}')"
+                    <button onclick="abrirModalEditar('${regIdEscaped}')"
                       class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95" 
                         title="Planificación y Control Avanzado">
                         <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
@@ -572,8 +606,9 @@ function renderizarMatriz(datos) {
                 </td>
             </tr>
         `;
-        tbody.insertAdjacentHTML("beforeend", filaHtml);
     });
+
+    tbody.innerHTML = htmlFilas.join('');
 }
 
 function transformarABase64(file) {
@@ -811,13 +846,12 @@ function cerrarModalEditar() {
 function renderizarTareasModal() {
     const container = document.getElementById("edit-container-tareas");
     if (!container) return;
-    container.innerHTML = "";
 
     if (tareasModalActual.length === 0) {
         container.innerHTML = `<p class="text-[11px] text-slate-600 italic py-2 text-center">No hay tareas de diagnóstico asignadas.</p>`;
     } else {
-        tareasModalActual.forEach((tarea, index) => {
-            const itemHtml = `
+        const htmlArray = tareasModalActual.map((tarea, index) => {
+            return `
                 <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800/60 gap-2 transition-colors">
                 <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
                 <input type="checkbox" ${tarea.hecho ? "checked" : ""} 
@@ -832,8 +866,8 @@ function renderizarTareasModal() {
             </button>
             </div>
             `;
-            container.insertAdjacentHTML("beforeend", itemHtml);
         });
+        container.innerHTML = htmlArray.join('');
     }
    
     let avanceCalculado = 0;

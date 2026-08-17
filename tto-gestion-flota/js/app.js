@@ -1,6 +1,6 @@
 /**
  * TTOCC - Gestión de Flota
- * app.js - Lógica Global, Utilidades, Sanitización XSS, Gestión de Sesión y Sincronización
+ * app.js - Lógica Global, Utilidades, Sanitización XSS, Gestión de Sesión, Debounce y Sincronización Cifrada
  */
 "use strict";
 
@@ -19,7 +19,7 @@ const OPERADOR_KEY = 'TTOCC_OPERADOR';
 
 
 // ==========================================
-// 2. SEGURIDAD Y UTILIDADES DE SANITIZACIÓN (XSS & ARCHIVOS)
+// 2. SEGURIDAD, UTILIDADES & HELPER DEBOUNCE
 // ==========================================
 
 function escapeHTML(str) {
@@ -30,6 +30,15 @@ function escapeHTML(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function debounce(func, wait = 250) {
+    let timeout;
+    return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
 }
 
 function validarArchivoAdjunto(file, tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], maxTamanoBytes = 5 * 1024 * 1024) {
@@ -199,12 +208,18 @@ function mostrarConfirmacion(titulo, mensaje, callbackAceptar) {
 
 
 // ==========================================
-// 6. LECTURA OFFLINE-FIRST (STALE-WHILE-REVALIDATE)
+// 6. LECTURA OFFLINE-FIRST (STALE-WHILE-REVALIDATE Y DEXIE SEGURIDAD)
 // ==========================================
 
 async function obtenerRegistrosFlota(callbackRender) {
-    const datosLocales = localStorage.getItem(CACHE_KEY);
-    let registros = datosLocales ? JSON.parse(datosLocales) : [];
+    let registros = [];
+    if (typeof obtenerMantenimientosLocalSeguro === 'function') {
+        registros = await obtenerMantenimientosLocalSeguro();
+    }
+    if ((!registros || registros.length === 0)) {
+        const datosLocales = localStorage.getItem(CACHE_KEY);
+        registros = datosLocales ? JSON.parse(datosLocales) : [];
+    }
 
     if (registros.length > 0 && typeof callbackRender === 'function') {
         callbackRender(registros);
@@ -217,6 +232,9 @@ async function obtenerRegistrosFlota(callbackRender) {
             if (response.ok) {
                 const datosServidor = await response.json();
                 localStorage.setItem(CACHE_KEY, JSON.stringify(datosServidor));
+                if (typeof guardarMantenimientosLocalSeguro === 'function') {
+                    await guardarMantenimientosLocalSeguro(datosServidor);
+                }
                 if (typeof callbackRender === 'function') {
                     callbackRender(datosServidor);
                 }
@@ -229,18 +247,21 @@ async function obtenerRegistrosFlota(callbackRender) {
 
 
 // ==========================================
-// 7. GESTIÓN DE COLA OFFLINE Y SINCRONIZACIÓN
+// 7. GESTIÓN DE COLA OFFLINE Y SINCRONIZACIÓN UNIFICADA
 // ==========================================
 
-function encolarOperacionOffline(accion, payload) {
-    let queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
+function encolarOperacionOffline(accion, payload, key = SYNC_QUEUE_KEY) {
+    let queue = JSON.parse(localStorage.getItem(key) || '[]');
     queue.push({
         idSync: Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         accion: accion,
         payload: payload,
         timestamp: new Date().toISOString()
     });
-    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+    localStorage.setItem(key, JSON.stringify(queue));
+    if (typeof encolarOfflineSeguro === 'function') {
+        encolarOfflineSeguro(accion, payload).catch(() => {});
+    }
     console.warn(`[Offline Queue] Operación '${accion}' guardada en cola local.`);
 }
 
@@ -248,21 +269,25 @@ function encolarOperacionOffline(accion, payload) {
  * Validador universal de estado de red (Capacitor Nativo / Web API)
  */
 async function validarConexionRed() {
-    if (window.Capacitor && window.Capacitor.isPluginAvailable('Network')) {
-        const status = await Capacitor.Plugins.Network.getStatus();
-        return status.connected;
+    if (window.Capacitor && window.Capacitor.isPluginAvailable && window.Capacitor.isPluginAvailable('Network')) {
+        try {
+            const status = await Capacitor.Plugins.Network.getStatus();
+            return status.connected;
+        } catch (e) {
+            return navigator.onLine;
+        }
     }
     return navigator.onLine;
 }
 
-async function procesarSincronizacionPendiente() {
+async function procesarSincronizacionPendiente(key = SYNC_QUEUE_KEY) {
     const hayConexion = await validarConexionRed();
     if (!hayConexion || !APP_CONFIG || !APP_CONFIG.URL_API) return;
 
-    let queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
+    let queue = JSON.parse(localStorage.getItem(key) || '[]');
     if (queue.length === 0) return;
 
-    console.log(`[Sync] Procesando ${queue.length} operaciones pendientes...`);
+    console.log(`[Sync] Procesando ${queue.length} operaciones pendientes para ${key}...`);
     
     let pendienteSincronizar = [...queue];
 
@@ -279,7 +304,7 @@ async function procesarSincronizacionPendiente() {
                 const res = await response.json();
                 if (res.status === 'SUCCESS') {
                     pendienteSincronizar = pendienteSincronizar.filter(q => q.idSync !== item.idSync);
-                    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(pendienteSincronizar));
+                    localStorage.setItem(key, JSON.stringify(pendienteSincronizar));
                     console.log(`[Sync Exitoso] Registro ${item.idSync} sincronizado.`);
                 } else {
                     console.warn('[Sync] Servidor devolvió error:', res.message);
@@ -307,7 +332,7 @@ async function procesarSincronizacionPendiente() {
 // ==========================================
 
 function inicializarMonitoreoRed() {
-    if (window.Capacitor && window.Capacitor.isPluginAvailable('Network')) {
+    if (window.Capacitor && window.Capacitor.isPluginAvailable && window.Capacitor.isPluginAvailable('Network')) {
         const { Network } = Capacitor.Plugins;
 
         Network.addListener('networkStatusChange', status => {

@@ -5,7 +5,14 @@ let datosUnidadesGlobal = [];
 let instanciaChartTalleres = null;
 let instanciaChartEstatus = null;
 
-document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
+document.addEventListener("DOMContentLoaded", () => {
+    cargarDatosAnaliticos();
+
+    const searchInput = document.getElementById("visor-busqueda");
+    if (searchInput) {
+        searchInput.addEventListener("input", debounce(filtrarVisor, 250));
+    }
+});
 
 /**
  * Convierte una fecha/hora a un formato relativo estilo red social
@@ -137,6 +144,20 @@ async function cargarDatosAnaliticos() {
                 }
             } catch(e) { console.error("Error parseando tareas", e); }
 
+            const fechaRegRaw = getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A";
+
+            let parsedFechaTimestamp = 0;
+            if (fechaRegRaw && fechaRegRaw !== "N/A") {
+                const partesFechaHora = String(fechaRegRaw).trim().split(" ");
+                const partesFecha = partesFechaHora[0].split("-");
+                if (partesFecha.length === 3) {
+                    const d = parseInt(partesFecha[0], 10);
+                    const m = parseInt(partesFecha[1], 10) - 1;
+                    const y = parseInt(partesFecha[2], 10);
+                    parsedFechaTimestamp = new Date(y, m, d).getTime();
+                }
+            }
+
             return {
                 ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
                 ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
@@ -145,7 +166,8 @@ async function cargarDatosAnaliticos() {
                 Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
                 Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "Sin novedades",
-                Fecha_Registro: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
+                Fecha_Registro: fechaRegRaw,
+                Fecha_Registro_Timestamp: parsedFechaTimestamp,
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "N/A",
@@ -186,6 +208,9 @@ function filtrarVisor() {
     const fechaDesde = document.getElementById("visor-fecha-desde").value;
     const fechaHasta = document.getElementById("visor-fecha-hasta").value;
 
+    const fDesdeTs = fechaDesde ? new Date(fechaDesde).getTime() : null;
+    const fHastaTs = fechaHasta ? new Date(fechaHasta).getTime() : null;
+
     const filtrados = datosUnidadesGlobal.filter(reg => {
         const matchesBusqueda = !query ||
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
@@ -196,19 +221,9 @@ function filtrarVisor() {
         const matchesUbicacion = !ubicacion || reg.Nombre_Taller === ubicacion;
 
         let matchesFecha = true;
-        if (fechaDesde || fechaHasta) {
-            const partesFechaHora = reg.Fecha_Registro.split(" ");
-            const [d, m, y] = partesFechaHora[0].split("-").map(Number);
-            const fechaReg = new Date(y, m - 1, d);
-
-            if (fechaDesde) {
-                const fDesde = new Date(fechaDesde);
-                if (fechaReg < fDesde) matchesFecha = false;
-            }
-            if (fechaHasta) {
-                const fHasta = new Date(fechaHasta);
-                if (fechaReg > fHasta) matchesFecha = false;
-            }
+        if ((fDesdeTs !== null || fHastaTs !== null) && reg.Fecha_Registro_Timestamp) {
+            if (fDesdeTs !== null && reg.Fecha_Registro_Timestamp < fDesdeTs) matchesFecha = false;
+            if (fHastaTs !== null && reg.Fecha_Registro_Timestamp > fHastaTs) matchesFecha = false;
         }
 
         return matchesBusqueda && matchesEstatus && matchesUbicacion && matchesFecha;
@@ -238,14 +253,16 @@ function renderizarVisor(datos) {
         return;
     }
 
-    tbody.innerHTML = "";
     let conteoTalleres = {};
-    
-    let porAtender = datos.filter(r => r.Estatus === "Por Atender").length;
-    let enProceso = datos.filter(r => r.Estatus === "En Proceso").length;
-    let listos = total - (porAtender + enProceso);
+    let porAtender = 0;
+    let enProceso = 0;
+    let listos = 0;
 
-    [...datos].reverse().forEach(reg => {
+    const htmlFilas = [...datos].reverse().map(reg => {
+        if (reg.Estatus === "Por Atender") porAtender++;
+        else if (reg.Estatus === "En Proceso") enProceso++;
+        else listos++;
+
         let nombreTallerFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${escapeHTML(reg.Nombre_Taller_Ext)}` : escapeHTML(reg.Nombre_Taller);
         conteoTalleres[nombreTallerFinal] = (conteoTalleres[nombreTallerFinal] || 0) + 1;
 
@@ -262,14 +279,16 @@ function renderizarVisor(datos) {
             colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
         }
 
-        let fila = `
-            <tr id="fila-${escapeHTML(reg.ID_Registro)}"
+        const idRegEscaped = escapeHTML(reg.ID_Registro);
+
+        return `
+            <tr id="fila-${idRegEscaped}"
     class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">   
     
              <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[10px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
               <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Registro</span>
     
-              <span class="text-right md:text-left font-black tracking-widest text-slate-700 dark:text-slate-400 transition-colors">#${escapeHTML(reg.ID_Registro)}</span>
+              <span class="text-right md:text-left font-black tracking-widest text-slate-700 dark:text-slate-400 transition-colors">#${idRegEscaped}</span>
              </td>
 
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
@@ -338,7 +357,7 @@ function renderizarVisor(datos) {
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 md:w-28 text-center transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Detalle</span>
                     <div class="flex justify-end md:justify-center">
-                        <button onclick="abrirModalDetalle('${escapeHTML(reg.ID_Registro)}')"
+                        <button onclick="abrirModalDetalle('${idRegEscaped}')"
                         class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer shadow-md shadow-slate-200 dark:shadow-black/20 transition-all active:scale-95">
                         Detalle
                         </button>
@@ -346,9 +365,9 @@ function renderizarVisor(datos) {
                 </td>
             </tr>
         `;
-        tbody.insertAdjacentHTML("beforeend", fila);
     });
 
+    tbody.innerHTML = htmlFilas.join('');
     renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
 }
 
@@ -372,6 +391,7 @@ function abrirModalDetalle(id) {
     tareasContainer.innerHTML = "";
 
     if (reg.Tareas && reg.Tareas.length > 0) {
+        const docFrag = document.createDocumentFragment();
         reg.Tareas.forEach(t => {
             const item = document.createElement("div");
             item.className = "flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800/40 transition-colors";
@@ -380,8 +400,9 @@ function abrirModalDetalle(id) {
                 <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-400 dark:text-slate-600'} text-sm transition-colors"></i>
                 <span class="text-xs ${t.hecho ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'} font-medium transition-colors">${escapeHTML(t.texto)}</span>
             `;
-            tareasContainer.appendChild(item);
+            docFrag.appendChild(item);
         });
+        tareasContainer.appendChild(docFrag);
     } else {
         tareasContainer.innerHTML = `<p class="text-[10px] text-slate-500 dark:text-slate-600 italic text-center py-4 transition-colors">No se asignaron tareas específicas en el diagnóstico.</p>`;
     }
