@@ -1,4 +1,4 @@
-// js/form-talleres.js - Controlador Unificado de Talleres y Formulario
+// js/form-talleres.js - Controlador Unificado de Mantenimiento de Talleres
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,10 +8,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("online", procesarColaOffline);
 
+    const inputBusqueda = document.getElementById("input-busqueda");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", debounce(filtrarMatriz, 250));
+    }
+
+    const inputBusquedaUnidadModal = document.getElementById("input-busqueda-unidad-modal");
+    if (inputBusquedaUnidadModal) {
+        inputBusquedaUnidadModal.addEventListener("input", debounce(filtrarUnidadesFlotaModal, 250));
+    }
+
     if (typeof $ !== 'undefined') {
         inicializarSelects();
     } else {
-        console.warn("jQuery no detectado de inmediato, reintentando inicialización...");
         setTimeout(inicializarSelects, 100);
     }
 });
@@ -39,9 +48,6 @@ var FILTROS_ACTIVOS = {
     ubicacion: ""
 };
 
-/**
- * LÓGICA DE SELECCIÓN DE UNIDAD DESDE EL MAESTRO DE ACTIVOS
- */
 function initEventoUnidadFrecuente() {
     const btn = document.getElementById("btnUnidadFrecuente");
     if (btn) {
@@ -92,13 +98,17 @@ async function cargarUnidadesFlotaModal() {
                 }
                 const getV = (terms) => {
                     const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                    return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                    return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
                 };
                 return {
                     ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
                     Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
                     Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
                     Marca: normalized["MARCA"] || u["Marca"] || "",
+                    Modelo: normalized["MODELO"] || u["Modelo"] || "",
+                    Color: normalized["COLOR"] || u["Color"] || "",
+                    Anio: getV(["ANIO", "ANO"]) || u["Anio"] || "",
+                    Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                     Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
                 };
             });
@@ -122,24 +132,27 @@ function renderizarUnidadesFlotaModal(unidades) {
         return;
     }
 
-    tbody.innerHTML = "";
-    unidades.forEach(u => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
-        tr.innerHTML = `
-            <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${escapeHTML(u.ID_Unidad)}</td>
-            <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
-            <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
-            <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${escapeHTML(u.Marca)}</td>
-            <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[9px] font-black">${escapeHTML(u.Tipo_Flota)}</span></td>
-            <td class="p-3 text-center">
-                <button type="button" onclick="seleccionarUnidadFlota('${escapeHTML(u.ID_Unidad)}', '${escapeHTML(u.Marca)}', '${escapeHTML(u.Tipo_Flota)}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
-                    Seleccionar
-                </button>
-            </td>
+    const htmlArray = unidades.map(u => {
+        const idEscaped = escapeHTML(u.ID_Unidad);
+        const marcaEscaped = escapeHTML(u.Marca);
+        const tipoEscaped = escapeHTML(u.Tipo_Flota);
+        return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${idEscaped}</td>
+                <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
+                <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
+                <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${marcaEscaped}</td>
+                <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[9px] font-black">${tipoEscaped}</span></td>
+                <td class="p-3 text-center">
+                    <button type="button" onclick="seleccionarUnidadFlota('${idEscaped}', '${marcaEscaped}', '${tipoEscaped}')" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
+                        Seleccionar
+                    </button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(tr);
     });
+
+    tbody.innerHTML = htmlArray.join('');
 }
 
 function filtrarUnidadesFlotaModal() {
@@ -173,6 +186,10 @@ const CLAVE_COLA_OFFLINE = "TTOCC_COLA_PETICIONES_OFFLINE";
 const CLAVE_RESPALDO_MATRIZ = "TTOCC_RESPALDO_LOCAL_MATRIZ";
 
 function encolarPeticionOffline(payload) {
+    if (typeof encolarOperacionOffline === 'function') {
+        encolarOperacionOffline("panel_op", payload, CLAVE_COLA_OFFLINE);
+        return;
+    }
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
     cola.push({
         id: Date.now(),
@@ -184,6 +201,11 @@ function encolarPeticionOffline(payload) {
 
 async function procesarColaOffline() {
     if (!navigator.onLine) return;
+    if (typeof procesarSincronizacionPendiente === 'function') {
+        await procesarSincronizacionPendiente(CLAVE_COLA_OFFLINE);
+        await cargarTablaEditable();
+        return;
+    }
 
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
     if (cola.length === 0) return;
@@ -215,9 +237,6 @@ async function procesarColaOffline() {
     await cargarTablaEditable();
 }
 
-/**
- * Lógica de Identificación y Autenticación Backend
- */
 async function verificarSesion() {
     const token = obtenerTokenSesion();
     const sesionUser = sessionStorage.getItem("TTOCC_OPERADOR");
@@ -236,7 +255,7 @@ async function verificarSesion() {
                 return;
             }
         } catch (e) {
-            console.warn("Error validando token en servidor. Se mantiene sesión local.", e);
+            console.warn("No se pudo validar el token con el servidor.", e);
             OPERADOR_ACTUAL = sesionUser;
             window.operadorActivo = sesionUser;
             document.getElementById("modalIdentificacion").classList.add("hidden");
@@ -260,7 +279,13 @@ async function confirmarIdentidad(event) {
     const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
     const passwordSanitizado = inputPassword.value.trim().toLowerCase();
 
-    if (!operadorSanitizado || !passwordSanitizado) return;
+    if (!operadorSanitizado || !passwordSanitizado) {
+        if (divError) {
+            divError.textContent = "Seleccione operador e ingrese la contraseña.";
+            divError.classList.remove('hidden');
+        }
+        return;
+    }
 
     try {
         const response = await fetch(APP_CONFIG.URL_API, {
@@ -300,9 +325,6 @@ async function confirmarIdentidad(event) {
     }
 }
 
-/**
- * Lógica de Búsqueda y Filtros
- */
 function abrirFiltros() {
     const sheet = document.getElementById("bottomSheetFiltros");
     const content = document.getElementById("sheetContent");
@@ -350,6 +372,8 @@ function filtrarMatriz() {
         const matchesBusqueda = !query ||
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Marca || "").toLowerCase().includes(query) ||
+            String(reg.Modelo || "").toLowerCase().includes(query) ||
+            String(reg.Serial || "").toLowerCase().includes(query) ||
             String(reg.Nombre_Taller || "").toLowerCase().includes(query) ||
             String(reg.Nombre_Taller_Ext || "").toLowerCase().includes(query) ||
             String(reg.ID_Registro || "").toLowerCase().includes(query);
@@ -402,7 +426,7 @@ async function cargarTablaEditable() {
 
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
             };
 
             let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
@@ -424,6 +448,12 @@ async function cargarTablaEditable() {
                 Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
                 Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
+                Modelo: normalized["MODELO"] || u["Modelo"] || "",
+                Color: normalized["COLOR"] || u["Color"] || "",
+                Anio: getV(["ANIO", "ANO"]) || u["Anio"] || "",
+                Serial: getV(["SERIAL"]) || u["Serial"] || "",
+                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
+                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
                 Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
                 Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
@@ -436,6 +466,9 @@ async function cargarTablaEditable() {
         });
 
         localStorage.setItem(CLAVE_RESPALDO_MATRIZ, JSON.stringify(listaRegistrosPanel));
+        if (typeof guardarMantenimientosLocalSeguro === 'function') {
+            await guardarMantenimientosLocalSeguro(listaRegistrosPanel);
+        }
 
         actualizarSelectGerencias();
 
@@ -449,9 +482,17 @@ async function cargarTablaEditable() {
     } catch (err) {
         console.error("Error al cargar datos remotos, recurriendo a respaldo local:", err);
 
-        const respaldoLocal = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
-        if (respaldoLocal) {
-            listaRegistrosPanel = JSON.parse(respaldoLocal);
+        let respaldoLocal = null;
+        if (typeof obtenerMantenimientosLocalSeguro === 'function') {
+            respaldoLocal = await obtenerMantenimientosLocalSeguro();
+        }
+        if (!respaldoLocal || respaldoLocal.length === 0) {
+            const localStr = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
+            if (localStr) respaldoLocal = JSON.parse(localStr);
+        }
+
+        if (respaldoLocal && respaldoLocal.length > 0) {
+            listaRegistrosPanel = respaldoLocal;
             renderizarMatriz(listaRegistrosPanel);
             if (window.TTOCC_UI) {
                 TTOCC_UI.warning("Modo Offline Activo", "Mostrando datos guardados localmente en caché.");
@@ -471,17 +512,15 @@ function renderizarMatriz(datos) {
         return;
     }
 
-    tbody.innerHTML = "";
-
-    [...datos].reverse().forEach(reg => {
+    const htmlFilas = [...datos].reverse().map(reg => {
         let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${escapeHTML(reg.Nombre_Taller_Ext)}` : escapeHTML(reg.Nombre_Taller);
 
         let badgeFotoAntes = reg.Foto_Antes
-            ? `<a href="${escapeHTML(reg.Foto_Antes)}" target="_blank" class="pswp-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
+            ? `<a href="${escapeHTML(reg.Foto_Antes)}" target="_blank" class="pswp-link text-cyan-600 dark:text-cyan-400 hover:underline text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
             : '';
 
         let badgeFotoDespues = reg.Foto_Despues
-            ? `<a href="${escapeHTML(reg.Foto_Despues)}" target="_blank" class="pswp-link text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
+            ? `<a href="${escapeHTML(reg.Foto_Despues)}" target="_blank" class="pswp-link text-emerald-600 dark:text-emerald-400 hover:underline text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
             : '';
 
         let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
@@ -497,13 +536,15 @@ function renderizarMatriz(datos) {
             colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
         }
 
-        let filaHtml = `
-             <tr id="fila-${escapeHTML(reg.ID_Registro)}"
+        const regIdEscaped = escapeHTML(reg.ID_Registro);
+
+        return `
+             <tr id="fila-${regIdEscaped}"
     class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Registro:</span>
                     <div class="text-right md:text-left">
-                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${escapeHTML(reg.ID_Registro)}</span>
+                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${regIdEscaped}</span>
                     </div>
                 </td>
 
@@ -511,7 +552,7 @@ function renderizarMatriz(datos) {
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Unidad / Marca:</span>
                     <div class="text-right md:text-left">
                     <span class="font-black text-slate-900 dark:text-white tracking-wider font-mono block text-xs transition-colors">${escapeHTML(reg.ID_Unidad)}</span>
-                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wide transition-colors">${escapeHTML(reg.Marca)}</span>
+                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wide transition-colors">${escapeHTML(reg.Marca)} ${escapeHTML(reg.Modelo)}</span>
                     </div>
                 </td>
 
@@ -525,7 +566,7 @@ function renderizarMatriz(datos) {
                  <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
                     <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
                     <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[12px] font-black text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
+                        <span class="font-mono text-[12px] font-black text-cyan-500 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
                     </div>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none md:w-40 transition-colors">
@@ -544,7 +585,7 @@ function renderizarMatriz(datos) {
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Acciones</span>
 
                     <div class="flex gap-1.5 justify-end md:justify-center">
-                    <button onclick="abrirModalEditar('${escapeHTML(reg.ID_Registro)}')"
+                    <button onclick="abrirModalEditar('${regIdEscaped}')"
                       class="bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-cyan-500 dark:hover:border-cyan-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
                         title="Planificación y Control Avanzado">
                         <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
@@ -553,8 +594,9 @@ function renderizarMatriz(datos) {
                 </td>
             </tr>
         `;
-        tbody.insertAdjacentHTML("beforeend", filaHtml);
     });
+
+    tbody.innerHTML = htmlFilas.join('');
 }
 
 function transformarABase64(file) {
@@ -726,7 +768,7 @@ async function guardarNuevoRegistro(event) {
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);
         cerrarModalNuevo();
-        TTOCC_UI.warning("Sin Conexión", "El registro se guardó en la cola offline y se subirá automáticamente cuando vuelvas a tener internet.");
+        TTOCC_UI.warning("Sin Conexión", "El registro se guardó en la cola offline.");
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
         return;
@@ -749,7 +791,7 @@ async function guardarNuevoRegistro(event) {
         console.warn("Fallo de red durante guardado. Encolando offline...", err);
         encolarPeticionOffline(payload);
         cerrarModalNuevo();
-        TTOCC_UI.warning("Modo Offline Activado", "Error de comunicación. La solicitud fue encolada para respaldarse en la nube al conectarse.");
+        TTOCC_UI.warning("Modo Offline Activado", "Error de comunicación. La solicitud fue encolada.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
@@ -786,13 +828,12 @@ function cerrarModalEditar() {
 function renderizarTareasModal() {
     const container = document.getElementById("edit-container-tareas");
     if (!container) return;
-    container.innerHTML = "";
 
     if (tareasModalActual.length === 0) {
         container.innerHTML = `<p class="text-[11px] text-slate-600 italic py-2 text-center">No hay tareas de diagnóstico asignadas.</p>`;
     } else {
-        tareasModalActual.forEach((tarea, index) => {
-            const itemHtml = `
+        const htmlArray = tareasModalActual.map((tarea, index) => {
+            return `
                 <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800/60 gap-2 transition-colors">
                 <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
                 <input type="checkbox" ${tarea.hecho ? "checked" : ""}
@@ -807,8 +848,8 @@ function renderizarTareasModal() {
             </button>
             </div>
             `;
-            container.insertAdjacentHTML("beforeend", itemHtml);
         });
+        container.innerHTML = htmlArray.join('');
     }
 
     let avanceCalculado = 0;
@@ -944,7 +985,7 @@ async function guardarEdicionModal(event) {
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);
         cerrarModalEditar();
-        TTOCC_UI.warning("Sin Conexión", "La edición se guardó localmente. Se respaldará en la nube automáticamente al restablecerse la conexión.");
+        TTOCC_UI.warning("Sin Conexión", "La edición se guardó localmente.");
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
         return;
@@ -967,7 +1008,7 @@ async function guardarEdicionModal(event) {
         console.warn("Fallo de red en edición. Guardando en cola offline...", err);
         encolarPeticionOffline(payload);
         cerrarModalEditar();
-        TTOCC_UI.warning("Sin Conexión", "Cambios retenidos en dispositivo. Se sincronizarán en la nube al detectar internet.");
+        TTOCC_UI.warning("Sin Conexión", "Cambios retenidos en dispositivo.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
@@ -1018,7 +1059,7 @@ async function confirmarEliminarRegistro() {
         encolarPeticionOffline(payload);
         cerrarModalEditar();
         modalContent.innerHTML = originalContentHtml;
-        TTOCC_UI.warning("Eliminación Encolada", "Se procesará el borrado en cuanto se restablezca el acceso a la red.");
+        TTOCC_UI.warning("Eliminación Encolada", "Se procesará el borrado al reconectarse.");
         return;
     }
 
@@ -1034,7 +1075,7 @@ async function confirmarEliminarRegistro() {
             cerrarModalEditar();
             setTimeout(() => { modalContent.innerHTML = originalContentHtml; }, 500);
             await cargarTablaEditable();
-            TTOCC_UI.success("Registro Eliminado", "La unidad y sus archivos asociados han sido removidos con éxito.");
+            TTOCC_UI.success("Registro Eliminado", "La unidad y sus archivos asociados han sido removidos.");
         } else {
             TTOCC_UI.error("Error al Eliminar", res.message);
             modalContent.innerHTML = originalContentHtml;
@@ -1044,6 +1085,6 @@ async function confirmarEliminarRegistro() {
         encolarPeticionOffline(payload);
         cerrarModalEditar();
         modalContent.innerHTML = originalContentHtml;
-        TTOCC_UI.warning("Sin Conexión", "La eliminación se enviará automáticamente al reconectarse a internet.");
+        TTOCC_UI.warning("Sin Conexión", "La eliminación se enviará automáticamente al reconectarse.");
     }
 }
