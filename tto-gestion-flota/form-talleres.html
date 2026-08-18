@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTOCC System - Panel de Control de Talleres</title>
-    <!--script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script-->
     <script src="js/libs/browser@4.js"></script>
     <style type="text/tailwindcss">
         @theme {
@@ -12,35 +11,12 @@
         }
         @variant dark (&:where(.dark, .dark *));
     </style>
-    <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"-->
     <link rel="stylesheet" href="css/fontawesome/all.min.css">
     <link rel="manifest" href="manifest-panel.json">
-    <!--script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script-->
     <script src="js/jquery-3.6.0.min.js" defer></script>
-    <!--link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /-->
     <link href="css/select2.min.css" rel="stylesheet" />
-    <!--script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script-->
     <script src="js/select2.min.js" defer></script>
     <link rel="stylesheet" href="css/photoswipe.css">
-    <!--script type="module">
-        import PhotoSwipeLightbox from 'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe-lightbox.esm.min.js';
-        const lightbox = new PhotoSwipeLightbox({
-            gallery: '#tablaEditableCuerpo',
-            children: 'a.pswp-link',
-            pswpModule: () => import('https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.esm.min.js')
-        });
-
-        lightbox.addFilter('itemData', (itemData, index) => {
-            if (!itemData.width || !itemData.height) {
-                itemData.width = 1200;
-                itemData.height = 900;
-            }
-            return itemData;
-        });
-
-        lightbox.init();
-        window.pswpLightbox = lightbox;
-    </script-->
 
     <script type="module">
         import PhotoSwipeLightbox from './js/photoswipe/photoswipe-lightbox.esm.min.js';
@@ -254,7 +230,7 @@
 
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
-                            Fosa / Taller Asignado
+                            Taller Asignado
                         </label>
                         <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs cursor-pointer transition-colors">
                             <option value="Taller Lagunillas" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Taller Lagunillas</option>
@@ -476,67 +452,72 @@
         </div>
     </div>
 
-    <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
-        <div id="sheetContent" class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-[32px] shadow-2xl p-6 transition-transform translate-y-full duration-400 ease-[cubic-bezier(0.2,0,0,1)] border-t border-slate-200 dark:border-slate-800" onclick="event.stopPropagation()">
+   <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
+    <div id="sheetContent" class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-[32px] shadow-2xl p-6 transition-transform translate-y-full duration-400 ease-[cubic-bezier(0.2,0,0,1)] border-t border-slate-200 dark:border-slate-800" onclick="event.stopPropagation()">
 
-            <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6 opacity-50"></div>
+        <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6 opacity-50"></div>
 
-            <div class="flex justify-between items-center mb-5">
-                <h3 class="text-xs uppercase font-black tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-cyan-500"></i> Control de Búsqueda y Filtros
-                </h3>
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xs uppercase font-black tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-cyan-500"></i> Control de Búsqueda y Filtros
+            </h3>
+            <div class="flex items-center gap-3">
                 <button onclick="limpiarFiltros()" type="button" class="text-cyan-500 text-[10px] font-black uppercase tracking-wider hover:text-cyan-400 transition-colors cursor-pointer">
                     Limpiar todo
                 </button>
+                <button onclick="cerrarFiltros(event)" type="button" class="text-slate-400 hover:text-slate-200 text-sm transition-colors cursor-pointer p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-
-            <div class="mb-6">
-                <label for="input-busqueda" class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Tipee un criterio de búsqueda</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-xs"></i>
-                    </div>
-                    <input type="text"
-                           id="input-busqueda"
-                           oninput="filtrarMatriz()"
-                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs rounded-xl pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium shadow-inner"
-                           placeholder="Buscar por Unidad, ID, Taller, Marca o Novedad...">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Estatus</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="toggleFiltroBadge(this, 'estatus', 'Por Atender')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
-                            ⚠️ Por Atender
-                        </button>
-                        <button onclick="toggleFiltroBadge(this, 'estatus', 'En Proceso')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
-                            ⚙️ En Proceso
-                        </button>
-                        <button onclick="toggleFiltroBadge(this, 'estatus', 'Listo')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
-                            ✅ Ya Operativa
-                        </button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Ubicación</label>
-                    <select id="filtro-ubicacion" onchange="filtrarMatriz()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-cyan-500 transition-all cursor-pointer">
-                        <option value="">Todas las ubicaciones</option>
-                        <option value="Taller Lagunillas">Taller Lagunillas</option>
-                        <option value="Taller La Salina">Taller La Salina</option>
-                        <option value="Taller Lago Medio">Taller Lago Medio</option>
-                        <option value="TALLER EXTERNO (Terceros)">Taller Externo (Terceros)</option>
-                    </select>
-                </div>
-            </div>
-
-            <button onclick="cerrarFiltros()" type="button" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[11px] mt-8 shadow-lg shadow-cyan-950/50 transition-all active:scale-95 cursor-pointer">
-                Aplicar y Cerrar
-            </button>
         </div>
+
+        <div class="mb-6">
+            <label for="input-busqueda" class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Tipee un criterio de búsqueda</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-xs"></i>
+                </div>
+                <input type="text"
+                       id="input-busqueda"
+                       class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs rounded-xl pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium shadow-inner"
+                       placeholder="Buscar por Unidad, ID, Taller, Marca o Novedad..."
+                       autocomplete="off">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Estatus</label>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFiltroBadge(this, 'estatus', 'Por Atender')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                        ⚠️ Por Atender
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'estatus', 'En Proceso')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                        ⚙️ En Proceso
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'estatus', 'Listo')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                        ✅ Ya Operativa
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label for="filtro-ubicacion" class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Ubicación</label>
+                <select id="filtro-ubicacion" onchange="filtrarMatriz()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-cyan-500 transition-all cursor-pointer">
+                    <option value="">Todas las ubicaciones</option>
+                    <option value="Taller Lagunillas">Taller Lagunillas</option>
+                    <option value="Taller La Salina">Taller La Salina</option>
+                    <option value="Taller Lago Medio">Taller Lago Medio</option>
+                    <option value="TALLER EXTERNO (Terceros)">Taller Externo (Terceros)</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="cerrarFiltros(event)" type="button" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[11px] mt-8 shadow-lg shadow-cyan-950/50 transition-all active:scale-95 cursor-pointer">
+            Aplicar y Cerrar
+        </button>
     </div>
+</div>
 
     <footer class="w-full text-center py-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/60 hidden sm:block transition-colors">
         <p class="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black transition-colors">
