@@ -1,1049 +1,555 @@
-// js/form-talleres.js - Controlador Unificado de Talleres y Formulario
-"use strict";
-
-document.addEventListener("DOMContentLoaded", () => {
-    verificarSesion();
-    cargarTablaEditable();
-    initEventoUnidadFrecuente();
-
-    window.addEventListener("online", procesarColaOffline);
-
-    if (typeof $ !== 'undefined') {
-        inicializarSelects();
-    } else {
-        console.warn("jQuery no detectado de inmediato, reintentando inicialización...");
-        setTimeout(inicializarSelects, 100);
-    }
-});
-
-function inicializarSelects() {
-    if (typeof $ === 'undefined') return;
-
-    const configGerencia = {
-        placeholder: 'Seleccione o escriba...',
-        tags: true,
-        width: '100%'
-    };
-
-    $('#add-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalNuevoRegistro') }));
-    $('#edit-gerencia').select2(Object.assign({}, configGerencia, { dropdownParent: $('#modalEditarRegistro') }));
-}
-
-var listaRegistrosPanel = [];
-var tareasModalActual = [];
-var unidadesFlotaCache = [];
-var OPERADOR_ACTUAL = "";
-var FILTROS_ACTIVOS = {
-    busqueda: "",
-    estatus: [],
-    ubicacion: ""
-};
-
-/**
- * LÓGICA DE SELECCIÓN DE UNIDAD DESDE EL MAESTRO DE ACTIVOS
- */
-function initEventoUnidadFrecuente() {
-    const btn = document.getElementById("btnUnidadFrecuente");
-    if (btn) {
-        btn.addEventListener("click", abrirModalSeleccionarUnidad);
-    }
-}
-
-async function abrirModalSeleccionarUnidad() {
-    const modal = document.getElementById("modalSeleccionarUnidad");
-    if (!modal) return;
-    const searchInput = document.getElementById("input-busqueda-unidad-modal");
-    if (searchInput) searchInput.value = "";
-
-    modal.classList.remove("hidden");
-    await cargarUnidadesFlotaModal();
-}
-
-function cerrarModalSeleccionarUnidad() {
-    const modal = document.getElementById("modalSeleccionarUnidad");
-    if (modal) modal.classList.add("hidden");
-}
-
-async function cargarUnidadesFlotaModal() {
-    const tbody = document.getElementById("tablaUnidadesFlotaCuerpo");
-    if (!tbody) return;
-
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="6" class="p-4 text-center text-cyan-400 font-bold uppercase text-[10px]">
-                <i class="fa-solid fa-spinner animate-spin mr-1"></i> Cargando Maestro de Activos...
-            </td>
-        </tr>
-    `;
-
-    try {
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify({ accion: "leer_activos" })
-        });
-        const res = await response.json();
-
-        if (res.status === "SUCCESS") {
-            let filasCrudas = res.datos || [];
-            unidadesFlotaCache = filasCrudas.map(u => {
-                let normalized = {};
-                for (let key in u) {
-                    normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = u[key];
-                }
-                const getV = (terms) => {
-                    const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                    return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
-                };
-                return {
-                    ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
-                    Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
-                    Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
-                    Marca: normalized["MARCA"] || u["Marca"] || "",
-                    Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
-                };
-            });
-
-            renderizarUnidadesFlotaModal(unidadesFlotaCache);
-        } else {
-            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500 font-bold text-xs">${escapeHTML(res.message)}</td></tr>`;
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTOCC System - Panel de Control de Talleres</title>
+    <!--script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script-->
+    <script src="js/libs/browser@4.js"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-scheme: light dark;
         }
-    } catch (e) {
-        console.error("Error leyendo activos para modal:", e);
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500 font-bold text-xs">Error de comunicación con la base de datos.</td></tr>`;
-    }
-}
-
-function renderizarUnidadesFlotaModal(unidades) {
-    const tbody = document.getElementById("tablaUnidadesFlotaCuerpo");
-    if (!tbody) return;
-
-    if (unidades.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500 font-bold text-xs uppercase">No hay unidades registradas o encontradas.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = "";
-    unidades.forEach(u => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
-        tr.innerHTML = `
-            <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${escapeHTML(u.ID_Unidad)}</td>
-            <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
-            <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
-            <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${escapeHTML(u.Marca)}</td>
-            <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[9px] font-black">${escapeHTML(u.Tipo_Flota)}</span></td>
-            <td class="p-3 text-center">
-                <button type="button" onclick="seleccionarUnidadFlota('${escapeHTML(u.ID_Unidad)}', '${escapeHTML(u.Marca)}', '${escapeHTML(u.Tipo_Flota)}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
-                    Seleccionar
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function filtrarUnidadesFlotaModal() {
-    const query = (document.getElementById("input-busqueda-unidad-modal")?.value || "").toLowerCase().trim();
-    const filtrados = unidadesFlotaCache.filter(u => {
-        return !query ||
-            String(u.ID_Unidad || "").toLowerCase().includes(query) ||
-            String(u.Placa || "").toLowerCase().includes(query) ||
-            String(u.Serial || "").toLowerCase().includes(query) ||
-            String(u.Marca || "").toLowerCase().includes(query);
-    });
-    renderizarUnidadesFlotaModal(filtrados);
-}
-
-function seleccionarUnidadFlota(idUnidad, marca, tipoFlota) {
-    const inputUnidad = document.getElementById("add-unidad");
-    const inputMarca = document.getElementById("add-marca");
-    const selectFlota = document.getElementById("add-flota");
-
-    if (inputUnidad) inputUnidad.value = idUnidad;
-    if (inputMarca) inputMarca.value = marca;
-    if (selectFlota) selectFlota.value = tipoFlota;
-
-    cerrarModalSeleccionarUnidad();
-    if (window.TTOCC_UI) {
-        TTOCC_UI.success("Unidad Seleccionada", `Se cargó la unidad ${idUnidad} (${marca}) al formulario.`);
-    }
-}
-
-const CLAVE_COLA_OFFLINE = "TTOCC_COLA_PETICIONES_OFFLINE";
-const CLAVE_RESPALDO_MATRIZ = "TTOCC_RESPALDO_LOCAL_MATRIZ";
-
-function encolarPeticionOffline(payload) {
-    const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
-    cola.push({
-        id: Date.now(),
-        fecha: new Date().toISOString(),
-        payload: payload
-    });
-    localStorage.setItem(CLAVE_COLA_OFFLINE, JSON.stringify(cola));
-}
-
-async function procesarColaOffline() {
-    if (!navigator.onLine) return;
-
-    const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || "[]");
-    if (cola.length === 0) return;
-
-    if (window.TTOCC_UI) {
-        TTOCC_UI.info("Sincronizando...", `Enviando ${cola.length} operación(es) guardada(s) sin conexión.`);
-    }
-
-    const colaPendiente = [...cola];
-    localStorage.setItem(CLAVE_COLA_OFFLINE, JSON.stringify([]));
-
-    for (const item of colaPendiente) {
-        try {
-            const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
-            const response = await fetch(APP_CONFIG.URL_API, {
-                method: "POST",
-                body: JSON.stringify(payloadConToken)
-            });
-            const res = await response.json();
-            if (res.status !== "SUCCESS") {
-                console.error("Fallo reintentando petición offline:", item, res);
-            }
-        } catch (e) {
-            console.error("Error crítico retransmitiendo petición offline:", e);
-            encolarPeticionOffline(item.payload);
-        }
-    }
-
-    await cargarTablaEditable();
-}
-
-/**
- * Lógica de Identificación y Autenticación Backend
- */
-async function verificarSesion() {
-    const token = obtenerTokenSesion();
-    const sesionUser = sessionStorage.getItem("TTOCC_OPERADOR");
-
-    if (token && sesionUser) {
-        try {
-            const res = await fetch(APP_CONFIG.URL_API, {
-                method: "POST",
-                body: JSON.stringify({ accion: "validar_token", token: token })
-            });
-            const data = await res.json();
-            if (data.status === "SUCCESS" && data.valido) {
-                OPERADOR_ACTUAL = data.usuario || sesionUser;
-                window.operadorActivo = OPERADOR_ACTUAL;
-                document.getElementById("modalIdentificacion").classList.add("hidden");
-                return;
-            }
-        } catch (e) {
-            console.warn("Error validando token en servidor. Se mantiene sesión local.", e);
-            OPERADOR_ACTUAL = sesionUser;
-            window.operadorActivo = sesionUser;
-            document.getElementById("modalIdentificacion").classList.add("hidden");
-            return;
-        }
-    }
-
-    cerrarSesion();
-    document.getElementById("modalIdentificacion").classList.remove("hidden");
-}
-
-async function confirmarIdentidad(event) {
-    event.preventDefault();
-
-    const selectOperador = document.getElementById('input-operador');
-    const inputPassword = document.getElementById('input-password');
-    const divError = document.getElementById('error-identificacion');
-
-    if (!selectOperador || !inputPassword) return;
-
-    const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
-    const passwordSanitizado = inputPassword.value.trim().toLowerCase();
-
-    if (!operadorSanitizado || !passwordSanitizado) return;
-
-    try {
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify({
-                accion: "login",
-                usuario: operadorSanitizado,
-                password: passwordSanitizado
-            })
+        @variant dark (&:where(.dark, .dark *));
+    </style>
+    <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"-->
+    <link rel="stylesheet" href="css/fontawesome/all.min.css">
+    <link rel="manifest" href="manifest-panel.json">
+    <!--script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script-->
+    <script src="js/jquery-3.6.0.min.js" defer></script>
+    <!--link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /-->
+    <link href="css/select2.min.css" rel="stylesheet" />
+    <!--script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script-->
+    <script src="js/select2.min.js" defer></script>
+    <link rel="stylesheet" href="css/photoswipe.css">
+    <!--script type="module">
+        import PhotoSwipeLightbox from 'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe-lightbox.esm.min.js';
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '#tablaEditableCuerpo',
+            children: 'a.pswp-link',
+            pswpModule: () => import('https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.esm.min.js')
         });
 
-        const res = await response.json();
-
-        if (res.status === "SUCCESS" && res.token) {
-            guardarSesion(res.token, res.usuario);
-            OPERADOR_ACTUAL = res.usuario;
-            window.operadorActivo = res.usuario;
-
-            if (divError) divError.classList.add('hidden');
-            document.getElementById('modalIdentificacion').classList.add('hidden');
-
-            procesarColaOffline();
-        } else {
-            if (divError) {
-                divError.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${escapeHTML(res.message || "Credenciales incorrectas")}`;
-                divError.classList.remove('hidden');
+        lightbox.addFilter('itemData', (itemData, index) => {
+            if (!itemData.width || !itemData.height) {
+                itemData.width = 1200;
+                itemData.height = 900;
             }
-            inputPassword.value = '';
-            inputPassword.focus();
-        }
-    } catch (err) {
-        console.error("Error al autenticar:", err);
-        if (divError) {
-            divError.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Error de conexión con el servidor.`;
-            divError.classList.remove('hidden');
-        }
-    }
-}
-
-/**
- * Lógica de Búsqueda y Filtros
- */
-function abrirFiltros() {
-    const sheet = document.getElementById("bottomSheetFiltros");
-    const content = document.getElementById("sheetContent");
-    sheet.classList.remove("hidden");
-    setTimeout(() => {
-        content.classList.remove("translate-y-full");
-    }, 10);
-}
-
-function cerrarFiltros(event) {
-    const content = document.getElementById("sheetContent");
-    content.classList.add("translate-y-full");
-    setTimeout(() => {
-        document.getElementById("bottomSheetFiltros").classList.add("hidden");
-    }, 300);
-}
-
-function toggleFiltroBadge(btn, tipo, valor) {
-    const index = FILTROS_ACTIVOS[tipo].indexOf(valor);
-    if (index > -1) {
-        FILTROS_ACTIVOS[tipo].splice(index, 1);
-        btn.classList.remove("bg-cyan-600", "text-white", "border-cyan-600");
-    } else {
-        FILTROS_ACTIVOS[tipo].push(valor);
-        btn.classList.add("bg-cyan-600", "text-white", "border-cyan-600");
-    }
-    filtrarMatriz();
-}
-
-function limpiarFiltros() {
-    FILTROS_ACTIVOS = { busqueda: "", estatus: [], ubicacion: "" };
-    document.getElementById("input-busqueda").value = "";
-    document.getElementById("filtro-ubicacion").value = "";
-    document.querySelectorAll(".filter-badge").forEach(b => {
-        b.classList.remove("bg-cyan-600", "text-white", "border-cyan-600");
-    });
-    renderizarMatriz(listaRegistrosPanel);
-}
-
-function filtrarMatriz() {
-    const query = document.getElementById("input-busqueda").value.toLowerCase().trim();
-    const ubicacion = document.getElementById("filtro-ubicacion").value;
-
-    const filtrados = listaRegistrosPanel.filter(reg => {
-        const matchesBusqueda = !query ||
-            String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
-            String(reg.Marca || "").toLowerCase().includes(query) ||
-            String(reg.Nombre_Taller || "").toLowerCase().includes(query) ||
-            String(reg.Nombre_Taller_Ext || "").toLowerCase().includes(query) ||
-            String(reg.ID_Registro || "").toLowerCase().includes(query);
-
-        const matchesEstatus = FILTROS_ACTIVOS.estatus.length === 0 || FILTROS_ACTIVOS.estatus.includes(reg.Estatus);
-        const matchesUbicacion = !ubicacion || reg.Nombre_Taller === ubicacion;
-
-        return matchesBusqueda && matchesEstatus && matchesUbicacion;
-    });
-
-    renderizarMatriz(filtrados);
-}
-
-async function cargarTablaEditable() {
-    const tbody = document.getElementById("tablaEditableCuerpo");
-    if (!tbody) return;
-
-    tbody.innerHTML = `
-        <tr class="block md:table-row">
-            <td colspan="7" class="block md:table-cell p-8 text-center text-cyan-400 font-bold uppercase tracking-widest text-[10px]">
-                <i class="fa-solid fa-spinner animate-spin mr-2 text-xs"></i> Interconectando con Base de Datos Central...
-            </td>
-        </tr>
-    `;
-
-    try {
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify({ accion: "leer" })
+            return itemData;
         });
 
-        const res = await response.json();
-        if (res.status !== "SUCCESS") {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
-            return;
-        }
+        lightbox.init();
+        window.pswpLightbox = lightbox;
+    </script-->
 
-        let filasCrudas = res.datos || res.unidades || [];
-
-        listaRegistrosPanel = filasCrudas.map(u => {
-            let normalized = {};
-            for (let key in u) {
-                let val = u[key];
-                if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
-                    const id = val.split('id=')[1]?.split('&')[0];
-                    if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
-                }
-                normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = val;
-            }
-
-            const getV = (terms) => {
-                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
-            };
-
-            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
-            let tareasArray = [];
-            try {
-                if (tareasRaw) {
-                    tareasArray = typeof tareasRaw === "string" ? JSON.parse(tareasRaw) : tareasRaw;
-                }
-            } catch(e) {
-                console.error("Error parseando JSON de tareas en registro", e);
-            }
-
-            return {
-                ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
-                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I",
-                Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",
-                Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
-                Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
-                Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "",
-                Marca: normalized["MARCA"] || u["Marca"] || "",
-                Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
-                Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
-                Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
-                Fecha_Ingreso: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
-                Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
-                Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "",
-                Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "",
-                Tareas: tareasArray
-            };
+    <script type="module">
+        import PhotoSwipeLightbox from './js/photoswipe/photoswipe-lightbox.esm.min.js';
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '#tablaEditableCuerpo',
+            children: 'a.pswp-link',
+            pswpModule: () => import('./js/photoswipe/photoswipe.esm.min.js')
         });
 
-        localStorage.setItem(CLAVE_RESPALDO_MATRIZ, JSON.stringify(listaRegistrosPanel));
-
-        actualizarSelectGerencias();
-
-        if (listaRegistrosPanel.length === 0) {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen unidades activas en el historial.</td></tr>`;
-            return;
-        }
-
-        renderizarMatriz(listaRegistrosPanel);
-
-    } catch (err) {
-        console.error("Error al cargar datos remotos, recurriendo a respaldo local:", err);
-
-        const respaldoLocal = localStorage.getItem(CLAVE_RESPALDO_MATRIZ);
-        if (respaldoLocal) {
-            listaRegistrosPanel = JSON.parse(respaldoLocal);
-            renderizarMatriz(listaRegistrosPanel);
-            if (window.TTOCC_UI) {
-                TTOCC_UI.warning("Modo Offline Activo", "Mostrando datos guardados localmente en caché.");
+        lightbox.addFilter('itemData', (itemData, index) => {
+            if (!itemData.width || !itemData.height) {
+                itemData.width = 1200;
+                itemData.height = 900;
             }
-        } else {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error crítico de enlace de datos y sin respaldo local.</td></tr>`;
-        }
-    }
-}
-
-function renderizarMatriz(datos) {
-    const tbody = document.getElementById("tablaEditableCuerpo");
-    if (!tbody) return;
-
-    if (datos.length === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin registros que coincidan con la búsqueda.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = "";
-
-    [...datos].reverse().forEach(reg => {
-        let fosaFinal = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? `EXT: ${escapeHTML(reg.Nombre_Taller_Ext)}` : escapeHTML(reg.Nombre_Taller);
-
-        let badgeFotoAntes = reg.Foto_Antes
-            ? `<a href="${escapeHTML(reg.Foto_Antes)}" target="_blank" class="pswp-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-image"></i> Antes</a>`
-            : '';
-
-        let badgeFotoDespues = reg.Foto_Despues
-            ? `<a href="${escapeHTML(reg.Foto_Despues)}" target="_blank" class="pswp-link text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors text-[9px] font-bold flex items-center gap-1" data-pswp-width="1200" data-pswp-height="900"><i class="fa-solid fa-circle-check"></i> Después</a>`
-            : '';
-
-        let badgeEstatus = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚠️ Por Atender</span>`;
-        let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-950/40";
-
-        if (reg.Estatus === "En Proceso") {
-            badgeEstatus = `<span class="bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">⚙️ En Proceso</span>`;
-            colorFila = "bg-cyan-500/[0.02] dark:bg-cyan-900/10 border-cyan-500/10 dark:border-cyan-500/20 hover:bg-cyan-500/[0.05] dark:hover:bg-cyan-900/20";
-        } else if (reg.Estatus === "Listo" || reg.Estatus === "Reparado") {
-            badgeEstatus = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">✅ Listo</span>`;
-            colorFila = "bg-emerald-500/[0.02] dark:bg-emerald-900/10 border-emerald-500/10 dark:border-emerald-500/20 hover:bg-emerald-500/[0.05] dark:hover:bg-emerald-900/20";
-        } else if (reg.Estatus === "Por Atender") {
-            colorFila = "bg-amber-500/[0.02] dark:bg-amber-900/5 border-amber-500/10 dark:border-amber-500/20 hover:bg-amber-500/[0.05] dark:hover:bg-amber-900/10";
-        }
-
-        let filaHtml = `
-             <tr id="fila-${escapeHTML(reg.ID_Registro)}"
-    class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Registro:</span>
-                    <div class="text-right md:text-left">
-                    <span class="text-slate-700 dark:text-slate-400 font-black tracking-widest transition-colors">${escapeHTML(reg.ID_Registro)}</span>
-                    </div>
-                </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Unidad / Marca:</span>
-                    <div class="text-right md:text-left">
-                    <span class="font-black text-slate-900 dark:text-white tracking-wider font-mono block text-xs transition-colors">${escapeHTML(reg.ID_Unidad)}</span>
-                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wide transition-colors">${escapeHTML(reg.Marca)}</span>
-                    </div>
-                </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-right md:text-left text-slate-700 dark:text-slate-300 font-medium text-[11px] transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Ubicación:</span>
-                    <div>
-                    <div class="font-semibold text-slate-800 dark:text-slate-200 transition-colors">${fosaFinal}</div>
-                    <div class="flex gap-2 justify-end md:justify-start flex-wrap mt-0.5">${badgeFotoAntes} ${badgeFotoDespues}</div>
-                    </div>
-                 </td>
-                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-800/20">
-                    <span class="md:hidden text-slate-500 uppercase text-[9px] font-black tracking-widest">Avance</span>
-                    <div class="flex items-center justify-end md:justify-start">
-                        <span class="font-mono text-[12px] font-black text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-md">${reg.Avance}%</span>
-                    </div>
-                </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none md:w-40 transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Estatus</span>
-                    <div class="flex justify-end md:justify-start">
-                    ${badgeEstatus}
-                    </div>
-                </td>
-                <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto">
-                <span class="md:hidden text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1 block">Novedad</span>
-                <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium break-words whitespace-normal normal-case block leading-relaxed" title="${escapeHTML(reg.Observaciones)}">
-                ${escapeHTML(reg.Observaciones) || 'Sin novedades registradas.'}
-                </p>
-                </td>
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 md:w-28 text-center transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">Acciones</span>
-
-                    <div class="flex gap-1.5 justify-end md:justify-center">
-                    <button onclick="abrirModalEditar('${escapeHTML(reg.ID_Registro)}')"
-                      class="bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-cyan-500 dark:hover:border-cyan-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
-                        title="Planificación y Control Avanzado">
-                        <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
-                    </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-        tbody.insertAdjacentHTML("beforeend", filaHtml);
-    });
-}
-
-function transformarABase64(file) {
-    return new Promise((resolve, reject) => {
-        if (!file) resolve("");
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-}
-
-function actualizarSelectGerencias() {
-    const opcionesBase = [
-        "VP EYP TRANSPORTE TERRESTRE", "VP EYP SUBDIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
-        "VP EYP SERVICIOS LOGISTICOS", "VP EYP SERVICIOS ELECTRICOS", "VP EYP SEGURIDAD INDUSTRIAL E HIGIENE OCUPACIONAL",
-        "VP EYP RELACIONES GUBERNAMENTALES PROPIEDADES Y CATASTRO", "VP EYP RECURSOS HUMANOS", "VP EYP PROYECTOS MAYORES",
-        "VP EYP PROYECTO UP INJ SOC CAMPO MENE DE ACOSTA", "VP EYP PROCURA Y CONTROL DE INVENTARIO",
-        "VP EYP PLANIFICACION, PRESUPUESTO Y GESTION", "VP EYP PDVSA ECUADOR", "VP EYP OFICINA DE APOYO",
-        "VP EYP INGENIERIA DE COSTOS", "VP EYP GERENCIA OPERACION INTEGRAL DE PLANTAS",
-        "VP EYP GERENCIA CORP DE CONFIGURACION DE PLANES", "VP EYP FINANZAS", "VP EYP DIVISION SUR DEL LAGO TRUJILLO",
-        "VP EYP DIVISION LAGO", "VP EYP DIVISION COSTA ORIENTAL DEL LAGO", "VP EYP DIVISION COSTA OCCIDENTAL DEL LAGO",
-        "VP EYP DIRECCION EJECUTIVA DE PRODUCCION OCCIDENTE", "VP EYP DIRECCION ADJUNTA DE PRODUCCION OCCIDENTE",
-        "VP EYP DESARROLLO SOCIAL", "VP EYP COSTA AFUERA", "VP EYP COORDINACION OPERACIONAL", "VP EYP CONTRATACION",
-        "VP EYP CONFIABILIDAD OPERACIONAL", "VP EYP ASUNTOS PUBLICOS", "VP EYP ASUNTOS JURIDICOS", "VP EYP AMBIENTE",
-        "VICEPRESIDENCIA EXPLORACION Y PRODUCCION", "PETROQUIMICA DE VENEZUELA, S.A", "PETROLEOS DE VENEZUELA S.A. YACIMIENTO",
-        "PDVSA VASSA", "PDVSA SERVICIOS PETROLEROS S.A.", "PDVSA INGENIERIA Y CONSTRUCCION", "PDVSA INDUSTRIAL",
-        "PDVSA GAS COMUNAL, S.A", "PDVSA GAS", "PDVSA ENT", "PDV SERVICIOS DE SALUD", "MINPET", "INTEVEP",
-        "EM PETROZAMORA", "EM PETROWAYU", "EM PETROWARAO", "EM PETROURDANETA", "EM PETROREGIONAL DEL LAGO",
-        "EM PETROQUIRIQUIRE", "EM PETROPERIJA", "EM PETROLERA SINOVENEZOLANA", "EM PETROLERA BIELOVENEZOLANA",
-        "EM PETROINDEPENDIENTE", "EM PETROCUMAREBO", "EM PETROCABIMAS", "EM PETROBOSCAN", "EM LAGOPETROL",
-        "EM BARIPETROL", "DIRECCION EJECUTIVA CYSN", "DIREC EJEC EXPLOR Y ESTUDIOS INTEG Y YAC",
-        "DIR. EJECUTIVA DE SEGURIDAD INTEGRAL", "CVP EEMM OCCIDENTE", "CVP", "BARIVEN"
-    ];
-
-    const gerenciasDeDatos = listaRegistrosPanel
-        .map(r => String(r.Gerencia || "").trim().toUpperCase())
-        .filter(g => g !== "");
-
-    const todasGerencias = [...new Set([...opcionesBase, ...gerenciasDeDatos])].sort();
-    const data = todasGerencias.map(g => ({ id: g, text: g }));
-
-    if (typeof $ !== 'undefined') {
-        $('#add-gerencia, #edit-gerencia').each(function() {
-            const $el = $(this);
-            const val = $el.val();
-            $el.empty().select2({
-                placeholder: 'Seleccione o escriba...',
-                tags: true,
-                data: data,
-                dropdownParent: $el.closest('.fixed')
-            }).val(val).trigger('change');
+            return itemData;
         });
-    }
-}
 
-function abrirModalNuevo() {
-    document.getElementById("formNuevoRegistro").reset();
-    const ahora = new Date();
-    const anio = ahora.getFullYear();
-    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-    const dia = String(ahora.getDate()).padStart(2, '0');
-    const horas = String(ahora.getHours()).padStart(2, '0');
-    const minutos = String(ahora.getMinutes()).padStart(2, '0');
-    const valorDefecto = `${anio}-${mes}-${dia}T${horas}:${minutos}`;
+        lightbox.init();
+        window.pswpLightbox = lightbox;
+    </script>
 
-    document.getElementById("add-fecha-ingreso").value = valorDefecto;
-    document.getElementById("wrapper-externo").classList.add("hidden");
-    limpiarPrevia('add-foto-antes', 'preview-add-antes');
-    document.getElementById("modalNuevoRegistro").classList.remove("hidden");
-}
-
-function cerrarModalNuevo() {
-    document.getElementById("modalNuevoRegistro").classList.add("hidden");
-}
-
-function alternarTallerExterno(valor) {
-    document.getElementById("wrapper-externo").classList.toggle("hidden", valor !== "TALLER EXTERNO (Terceros)");
-}
-
-function previsualizarImagen(input, idContenedor) {
-    const container = document.getElementById(idContenedor);
-    if (!container) return;
-    const img = container.querySelector("img");
-
-    if (input.files && input.files[0]) {
-        const valRes = validarArchivoAdjunto(input.files[0]);
-        if (!valRes.valido) {
-            TTOCC_UI.error("Archivo no válido", valRes.mensaje);
-            input.value = "";
-            img.src = "";
-            container.classList.add("hidden");
-            return;
+    <style>
+        /* Ajustes Select2 para Temas TTOCC */
+        .select2-container--default .select2-selection--single {
+            background-color: #f8fafc; /* slate-50 */
+            border-color: #e2e8f0; /* slate-200 */
+            height: 38px;
+            border-radius: 0.5rem;
         }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            img.src = e.result;
-            container.classList.remove("hidden");
-        };
-        reader.readAsDataURL(input.files[0]);
-    } else {
-        img.src = "";
-        container.classList.add("hidden");
-    }
-}
-
-function limpiarPrevia(idInput, idContenedor) {
-    const input = document.getElementById(idInput);
-    if (input) input.value = "";
-    const container = document.getElementById(idContenedor);
-    if (container) {
-        const img = container.querySelector("img");
-        if (img) img.src = "";
-        container.classList.add("hidden");
-    }
-}
-
-async function guardarNuevoRegistro(event) {
-    event.preventDefault();
-    const btn = document.getElementById("btn-crear-submit");
-    const fileInput = document.getElementById("add-foto-antes");
-
-    if (fileInput.files.length > 0) {
-        const valRes = validarArchivoAdjunto(fileInput.files[0]);
-        if (!valRes.valido) {
-            TTOCC_UI.error("Archivo adjunto no válido", valRes.mensaje);
-            return;
+        .dark .select2-container--default .select2-selection--single {
+            background-color: #020617; /* slate-950 */
+            border-color: #1e293b; /* slate-800 */
         }
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Procesando Imagen...`;
-
-    let fotoBase64 = "";
-    if (fileInput.files.length > 0) {
-        fotoBase64 = await transformarABase64(fileInput.files[0]);
-    }
-
-    let fechaRaw = document.getElementById("add-fecha-ingreso").value;
-    let fechaFormateada = "";
-    if(fechaRaw) {
-        const [fechaParte, horaParte] = fechaRaw.split("T");
-        if (fechaParte) {
-            const parts = fechaParte.split("-");
-            fechaFormateada = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            if (horaParte) {
-                fechaFormateada += ` ${horaParte}`;
-            }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #0f172a; /* slate-900 */
+            line-height: 36px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
-    }
-
-    const payload = {
-        accion: "crear",
-        token: obtenerTokenSesion(),
-        unidad: document.getElementById("add-unidad").value.trim(),
-        marca: document.getElementById("add-marca").value.trim(),
-        flota: document.getElementById("add-flota").value,
-        nombre_taller: document.getElementById("add-taller").value,
-        nombre_taller_ext: document.getElementById("add-taller-ext").value.trim(),
-        gerencia: $('#add-gerencia').val(),
-        usuario: document.getElementById("add-chofer").value.trim(),
-        observaciones: document.getElementById("add-observa").value.trim(),
-        fecha_ingreso: fechaFormateada,
-        foto_antes_base64: fotoBase64,
-        modificado_por: OPERADOR_ACTUAL
-    };
-
-    if (!navigator.onLine) {
-        encolarPeticionOffline(payload);
-        cerrarModalNuevo();
-        TTOCC_UI.warning("Sin Conexión", "El registro se guardó en la cola offline y se subirá automáticamente cuando vuelvas a tener internet.");
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
-        return;
-    }
-
-    try {
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        const res = await response.json();
-        if (res.status === "SUCCESS") {
-            cerrarModalNuevo();
-            await cargarTablaEditable();
-            TTOCC_UI.success("Registro Exitoso", "La unidad ha sido ingresada correctamente a la base de datos central.");
-        } else {
-            TTOCC_UI.error("Error de Servidor", res.message);
+        .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #f1f5f9; /* slate-100 */
         }
-    } catch (err) {
-        console.warn("Fallo de red durante guardado. Encolando offline...", err);
-        encolarPeticionOffline(payload);
-        cerrarModalNuevo();
-        TTOCC_UI.warning("Modo Offline Activado", "Error de comunicación. La solicitud fue encolada para respaldarse en la nube al conectarse.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Registrar Ingreso`;
-    }
-}
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-dropdown {
+            background-color: #ffffff;
+            border-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .dark .select2-dropdown {
+            background-color: #0f172a; /* slate-900 */
+            border-color: #1e293b; /* slate-800 */
+            color: #f1f5f9;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #0891b2; /* cyan-600 */
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+            color: #0f172a;
+            font-size: 0.75rem;
+        }
+        .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: #020617;
+            border-color: #1e293b;
+            color: white;
+        }
+        .select2-container { width: 100% !important; }
+    </style>
 
-function abrirModalEditar(id) {
-    const registro = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
-    if (!registro) return;
+    <script src="js/app.js" defer></script>
+    <script src="js/dexie.min.js" defer></script>
+    <script src="js/db.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/tema.js" defer></script>
+    <script src="js/form-talleres.js" defer></script>
+</head>
+<body class="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans antialiased min-h-full pb-12 transition-colors duration-300">
 
-    limpiarPrevia('edit-foto-despues', 'preview-edit-despues');
-
-    document.getElementById("edit-id-registro").value = registro.ID_Registro;
-    document.getElementById("edit-unidad").value = registro.ID_Unidad;
-    document.getElementById("edit-marca").value = registro.Marca;
-
-    $('#edit-gerencia').val(registro.Gerencia).trigger('change');
-
-    document.getElementById("edit-flota").value = registro.Tipo_Flota || "Liviana";
-    document.getElementById("edit-chofer").value = registro.Usuario;
-    document.getElementById("edit-observa").value = registro.Observaciones;
-    document.getElementById("edit-estatus").value = registro.Estatus;
-
-    tareasModalActual = Array.isArray(registro.Tareas) ? [...registro.Tareas] : [];
-
-    renderizarTareasModal();
-    document.getElementById("modalEditarRegistro").classList.remove("hidden");
-}
-
-function cerrarModalEditar() {
-    document.getElementById("modalEditarRegistro").classList.add("hidden");
-}
-
-function renderizarTareasModal() {
-    const container = document.getElementById("edit-container-tareas");
-    if (!container) return;
-    container.innerHTML = "";
-
-    if (tareasModalActual.length === 0) {
-        container.innerHTML = `<p class="text-[11px] text-slate-600 italic py-2 text-center">No hay tareas de diagnóstico asignadas.</p>`;
-    } else {
-        tareasModalActual.forEach((tarea, index) => {
-            const itemHtml = `
-                <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800/60 gap-2 transition-colors">
-                <label class="flex items-center gap-2 flex-1 cursor-pointer select-none">
-                <input type="checkbox" ${tarea.hecho ? "checked" : ""}
-                onchange="alternarTareaModal(${index})"
-               class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
-               <span class="text-xs ${tarea.hecho ? "line-through text-slate-400 dark:text-slate-500 font-medium" : "text-slate-700 dark:text-slate-200 font-medium"} truncate max-w-[280px]">
-            ${escapeHTML(tarea.texto)}
-            </span>
-            </label>
-            <button type="button" onclick="eliminarTareaModal(${index})" class="text-slate-400 dark:text-slate-600 hover:text-red-500 p-1 transition-colors">
-            <i class="fa-solid fa-trash-can text-[10px]"></i>
-            </button>
+    <header class="bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="patio.html" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 p-2 rounded-xl transition-all cursor-pointer mr-1">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </a>
+                <div class="bg-cyan-600/10 border border-cyan-500/20 p-2 rounded-xl text-cyan-500">
+                    <i class="fa-solid fa-screwdriver-wrench text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-xs uppercase tracking-[0.2em] font-black text-slate-800 dark:text-white">TTOCC System</h1>
+                    <p class="text-[9px] text-slate-500 uppercase tracking-widest font-black">Control de Talleres</p>
+                </div>
             </div>
-            `;
-            container.insertAdjacentHTML("beforeend", itemHtml);
-        });
-    }
 
-    let avanceCalculado = 0;
-    if (tareasModalActual.length > 0) {
-        const total = tareasModalActual.length;
-        const completadas = tareasModalActual.filter(t => t.hecho).length;
-        avanceCalculado = Math.round((completadas / total) * 100);
-    }
-
-    const selectorEstatus = document.getElementById("edit-estatus");
-
-    if (selectorEstatus) {
-        if (tareasModalActual.length > 0 && avanceCalculado === 100) {
-            selectorEstatus.value = "Listo";
-        }
-        else if (avanceCalculado < 100 && (selectorEstatus.value === "Listo" || selectorEstatus.value === "Reparado")) {
-            selectorEstatus.value = "En Proceso";
-        }
-
-        if (selectorEstatus.value === "Listo") {
-            avanceCalculado = 100;
-        }
-    }
-
-    actualizarInterfazAvanceModal(avanceCalculado);
-}
-
-function agregarTareaModal() {
-    const input = document.getElementById("edit-nueva-tarea");
-    if (!input) return;
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    tareasModalActual.push({ texto: texto, hecho: false });
-    input.value = "";
-    renderizarTareasModal();
-}
-
-function alternarTareaModal(index) {
-    if (tareasModalActual[index]) {
-        tareasModalActual[index].hecho = !tareasModalActual[index].hecho;
-        renderizarTareasModal();
-    }
-}
-
-function eliminarTareaModal(index) {
-    tareasModalActual.splice(index, 1);
-    renderizarTareasModal();
-}
-
-function evaluarEstatusModal(valor) {
-    if (valor === "Listo") {
-        actualizarInterfazAvanceModal(100);
-    } else {
-        renderizarTareasModal();
-    }
-}
-
-function actualizarInterfazAvanceModal(porcentaje) {
-    const lblAvance = document.getElementById("edit-lbl-avance-calculado");
-    if (lblAvance) lblAvance.textContent = porcentaje + "%";
-
-    const wrapperFoto = document.getElementById("wrapper-foto-despues");
-    if (!wrapperFoto) return;
-
-    if (porcentaje === 100) {
-        wrapperFoto.classList.remove("hidden");
-    } else {
-        wrapperFoto.classList.add("hidden");
-        const inputFoto = document.getElementById("edit-foto-despues");
-        if (inputFoto) inputFoto.value = "";
-    }
-}
-
-async function guardarEdicionModal(event) {
-    event.preventDefault();
-    const id = document.getElementById("edit-id-registro").value;
-    const btn = document.getElementById("btn-editar-submit");
-    const fileInput = document.getElementById("edit-foto-despues");
-
-    if (fileInput && fileInput.files.length > 0) {
-        const valRes = validarArchivoAdjunto(fileInput.files[0]);
-        if (!valRes.valido) {
-            TTOCC_UI.error("Archivo adjunto no válido", valRes.mensaje);
-            return;
-        }
-    }
-
-    const original = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
-    const estatus = document.getElementById("edit-estatus").value;
-
-    let avanceFinal = 0;
-    if (tareasModalActual.length > 0) {
-        const total = tareasModalActual.length;
-        const completadas = tareasModalActual.filter(t => t.hecho).length;
-        avanceFinal = Math.round((completadas / total) * 100);
-    }
-    if (estatus === "Listo") avanceFinal = 100;
-
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Actualizando registros...`;
-
-    let fotoDespuesBase64 = "";
-    if (fileInput && fileInput.files.length > 0) {
-        fotoDespuesBase64 = await transformarABase64(fileInput.files[0]);
-    }
-
-    let fechaSalidaStr = original ? original.Fecha_Salida : "";
-    if (estatus === "Listo" && !fechaSalidaStr) {
-        const hoy = new Date();
-        fechaSalidaStr = `${String(hoy.getDate()).padStart(2,'0')}-${String(hoy.getMonth()+1).padStart(2,'0')}-${hoy.getFullYear()}`;
-    }
-
-    const payload = {
-        accion: "editar",
-        token: obtenerTokenSesion(),
-        id_registro: id,
-        marca: document.getElementById("edit-marca").value.trim(),
-        flota: document.getElementById("edit-flota").value,
-        gerencia: $('#edit-gerencia').val(),
-        usuario: document.getElementById("edit-chofer").value.trim(),
-        observaciones: document.getElementById("edit-observa").value.trim(),
-        estatus: estatus,
-        avance: avanceFinal.toString(),
-        tareas: JSON.stringify(tareasModalActual),
-        foto_antes: original ? original.Foto_Antes : "",
-        foto_despues: original ? original.Foto_Despues : "",
-        foto_despues_base64: fotoDespuesBase64,
-        fecha_salida: fechaSalidaStr,
-        modificado_por: OPERADOR_ACTUAL
-    };
-
-    if (!navigator.onLine) {
-        encolarPeticionOffline(payload);
-        cerrarModalEditar();
-        TTOCC_UI.warning("Sin Conexión", "La edición se guardó localmente. Se respaldará en la nube automáticamente al restablecerse la conexión.");
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
-        return;
-    }
-
-    try {
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        const res = await response.json();
-        if (res.status === "SUCCESS") {
-            cerrarModalEditar();
-            await cargarTablaEditable();
-            TTOCC_UI.success("Actualización Correcta", "Los cambios en el diagnóstico han sido sincronizados.");
-        } else {
-            TTOCC_UI.error("Error al Guardar", res.message);
-        }
-    } catch (err) {
-        console.warn("Fallo de red en edición. Guardando en cola offline...", err);
-        encolarPeticionOffline(payload);
-        cerrarModalEditar();
-        TTOCC_UI.warning("Sin Conexión", "Cambios retenidos en dispositivo. Se sincronizarán en la nube al detectar internet.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
-    }
-}
-
-async function confirmarEliminarRegistro() {
-    const id = document.getElementById("edit-id-registro").value;
-    const unidad = document.getElementById("edit-unidad").value;
-
-    const confirmacion = await TTOCC_UI.confirm(
-        "¿Eliminar Registro?",
-        `Esta acción borrará la unidad ${escapeHTML(unidad)} (ID #${escapeHTML(id)}) de la base de datos y sus fotos en Drive.`,
-        "Eliminar",
-        "Cancelar"
-    );
-
-    if (!confirmacion) return;
-
-    const confirmacionFinal = await TTOCC_UI.confirm(
-        "Confirmación Final",
-        "¿Está absolutamente seguro? Esta operación no se puede deshacer.",
-        "SÍ, ELIMINAR",
-        "VOLVER"
-    );
-
-    if (!confirmacionFinal) return;
-
-    const modalContent = document.querySelector("#modalEditarRegistro > div");
-    const originalContentHtml = modalContent.innerHTML;
-
-    modalContent.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-12 text-center">
-            <i class="fa-solid fa-trash-can animate-bounce text-red-500 text-5xl mb-4"></i>
-            <h3 class="text-white font-black uppercase tracking-widest">Eliminando Registro...</h3>
-            <p class="text-slate-500 text-[10px] mt-2 uppercase tracking-tighter">Limpiando Base de Datos y Archivos en Drive</p>
+            <button onclick="abrirModalNuevo()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-600/20 flex items-center gap-2 cursor-pointer active:scale-95">
+                <i class="fa-solid fa-plus text-[10px]"></i> Registrar Ingreso
+            </button>
         </div>
-    `;
+    </header>
 
-    const payload = {
-        accion: "eliminar",
-        token: obtenerTokenSesion(),
-        id_registro: id,
-        modificado_por: OPERADOR_ACTUAL
-    };
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden transition-colors">
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center flex-wrap gap-2 transition-colors">
+                <div>
+                    <h2 class="text-xs uppercase tracking-[0.2em] font-black text-slate-800 dark:text-slate-300">Matriz Operativa en Tiempo Real</h2>
+                    <p class="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black">Gestión de unidades & mantenimiento</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleTema()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
+                        <i class="fa-solid fa-sun theme-toggle-icon"></i>
+                    </button>
+                    <button onclick="abrirFiltros()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
+                        <i class="fa-solid fa-filter text-[10px]"></i> Filtros
+                    </button>
+                    <button onclick="cargarTablaEditable()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
+                        <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar
+                    </button>
+                </div>
+            </div>
 
-    if (!navigator.onLine) {
-        encolarPeticionOffline(payload);
-        cerrarModalEditar();
-        modalContent.innerHTML = originalContentHtml;
-        TTOCC_UI.warning("Eliminación Encolada", "Se procesará el borrado en cuanto se restablezca el acceso a la red.");
-        return;
-    }
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="hidden md:table-header-group">
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[9px] uppercase font-black text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-950/40 tracking-[0.15em] transition-colors">
+                            <th class="p-4 w-12 font-mono">ID</th>
+                            <th class="p-4 w-48">Unidad / Marca</th>
+                            <th class="p-4 w-48">Taller / Ubicación</th>
+                            <th class="p-4 w-32 text-center">Avance (%)</th>
+                            <th class="p-4 w-40 text-center">Estatus</th>
+                            <th class="p-4">Novedad Operativa</th>
+                            <th class="p-4 w-28 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEditableCuerpo" class="block md:table-row-group divide-y divide-slate-100 dark:divide-slate-800/40 transition-colors"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-    try {
-        const response = await fetch(APP_CONFIG.URL_API, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
+    <!-- MODAL BÚSQUEDA / SELECCIÓN DE UNIDAD DE FLOTA -->
+    <div id="modalSeleccionarUnidad" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[70] hidden p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[85vh] transition-colors">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <h3 class="text-xs uppercase tracking-widest font-black text-cyan-600 dark:text-cyan-400 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-sm"></i> Seleccionar Unidad del Maestro de Activos
+                </h3>
+                <button type="button" onclick="cerrarModalSeleccionarUnidad()" class="text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
 
-        const res = await response.json();
+            <div class="mb-4">
+                <input type="text" id="input-busqueda-unidad-modal" oninput="filtrarUnidadesFlotaModal()" placeholder="Buscar por ID Unidad, Placa, Serial o Marca..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 font-medium">
+            </div>
 
-        if (res.status === "SUCCESS") {
-            cerrarModalEditar();
-            setTimeout(() => { modalContent.innerHTML = originalContentHtml; }, 500);
-            await cargarTablaEditable();
-            TTOCC_UI.success("Registro Eliminado", "La unidad y sus archivos asociados han sido removidos con éxito.");
-        } else {
-            TTOCC_UI.error("Error al Eliminar", res.message);
-            modalContent.innerHTML = originalContentHtml;
-        }
-    } catch (err) {
-        console.warn("Fallo de red en borrado. Guardando en cola offline...", err);
-        encolarPeticionOffline(payload);
-        cerrarModalEditar();
-        modalContent.innerHTML = originalContentHtml;
-        TTOCC_UI.warning("Sin Conexión", "La eliminación se enviará automáticamente al reconectarse a internet.");
-    }
-}
+            <div class="overflow-x-auto max-h-[50vh]">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[9px] uppercase font-black text-slate-500 bg-slate-50 dark:bg-slate-950/50">
+                            <th class="p-3 font-mono">ID Unidad</th>
+                            <th class="p-3">Placa</th>
+                            <th class="p-3">Serial</th>
+                            <th class="p-3">Marca</th>
+                            <th class="p-3">Flota</th>
+                            <th class="p-3 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUnidadesFlotaCuerpo" class="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs font-medium">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 transition-colors overflow-y-auto max-h-[95vh]">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
+                <h3 class="text-xs uppercase tracking-widest font-black text-cyan-600 dark:text-cyan-400 flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Taller
+                </h3>
+                <button onclick="cerrarModalNuevo()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Unidad <span class="text-red-500">*</span></label>
+                            <button type="button" id="btnUnidadFrecuente" class="text-[9px] font-black uppercase text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-magnifying-glass"></i> Seleccionar Flota
+                            </button>
+                        </div>
+                        <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca</label>
+                        <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                            Tipo de Flota
+                        </label>
+                        <select id="add-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                            Fosa / Taller Asignado
+                        </label>
+                        <select id="add-taller" onchange="alternarTallerExterno(this.value)" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs cursor-pointer transition-colors">
+                            <option value="Taller Lagunillas" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Taller Lagunillas</option>
+                            <option value="Taller La Salina" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Taller La Salina</option>
+                            <option value="Taller Lago Medio" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Taller Lago Medio</option>
+                            <option value="TALLER EXTERNO (Terceros)" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">TALLER EXTERNO (Terceros)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="wrapper-externo" class="mb-3 hidden">
+                    <label class="block text-[10px] uppercase font-bold text-amber-600 dark:text-yellow-500 mb-1 transition-colors">
+                        <i class="fa-solid fa-building-shield"></i> Nombre del Taller Aliado (Externo)
+                    </label>
+                    <input type="text" id="add-taller-ext" placeholder="Ej: Rectificadora Fénix C.A." class="w-full bg-white dark:bg-slate-950 border border-amber-600/30 dark:border-yellow-600/30 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-amber-500 dark:focus:border-yellow-500 text-xs uppercase transition-colors">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                            Gerencia Usuaria
+                        </label>
+                        <select id="add-gerencia" class="buscador w-full"></select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                            Usuario / Chofer
+                        </label>
+                        <input type="text" id="add-chofer" placeholder="Nombre del solicitante" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-cyan-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                            <i class="fa-solid fa-calendar-day mr-1"></i> Fecha de Ingreso
+                        </label>
+                        <input type="datetime-local" id="add-fecha-ingreso" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs cursor-pointer transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                            <i class="fa-solid fa-camera mr-1"></i> Foto Antes (Evidencia)
+                        </label>
+                        <input type="file" id="add-foto-antes" accept="image/*" onchange="previsualizarImagen(this, 'preview-add-antes')" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-400 focus:outline-none focus:border-cyan-500 text-[11px] cursor-pointer transition-colors">
+
+                        <div id="preview-add-antes" class="hidden mt-2 relative w-full aspect-video bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+                            <img src="" class="w-full h-full object-contain">
+                            <button type="button" onclick="limpiarPrevia('add-foto-antes', 'preview-add-antes')" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-md text-[10px] transition-colors">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
+                        Observaciones Iniciales
+                    </label>
+                    <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-cyan-500 text-xs resize-none transition-colors"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <button type="button" onclick="cerrarModalNuevo()" class="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
+                    <button type="submit" id="btn-crear-submit" class="px-6 py-2.5 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-cyan-600/20 active:scale-95">
+                        <i class="fa-solid fa-square-check"></i> Registrar Ingreso
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[90vh] transition-colors">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
+                <h3 class="text-xs uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
+                </h3>
+                <button onclick="cerrarModalEditar()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
+                <input type="hidden" id="edit-id-registro">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">ID Unidad (Protegido)</label>
+                        <input type="text" id="edit-unidad" disabled class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca del Vehículo</label>
+                        <input type="text" id="edit-marca" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
+                        <select id="edit-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Estatus Operativo</label>
+                        <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 text-xs cursor-pointer font-bold transition-colors">
+                            <option value="Por Atender">⚠️ Por Atender</option>
+                            <option value="En Proceso">⚙️ En Proceso</option>
+                            <option value="Listo">✅ Ya Operativa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Gerencia Usuaria</label>
+                        <select id="edit-gerencia" class="buscador w-full"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Usuario / Chofer</label>
+                        <input type="text" id="edit-chofer" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="mb-4 border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-950/30 transition-colors">
+                    <label class="block text-[10px] uppercase tracking-wider font-black text-cyan-600 dark:text-cyan-400 mb-2 transition-colors">
+                        <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones
+                    </label>
+
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros..." class="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs transition-colors">
+                        <button type="button" onclick="agregarTareaModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="edit-container-tareas" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div>
+
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 transition-colors">
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold transition-colors">Avance Real Calculado:</span>
+                        <span id="edit-lbl-avance-calculado" class="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-950 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 transition-colors">0%</span>
+                    </div>
+                </div>
+
+                <div id="wrapper-foto-despues" class="mb-4 hidden p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-xl transition-all">
+                    <label class="block text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 mb-1 transition-colors">
+                        <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
+                    </label>
+                    <input type="file" id="edit-foto-despues" accept="image/*" onchange="previsualizarImagen(this, 'preview-edit-despues')" class="w-full bg-white dark:bg-slate-950 border border-emerald-600/30 dark:border-emerald-800 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer transition-colors">
+                    <div id="preview-edit-despues" class="hidden mt-2 relative w-full aspect-video bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+                        <img src="" class="w-full h-full object-contain">
+                        <button type="button" onclick="limpiarPrevia('edit-foto-despues', 'preview-edit-despues')" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-md text-[10px] transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Bitácora de Observaciones</label>
+                    <textarea id="edit-observa" rows="2" placeholder="Notas sobre el cierre o estatus del mantenimiento..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 text-xs resize-none transition-colors"></textarea>
+                </div>
+
+                <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <button type="button" onclick="confirmarEliminarRegistro()" class="px-5 py-2.5 rounded-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer border border-red-500/20 active:scale-95">
+                        <i class="fa-solid fa-trash-can"></i> Eliminar
+                    </button>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="cerrarModalEditar()" class="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
+                        <button type="submit" id="btn-editar-submit" class="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20 active:scale-95">
+                            <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalIdentificacion" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-[28px] shadow-2xl p-8 transition-colors">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-600/10 text-cyan-600 mb-4 transition-colors">
+                    <i class="fa-solid fa-user-shield text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight transition-colors">Acceso Restringido</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1 transition-colors">Seleccione su usuario e ingrese su clave de 5 dígitos</p>
+            </div>
+
+            <form onsubmit="confirmarIdentidad(event)" class="space-y-4" autocomplete="off">
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest transition-colors">Responsable de Turno</label>
+                    <select id="input-operador" required
+                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 text-xs font-bold uppercase transition-all cursor-pointer">
+                        <option value="" disabled selected hidden>Seleccione Operador...</option>
+                        <option value="WILLIAM RIOS">WILLIAM RIOS</option>
+                        <option value="VANNESA ROMERO">VANNESA ROMERO</option>
+                        <option value="PEDRO POLANCO">PEDRO POLANCO</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest transition-colors">Contraseña (5 dígitos)</label>
+                    <input type="password"
+                           id="input-password"
+                           required
+                           maxlength="5"
+                           pattern="[a-z0-9]{5}"
+                           placeholder="•••••"
+                           title="La contraseña debe tener exactamente 5 caracteres alfanuméricos en minúsculas."
+                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white text-center focus:outline-none focus:border-cyan-500 text-lg font-mono tracking-widest transition-all">
+                </div>
+
+                <div id="error-identificacion" class="text-[11px] text-red-500 font-bold text-center hidden bg-red-500/10 border border-red-500/20 py-2 rounded-xl">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Credenciales incorrectas o inválidas.
+                </div>
+
+                <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all cursor-pointer shadow-lg shadow-cyan-600/15 active:scale-98">
+                    Ingresar al Sistema <i class="fa-solid fa-right-to-bracket ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
+        <div id="sheetContent" class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-[32px] shadow-2xl p-6 transition-transform translate-y-full duration-400 ease-[cubic-bezier(0.2,0,0,1)] border-t border-slate-200 dark:border-slate-800" onclick="event.stopPropagation()">
+
+            <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6 opacity-50"></div>
+
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xs uppercase font-black tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-cyan-500"></i> Control de Búsqueda y Filtros
+                </h3>
+                <button onclick="limpiarFiltros()" type="button" class="text-cyan-500 text-[10px] font-black uppercase tracking-wider hover:text-cyan-400 transition-colors cursor-pointer">
+                    Limpiar todo
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label for="input-busqueda" class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Tipee un criterio de búsqueda</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-xs"></i>
+                    </div>
+                    <input type="text"
+                           id="input-busqueda"
+                           oninput="filtrarMatriz()"
+                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs rounded-xl pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium shadow-inner"
+                           placeholder="Buscar por Unidad, ID, Taller, Marca o Novedad...">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Estatus</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="toggleFiltroBadge(this, 'estatus', 'Por Atender')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                            ⚠️ Por Atender
+                        </button>
+                        <button onclick="toggleFiltroBadge(this, 'estatus', 'En Proceso')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                            ⚙️ En Proceso
+                        </button>
+                        <button onclick="toggleFiltroBadge(this, 'estatus', 'Listo')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                            ✅ Ya Operativa
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Ubicación</label>
+                    <select id="filtro-ubicacion" onchange="filtrarMatriz()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-cyan-500 transition-all cursor-pointer">
+                        <option value="">Todas las ubicaciones</option>
+                        <option value="Taller Lagunillas">Taller Lagunillas</option>
+                        <option value="Taller La Salina">Taller La Salina</option>
+                        <option value="Taller Lago Medio">Taller Lago Medio</option>
+                        <option value="TALLER EXTERNO (Terceros)">Taller Externo (Terceros)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="cerrarFiltros()" type="button" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[11px] mt-8 shadow-lg shadow-cyan-950/50 transition-all active:scale-95 cursor-pointer">
+                Aplicar y Cerrar
+            </button>
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/60 hidden sm:block transition-colors">
+        <p class="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black transition-colors">
+          TTOCC System - Panel de Control de Talleres
+        </p>
+        <p class="text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-wider font-medium mt-0.5 transition-colors">
+          Desarrollado por <span class="font-bold text-slate-600 dark:text-slate-400">RIVEROJDU</span> &copy; 2026
+        </p>
+     </footer>
+       <!-- Vercel Speed Insights -->
+<script type="module">
+  import { injectSpeedInsights } from 'https://cdn.jsdelivr.net/npm/@vercel/speed-insights@1/dist/index.mjs';
+  injectSpeedInsights();
+</script>
+</body>
+</html>
