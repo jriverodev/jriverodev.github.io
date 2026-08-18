@@ -246,10 +246,11 @@ async function obtenerMapaUltimoTaller() {
                 }
                 const getV = (terms) => {
                     const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                    return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                    return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
                 };
 
-                const idUnidad = (getV(["IDUNIDAD", "UNIDAD"]) || item["ID_Unidad"] || "").toUpperCase();
+                const rawId = getV(["IDUNIDAD", "UNIDAD"]) || item["ID_Unidad"] || "";
+                const idUnidad = String(rawId).toUpperCase();
                 const taller = getV(["NOMBRETALLER", "TALLER"]) || item["Nombre_Taller"] || "";
                 const tallerExt = getV(["TALLEREXT"]) || item["Nombre_Taller_Ext"] || "";
                 const tallerFinal = taller === "TALLER EXTERNO (Terceros)" && tallerExt ? `EXT: ${tallerExt}` : taller;
@@ -305,10 +306,11 @@ async function cargarTablaActivos() {
 
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
             };
 
-            const idUnidad = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
+            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
+            const idUnidad = String(rawId);
             const idKey = idUnidad.toUpperCase();
 
             return {
