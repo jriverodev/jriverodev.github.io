@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Almacenes de control en memoria global
 var listaActivosGlobal = [];
+var mapaUltimoTaller = {};
 var OPERADOR_ACTUAL = "";
 var FILTROS_ACTIVOS = {
     busqueda: "",
@@ -212,7 +213,10 @@ function filtrarActivos() {
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Placa || "").toLowerCase().includes(query) ||
             String(reg.Serial || "").toLowerCase().includes(query) ||
-            String(reg.Marca || "").toLowerCase().includes(query);
+            String(reg.Marca || "").toLowerCase().includes(query) ||
+            String(reg.Modelo || "").toLowerCase().includes(query) ||
+            String(reg.Gerencia || "").toLowerCase().includes(query) ||
+            String(reg.Responsable_Usuario || "").toLowerCase().includes(query);
 
         const matchesFlota = !flota || reg.Tipo_Flota === flota;
 
@@ -220,6 +224,46 @@ function filtrarActivos() {
     });
 
     renderizarActivos(filtrados);
+}
+
+/**
+ * Obtiene el historial de registros de taller para calcular el último taller visitado por cada unidad
+ */
+async function obtenerMapaUltimoTaller() {
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "leer" })
+        });
+        const res = await response.json();
+        if (res.status === "SUCCESS") {
+            const historial = res.datos || res.unidades || [];
+            const mapa = {};
+            historial.forEach(item => {
+                let normalized = {};
+                for (let key in item) {
+                    normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = item[key];
+                }
+                const getV = (terms) => {
+                    const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
+                    return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                };
+
+                const idUnidad = (getV(["IDUNIDAD", "UNIDAD"]) || item["ID_Unidad"] || "").toUpperCase();
+                const taller = getV(["NOMBRETALLER", "TALLER"]) || item["Nombre_Taller"] || "";
+                const tallerExt = getV(["TALLEREXT"]) || item["Nombre_Taller_Ext"] || "";
+                const tallerFinal = taller === "TALLER EXTERNO (Terceros)" && tallerExt ? `EXT: ${tallerExt}` : taller;
+                const fecha = getV(["FECHAING", "FECHA"]) || item["Fecha_Ingr"] || item["Fecha_Ingreso"] || "";
+
+                if (idUnidad) {
+                    mapa[idUnidad] = tallerFinal ? `${tallerFinal} (${fecha || 'S/F'})` : "Sin Historial Taller";
+                }
+            });
+            mapaUltimoTaller = mapa;
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar historial de talleres para ubicación:", e);
+    }
 }
 
 /**
@@ -231,11 +275,13 @@ async function cargarTablaActivos() {
 
     tbody.innerHTML = `
         <tr class="block md:table-row">
-            <td colspan="7" class="block md:table-cell p-8 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]">
+            <td colspan="8" class="block md:table-cell p-8 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]">
                 <i class="fa-solid fa-spinner animate-spin mr-2 text-xs"></i> Interconectando con Base de Datos Central...
             </td>
         </tr>
     `;
+
+    await obtenerMapaUltimoTaller();
 
     try {
         const response = await fetch(APP_CONFIG.URL_API, {
@@ -245,7 +291,7 @@ async function cargarTablaActivos() {
 
         const res = await response.json();
         if (res.status !== "SUCCESS") {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -262,12 +308,24 @@ async function cargarTablaActivos() {
                 return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
+            const idUnidad = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
+            const idKey = idUnidad.toUpperCase();
+
             return {
-                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
+                ID_Unidad: idUnidad,
                 Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
                 Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
+                Modelo: normalized["MODELO"] || u["Modelo"] || "",
+                Color: normalized["COLOR"] || u["Color"] || "",
+                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                 Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
+                Estatus_Final: getV(["ESTATUSFINAL", "ESTATUS"]) || u["Estatus_Final"] || "",
+                Situacion_Actual: getV(["SITUACIONACTUAL", "SITUACION"]) || u["Situacion_Actual"] || "",
+                Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
+                Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
+                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
+                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
                 Documento_Url: getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || ""
             };
         });
@@ -278,7 +336,7 @@ async function cargarTablaActivos() {
         }
 
         if (listaActivosGlobal.length === 0) {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen activos registrados.</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen activos registrados.</td></tr>`;
             return;
         }
 
@@ -303,7 +361,7 @@ async function cargarTablaActivos() {
                 TTOCC_UI.warning("Modo Offline Activo", "Mostrando activos guardados localmente.");
             }
         } else {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error de enlace y sin respaldo local.</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error de enlace y sin respaldo local.</td></tr>`;
         }
     }
 }
@@ -316,7 +374,7 @@ function renderizarActivos(datos) {
     if (!tbody) return;
 
     if (datos.length === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin activos que coincidan con la búsqueda.</td></tr>`;
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin activos que coincidan con la búsqueda.</td></tr>`;
         return;
     }
 
@@ -341,23 +399,40 @@ function renderizarActivos(datos) {
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Placa:</span>
-                    <span class="text-slate-700 dark:text-slate-300 font-bold uppercase">${escapeHTML(reg.Placa)}</span>
-                </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Serial:</span>
-                    <span class="text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(reg.Serial)}</span>
-                </td>
-
-                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Marca:</span>
-                    <span class="text-slate-800 dark:text-slate-200 uppercase font-bold text-xs">${escapeHTML(reg.Marca)}</span>
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Placa / Serial:</span>
+                    <div>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold uppercase block">${escapeHTML(reg.Placa)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Serial)}</span>
+                    </div>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Flota:</span>
-                    <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase">${escapeHTML(reg.Tipo_Flota)}</span>
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Marca / Modelo:</span>
+                    <div>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold text-xs uppercase block">${escapeHTML(reg.Marca)} ${escapeHTML(reg.Modelo)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Tipo_Vehiculo)} - ${escapeHTML(reg.Color)}</span>
+                    </div>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Flota / Estatus:</span>
+                    <div>
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase inline-block mb-1">${escapeHTML(reg.Tipo_Flota)}</span>
+                        <div class="text-[9px] font-bold text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(reg.Estatus_Final || 'S/E')} - ${escapeHTML(reg.Situacion_Actual || 'S/S')}</div>
+                    </div>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Gerencia / Usuario:</span>
+                    <div>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold text-[10px] uppercase block">${escapeHTML(reg.Gerencia || 'SIN GERENCIA')}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Responsable_Usuario || 'S/R')} (${escapeHTML(reg.Cargo_Usuario || 'S/C')})</span>
+                    </div>
+                </td>
+
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Último Taller:</span>
+                    <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase block">${escapeHTML(reg.Ubicacion_Taller)}</span>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
@@ -470,7 +545,15 @@ async function guardarNuevoRegistro(event) {
         placa: document.getElementById("add-placa").value.trim().toUpperCase(),
         serial: document.getElementById("add-serial").value.trim().toUpperCase(),
         marca: document.getElementById("add-marca").value.trim().toUpperCase(),
+        modelo: document.getElementById("add-modelo").value.trim().toUpperCase(),
+        color: document.getElementById("add-color").value.trim().toUpperCase(),
+        tipo_vehiculo: document.getElementById("add-tipo-vehiculo").value.trim().toUpperCase(),
         flota: document.getElementById("add-flota").value,
+        estatus_final: document.getElementById("add-estatus-final").value.trim().toUpperCase(),
+        situacion_actual: document.getElementById("add-situacion-actual").value.trim().toUpperCase(),
+        gerencia: document.getElementById("add-gerencia").value.trim().toUpperCase(),
+        responsable_usuario: document.getElementById("add-responsable-usuario").value.trim().toUpperCase(),
+        cargo_usuario: document.getElementById("add-cargo-usuario").value.trim().toUpperCase(),
         documento_base64: docBase64,
         documento_nombre: docNombre,
         modificado_por: OPERADOR_ACTUAL
@@ -523,7 +606,16 @@ function abrirModalEditar(idUnidad) {
     document.getElementById("edit-placa").value = reg.Placa;
     document.getElementById("edit-serial").value = reg.Serial;
     document.getElementById("edit-marca").value = reg.Marca;
+    document.getElementById("edit-modelo").value = reg.Modelo || "";
+    document.getElementById("edit-color").value = reg.Color || "";
+    document.getElementById("edit-tipo-vehiculo").value = reg.Tipo_Vehiculo || "";
     document.getElementById("edit-flota").value = reg.Tipo_Flota;
+    document.getElementById("edit-estatus-final").value = reg.Estatus_Final || "";
+    document.getElementById("edit-situacion-actual").value = reg.Situacion_Actual || "";
+    document.getElementById("edit-gerencia").value = reg.Gerencia || "";
+    document.getElementById("edit-responsable-usuario").value = reg.Responsable_Usuario || "";
+    document.getElementById("edit-cargo-usuario").value = reg.Cargo_Usuario || "";
+    document.getElementById("edit-ubicacion-taller").value = reg.Ubicacion_Taller || "Sin Historial Taller";
 
     const wrapperDoc = document.getElementById("wrapper-doc-actual");
     const linkDoc = document.getElementById("link-doc-actual");
@@ -573,7 +665,15 @@ async function guardarEdicionModal(event) {
         placa: document.getElementById("edit-placa").value.trim().toUpperCase(),
         serial: document.getElementById("edit-serial").value.trim().toUpperCase(),
         marca: document.getElementById("edit-marca").value.trim().toUpperCase(),
+        modelo: document.getElementById("edit-modelo").value.trim().toUpperCase(),
+        color: document.getElementById("edit-color").value.trim().toUpperCase(),
+        tipo_vehiculo: document.getElementById("edit-tipo-vehiculo").value.trim().toUpperCase(),
         flota: document.getElementById("edit-flota").value,
+        estatus_final: document.getElementById("edit-estatus-final").value.trim().toUpperCase(),
+        situacion_actual: document.getElementById("edit-situacion-actual").value.trim().toUpperCase(),
+        gerencia: document.getElementById("edit-gerencia").value.trim().toUpperCase(),
+        responsable_usuario: document.getElementById("edit-responsable-usuario").value.trim().toUpperCase(),
+        cargo_usuario: document.getElementById("edit-cargo-usuario").value.trim().toUpperCase(),
         documento_base64: docBase64,
         documento_nombre: docNombre,
         documento_eliminar: documentoEliminarFlag,
