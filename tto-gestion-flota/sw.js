@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ttocc-flota-v8';
+const CACHE_NAME = 'ttocc-flota-v9';
 
 const ASSETS = [
   './',
@@ -22,21 +22,21 @@ const ASSETS = [
   './js/visor-flota.js',
   './js/ui.js',
   './js/tema.js',
-  // CDN externas utilizadas por tu app
   './js/libs/browser@4.js',
-  'css/font-awesome/6.4.0/css/all.min.css',
+  './css/fontawesome/all.min.css',
   './js/chart.js',
   './js/xlsx.full.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  './css/photoswipe/photoswipe.css',
-  './js/photoswipe/photoswipe.umd.min.js',
-  './js/photoswipe/photoswipe-lightbox.umd.min.js'
+  './css/photoswipe/photoswipe.css'
 ];
 
 // Instalación
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.allSettled(
+        ASSETS.map(asset => cache.add(asset).catch(err => console.warn(`SW: No se pudo precargar ${asset}:`, err)))
+      );
+    })
   );
   self.skipWaiting();
 });
