@@ -72,10 +72,11 @@
                     <thead class="hidden md:table-header-group">
                         <tr class="border-b border-slate-200 dark:border-slate-800 text-[9px] uppercase font-black text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-950/40 tracking-[0.15em] transition-colors">
                             <th class="p-4 font-mono">ID Unidad</th>
-                            <th class="p-4">Placa de Identificación</th>
-                            <th class="p-4">Serial del Activo</th>
-                            <th class="p-4">Marca del Vehículo</th>
-                            <th class="p-4">Tipo de Flota</th>
+                            <th class="p-4">Placa / Serial</th>
+                            <th class="p-4">Marca / Modelo / Color / Tipo</th>
+                            <th class="p-4">Flota / Estatus / Situación</th>
+                            <th class="p-4">Gerencia / Usuario / Cargo</th>
+                            <th class="p-4">Última Ubicación Taller</th>
                             <th class="p-4">Documentación</th>
                             <th class="p-4 text-center w-28">Acciones</th>
                         </tr>
@@ -88,7 +89,7 @@
 
     <!-- MODAL 1: REGISTRAR NUEVO ACTIVO -->
     <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 transition-colors overflow-y-auto max-h-[95vh]">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 transition-colors overflow-y-auto max-h-[95vh]">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
                 <h3 class="text-xs uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-plus text-sm"></i> Registrar Nuevo Vehículo / Activo
@@ -119,14 +120,52 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
-                        Tipo de Flota
-                    </label>
-                    <select id="add-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
-                        <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
-                        <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
-                    </select>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Modelo</label>
+                        <input type="text" id="add-modelo" placeholder="Ej: Cargo 1722 / F-350" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Color</label>
+                        <input type="text" id="add-color" placeholder="Ej: Blanco / Rojo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Vehículo</label>
+                        <input type="text" id="add-tipo-vehiculo" placeholder="Ej: Camión / Pick-Up / Bus" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
+                        <select id="add-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Estatus Final</label>
+                        <input type="text" id="add-estatus-final" placeholder="Ej: Operativo / Inoperativo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Situación Actual</label>
+                        <input type="text" id="add-situacion-actual" placeholder="Ej: En taller / Asignado" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Gerencia Usuaria</label>
+                        <input type="text" id="add-gerencia" placeholder="Ej: VP EYP TRANSPORTE" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Responsable Usuario</label>
+                        <input type="text" id="add-responsable-usuario" placeholder="Ej: CARLOS MENDOZA" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Cargo de Usuario</label>
+                        <input type="text" id="add-cargo-usuario" placeholder="Ej: CHÓFER OPERADOR" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
                 </div>
 
                 <div class="mb-4">
@@ -152,7 +191,7 @@
 
     <!-- MODAL 2: EDITAR ACTIVO -->
     <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[90vh] transition-colors">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[90vh] transition-colors">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
                 <h3 class="text-xs uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-pen-to-square"></i> Modificar Ficha del Vehículo
@@ -183,12 +222,57 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Modelo</label>
+                        <input type="text" id="edit-modelo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Color</label>
+                        <input type="text" id="edit-color" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Vehículo</label>
+                        <input type="text" id="edit-tipo-vehiculo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
+                        <select id="edit-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Estatus Final</label>
+                        <input type="text" id="edit-estatus-final" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Situación Actual</label>
+                        <input type="text" id="edit-situacion-actual" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Gerencia Usuaria</label>
+                        <input type="text" id="edit-gerencia" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Responsable Usuario</label>
+                        <input type="text" id="edit-responsable-usuario" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Cargo de Usuario</label>
+                        <input type="text" id="edit-cargo-usuario" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
                 <div class="mb-3">
-                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
-                    <select id="edit-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
-                        <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
-                        <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
-                    </select>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Última Ubicación Taller (Auto-Calculada)</label>
+                    <input type="text" id="edit-ubicacion-taller" readonly class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs uppercase font-medium select-none transition-colors">
                 </div>
 
                 <div class="mb-4">
@@ -297,7 +381,7 @@
                            id="input-busqueda"
                            oninput="filtrarActivos()"
                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs rounded-xl pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-medium shadow-inner"
-                           placeholder="Buscar por Unidad, Placa, Serial o Marca...">
+                           placeholder="Buscar por Unidad, Placa, Serial, Marca, Modelo, Gerencia...">
                 </div>
             </div>
 
