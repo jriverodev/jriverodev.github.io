@@ -2,10 +2,18 @@
 "use strict";
 
 let datosActivosGlobal = [];
+let mapaUltimoTaller = {};
 let instanciaChartFlota = null;
 let instanciaChartMarcas = null;
 
-document.addEventListener("DOMContentLoaded", cargarDatosAnaliticos);
+document.addEventListener("DOMContentLoaded", () => {
+    cargarDatosAnaliticos();
+
+    const searchInput = document.getElementById("visor-busqueda");
+    if (searchInput) {
+        searchInput.addEventListener("input", debounce(filtrarVisor, 250));
+    }
+});
 
 function toggleSeccion(id) {
     const el = document.getElementById(id);
@@ -17,12 +25,52 @@ function toggleSeccion(id) {
     }
 }
 
+async function obtenerMapaUltimoTaller() {
+    try {
+        const response = await fetch(APP_CONFIG.URL_API, {
+            method: "POST",
+            body: JSON.stringify({ accion: "leer" })
+        });
+        const res = await response.json();
+        if (res.status === "SUCCESS") {
+            const historial = res.datos || res.unidades || [];
+            const mapa = {};
+            historial.forEach(item => {
+                let normalized = {};
+                for (let key in item) {
+                    normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = item[key];
+                }
+                const getV = (terms) => {
+                    const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
+                    return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
+                };
+
+                const rawId = getV(["IDUNIDAD", "UNIDAD"]) || item["ID_Unidad"] || "";
+                const idUnidad = String(rawId).toUpperCase();
+                const taller = getV(["NOMBRETALLER", "TALLER"]) || item["Nombre_Taller"] || "";
+                const tallerExt = getV(["TALLEREXT"]) || item["Nombre_Taller_Ext"] || "";
+                const tallerFinal = taller === "TALLER EXTERNO (Terceros)" && tallerExt ? `EXT: ${tallerExt}` : taller;
+                const fecha = getV(["FECHAING", "FECHA"]) || item["Fecha_Ingr"] || item["Fecha_Ingreso"] || "";
+
+                if (idUnidad) {
+                    mapa[idUnidad] = tallerFinal ? `${tallerFinal} (${fecha || 'S/F'})` : "Sin Historial Taller";
+                }
+            });
+            mapaUltimoTaller = mapa;
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar historial de talleres para ubicación:", e);
+    }
+}
+
 async function cargarDatosAnaliticos() {
     const tbody = document.getElementById("tablaCuerpo");
     try {
         if (tbody) {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando catálogo de Activos...</td></tr>`;
+            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-emerald-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando catálogo de Activos...</td></tr>`;
         }
+
+        await obtenerMapaUltimoTaller();
 
         const response = await fetch(APP_CONFIG.URL_API, {
             method: "POST",
@@ -33,7 +81,7 @@ async function cargarDatosAnaliticos() {
         const res = await response.json();
 
         if (res.status !== "SUCCESS") {
-            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${escapeHTML(res.message)}</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 uppercase tracking-widest text-[10px] font-bold">Error: ${escapeHTML(res.message)}</td></tr>`;
             return;
         }
 
@@ -47,26 +95,51 @@ async function cargarDatosAnaliticos() {
 
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
+                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
             };
 
+            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
+            const idUnidad = String(rawId);
+            const idKey = idUnidad.toUpperCase();
+
             return {
-                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
+                ID_Unidad: idUnidad,
                 Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
                 Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
+                Modelo: normalized["MODELO"] || u["Modelo"] || "",
+                Color: normalized["COLOR"] || u["Color"] || "",
+                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                 Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
+                Estatus_Final: getV(["ESTATUSFINAL", "ESTATUS"]) || u["Estatus_Final"] || "",
+                Situacion_Actual: getV(["SITUACIONACTUAL", "SITUACION"]) || u["Situacion_Actual"] || "",
+                Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
+                Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
+                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
+                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
                 Documento_Url: getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || ""
             };
         });
 
+        poblarSelectorTipoVehiculo(datosActivosGlobal);
         calcularKpisGlobales(datosActivosGlobal);
         renderizarVisor(datosActivosGlobal);
 
     } catch (err) {
         console.error("Error analítico en visor de flota:", err);
-        if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-red-500 uppercase font-bold text-[10px]">Error fatal conectando con la red central.</td></tr>`;
     }
+}
+
+function poblarSelectorTipoVehiculo(datos) {
+    const select = document.getElementById("visor-filtro-tipo-vehiculo");
+    if (!select) return;
+
+    const tipos = [...new Set(datos.map(d => String(d.Tipo_Vehiculo || "").trim()).filter(Boolean))].sort();
+    select.innerHTML = '<option value="">TODOS LOS TIPOS</option>';
+    tipos.forEach(tipo => {
+        select.innerHTML += `<option value="${escapeHTML(tipo)}">${escapeHTML(tipo.toUpperCase())}</option>`;
+    });
 }
 
 function calcularKpisGlobales(datos) {
@@ -77,23 +150,34 @@ function calcularKpisGlobales(datos) {
     document.getElementById("kpiTotal").textContent = total;
     document.getElementById("kpiLiviana").textContent = liviana;
     document.getElementById("kpiPesada").textContent = pesada;
+    document.getElementById("kpiFiltrado").textContent = total;
 }
 
 function filtrarVisor() {
     const query = document.getElementById("visor-busqueda").value.toLowerCase().trim();
     const flota = document.getElementById("visor-filtro-flota").value;
+    const tipoVehiculo = document.getElementById("visor-filtro-tipo-vehiculo") ? document.getElementById("visor-filtro-tipo-vehiculo").value : "";
 
     const filtrados = datosActivosGlobal.filter(reg => {
         const matchesBusqueda = !query ||
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Placa || "").toLowerCase().includes(query) ||
             String(reg.Serial || "").toLowerCase().includes(query) ||
-            String(reg.Marca || "").toLowerCase().includes(query);
+            String(reg.Marca || "").toLowerCase().includes(query) ||
+            String(reg.Modelo || "").toLowerCase().includes(query) ||
+            String(reg.Gerencia || "").toLowerCase().includes(query) ||
+            String(reg.Responsable_Usuario || "").toLowerCase().includes(query);
 
         const matchesFlota = !flota || reg.Tipo_Flota === flota;
+        const matchesTipoVehiculo = !tipoVehiculo || String(reg.Tipo_Vehiculo || "").trim().toUpperCase() === tipoVehiculo.trim().toUpperCase();
 
-        return matchesBusqueda && matchesFlota;
+        return matchesBusqueda && matchesFlota && matchesTipoVehiculo;
     });
+
+    const kpiFiltradoEl = document.getElementById("kpiFiltrado");
+    if (kpiFiltradoEl) {
+        kpiFiltradoEl.textContent = filtrados.length;
+    }
 
     renderizarVisor(filtrados);
 }
@@ -101,6 +185,14 @@ function filtrarVisor() {
 function limpiarFiltrosVisor() {
     document.getElementById("visor-busqueda").value = "";
     document.getElementById("visor-filtro-flota").value = "";
+    const selectTipo = document.getElementById("visor-filtro-tipo-vehiculo");
+    if (selectTipo) selectTipo.value = "";
+
+    const kpiFiltradoEl = document.getElementById("kpiFiltrado");
+    if (kpiFiltradoEl) {
+        kpiFiltradoEl.textContent = datosActivosGlobal.length;
+    }
+
     renderizarVisor(datosActivosGlobal);
 }
 
@@ -109,19 +201,17 @@ function renderizarVisor(datos) {
     if (!tbody) return;
 
     if (datos.length === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="6" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen activos que coincidan con los filtros</td></tr>`;
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen activos que coincidan con los filtros</td></tr>`;
         renderizarGraficos(0, 0, {});
         return;
     }
-
-    tbody.innerHTML = "";
 
     let liviana = datos.filter(r => r.Tipo_Flota === "Liviana").length;
     let pesada = datos.filter(r => r.Tipo_Flota === "Pesada").length;
 
     let conteoMarcas = {};
 
-    [...datos].reverse().forEach(reg => {
+    const htmlFilas = [...datos].reverse().map(reg => {
         conteoMarcas[reg.Marca || "S/I"] = (conteoMarcas[reg.Marca || "S/I"] || 0) + 1;
 
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
@@ -132,33 +222,52 @@ function renderizarVisor(datos) {
                </a>`
             : `<span class="text-[9px] text-slate-400 dark:text-slate-600 italic">Sin Documento</span>`;
 
-        let fila = `
-            <tr id="fila-${escapeHTML(reg.ID_Unidad)}"
-                class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
+        const idEscaped = escapeHTML(reg.ID_Unidad);
+
+        return `
+             <tr id="fila-${idEscaped}"
+                 class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
 
                  <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                      <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Unidad</span>
-                     <span class="font-black tracking-widest text-slate-800 dark:text-white text-xs uppercase">${escapeHTML(reg.ID_Unidad)}</span>
+                     <span class="font-black tracking-widest text-slate-800 dark:text-white text-xs uppercase">${idEscaped}</span>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Placa</span>
-                    <span class="text-slate-700 dark:text-slate-300 font-bold uppercase">${escapeHTML(reg.Placa)}</span>
-                 </td>
-
-                 <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Serial del Vehículo</span>
-                    <span class="text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(reg.Serial)}</span>
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Placa / Serial</span>
+                    <div>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold uppercase block">${escapeHTML(reg.Placa)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Serial)}</span>
+                    </div>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Marca</span>
-                    <span class="text-slate-800 dark:text-slate-200 uppercase font-bold text-xs">${escapeHTML(reg.Marca)}</span>
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Marca / Modelo</span>
+                    <div>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold text-xs uppercase block">${escapeHTML(reg.Marca)} ${escapeHTML(reg.Modelo)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Tipo_Vehiculo)} - ${escapeHTML(reg.Color)}</span>
+                    </div>
                  </td>
 
-                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Tipo de Flota</span>
-                    <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase">${escapeHTML(reg.Tipo_Flota)}</span>
+                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Flota / Estatus</span>
+                    <div>
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase inline-block mb-1">${escapeHTML(reg.Tipo_Flota)}</span>
+                        <div class="text-[9px] font-bold text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(reg.Estatus_Final || 'S/E')} - ${escapeHTML(reg.Situacion_Actual || 'S/S')}</div>
+                    </div>
+                 </td>
+
+                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Gerencia / Usuario</span>
+                    <div>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold text-[10px] uppercase block">${escapeHTML(reg.Gerencia || 'SIN GERENCIA')}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Responsable_Usuario || 'S/R')} (${escapeHTML(reg.Cargo_Usuario || 'S/C')})</span>
+                    </div>
+                 </td>
+
+                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Último Taller</span>
+                    <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase block">${escapeHTML(reg.Ubicacion_Taller)}</span>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
@@ -167,9 +276,9 @@ function renderizarVisor(datos) {
                  </td>
             </tr>
         `;
-        tbody.insertAdjacentHTML("beforeend", fila);
     });
 
+    tbody.innerHTML = htmlFilas.join('');
     renderizarGraficos(liviana, pesada, conteoMarcas);
 }
 
@@ -244,7 +353,16 @@ async function exportarAExcel() {
         "Placa": reg.Placa,
         "Serial Chasis": reg.Serial,
         "Marca": reg.Marca,
+        "Modelo": reg.Modelo,
+        "Color": reg.Color,
+        "Tipo de Vehículo": reg.Tipo_Vehiculo,
         "Tipo de Flota": reg.Tipo_Flota,
+        "Estatus Final": reg.Estatus_Final,
+        "Situación Actual": reg.Situacion_Actual,
+        "Gerencia": reg.Gerencia,
+        "Responsable Usuario": reg.Responsable_Usuario,
+        "Cargo de Usuario": reg.Cargo_Usuario,
+        "Última Ubicación Taller": reg.Ubicacion_Taller,
         "Link Documento": reg.Documento_Url
     }));
 

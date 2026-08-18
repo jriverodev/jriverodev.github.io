@@ -222,7 +222,7 @@ function doPost(e) {
     var sheetActivos = ss.getSheetByName("Maestro_Activos");
     if (!sheetActivos) {
       sheetActivos = ss.insertSheet("Maestro_Activos");
-      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Modelo",	"Color",	"Tipo_Vehiculo",	"Tipo_Flota",	"Estatus_Final",	"Situacion_Actual",	"Gerencia",	"Responsable_Usuario",	"Cargo_Usuario",	"Ubicacion_Taller", "Documento_Url"]);
+      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Tipo_Flota", "Documento_Url"]);
     }
 
     // MAPEO DE COLUMNAS (17 columnas en Historial_Mantenimiento)
