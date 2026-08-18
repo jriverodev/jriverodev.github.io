@@ -16,15 +16,12 @@ const DURACION_SESION_MS = 12 * 60 * 60 * 1000;
 // MÓDULO DE SEGURIDAD, SANITIZACIÓN Y HASHING DE CONTRASEÑAS
 // =========================================================================
 
-/**
- * Sanitiza recursivamente cualquier entrada para prevenir inyecciones HTML / Script
- */
 function sanitizeInput(data) {
   if (data === null || data === undefined) return "";
   if (typeof data === "string") {
     return data
-      .replace(/<[^>]*>?/gm, "") // Elimina etiquetas HTML
-      .replace(/[\r\n\t]/g, " ") // Reemplaza saltos de línea/tabulaciones por espacios
+      .replace(/<[^>]*>?/gm, "") 
+      .replace(/[\r\n\t]/g, " ") 
       .trim();
   } else if (Array.isArray(data)) {
     return data.map(function(item) { return sanitizeInput(item); });
@@ -40,13 +37,6 @@ function sanitizeInput(data) {
   return data;
 }
 
-/**
- * Genera un Hash SHA-256 a partir de una contraseña y una sal (salt).
- * Explicación de Seguridad:
- * - Nunca se almacenan contraseñas en texto plano.
- * - La sal (salt) es un valor aleatorio único por usuario que evita ataques de tablas Rainbow.
- * - La combinación contraseña + salt se procesa mediante Utilities.computeDigest con SHA-256.
- */
 function calcularHashPassword(password, salt) {
   var textoCombinado = String(password).trim().toLowerCase() + String(salt);
   var rawHash = Utilities.computeDigest(
@@ -65,9 +55,6 @@ function calcularHashPassword(password, salt) {
   return hashHex;
 }
 
-/**
- * Genera una sal (salt) aleatoria de 16 caracteres hexadecimales
- */
 function generarSaltAleatorio() {
   var chars = "abcdef0123456789";
   var salt = "";
@@ -77,10 +64,6 @@ function generarSaltAleatorio() {
   return salt;
 }
 
-/**
- * Inicializa la base de usuarios autorizados en PropertiesService si no existe.
- * Almacena pares { usuario: { salt: string, hash: string } }
- */
 function inicializarUsuarios() {
   var userProperties = PropertiesService.getScriptProperties();
   var usuariosExistentes = userProperties.getProperty("TTOCC_USUARIOS_DB");
@@ -94,7 +77,6 @@ function inicializarUsuarios() {
     }
   }
 
-  // Lista de usuarios por defecto con sus credenciales iniciales
   var usuariosSemilla = [
     { usuario: "WILLIAM RIOS", pass: "wr123" },
     { usuario: "VANNESA ROMERO", pass: "vr456" },
@@ -123,9 +105,6 @@ function inicializarUsuarios() {
   return dbUsuarios;
 }
 
-/**
- * Autentica un usuario contra la base protegida en ScriptProperties
- */
 function autenticarUsuario(usuarioInput, passwordInput) {
   var dbUsuarios = inicializarUsuarios();
   var usuarioUpper = String(usuarioInput || "").toUpperCase().trim();
@@ -137,9 +116,6 @@ function autenticarUsuario(usuarioInput, passwordInput) {
   return hashCalculado === userRecord.hash;
 }
 
-/**
- * Genera un token de sesión temporal con timestamp de expiración y lo almacena en PropertiesService
- */
 function generarTokenSesion(usuario) {
   var userProperties = PropertiesService.getScriptProperties();
   var token = "TTOCC_SEC_" + Utilities.getUuid().replace(/-/g, "");
@@ -150,7 +126,6 @@ function generarTokenSesion(usuario) {
   var sesiones = {};
   try { sesiones = JSON.parse(sesionesStr); } catch (e) { sesiones = {}; }
 
-  // Limpiar tokens expirados
   var sesionesLimpias = {};
   for (var k in sesiones) {
     if (sesiones[k] && sesiones[k].expiracion > ahora) {
@@ -169,9 +144,6 @@ function generarTokenSesion(usuario) {
   return { token: token, usuario: usuario.toUpperCase().trim(), expiracion: expiracion };
 }
 
-/**
- * Valida si un token de sesión es legítimo y no ha expirado
- */
 function validarTokenSesion(token) {
   if (!token) return { valido: false, usuario: null };
 
@@ -206,15 +178,16 @@ function doPost(e) {
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // Obtener o crear 'Historial_Mantenimiento'
+    // Obtener o crear 'Historial_Mantenimiento' respetando exactamente el esquema provisto
     var sheet = ss.getSheetByName("Historial_Mantenimiento");
     if (!sheet) {
       sheet = ss.insertSheet("Historial_Mantenimiento");
       sheet.appendRow([
-        "ID_Registro", "ID_Unidad", "Tipo_Flota", "Nombre_Taller", "Avance",
-        "Estatus", "Observaciones", "Fecha_Ingreso", "Fecha_Salida", "Marca",
-        "Foto_Antes", "Foto_Despues", "Nombre_Taller_Ext", "Gerencia",
-        "Usuario", "Tareas", "Modificado_Por"
+        "ID_Registro", "ID_Unidad", "Tipo_Flota", "Nombre_Taller", "Taller_Ext", 
+        "Estatus", "Observaciones", "Marca", "Modelo", "Color", 
+        "Anio", "Serial", "Tipo_Vehiculo", "Avance", "Foto_Antes", 
+        "Foto_Despues", "Fecha_Ingreso", "Fecha_Salida", "Gerencia", "Usuario", 
+        "Cargo_Usuario", "Tareas", "Modificado_Por"
       ]);
     }
 
@@ -222,27 +195,33 @@ function doPost(e) {
     var sheetActivos = ss.getSheetByName("Maestro_Activos");
     if (!sheetActivos) {
       sheetActivos = ss.insertSheet("Maestro_Activos");
-      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Tipo_Flota", "Documento_Url"]);
+      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Modelo", "Color", "Tipo_Vehiculo", "Tipo_Flota", "Estatus_Final", "Situacion_Actual", "Gerencia", "Responsable_Usuario", "Cargo_Usuario", "Ubicacion_Taller", "Documento_Url"]);
     }
 
-    // MAPEO DE COLUMNAS (17 columnas en Historial_Mantenimiento)
-    var COL_ID_REGISTRO = 1;     // A
-    var COL_UNIDAD = 2;          // B
-    var COL_FLOTA = 3;           // C
-    var COL_FOSA = 4;            // D
-    var COL_AVANCE = 5;          // E
-    var COL_ESTATUS = 6;         // F
-    var COL_OBSERVA = 7;         // G
-    var COL_FECHA_INGR = 8;      // H
-    var COL_FECHA_SALIDA = 9;    // I
-    var COL_MARCA = 10;          // J
-    var COL_FOTO_ANTES = 11;     // K
-    var COL_FOTO_DESPUES = 12;   // L
-    var COL_TALLER_EXT = 13;     // M
-    var COL_GERENCIA = 14;       // N
-    var COL_USUARIO = 15;        // O
-    var COL_TAREAS = 16;         // P
-    var COL_MODIFICADO_POR = 17; // Q
+    // MAPEO EXACTO DE LAS 23 COLUMNAS EN HISTORIAL_MANTENIMIENTO
+    var COL_ID_REGISTRO    = 1;  // A
+    var COL_UNIDAD         = 2;  // B
+    var COL_TIPO_FLOTA     = 3;  // C
+    var COL_NOMBRE_TALLER  = 4;  // D
+    var COL_TALLER_EXT     = 5;  // E
+    var COL_ESTATUS        = 6;  // F
+    var COL_OBSERVA        = 7;  // G
+    var COL_MARCA          = 8;  // H
+    var COL_MODELO         = 9;  // I
+    var COL_COLOR          = 10; // J
+    var COL_ANIO           = 11; // K
+    var COL_SERIAL         = 12; // L
+    var COL_TIPO_VEHICULO  = 13; // M
+    var COL_AVANCE         = 14; // N
+    var COL_FOTO_ANTES     = 15; // O
+    var COL_FOTO_DESPUES    = 16; // P
+    var COL_FECHA_INGR     = 17; // Q
+    var COL_FECHA_SALIDA   = 18; // R
+    var COL_GERENCIA       = 19; // S
+    var COL_USUARIO        = 20; // T
+    var COL_CARGO_USUARIO  = 21; // U
+    var COL_TAREAS         = 22; // V
+    var COL_MODIFICADO_POR = 23; // W
 
     // =========================================================================
     // ACCIONES DE AUTENTICACIÓN Y SESIÓN
@@ -280,10 +259,9 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // MODULO: MAESTRO DE ACTIVOS
+    // MÓDULO: MAESTRO DE ACTIVOS
     // =========================================================================
 
-    // LEER ACTIVOS (Lectura Pública)
     if (payload.accion === "leer_activos") {
       var rango = sheetActivos.getDataRange();
       var valores = rango.getValues();
@@ -301,7 +279,6 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", datos: listaObjetos });
     }
 
-    // VERIFICAR SESIÓN PARA ACCIONES DE ESCRITURA EN ACTIVOS
     if (["crear_activo", "editar_activo", "eliminar_activo"].indexOf(payload.accion) !== -1) {
       var authCheckActivos = validarTokenSesion(payload.token);
       if (!authCheckActivos.valido) {
@@ -309,11 +286,10 @@ function doPost(e) {
       }
     }
 
-    // CREAR ACTIVO
     if (payload.accion === "crear_activo") {
       var idUnidad = String(payload.id_unidad).toUpperCase().trim();
-
       var datosActivos = sheetActivos.getDataRange().getValues();
+
       for (var i = 1; i < datosActivos.length; i++) {
         if (String(datosActivos[i][0]).toUpperCase().trim() === idUnidad) {
           return retornarJSON({ status: "ERROR", message: "La unidad '" + idUnidad + "' ya está registrada en el Maestro de Activos." });
@@ -333,7 +309,16 @@ function doPost(e) {
         payload.placa || "",
         payload.serial || "",
         payload.marca || "",
+        payload.modelo || "",
+        payload.color || "",
+        payload.tipo_vehiculo || "",
         payload.flota || "Liviana",
+        payload.estatus_final || "",
+        payload.situacion_actual || "",
+        payload.gerencia || "",
+        payload.responsable_usuario || "",
+        payload.cargo_usuario || "",
+        payload.ubicacion_taller || "",
         urlDocumento
       ];
 
@@ -343,7 +328,6 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", message: "Vehículo registrado con éxito en el Maestro de Activos." });
     }
 
-    // EDITAR ACTIVO
     if (payload.accion === "editar_activo") {
       var idUnidad = String(payload.id_unidad).toUpperCase().trim();
       var datosActivos = sheetActivos.getDataRange().getValues();
@@ -351,8 +335,7 @@ function doPost(e) {
       for (var k = 1; k < datosActivos.length; k++) {
         if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
           var numeroFila = k + 1;
-
-          var urlDocumentoFinal = datosActivos[k][5] || "";
+          var urlDocumentoFinal = datosActivos[k][14] || "";
 
           if (payload.documento_eliminar) {
             eliminarArchivoDrive(urlDocumentoFinal);
@@ -372,8 +355,17 @@ function doPost(e) {
           sheetActivos.getRange(numeroFila, 2).setValue(payload.placa || "");
           sheetActivos.getRange(numeroFila, 3).setValue(payload.serial || "");
           sheetActivos.getRange(numeroFila, 4).setValue(payload.marca || "");
-          sheetActivos.getRange(numeroFila, 5).setValue(payload.flota || "Liviana");
-          sheetActivos.getRange(numeroFila, 6).setValue(urlDocumentoFinal);
+          sheetActivos.getRange(numeroFila, 5).setValue(payload.modelo || "");
+          sheetActivos.getRange(numeroFila, 6).setValue(payload.color || "");
+          sheetActivos.getRange(numeroFila, 7).setValue(payload.tipo_vehiculo || "");
+          sheetActivos.getRange(numeroFila, 8).setValue(payload.flota || "Liviana");
+          sheetActivos.getRange(numeroFila, 9).setValue(payload.estatus_final || "");
+          sheetActivos.getRange(numeroFila, 10).setValue(payload.situacion_actual || "");
+          sheetActivos.getRange(numeroFila, 11).setValue(payload.gerencia || "");
+          sheetActivos.getRange(numeroFila, 12).setValue(payload.responsable_usuario || "");
+          sheetActivos.getRange(numeroFila, 13).setValue(payload.cargo_usuario || "");
+          sheetActivos.getRange(numeroFila, 14).setValue(payload.ubicacion_taller || "");
+          sheetActivos.getRange(numeroFila, 15).setValue(urlDocumentoFinal);
 
           SpreadsheetApp.flush();
           return retornarJSON({ status: "SUCCESS", message: "Activo técnico actualizado correctamente." });
@@ -382,7 +374,6 @@ function doPost(e) {
       return retornarJSON({ status: "ERROR", message: "ID de Unidad no encontrado en el Maestro de Activos." });
     }
 
-    // ELIMINAR ACTIVO
     if (payload.accion === "eliminar_activo") {
       var idUnidad = String(payload.id_unidad).toUpperCase().trim();
       var datosActivos = sheetActivos.getDataRange().getValues();
@@ -390,8 +381,7 @@ function doPost(e) {
       for (var k = 1; k < datosActivos.length; k++) {
         if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
           var numeroFila = k + 1;
-
-          var urlDoc = datosActivos[k][5];
+          var urlDoc = datosActivos[k][14];
           eliminarArchivoDrive(urlDoc);
 
           sheetActivos.deleteRow(numeroFila);
@@ -404,10 +394,9 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // MODULO: HISTORIAL DE MANTENIMIENTO / TALLERES
+    // MÓDULO: HISTORIAL DE MANTENIMIENTO / TALLERES
     // =========================================================================
 
-    // LEER HISTORIAL (Lectura Pública)
     if (payload.accion === "leer") {
       var rango = sheet.getDataRange();
       var valores = rango.getValues();
@@ -429,7 +418,6 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", datos: listaObjetos });
     }
 
-    // VERIFICAR SESIÓN PARA ACCIONES DE ESCRITURA EN HISTORIAL
     if (["crear", "editar", "eliminar"].indexOf(payload.accion) !== -1) {
       var authCheckHistorial = validarTokenSesion(payload.token);
       if (!authCheckHistorial.valido) {
@@ -437,7 +425,6 @@ function doPost(e) {
       }
     }
 
-    // EDITAR HISTORIAL
     if (payload.accion === "editar") {
       var datos = sheet.getDataRange().getValues();
       var idBuscado = String(payload.id_registro);
@@ -446,7 +433,6 @@ function doPost(e) {
         if (String(datos[k][COL_ID_REGISTRO - 1]) === idBuscado) {
           var numeroFila = k + 1;
 
-          // Procesar Foto Después en Google Drive si viene en Base64
           var urlFotoDespuesFinal = payload.foto_despues || "";
           if (payload.foto_despues_base64 && payload.foto_despues_base64 !== "") {
             urlFotoDespuesFinal = guardarFotoEnDrive(
@@ -455,14 +441,23 @@ function doPost(e) {
             );
           }
 
-          sheet.getRange(numeroFila, COL_MARCA).setValue(payload.marca);
-          sheet.getRange(numeroFila, COL_ESTATUS).setValue(payload.estatus);
-          sheet.getRange(numeroFila, COL_OBSERVA).setValue(payload.observaciones);
-          sheet.getRange(numeroFila, COL_FOTO_ANTES).setValue(payload.foto_antes);
+          sheet.getRange(numeroFila, COL_TIPO_FLOTA).setValue(payload.flota || "");
+          sheet.getRange(numeroFila, COL_NOMBRE_TALLER).setValue(payload.nombre_taller || "");
+          sheet.getRange(numeroFila, COL_TALLER_EXT).setValue(payload.nombre_taller_ext || "");
+          sheet.getRange(numeroFila, COL_ESTATUS).setValue(payload.estatus || "");
+          sheet.getRange(numeroFila, COL_OBSERVA).setValue(payload.observaciones || "");
+          sheet.getRange(numeroFila, COL_MARCA).setValue(payload.marca || "");
+          sheet.getRange(numeroFila, COL_MODELO).setValue(payload.modelo || "");
+          sheet.getRange(numeroFila, COL_COLOR).setValue(payload.color || "");
+          sheet.getRange(numeroFila, COL_ANIO).setValue(payload.anio || "");
+          sheet.getRange(numeroFila, COL_SERIAL).setValue(payload.serial || "");
+          sheet.getRange(numeroFila, COL_TIPO_VEHICULO).setValue(payload.tipo_vehiculo || "");
+          sheet.getRange(numeroFila, COL_AVANCE).setValue(payload.avance || 0);
+          sheet.getRange(numeroFila, COL_FOTO_ANTES).setValue(payload.foto_antes || "");
           sheet.getRange(numeroFila, COL_FOTO_DESPUES).setValue(urlFotoDespuesFinal);
-          sheet.getRange(numeroFila, COL_AVANCE).setValue(payload.avance);
-          sheet.getRange(numeroFila, COL_GERENCIA).setValue(payload.gerencia);
-          sheet.getRange(numeroFila, COL_USUARIO).setValue(payload.usuario);
+          sheet.getRange(numeroFila, COL_GERENCIA).setValue(payload.gerencia || "");
+          sheet.getRange(numeroFila, COL_USUARIO).setValue(payload.usuario || "");
+          sheet.getRange(numeroFila, COL_CARGO_USUARIO).setValue(payload.cargo_usuario || "");
           sheet.getRange(numeroFila, COL_MODIFICADO_POR).setValue(payload.modificado_por || "");
 
           if (payload.tareas) {
@@ -485,7 +480,6 @@ function doPost(e) {
       return retornarJSON({ status: "ERROR", message: "ID no encontrado." });
     }
 
-    // CREAR HISTORIAL
     if (payload.accion === "crear") {
       var ultimaFila = sheet.getLastRow();
       var nuevoId = 1;
@@ -501,7 +495,6 @@ function doPost(e) {
 
       var fechaIngresoFinal = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
 
-      // Procesar Foto Antes en Google Drive
       var urlFotoDrive = "";
       if (payload.foto_antes_base64 && payload.foto_antes_base64 !== "") {
         urlFotoDrive = guardarFotoEnDrive(
@@ -510,23 +503,30 @@ function doPost(e) {
         );
       }
 
-      var nuevaFila = [];
-      nuevaFila[COL_ID_REGISTRO - 1] = nuevoId;
-      nuevaFila[COL_UNIDAD - 1] = payload.unidad || "S/I";
-      nuevaFila[COL_FLOTA - 1] = payload.flota || "";
-      nuevaFila[COL_FOSA - 1] = payload.nombre_taller || "";
-      nuevaFila[COL_AVANCE - 1] = 0;
-      nuevaFila[COL_ESTATUS - 1] = "Por Atender";
-      nuevaFila[COL_OBSERVA - 1] = payload.observaciones || "";
-      nuevaFila[COL_FECHA_INGR - 1] = fechaIngresoFinal;
-      nuevaFila[COL_FECHA_SALIDA - 1] = "";
-      nuevaFila[COL_MARCA - 1] = payload.marca || "";
-      nuevaFila[COL_FOTO_ANTES - 1] = urlFotoDrive;
-      nuevaFila[COL_FOTO_DESPUES - 1] = "";
-      nuevaFila[COL_TALLER_EXT - 1] = payload.nombre_taller_ext || "";
-      nuevaFila[COL_GERENCIA - 1] = payload.gerencia || "";
-      nuevaFila[COL_USUARIO - 1] = payload.usuario || "";
-      nuevaFila[COL_TAREAS - 1] = "[]";
+      // Matriz de 23 posiciones totalmente sincronizada con los índices A-W (0 a 22)
+      var nuevaFila = new Array(23).fill("");
+      nuevaFila[COL_ID_REGISTRO - 1]    = nuevoId;
+      nuevaFila[COL_UNIDAD - 1]         = payload.unidad || "S/I";
+      nuevaFila[COL_TIPO_FLOTA - 1]     = payload.flota || "";
+      nuevaFila[COL_NOMBRE_TALLER - 1]  = payload.nombre_taller || "";
+      nuevaFila[COL_TALLER_EXT - 1]     = payload.nombre_taller_ext || "";
+      nuevaFila[COL_ESTATUS - 1]        = payload.estatus || "Por Atender";
+      nuevaFila[COL_OBSERVA - 1]        = payload.observaciones || "";
+      nuevaFila[COL_MARCA - 1]          = payload.marca || "";
+      nuevaFila[COL_MODELO - 1]         = payload.modelo || "";
+      nuevaFila[COL_COLOR - 1]          = payload.color || "";
+      nuevaFila[COL_ANIO - 1]           = payload.anio || "";
+      nuevaFila[COL_SERIAL - 1]         = payload.serial || "";
+      nuevaFila[COL_TIPO_VEHICULO - 1]  = payload.tipo_vehiculo || "";
+      nuevaFila[COL_AVANCE - 1]         = payload.avance || 0;
+      nuevaFila[COL_FOTO_ANTES - 1]     = urlFotoDrive;
+      nuevaFila[COL_FOTO_DESPUES - 1]    = payload.foto_despues || "";
+      nuevaFila[COL_FECHA_INGR - 1]     = fechaIngresoFinal;
+      nuevaFila[COL_FECHA_SALIDA - 1]   = payload.fecha_salida || "";
+      nuevaFila[COL_GERENCIA - 1]       = payload.gerencia || "";
+      nuevaFila[COL_USUARIO - 1]        = payload.usuario || "";
+      nuevaFila[COL_CARGO_USUARIO - 1]  = payload.cargo_usuario || "";
+      nuevaFila[COL_TAREAS - 1]         = payload.tareas || "[]";
       nuevaFila[COL_MODIFICADO_POR - 1] = payload.modificado_por || "";
 
       sheet.appendRow(nuevaFila);
@@ -535,7 +535,6 @@ function doPost(e) {
       return retornarJSON({ status: "SUCCESS", message: "Registrado con éxito.", id_asignado: nuevoId });
     }
 
-    // ELIMINAR HISTORIAL
     if (payload.accion === "eliminar") {
       var datos = sheet.getDataRange().getValues();
       var idBuscado = String(payload.id_registro);
@@ -566,9 +565,6 @@ function doPost(e) {
   }
 }
 
-/**
- * Genera el archivo físico en Google Drive (Imagen) y retorna el stream directo
- */
 function guardarFotoEnDrive(base64Data, nombreArchivo) {
   try {
     if (CONFIG_DRIVE_FOLDER_ID === "TU_ID_DE_CARPETA_DE_GOOGLE_DRIVE_AQUI" || !CONFIG_DRIVE_FOLDER_ID) {
@@ -591,9 +587,6 @@ function guardarFotoEnDrive(base64Data, nombreArchivo) {
   }
 }
 
-/**
- * Genera un documento (PDF o Imagen) en Google Drive y retorna el enlace de visualización
- */
 function guardarDocumentoEnDrive(base64Data, nombreArchivo) {
   try {
     if (CONFIG_DRIVE_FOLDER_ID === "TU_ID_DE_CARPETA_DE_GOOGLE_DRIVE_AQUI" || !CONFIG_DRIVE_FOLDER_ID) {
@@ -626,9 +619,6 @@ function guardarDocumentoEnDrive(base64Data, nombreArchivo) {
   }
 }
 
-/**
- * Intenta extraer el ID de un archivo de Drive de su URL y lo envía a la papelera
- */
 function eliminarArchivoDrive(url) {
   if (!url || typeof url !== "string" || !url.includes("id=")) return;
   try {
