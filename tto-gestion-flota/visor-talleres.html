@@ -100,48 +100,75 @@
         </div>
 
         <!-- FILTROS AVANZADOS -->
-        <div id="visor-filtros-contenedor" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hidden flex-wrap gap-4 items-end shadow-sm dark:shadow-none transition-all">
-            <div class="flex-1 min-w-[200px]">
-                <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Búsqueda Predictiva</label>
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 text-xs"></i>
-                    <input type="text" id="visor-busqueda" oninput="filtrarVisor()" placeholder="Unidad, Marca, Gerencia..."
-                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 transition-all">
-                </div>
-            </div>
-            <div class="w-full sm:w-40">
-                <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Estatus</label>
-                <select id="visor-filtro-estatus" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors">
-                    <option value="">TODOS</option>
-                    <option value="Por Atender">⚠️ POR ATENDER</option>
-                    <option value="En Proceso">⚙️ EN PROCESO</option>
-                    <option value="Listo">✅ YA OPERATIVA</option>
-                </select>
-            </div>
-            <div class="w-full sm:w-48">
-                <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Ubicación</label>
-                <select id="visor-filtro-ubicacion" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors">
-                    <option value="">TODOS LOS TALLERES</option>
-                    <option value="Taller Lagunillas">TALLER LAGUNILLAS</option>
-                    <option value="Taller La Salina">TALLER LA SALINA</option>
-                    <option value="Taller Lago Medio">TALLER LAGO MEDIO</option>
-                    <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO</option>
-                </select>
-            </div>
-            <div class="w-full sm:w-auto flex gap-2">
-                <div class="w-32">
-                    <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Desde</label>
-                    <input type="date" id="visor-fecha-desde" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-[10px] text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors">
-                </div>
-                <div class="w-32">
-                    <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Hasta</label>
-                    <input type="date" id="visor-fecha-hasta" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-[10px] text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors">
-                </div>
-            </div>
-            <button onclick="limpiarFiltrosVisor()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all border border-slate-200 dark:border-slate-700 cursor-pointer" title="Limpiar Filtros">
-                <i class="fa-solid fa-filter-circle-xmark"></i>
-            </button>
+       <div id="visor-filtros-contenedor" 
+     class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-wrap gap-3 md:gap-4 items-end shadow-sm dark:shadow-none transition-all hidden">
+    
+    <!-- Búsqueda Predictiva -->
+    <div class="flex-1 min-w-[240px]">
+        <label for="visor-busqueda" class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">
+            Búsqueda Predictiva
+        </label>
+        <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 text-xs"></i>
+            <input type="text" id="visor-busqueda" oninput="filtrarVisor()" placeholder="Unidad, Marca, Gerencia..."
+                   class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all">
         </div>
+    </div>
+
+    <!-- Estatus -->
+    <div class="w-full sm:w-44">
+        <label for="visor-filtro-estatus" class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">
+            Estatus
+        </label>
+        <select id="visor-filtro-estatus" onchange="filtrarVisor()" 
+                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer">
+            <option value="">TODOS</option>
+            <option value="Por Atender">⚠️ POR ATENDER</option>
+            <option value="En Proceso">⚙️ EN PROCESO</option>
+            <option value="Listo">✅ YA OPERATIVA</option>
+        </select>
+    </div>
+
+    <!-- Ubicación -->
+    <div class="w-full sm:w-52">
+        <label for="visor-filtro-ubicacion" class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">
+            Ubicación
+        </label>
+        <select id="visor-filtro-ubicacion" onchange="filtrarVisor()" 
+                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer">
+            <option value="">TODOS LOS TALLERES</option>
+            <option value="Taller Lagunillas">TALLER LAGUNILLAS</option>
+            <option value="Taller La Salina">TALLER LA SALINA</option>
+            <option value="Taller Lago Medio">TALLER LAGO MEDIO</option>
+            <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO</option>
+        </select>
+    </div>
+
+    <!-- Rango de Fechas -->
+    <div class="w-full sm:w-auto flex items-center gap-2">
+        <div class="flex-1 sm:w-36">
+            <label for="visor-fecha-desde" class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">
+                Desde
+            </label>
+            <input type="date" id="visor-fecha-desde" onchange="filtrarVisor()" 
+                   class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 text-[11px] font-mono text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all">
+        </div>
+        <div class="flex-1 sm:w-36">
+            <label for="visor-fecha-hasta" class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">
+                Hasta
+            </label>
+            <input type="date" id="visor-fecha-hasta" onchange="filtrarVisor()" 
+                   class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 text-[11px] font-mono text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all">
+        </div>
+    </div>
+
+    <!-- Botón Limpiar -->
+    <button onclick="limpiarFiltrosVisor()" 
+            class="bg-slate-100 dark:bg-slate-900 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-500 text-slate-400 p-2.5 rounded-xl transition-all border border-slate-200 dark:border-slate-800 cursor-pointer active:scale-95 flex items-center justify-center h-[38px] w-[38px]" 
+            title="Limpiar Filtros">
+        <i class="fa-solid fa-filter-circle-xmark text-sm"></i>
+    </button>
+</div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 p-0.5">
             <div onclick="filtrarPorKpi('')"
