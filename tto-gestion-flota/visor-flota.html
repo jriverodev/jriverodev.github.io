@@ -54,10 +54,10 @@
                 <span class="hidden md:inline uppercase font-black tracking-widest text-[10px]">Excel</span>
             </button>
 
-            <button onclick="exportarAPDF()" title="Exportar a PDF" class="bg-rose-100 dark:bg-rose-950/40 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-400 font-bold p-2 md:px-4 md:py-2 rounded-full text-xs transition-colors border border-rose-200 dark:border-rose-500/30 flex items-center gap-1.5 cursor-pointer active:scale-95">
+            <!--button onclick="exportarAPDF()" title="Exportar a PDF" class="bg-rose-100 dark:bg-rose-950/40 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-400 font-bold p-2 md:px-4 md:py-2 rounded-full text-xs transition-colors border border-rose-200 dark:border-rose-500/30 flex items-center gap-1.5 cursor-pointer active:scale-95">
                 <i class="fa-solid fa-file-pdf text-sm md:text-xs"></i>
                 <span class="hidden md:inline uppercase font-black tracking-widest text-[10px]">PDF</span>
-            </button>
+            </button-->
 
             <button onclick="cargarDatosAnaliticos()" title="Actualizar datos" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold p-2 md:px-4 md:py-2 rounded-full text-xs transition-colors border border-slate-300 dark:border-slate-700 flex items-center gap-1 cursor-pointer active:scale-95">
                 <i class="fa-solid fa-rotate text-sm md:text-xs"></i>
@@ -83,7 +83,7 @@
                 <label class="block text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 mb-1.5 tracking-widest">Búsqueda Predictiva</label>
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 text-xs"></i>
-                    <input type="text" id="visor-busqueda" placeholder="ID Unidad, Placa, Serial, Marca, Modelo, Gerencia..."
+                    <input type="text" id="visor-busqueda" placeholder="ID Unidad, Placa, VIN, Marca, Modelo, Gerencia..."
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-all">
                 </div>
             </div>
@@ -170,7 +170,7 @@
                     <thead hidden md:table-header-group>
                         <tr class="bg-slate-50 dark:bg-slate-900 text-[9px] font-black tracking-[0.15em] text-slate-600 dark:text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase transition-colors">
                             <th class="p-4">ID Unidad</th>
-                            <th class="p-4">Placa / Serial</th>
+                            <th class="p-4">Placa / VIN</th>
                             <th class="p-4">Marca / Modelo / Color / Tipo</th>
                             <th class="p-4">Flota / Estatus / Situación</th>
                             <th class="p-4">Gerencia / Usuario / Cargo</th>
