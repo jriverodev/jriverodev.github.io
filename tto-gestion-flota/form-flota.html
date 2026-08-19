@@ -72,7 +72,7 @@
                     <thead class="hidden md:table-header-group">
                         <tr class="border-b border-slate-200 dark:border-slate-800 text-[9px] uppercase font-black text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-950/40 tracking-[0.15em] transition-colors">
                             <th class="p-4 font-mono">ID Unidad</th>
-                            <th class="p-4">Placa / Serial</th>
+                            <th class="p-4">Placa / VIN</th>
                             <th class="p-4">Marca / Modelo / Color / Tipo</th>
                             <th class="p-4">Flota / Estatus / Situación</th>
                             <th class="p-4">Gerencia / Usuario / Cargo</th>
@@ -111,7 +111,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Serial del Vehículo / Chasis <span class="text-red-500">*</span></label>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">VIN <span class="text-red-500">*</span></label>
                         <input type="text" id="add-serial" required placeholder="Ej: AJHD871927H" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
@@ -382,7 +382,7 @@
                            id="input-busqueda"
                            oninput="filtrarActivos()"
                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs rounded-xl pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-medium shadow-inner"
-                           placeholder="Buscar por Unidad, Placa, Serial, Marca, Modelo, Gerencia...">
+                           placeholder="Buscar por Unidad, Placa, VIN, Marca, Modelo, Gerencia...">
                 </div>
             </div>
 
