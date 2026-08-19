@@ -404,6 +404,8 @@ async function exportarAExcel() {
     }
 }
 
+/**
+ 
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
     if (datosActivosGlobal.length === 0) return TTOCC_UI.error("Error", "No hay datos para exportar.");
@@ -415,7 +417,8 @@ function exportarAPDF() {
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
-}
+}  
+ */
 
 function filtrarPorKpi(flota) {
     const selectFlota = document.getElementById('visor-filtro-flota');
