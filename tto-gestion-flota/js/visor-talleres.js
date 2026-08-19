@@ -660,7 +660,7 @@ async function exportarAExcel() {
         XLSX.writeFile(libro, nombreArchivo);
     }
 }
-
+/*  
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
     if (datosUnidadesGlobal.length === 0) return TTOCC_UI.error("Error de Exportación", "No hay datos para exportar a PDF.");
@@ -673,7 +673,7 @@ function exportarAPDF() {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     }).from(elemento).save();
 }
-
+*/
 function filtrarPorKpi(estatus) {
     const selectEstatus = document.getElementById('visor-filtro-estatus');
     if (selectEstatus) {
