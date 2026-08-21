@@ -6,10 +6,12 @@
   class SyncManager {
     constructor(options = {}) {
       this.supabaseTableMap = options.tableMap || {
-        mantenimientos: 'mantenimientos',
+        mantenimientos: 'historial_mantenimiento',
         activos: 'maestro_activos',
         registros: 'historial_mantenimiento',
-        registros_activos: 'maestro_activos'
+        registros_activos: 'maestro_activos',
+        historial_mantenimiento: 'historial_mantenimiento',
+        maestro_activos: 'maestro_activos'
       };
       this.client = null;
       this.syncing = false;

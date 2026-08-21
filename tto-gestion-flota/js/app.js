@@ -10,11 +10,12 @@
 
 const APP_CONFIG = {
     URL_API: "https://script.google.com/macros/s/AKfycbzBfFYRZVu2Q3BKQDJ-EfnL1jtpEx2zFK3hgfgdugumIke6Lh4SUfCxsqynuHd2s6R3jw/exec",
-    SUPABASE_URL: window.TTOCC_SUPABASE_URL || "https://your-project-ref.supabase.co",
-    SUPABASE_ANON_KEY: window.TTOCC_SUPABASE_ANON_KEY || "your-anon-key",
+    SUPABASE_URL: window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co",
+    SUPABASE_ANON_KEY: window.TTOCC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ma2xjd3JwZ2F2YXh6bmt4bHJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODUzNjgsImV4cCI6MjA4MDg2MTM2OH0.2xHgsM4F3X0vw05PgVhpMF11w1lU6zT21cp6MlE5gNY",
     TABLES: {
-        registros: "mantenimientos",
-        activos: "activos",
+        registros: "historial_mantenimiento",
+        mantenimientos: "historial_mantenimiento",
+        activos: "maestro_activos",
         colaOffline: "colaOffline"
     }
 };
@@ -101,11 +102,39 @@ async function handleLocalApiGateway(payload) {
     }
 
     if (accion === 'leer') {
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client) {
+            try {
+                const { data, error } = await client.from('historial_mantenimiento').select('*');
+                if (!error && Array.isArray(data)) {
+                    if (typeof guardarMantenimientosLocalSeguro === 'function') {
+                        await guardarMantenimientosLocalSeguro(data);
+                    }
+                    return toJsonResponse({ status: 'SUCCESS', datos: data });
+                }
+            } catch (e) {
+                console.warn('[Supabase] Error leyendo historial_mantenimiento en vivo:', e);
+            }
+        }
         const registros = await readLocalTable(APP_CONFIG.TABLES.registros);
         return toJsonResponse({ status: 'SUCCESS', datos: registros });
     }
 
     if (accion === 'leer_activos') {
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client) {
+            try {
+                const { data, error } = await client.from('maestro_activos').select('*');
+                if (!error && Array.isArray(data)) {
+                    if (typeof guardarActivosLocalSeguro === 'function') {
+                        await guardarActivosLocalSeguro(data);
+                    }
+                    return toJsonResponse({ status: 'SUCCESS', datos: data });
+                }
+            } catch (e) {
+                console.warn('[Supabase] Error leyendo maestro_activos en vivo:', e);
+            }
+        }
         const registros = await readLocalTable(APP_CONFIG.TABLES.activos);
         return toJsonResponse({ status: 'SUCCESS', datos: registros });
     }
