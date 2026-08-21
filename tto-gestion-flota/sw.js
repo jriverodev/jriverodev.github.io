@@ -26,7 +26,7 @@ const ASSETS = [
   './css/fontawesome/all.min.css',
   './js/chart.js',
   './js/xlsx.full.min.js',
-  './css/photoswipe/photoswipe.css'
+  './css/photoswipe.css'
 ];
 
 // Instalación
@@ -55,8 +55,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   
-  // Evitar interceptar llamadas a la API de Google Apps Script
-  if (e.request.url.includes('script.google.com')) return;
+  // Evitar interceptar llamadas a la API de Google Apps Script o Supabase API
+  if (e.request.url.includes('script.google.com') || e.request.url.includes('supabase.co')) return;
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
@@ -66,7 +66,10 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
         }
         return networkResponse;
-      }).catch(() => cachedResponse);
+      }).catch((err) => {
+        if (cachedResponse) return cachedResponse;
+        throw err;
+      });
 
       return cachedResponse || fetchPromise;
     })
