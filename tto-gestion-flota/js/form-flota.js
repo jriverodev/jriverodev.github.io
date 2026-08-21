@@ -212,7 +212,7 @@ function filtrarActivos() {
         const matchesBusqueda = !query ||
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Placa || "").toLowerCase().includes(query) ||
-            String(reg.Serial || "").toLowerCase().includes(query) ||
+            String(reg.VIN || "").toLowerCase().includes(query) ||
             String(reg.Marca || "").toLowerCase().includes(query) ||
             String(reg.Modelo || "").toLowerCase().includes(query) ||
             String(reg.Gerencia || "").toLowerCase().includes(query) ||
@@ -316,7 +316,7 @@ async function cargarTablaActivos() {
             return {
                 ID_Unidad: idUnidad,
                 Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
-                Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
+                VIN: getV(["VIN"]) || u["VIN"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Modelo: normalized["MODELO"] || u["Modelo"] || "",
                 Color: normalized["COLOR"] || u["Color"] || "",
@@ -401,10 +401,10 @@ function renderizarActivos(datos) {
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
-                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Placa / Serial:</span>
+                    <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Placa / VIN:</span>
                     <div>
                         <span class="text-slate-800 dark:text-slate-200 font-bold uppercase block">${escapeHTML(reg.Placa)}</span>
-                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Serial)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.VIN)}</span>
                     </div>
                 </td>
 
@@ -535,9 +535,36 @@ async function guardarNuevoRegistro(event) {
 
     let docBase64 = "";
     let docNombre = "";
+    let documento_url = "";
+
     if (docInput && docInput.files.length > 0) {
-        docBase64 = await transformarABase64(docInput.files[0]);
-        docNombre = docInput.files[0].name;
+        const file = docInput.files[0];
+        docNombre = file.name;
+
+        // If online and Supabase client available, try uploading directly to Storage
+        if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
+            try {
+                const client = ensureSupabaseClient();
+                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                    const idUnidad = document.getElementById("add-unidad").value.trim().toUpperCase() || (crypto && crypto.randomUUID ? crypto.randomUUID() : `tmp-${Date.now()}`);
+                    const path = `activos/${idUnidad}/${docNombre}`;
+                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    if (publicUrl) {
+                        documento_url = publicUrl;
+                    } else {
+                        // fallback to base64
+                        docBase64 = await transformarABase64(file);
+                    }
+                } else {
+                    docBase64 = await transformarABase64(file);
+                }
+            } catch (e) {
+                console.warn('[Upload] Falló upload directo, usando base64 como fallback', e);
+                docBase64 = await transformarABase64(file);
+            }
+        } else {
+            docBase64 = await transformarABase64(file);
+        }
     }
 
     const payload = {
@@ -545,7 +572,7 @@ async function guardarNuevoRegistro(event) {
         token: obtenerTokenSesion(),
         id_unidad: document.getElementById("add-unidad").value.trim().toUpperCase(),
         placa: document.getElementById("add-placa").value.trim().toUpperCase(),
-        serial: document.getElementById("add-serial").value.trim().toUpperCase(),
+        vin: document.getElementById("add-vin").value.trim().toUpperCase(),
         marca: document.getElementById("add-marca").value.trim().toUpperCase(),
         modelo: document.getElementById("add-modelo").value.trim().toUpperCase(),
         color: document.getElementById("add-color").value.trim().toUpperCase(),
@@ -556,10 +583,16 @@ async function guardarNuevoRegistro(event) {
         gerencia: document.getElementById("add-gerencia").value.trim().toUpperCase(),
         responsable_usuario: document.getElementById("add-responsable-usuario").value.trim().toUpperCase(),
         cargo_usuario: document.getElementById("add-cargo-usuario").value.trim().toUpperCase(),
-        documento_base64: docBase64,
-        documento_nombre: docNombre,
         modificado_por: OPERADOR_ACTUAL
     };
+
+    if (documento_url) {
+        payload.documento_url = documento_url;
+        payload.documento_nombre = docNombre;
+    } else {
+        payload.documento_base64 = docBase64;
+        payload.documento_nombre = docNombre;
+    }
 
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);
@@ -606,7 +639,7 @@ function abrirModalEditar(idUnidad) {
 
     document.getElementById("edit-id-unidad").value = reg.ID_Unidad;
     document.getElementById("edit-placa").value = reg.Placa;
-    document.getElementById("edit-serial").value = reg.Serial;
+    document.getElementById("edit-vin").value = reg.VIN;
     document.getElementById("edit-marca").value = reg.Marca;
     document.getElementById("edit-modelo").value = reg.Modelo || "";
     document.getElementById("edit-color").value = reg.Color || "";
@@ -665,7 +698,7 @@ async function guardarEdicionModal(event) {
         token: obtenerTokenSesion(),
         id_unidad: idUnidad,
         placa: document.getElementById("edit-placa").value.trim().toUpperCase(),
-        serial: document.getElementById("edit-serial").value.trim().toUpperCase(),
+        vin: document.getElementById("edit-vin").value.trim().toUpperCase(),
         marca: document.getElementById("edit-marca").value.trim().toUpperCase(),
         modelo: document.getElementById("edit-modelo").value.trim().toUpperCase(),
         color: document.getElementById("edit-color").value.trim().toUpperCase(),

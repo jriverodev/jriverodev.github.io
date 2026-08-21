@@ -111,7 +111,7 @@ async function cargarUnidadesFlotaModal() {
                 return {
                     ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
                     Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
-                    Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
+                    VIN: getV(["VIN"]) || u["VIN"] || "S/I",
                     Marca: normalized["MARCA"] || u["Marca"] || "",
                     Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
                 };
@@ -144,7 +144,7 @@ function renderizarUnidadesFlotaModal(unidades) {
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                 <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${idEscaped}</td>
                 <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
-                <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
+                <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.VIN)}</td>
                 <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${marcaEscaped}</td>
                 <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] font-black">${tipoEscaped}</span></td>
                 <td class="p-3 text-center">
@@ -165,7 +165,7 @@ function filtrarUnidadesFlotaModal() {
         return !query ||
             String(u.ID_Unidad || "").toLowerCase().includes(query) ||
             String(u.Placa || "").toLowerCase().includes(query) ||
-            String(u.Serial || "").toLowerCase().includes(query) ||
+            String(u.VIN || "").toLowerCase().includes(query) ||
             String(u.Marca || "").toLowerCase().includes(query);
     });
     renderizarUnidadesFlotaModal(filtrados);
@@ -693,33 +693,42 @@ function alternarTallerExterno(valor) {
 }
 
 function previsualizarImagen(input, idContenedor) {
+    if (window.TTOCC_UI_UTILS && typeof window.TTOCC_UI_UTILS.previsualizarImagen === 'function') {
+        return window.TTOCC_UI_UTILS.previsualizarImagen(input, idContenedor);
+    }
+    // Fallback: original behavior if util not loaded
     const container = document.getElementById(idContenedor);
     if (!container) return;
     const img = container.querySelector("img");
 
     if (input.files && input.files[0]) {
-        const valRes = validarArchivoAdjunto(input.files[0]);
+        const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(input.files[0]) : { valido: true };
         if (!valRes.valido) {
-            TTOCC_UI.error("Archivo no válido", valRes.mensaje);
+            if (window.TTOCC_UI && typeof TTOCC_UI.error === 'function') {
+                TTOCC_UI.error("Archivo no válido", valRes.mensaje);
+            }
             input.value = "";
-            img.src = "";
+            if (img) img.src = "";
             container.classList.add("hidden");
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            img.src = e.result;
+            if (img) img.src = e.result;
             container.classList.remove("hidden");
         };
         reader.readAsDataURL(input.files[0]);
     } else {
-        img.src = "";
+        if (img) img.src = "";
         container.classList.add("hidden");
     }
 }
 
 function limpiarPrevia(idInput, idContenedor) {
+    if (window.TTOCC_UI_UTILS && typeof window.TTOCC_UI_UTILS.limpiarPrevia === 'function') {
+        return window.TTOCC_UI_UTILS.limpiarPrevia(idInput, idContenedor);
+    }
     const input = document.getElementById(idInput);
     if (input) input.value = "";
     const container = document.getElementById(idContenedor);
@@ -971,8 +980,30 @@ async function guardarEdicionModal(event) {
     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Actualizando registros...`;
 
     let fotoDespuesBase64 = "";
+    let fotoDespuesUrl = "";
     if (fileInput && fileInput.files.length > 0) {
-        fotoDespuesBase64 = await transformarABase64(fileInput.files[0]);
+        const file = fileInput.files[0];
+        if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
+            try {
+                const client = ensureSupabaseClient();
+                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                    const path = `mantenimientos/${id}/${file.name}`;
+                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    if (publicUrl) {
+                        fotoDespuesUrl = publicUrl;
+                    } else {
+                        fotoDespuesBase64 = await transformarABase64(file);
+                    }
+                } else {
+                    fotoDespuesBase64 = await transformarABase64(file);
+                }
+            } catch (e) {
+                console.warn('[Upload] Falló upload directo, usando base64 como fallback', e);
+                fotoDespuesBase64 = await transformarABase64(file);
+            }
+        } else {
+            fotoDespuesBase64 = await transformarABase64(file);
+        }
     }
 
     let fechaSalidaStr = original ? original.Fecha_Salida : "";
@@ -994,11 +1025,16 @@ async function guardarEdicionModal(event) {
         avance: avanceFinal.toString(),
         tareas: JSON.stringify(tareasModalActual), 
         foto_antes: original ? original.Foto_Antes : "",
-        foto_despues: original ? original.Foto_Despues : "", 
-        foto_despues_base64: fotoDespuesBase64, 
+        foto_despues: original ? original.Foto_Despues : "",
         fecha_salida: fechaSalidaStr,
         modificado_por: OPERADOR_ACTUAL
     };
+
+    if (fotoDespuesUrl) {
+        payload.foto_despues = fotoDespuesUrl;
+    } else {
+        payload.foto_despues_base64 = fotoDespuesBase64;
+    }
 
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);

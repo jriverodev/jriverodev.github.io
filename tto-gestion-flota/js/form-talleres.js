@@ -103,14 +103,16 @@ async function cargarUnidadesFlotaModal() {
                 return {
                     ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
                     Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
-                    Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
+                    VIN: getV(["VIN"]) || u["VIN"] || "S/I",
                     Marca: normalized["MARCA"] || u["Marca"] || "",
                     Modelo: normalized["MODELO"] || u["Modelo"] || "",
                     Color: normalized["COLOR"] || u["Color"] || "",
                     Anio: getV(["ANIO", "ANO"]) || u["Anio"] || "",
                     Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
-                    Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana"
-                };
+                    Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
+                        Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
+                        Responsable_Usuario: getV(["RESPONSABLEUSUARIO","RESPONSABLE","USUARIO"]) || u["Responsable_Usuario"] || ""
+                    };
             });
 
             renderizarUnidadesFlotaModal(unidadesFlotaCache);
@@ -140,11 +142,11 @@ function renderizarUnidadesFlotaModal(unidades) {
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                 <td class="p-3 font-mono font-bold text-slate-900 dark:text-white uppercase">${idEscaped}</td>
                 <td class="p-3 font-mono text-slate-700 dark:text-slate-300 uppercase">${escapeHTML(u.Placa)}</td>
-                <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.Serial)}</td>
+                <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.VIN)}</td>
                 <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${marcaEscaped}</td>
                 <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[9px] font-black">${tipoEscaped}</span></td>
                 <td class="p-3 text-center">
-                    <button type="button" onclick="seleccionarUnidadFlota('${idEscaped}', '${marcaEscaped}', '${tipoEscaped}')" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
+                    <button type="button" onclick="seleccionarUnidadFlota('${idEscaped}', '${marcaEscaped}', '${tipoEscaped}', '${escapeHTML(u.VIN)}', '${escapeHTML(u.Modelo)}', '${escapeHTML(u.Color)}', '${escapeHTML(u.Anio)}', '${escapeHTML(u.Tipo_Vehiculo)}', '${escapeHTML(u.Gerencia)}', '${escapeHTML(u.Responsable_Usuario)}')" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
                         Seleccionar
                     </button>
                 </td>
@@ -161,20 +163,52 @@ function filtrarUnidadesFlotaModal() {
         return !query ||
             String(u.ID_Unidad || "").toLowerCase().includes(query) ||
             String(u.Placa || "").toLowerCase().includes(query) ||
-            String(u.Serial || "").toLowerCase().includes(query) ||
+            String(u.VIN || "").toLowerCase().includes(query) ||
             String(u.Marca || "").toLowerCase().includes(query);
     });
     renderizarUnidadesFlotaModal(filtrados);
 }
 
-function seleccionarUnidadFlota(idUnidad, marca, tipoFlota) {
+function seleccionarUnidadFlota(idUnidad, marca, tipoFlota, vin, modelo, color, anio, tipoVehiculo, gerencia, responsable) {
     const inputUnidad = document.getElementById("add-unidad");
     const inputMarca = document.getElementById("add-marca");
     const selectFlota = document.getElementById("add-flota");
 
+    const inputVin = document.getElementById("add-vin");
+    const inputModelo = document.getElementById("add-modelo");
+    const inputColor = document.getElementById("add-color");
+    const inputAnio = document.getElementById("add-anio");
+    const inputTipoVeh = document.getElementById("add-tipo-vehiculo");
+    const selectGerencia = document.getElementById("add-gerencia");
+    const inputChofer = document.getElementById("add-chofer");
+
     if (inputUnidad) inputUnidad.value = idUnidad;
     if (inputMarca) inputMarca.value = marca;
     if (selectFlota) selectFlota.value = tipoFlota;
+
+    if (inputVin) inputVin.value = vin || "";
+    if (inputModelo) inputModelo.value = modelo || "";
+    if (inputColor) inputColor.value = color || "";
+    if (inputAnio) inputAnio.value = anio || "";
+    if (inputTipoVeh) inputTipoVeh.value = tipoVehiculo || "";
+
+    if (selectGerencia && gerencia) {
+        // try to set existing option or append temporarily
+        try {
+            selectGerencia.value = gerencia;
+            if (selectGerencia.value !== gerencia) {
+                const opt = document.createElement('option');
+                opt.value = gerencia;
+                opt.text = gerencia;
+                selectGerencia.appendChild(opt);
+                selectGerencia.value = gerencia;
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    if (inputChofer) inputChofer.value = responsable || '';
 
     cerrarModalSeleccionarUnidad();
     if (window.TTOCC_UI) {
@@ -373,7 +407,7 @@ function filtrarMatriz() {
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Marca || "").toLowerCase().includes(query) ||
             String(reg.Modelo || "").toLowerCase().includes(query) ||
-            String(reg.Serial || "").toLowerCase().includes(query) ||
+            String(reg.VIN || "").toLowerCase().includes(query) ||
             String(reg.Nombre_Taller || "").toLowerCase().includes(query) ||
             String(reg.Nombre_Taller_Ext || "").toLowerCase().includes(query) ||
             String(reg.ID_Registro || "").toLowerCase().includes(query);
@@ -451,7 +485,7 @@ async function cargarTablaEditable() {
                 Modelo: normalized["MODELO"] || u["Modelo"] || "",
                 Color: normalized["COLOR"] || u["Color"] || "",
                 Anio: getV(["ANIO", "ANO"]) || u["Anio"] || "",
-                Serial: getV(["SERIAL"]) || u["Serial"] || "",
+                VIN: getV(["VIN"]) || u["VIN"] || "",
                 Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
@@ -678,33 +712,42 @@ function alternarTallerExterno(valor) {
 }
 
 function previsualizarImagen(input, idContenedor) {
+    if (window.TTOCC_UI_UTILS && typeof window.TTOCC_UI_UTILS.previsualizarImagen === 'function') {
+        return window.TTOCC_UI_UTILS.previsualizarImagen(input, idContenedor);
+    }
+    // Fallback: original behavior if util not loaded
     const container = document.getElementById(idContenedor);
     if (!container) return;
     const img = container.querySelector("img");
 
     if (input.files && input.files[0]) {
-        const valRes = validarArchivoAdjunto(input.files[0]);
+        const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(input.files[0]) : { valido: true };
         if (!valRes.valido) {
-            TTOCC_UI.error("Archivo no válido", valRes.mensaje);
+            if (window.TTOCC_UI && typeof TTOCC_UI.error === 'function') {
+                TTOCC_UI.error("Archivo no válido", valRes.mensaje);
+            }
             input.value = "";
-            img.src = "";
+            if (img) img.src = "";
             container.classList.add("hidden");
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            img.src = e.result;
+            if (img) img.src = e.result;
             container.classList.remove("hidden");
         };
         reader.readAsDataURL(input.files[0]);
     } else {
-        img.src = "";
+        if (img) img.src = "";
         container.classList.add("hidden");
     }
 }
 
 function limpiarPrevia(idInput, idContenedor) {
+    if (window.TTOCC_UI_UTILS && typeof window.TTOCC_UI_UTILS.limpiarPrevia === 'function') {
+        return window.TTOCC_UI_UTILS.limpiarPrevia(idInput, idContenedor);
+    }
     const input = document.getElementById(idInput);
     if (input) input.value = "";
     const container = document.getElementById(idContenedor);
@@ -732,8 +775,32 @@ async function guardarNuevoRegistro(event) {
     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Procesando Imagen...`;
 
     let fotoBase64 = "";
+    let fotoUrl = "";
     if (fileInput.files.length > 0) {
-        fotoBase64 = await transformarABase64(fileInput.files[0]);
+        const file = fileInput.files[0];
+        // Try direct upload to Supabase Storage when online
+        if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
+            try {
+                const client = ensureSupabaseClient();
+                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                    const idUnidad = document.getElementById("add-unidad").value.trim() || (crypto && crypto.randomUUID ? crypto.randomUUID() : `tmp-${Date.now()}`);
+                    const path = `mantenimientos/${idUnidad}/${file.name}`;
+                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    if (publicUrl) {
+                        fotoUrl = publicUrl;
+                    } else {
+                        fotoBase64 = await transformarABase64(file);
+                    }
+                } else {
+                    fotoBase64 = await transformarABase64(file);
+                }
+            } catch (e) {
+                console.warn('[Upload] Falló upload directo, usando base64 como fallback', e);
+                fotoBase64 = await transformarABase64(file);
+            }
+        } else {
+            fotoBase64 = await transformarABase64(file);
+        }
     }
 
     let fechaRaw = document.getElementById("add-fecha-ingreso").value;
@@ -754,6 +821,11 @@ async function guardarNuevoRegistro(event) {
         token: obtenerTokenSesion(),
         unidad: document.getElementById("add-unidad").value.trim(),
         marca: document.getElementById("add-marca").value.trim(),
+        modelo: document.getElementById("add-modelo").value.trim(),
+        color: document.getElementById("add-color").value.trim(),
+        anio: parseInt(document.getElementById("add-anio").value, 10) || null,
+        vin: document.getElementById("add-vin").value.trim(),
+        tipo_vehiculo: document.getElementById("add-tipo-vehiculo").value.trim(),
         flota: document.getElementById("add-flota").value,
         nombre_taller: document.getElementById("add-taller").value,
         nombre_taller_ext: document.getElementById("add-taller-ext").value.trim(),
@@ -761,9 +833,14 @@ async function guardarNuevoRegistro(event) {
         usuario: document.getElementById("add-chofer").value.trim(),
         observaciones: document.getElementById("add-observa").value.trim(),
         fecha_ingreso: fechaFormateada,
-        foto_antes_base64: fotoBase64,
         modificado_por: OPERADOR_ACTUAL
     };
+
+    if (fotoUrl) {
+        payload.foto_antes = fotoUrl;
+    } else {
+        payload.foto_antes_base64 = fotoBase64;
+    }
 
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);
@@ -953,8 +1030,30 @@ async function guardarEdicionModal(event) {
     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> Actualizando registros...`;
 
     let fotoDespuesBase64 = "";
+    let fotoDespuesUrl = "";
     if (fileInput && fileInput.files.length > 0) {
-        fotoDespuesBase64 = await transformarABase64(fileInput.files[0]);
+        const file = fileInput.files[0];
+        if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
+            try {
+                const client = ensureSupabaseClient();
+                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                    const path = `mantenimientos/${id}/${file.name}`;
+                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    if (publicUrl) {
+                        fotoDespuesUrl = publicUrl;
+                    } else {
+                        fotoDespuesBase64 = await transformarABase64(file);
+                    }
+                } else {
+                    fotoDespuesBase64 = await transformarABase64(file);
+                }
+            } catch (e) {
+                console.warn('[Upload] Falló upload directo, usando base64 como fallback', e);
+                fotoDespuesBase64 = await transformarABase64(file);
+            }
+        } else {
+            fotoDespuesBase64 = await transformarABase64(file);
+        }
     }
 
     let fechaSalidaStr = original ? original.Fecha_Salida : "";
@@ -977,10 +1076,15 @@ async function guardarEdicionModal(event) {
         tareas: JSON.stringify(tareasModalActual),
         foto_antes: original ? original.Foto_Antes : "",
         foto_despues: original ? original.Foto_Despues : "",
-        foto_despues_base64: fotoDespuesBase64,
         fecha_salida: fechaSalidaStr,
         modificado_por: OPERADOR_ACTUAL
     };
+
+    if (fotoDespuesUrl) {
+        payload.foto_despues = fotoDespuesUrl;
+    } else {
+        payload.foto_despues_base64 = fotoDespuesBase64;
+    }
 
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);

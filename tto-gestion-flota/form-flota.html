@@ -20,8 +20,11 @@
     <script src="js/app.js" defer></script>
     <script src="js/dexie.min.js" defer></script>
     <script src="js/db.js" defer></script>
+    <script src="js/supabase-client.js" defer></script>
+    <script src="js/sync-manager.js" defer></script>
     <script src="js/ui.js" defer></script>
     <script src="js/tema.js" defer></script>
+    <script src="js/ui-utils.js" defer></script>
     <script src="js/form-flota.js" defer></script>
 </head>
 <body class="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans antialiased min-h-full pb-12 transition-colors duration-300">
@@ -112,7 +115,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">VIN <span class="text-red-500">*</span></label>
-                        <input type="text" id="add-serial" required placeholder="Ej: AJHD871927H" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <input type="text" id="add-vin" required placeholder="Ej: AJHD871927H" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca</label>
@@ -213,8 +216,8 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Serial del Vehículo / Chasis <span class="text-red-500">*</span></label>
-                        <input type="text" id="edit-serial" required class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">VIN del Vehículo / Chasis <span class="text-red-500">*</span></label>
+                        <input type="text" id="edit-vin" required class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca</label>

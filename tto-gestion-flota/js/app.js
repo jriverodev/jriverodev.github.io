@@ -9,8 +9,238 @@
 // ==========================================
 
 const APP_CONFIG = {
-    URL_API: "https://script.google.com/macros/s/AKfycbzBfFYRZVu2Q3BKQDJ-EfnL1jtpEx2zFK3hgfgdugumIke6Lh4SUfCxsqynuHd2s6R3jw/exec"
+    URL_API: "https://script.google.com/macros/s/AKfycbzBfFYRZVu2Q3BKQDJ-EfnL1jtpEx2zFK3hgfgdugumIke6Lh4SUfCxsqynuHd2s6R3jw/exec",
+    SUPABASE_URL: window.TTOCC_SUPABASE_URL || "https://your-project-ref.supabase.co",
+    SUPABASE_ANON_KEY: window.TTOCC_SUPABASE_ANON_KEY || "your-anon-key",
+    TABLES: {
+        registros: "mantenimientos",
+        activos: "activos",
+        colaOffline: "colaOffline"
+    }
 };
+
+function isSupabaseConfigured() {
+    return Boolean(APP_CONFIG.SUPABASE_URL && APP_CONFIG.SUPABASE_ANON_KEY && window.supabase);
+}
+
+function ensureSupabaseClient() {
+    if (window.TTOCC_SUPABASE_CLIENT) {
+        return window.TTOCC_SUPABASE_CLIENT;
+    }
+
+    if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_ANON_KEY) {
+        return null;
+    }
+
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        window.TTOCC_SUPABASE_CLIENT = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+        return window.TTOCC_SUPABASE_CLIENT;
+    }
+
+    const scriptTag = document.createElement('script');
+    scriptTag.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    scriptTag.async = true;
+    scriptTag.onload = () => {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+            window.TTOCC_SUPABASE_CLIENT = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+        }
+    };
+    document.head.appendChild(scriptTag);
+    return null;
+}
+
+function toJsonResponse(payload, status = 200) {
+    return new Response(JSON.stringify(payload), {
+        status,
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+async function readLocalTable(tableName) {
+    if (typeof leerRegistrosLocales === 'function') {
+        return await leerRegistrosLocales(tableName);
+    }
+
+    if (typeof dbTTOCC !== 'undefined' && dbTTOCC && dbTTOCC.table) {
+        try {
+            return await dbTTOCC.table(tableName).toArray();
+        } catch (error) {
+            console.warn('[Dexie] Error leyendo tabla local:', tableName, error);
+        }
+    }
+
+    return [];
+}
+
+async function handleLocalApiGateway(payload) {
+    const accion = payload && (payload.accion || payload.action);
+    const token = payload && payload.token;
+
+    if (accion === 'login') {
+        if (payload && payload.usuario) {
+            sessionStorage.setItem(OPERADOR_KEY, payload.usuario);
+            sessionStorage.setItem(SESSION_TOKEN_KEY, token || 'local-demo-token');
+            return toJsonResponse({
+                status: 'SUCCESS',
+                token: token || 'local-demo-token',
+                usuario: payload.usuario,
+                message: 'Sesión local creada.'
+            });
+        }
+        return toJsonResponse({ status: 'ERROR', message: 'Faltan credenciales.' }, 401);
+    }
+
+    if (accion === 'validar_token') {
+        const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+        const storedUser = sessionStorage.getItem(OPERADOR_KEY) || '';
+        return toJsonResponse({
+            status: 'SUCCESS',
+            valido: Boolean(storedToken && storedToken === (token || storedToken)),
+            usuario: storedUser
+        });
+    }
+
+    if (accion === 'leer') {
+        const registros = await readLocalTable(APP_CONFIG.TABLES.registros);
+        return toJsonResponse({ status: 'SUCCESS', datos: registros });
+    }
+
+    if (accion === 'leer_activos') {
+        const registros = await readLocalTable(APP_CONFIG.TABLES.activos);
+        return toJsonResponse({ status: 'SUCCESS', datos: registros });
+    }
+
+    if (accion === 'crear' || accion === 'editar') {
+        const tableName = APP_CONFIG.TABLES.registros;
+        const id = payload.id_registro || payload.id || payload.ID_Registro || generarIdCliente();
+        const registro = {
+            ...payload,
+            id: String(id),
+            sync_status: 'pending',
+            updated_at: new Date().toISOString(),
+            timestamp: new Date().toISOString()
+        };
+        if (typeof persistirRegistroLocal === 'function') {
+            await persistirRegistroLocal(tableName, registro);
+        }
+        return toJsonResponse({ status: 'SUCCESS', message: 'Registro guardado localmente.', datos: [registro] });
+    }
+
+    if (accion === 'eliminar') {
+        const id = payload.id_registro || payload.id;
+        if (typeof eliminarRegistroLocal === 'function') {
+            await eliminarRegistroLocal(APP_CONFIG.TABLES.registros, id);
+        }
+        return toJsonResponse({ status: 'SUCCESS', message: 'Registro eliminado localmente.' });
+    }
+
+    if (accion === 'crear_activo' || accion === 'editar_activo') {
+        const tableName = APP_CONFIG.TABLES.activos;
+        const id = payload.id_unidad || payload.id || payload.ID_Unidad || generarIdCliente();
+        const registro = {
+            ...payload,
+            id: String(id),
+            sync_status: 'pending',
+            updated_at: new Date().toISOString(),
+            timestamp: new Date().toISOString()
+        };
+        if (typeof persistirRegistroLocal === 'function') {
+            await persistirRegistroLocal(tableName, registro);
+        }
+        return toJsonResponse({ status: 'SUCCESS', message: 'Activo guardado localmente.', datos: [registro] });
+    }
+
+    if (accion === 'eliminar_activo') {
+        const id = payload.id_unidad || payload.id;
+        if (typeof eliminarRegistroLocal === 'function') {
+            await eliminarRegistroLocal(APP_CONFIG.TABLES.activos, id);
+        }
+        return toJsonResponse({ status: 'SUCCESS', message: 'Activo eliminado localmente.' });
+    }
+
+    return toJsonResponse({ status: 'ERROR', message: 'Acción no soportada en modo offline-first.' }, 400);
+}
+
+const originalFetch = window.fetch ? window.fetch.bind(window) : null;
+if (originalFetch) {
+    window.fetch = async function(input, init = {}) {
+        const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+        const bodyText = typeof init.body === 'string' ? init.body : (typeof input === 'object' && input && typeof input.body === 'string' ? input.body : '');
+        let parsedBody = null;
+
+        if (bodyText) {
+            try {
+                parsedBody = JSON.parse(bodyText);
+            } catch (error) {
+                parsedBody = null;
+            }
+        }
+
+        const isApiRequest = Boolean(
+            url && (
+                url === APP_CONFIG.URL_API ||
+                url.includes('script.google.com') ||
+                (parsedBody && (parsedBody.accion || parsedBody.action))
+            )
+        );
+
+        if (isApiRequest && parsedBody && (parsedBody.accion || parsedBody.action)) {
+            return handleLocalApiGateway(parsedBody);
+        }
+
+        return originalFetch(input, init);
+    };
+}
+
+async function syncData() {
+    if (!dbTTOCC || !navigator.onLine) {
+        return false;
+    }
+
+    const supabaseClient = ensureSupabaseClient();
+    if (!supabaseClient) {
+        return false;
+    }
+
+    const tables = Object.keys(APP_CONFIG.TABLES).filter((key) => key !== 'colaOffline');
+    for (const key of tables) {
+        const tableName = APP_CONFIG.TABLES[key];
+        const rows = await dbTTOCC.table(tableName).where('sync_status').equals('pending').toArray();
+        if (!rows.length) continue;
+
+        const payload = rows.map((row) => ({
+            ...row,
+            id: String(row.id || row.ID_Registro || row.id_registro || generarIdCliente()),
+            updated_at: new Date().toISOString(),
+            sync_status: 'synced'
+        }));
+
+            // Prefer using the optional helper that uploads images to Storage then upserts
+            if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.syncAndUpsert === 'function') {
+                const res = await window.TTOCC_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'ttocc-archivos' });
+                if (res.error) {
+                    console.warn('[Supabase] Error sincronizando tabla via TTOCC_SUPABASE_SYNC:', tableName, res.error);
+                    return false;
+                }
+                const rows = res.data || payload;
+                for (const item of rows) {
+                    await marcarRegistroSincronizado(tableName, item.id || item.ID_Registro || item.id_registro);
+                }
+            } else {
+                const { error, data } = await supabaseClient.from(tableName).upsert(payload, { onConflict: 'id' }).select();
+                if (error) {
+                    console.warn('[Supabase] Error sincronizando tabla:', tableName, error);
+                    return false;
+                }
+
+                for (const item of data || payload) {
+                    await marcarRegistroSincronizado(tableName, item.id || item.ID_Registro || item.id_registro);
+                }
+            }
+        }
+
+        return true;
+}
 
 const CACHE_KEY = 'ttocc_mantenimientos';
 const SYNC_QUEUE_KEY = 'ttocc_sync_queue';
@@ -282,19 +512,25 @@ async function validarConexionRed() {
 
 async function procesarSincronizacionPendiente(key = SYNC_QUEUE_KEY) {
     const hayConexion = await validarConexionRed();
-    if (!hayConexion || !APP_CONFIG || !APP_CONFIG.URL_API) return;
+    if (!hayConexion) return;
+
+    const sincronizado = await syncData();
+    if (sincronizado) {
+        console.log('[Sync Complete] Todos los registros locales están sincronizados en Supabase.');
+        mostrarNotificacion('Sincronización con la nube completada.', 'exito');
+    }
+
+    if (!APP_CONFIG || !APP_CONFIG.URL_API) return;
 
     let queue = JSON.parse(localStorage.getItem(key) || '[]');
     if (queue.length === 0) return;
 
     console.log(`[Sync] Procesando ${queue.length} operaciones pendientes para ${key}...`);
-    
     let pendienteSincronizar = [...queue];
 
     for (const item of queue) {
         try {
             const payloadConToken = Object.assign({}, item.payload, { token: obtenerTokenSesion() });
-
             const response = await fetch(APP_CONFIG.URL_API, {
                 method: 'POST',
                 body: JSON.stringify(payloadConToken)

@@ -185,7 +185,7 @@ function doPost(e) {
       sheet.appendRow([
         "ID_Registro", "ID_Unidad", "Tipo_Flota", "Nombre_Taller", "Taller_Ext", 
         "Estatus", "Observaciones", "Marca", "Modelo", "Color", 
-        "Anio", "Serial", "Tipo_Vehiculo", "Avance", "Foto_Antes", 
+        "Anio", "VIN", "Tipo_Vehiculo", "Avance", "Foto_Antes", 
         "Foto_Despues", "Fecha_Ingreso", "Fecha_Salida", "Gerencia", "Usuario", 
         "Cargo_Usuario", "Tareas", "Modificado_Por"
       ]);
@@ -195,7 +195,7 @@ function doPost(e) {
     var sheetActivos = ss.getSheetByName("Maestro_Activos");
     if (!sheetActivos) {
       sheetActivos = ss.insertSheet("Maestro_Activos");
-      sheetActivos.appendRow(["ID_Unidad", "Placa", "Serial", "Marca", "Modelo", "Color", "Tipo_Vehiculo", "Tipo_Flota", "Estatus_Final", "Situacion_Actual", "Gerencia", "Responsable_Usuario", "Cargo_Usuario", "Ubicacion_Taller", "Documento_Url"]);
+      sheetActivos.appendRow(["ID_Unidad", "Placa", "VIN", "Marca", "Modelo", "Color", "Tipo_Vehiculo", "Tipo_Flota", "Estatus_Final", "Situacion_Actual", "Gerencia", "Responsable_Usuario", "Cargo_Usuario", "Ubicacion_Taller", "Ubicacion_Taller_Fecha", "Documento_Url"]);
     }
 
     // MAPEO EXACTO DE LAS 23 COLUMNAS EN HISTORIAL_MANTENIMIENTO
@@ -210,7 +210,7 @@ function doPost(e) {
     var COL_MODELO         = 9;  // I
     var COL_COLOR          = 10; // J
     var COL_ANIO           = 11; // K
-    var COL_SERIAL         = 12; // L
+    var COL_VIN           = 12; // L
     var COL_TIPO_VEHICULO  = 13; // M
     var COL_AVANCE         = 14; // N
     var COL_FOTO_ANTES     = 15; // O
@@ -307,7 +307,7 @@ function doPost(e) {
       var nuevaFilaActivo = [
         idUnidad,
         payload.placa || "",
-        payload.serial || "",
+        payload.vin || "",
         payload.marca || "",
         payload.modelo || "",
         payload.color || "",
@@ -319,6 +319,7 @@ function doPost(e) {
         payload.responsable_usuario || "",
         payload.cargo_usuario || "",
         payload.ubicacion_taller || "",
+        payload.ubicacion_taller_fecha || "",
         urlDocumento
       ];
 
@@ -335,7 +336,7 @@ function doPost(e) {
       for (var k = 1; k < datosActivos.length; k++) {
         if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
           var numeroFila = k + 1;
-          var urlDocumentoFinal = datosActivos[k][14] || "";
+          var urlDocumentoFinal = datosActivos[k][15] || "";
 
           if (payload.documento_eliminar) {
             eliminarArchivoDrive(urlDocumentoFinal);
@@ -353,7 +354,7 @@ function doPost(e) {
           }
 
           sheetActivos.getRange(numeroFila, 2).setValue(payload.placa || "");
-          sheetActivos.getRange(numeroFila, 3).setValue(payload.serial || "");
+          sheetActivos.getRange(numeroFila, 3).setValue(payload.vin || "");
           sheetActivos.getRange(numeroFila, 4).setValue(payload.marca || "");
           sheetActivos.getRange(numeroFila, 5).setValue(payload.modelo || "");
           sheetActivos.getRange(numeroFila, 6).setValue(payload.color || "");
@@ -365,7 +366,10 @@ function doPost(e) {
           sheetActivos.getRange(numeroFila, 12).setValue(payload.responsable_usuario || "");
           sheetActivos.getRange(numeroFila, 13).setValue(payload.cargo_usuario || "");
           sheetActivos.getRange(numeroFila, 14).setValue(payload.ubicacion_taller || "");
-          sheetActivos.getRange(numeroFila, 15).setValue(urlDocumentoFinal);
+          // Escribir fecha de ubicación si viene en payload (fecha_ingreso) o vacío
+          var fechaUbicPayload = payload.ubicacion_taller_fecha || payload.fecha_ingreso || "";
+          sheetActivos.getRange(numeroFila, 15).setValue(fechaUbicPayload || "");
+          sheetActivos.getRange(numeroFila, 16).setValue(urlDocumentoFinal);
 
           SpreadsheetApp.flush();
           return retornarJSON({ status: "SUCCESS", message: "Activo técnico actualizado correctamente." });
@@ -381,7 +385,7 @@ function doPost(e) {
       for (var k = 1; k < datosActivos.length; k++) {
         if (String(datosActivos[k][0]).toUpperCase().trim() === idUnidad) {
           var numeroFila = k + 1;
-          var urlDoc = datosActivos[k][14];
+          var urlDoc = datosActivos[k][15];
           eliminarArchivoDrive(urlDoc);
 
           sheetActivos.deleteRow(numeroFila);
@@ -450,7 +454,7 @@ function doPost(e) {
           sheet.getRange(numeroFila, COL_MODELO).setValue(payload.modelo || "");
           sheet.getRange(numeroFila, COL_COLOR).setValue(payload.color || "");
           sheet.getRange(numeroFila, COL_ANIO).setValue(payload.anio || "");
-          sheet.getRange(numeroFila, COL_SERIAL).setValue(payload.serial || "");
+          sheet.getRange(numeroFila, COL_VIN).setValue(payload.vin || "");
           sheet.getRange(numeroFila, COL_TIPO_VEHICULO).setValue(payload.tipo_vehiculo || "");
           sheet.getRange(numeroFila, COL_AVANCE).setValue(payload.avance || 0);
           sheet.getRange(numeroFila, COL_FOTO_ANTES).setValue(payload.foto_antes || "");
@@ -474,6 +478,38 @@ function doPost(e) {
           }
 
           SpreadsheetApp.flush();
+
+          // ===== Sincronizar Maestro_Activos: actualizar Ubicacion_Taller y metadatos del activo si existe =====
+          try {
+            var idUnidadEdit2 = String(payload.unidad || "").toUpperCase().trim();
+            if (idUnidadEdit2) {
+              var datosActivosAll3 = sheetActivos.getDataRange().getValues();
+              for (var rrr = 1; rrr < datosActivosAll3.length; rrr++) {
+                if (String(datosActivosAll3[rrr][0]).toUpperCase().trim() === idUnidadEdit2) {
+                  var filaAct3 = rrr + 1;
+                  try {
+                    // Sólo actualizar Ubicacion_Taller desde acciones de talleres. Mantener Maestro como fuente única.
+                    var ubic3 = payload.nombre_taller || "";
+                    if (payload.nombre_taller_ext && payload.nombre_taller_ext !== "") {
+                      ubic3 = (ubic3 ? ubic3 : "") + (ubic3 ? " (EXT) " : "") + payload.nombre_taller_ext;
+                    }
+                    // Incluir fecha-hora si está disponible en el payload o usar ahora.
+                    var fechaTaller = payload.fecha_ingreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
+                        // Escribir nombre y fecha en columnas separadas: 14=Ubicacion,15=Fecha
+                        sheetActivos.getRange(filaAct3, 14).setValue(ubic3 || "");
+                        sheetActivos.getRange(filaAct3, 15).setValue(fechaTaller || "");
+                        SpreadsheetApp.flush();
+                  } catch (eUpd) {
+                    Logger.log('Error actualizando Ubicacion_Taller (editar): ' + eUpd.toString());
+                  }
+                  break;
+                }
+              }
+            }
+          } catch (e3) {
+            Logger.log('Error sincronizando Maestro_Activos desde sincronizar/editar mantenimiento: ' + e3.toString());
+          }
+
           return retornarJSON({ status: "SUCCESS", message: "Sincronizado correctamente." });
         }
       }
@@ -516,7 +552,7 @@ function doPost(e) {
       nuevaFila[COL_MODELO - 1]         = payload.modelo || "";
       nuevaFila[COL_COLOR - 1]          = payload.color || "";
       nuevaFila[COL_ANIO - 1]           = payload.anio || "";
-      nuevaFila[COL_SERIAL - 1]         = payload.serial || "";
+      nuevaFila[COL_VIN - 1]         = payload.vin || "";
       nuevaFila[COL_TIPO_VEHICULO - 1]  = payload.tipo_vehiculo || "";
       nuevaFila[COL_AVANCE - 1]         = payload.avance || 0;
       nuevaFila[COL_FOTO_ANTES - 1]     = urlFotoDrive;
@@ -531,6 +567,51 @@ function doPost(e) {
 
       sheet.appendRow(nuevaFila);
       SpreadsheetApp.flush();
+
+      // ===== Sincronizar Maestro_Activos: actualizar Ubicacion_Taller y metadatos del activo si existe, o crear uno nuevo =====
+      try {
+        var idUnidadNuevo = String(payload.unidad || "").toUpperCase().trim();
+        if (idUnidadNuevo) {
+          var datosActivosAll = sheetActivos.getDataRange().getValues();
+          var encontrado = false;
+          for (var r = 1; r < datosActivosAll.length; r++) {
+            if (String(datosActivosAll[r][0]).toUpperCase().trim() === idUnidadNuevo) {
+              var filaAct = r + 1;
+              // Cols: 1=ID_Unidad,2=Placa,3=VIN,4=Marca,5=Modelo,6=Color,7=Tipo_Vehiculo,8=Tipo_Flota,11=Gerencia,12=Responsable_Usuario,14=Ubicacion_Taller
+              sheetActivos.getRange(filaAct, 3).setValue(payload.vin || "");
+              sheetActivos.getRange(filaAct, 4).setValue(payload.marca || "");
+              sheetActivos.getRange(filaAct, 5).setValue(payload.modelo || "");
+              sheetActivos.getRange(filaAct, 6).setValue(payload.color || "");
+              sheetActivos.getRange(filaAct, 7).setValue(payload.tipo_vehiculo || "");
+              sheetActivos.getRange(filaAct, 8).setValue(payload.flota || "Liviana");
+              sheetActivos.getRange(filaAct, 11).setValue(payload.gerencia || "");
+              sheetActivos.getRange(filaAct, 12).setValue(payload.usuario || "");
+              // Prefer taller_ext display if provided
+              var ubic = payload.nombre_taller || "";
+              if (payload.nombre_taller_ext && payload.nombre_taller_ext !== "") {
+                ubic = (ubic ? ubic : "") + (ubic ? " (EXT) " : "") + payload.nombre_taller_ext;
+              }
+              try {
+                // Sólo actualizar Ubicacion_Taller y su fecha. No crear filas nuevas en Maestro_Activos desde acciones de taller.
+                var fechaTallerCrear = fechaIngresoFinal || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), FORMATO_FECHA_HORA);
+                sheetActivos.getRange(filaAct, 14).setValue(ubic || "");
+                sheetActivos.getRange(filaAct, 15).setValue(fechaTallerCrear || "");
+                encontrado = true;
+                SpreadsheetApp.flush();
+              } catch (eUpd2) {
+                Logger.log('Error actualizando Ubicacion_Taller (crear): ' + eUpd2.toString());
+              }
+              break;
+            }
+          }
+
+          // Si no se encontró, no crear una nueva fila: Maestro_Activos es la fuente de verdad y no debe duplicarse aquí.
+          SpreadsheetApp.flush();
+        }
+      } catch (e) {
+        // No bloquear el flujo de creación si falla la sincronización del maestro
+        Logger.log('Error sincronizando Maestro_Activos desde crear mantenimiento: ' + e.toString());
+      }
 
       return retornarJSON({ status: "SUCCESS", message: "Registrado con éxito.", id_asignado: nuevoId });
     }

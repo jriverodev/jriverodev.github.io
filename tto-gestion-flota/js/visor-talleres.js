@@ -120,7 +120,7 @@ async function obtenerMapaActivos() {
 
                 if (idKey) {
                     mapa[idKey] = {
-                        Serial: getV(["SERIAL"]) || item["Serial"] || "",
+                        VIN: getV(["VIN"]) || item["VIN"] || "",
                         Modelo: normalized["MODELO"] || item["Modelo"] || "",
                         Color: normalized["COLOR"] || item["Color"] || "",
                         Anio: getV(["ANIO", "ANO"]) || item["Anio"] || "",
@@ -203,7 +203,7 @@ async function cargarDatosAnaliticos() {
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Modelo: infoActivo.Modelo || normalized["MODELO"] || u["Modelo"] || "",
-                Serial: infoActivo.Serial || getV(["SERIAL"]) || u["Serial"] || "",
+                VIN: infoActivo.VIN || getV(["VIN"]) || u["VIN"] || "",
                 Color: infoActivo.Color || normalized["COLOR"] || u["Color"] || "",
                 Anio: infoActivo.Anio || getV(["ANIO", "ANO"]) || u["Anio"] || "",
                 Tipo_Vehiculo: infoActivo.Tipo_Vehiculo || getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
@@ -271,7 +271,7 @@ function filtrarVisor() {
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Marca || "").toLowerCase().includes(query) ||
             String(reg.Modelo || "").toLowerCase().includes(query) ||
-            String(reg.Serial || "").toLowerCase().includes(query) ||
+            String(reg.VIN || "").toLowerCase().includes(query) ||
             String(reg.Gerencia || "").toLowerCase().includes(query) ||
             String(reg.Usuario || "").toLowerCase().includes(query);
 
@@ -387,7 +387,7 @@ function renderizarVisor(datos) {
                     <div class="text-right md:text-left">
                     <span class="font-black text-slate-900 dark:text-white tracking-widest font-mono block text-xs transition-colors">${escapeHTML(reg.ID_Unidad)}</span>
                     <span class="text-[9px] text-slate-500 dark:text-slate-400 block font-sans font-black uppercase tracking-[0.1em] transition-colors">${escapeHTML(reg.Marca)} ${escapeHTML(reg.Modelo)} (${escapeHTML(reg.Anio || 'S/A')})</span>
-                    <span class="text-[9px] text-slate-400 dark:text-slate-500 font-mono block uppercase">${escapeHTML(reg.Serial)}</span>
+                    <span class="text-[9px] text-slate-400 dark:text-slate-500 font-mono block uppercase">${escapeHTML(reg.VIN)}</span>
                     </div>
                 </td>
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
@@ -605,7 +605,7 @@ async function exportarAExcel() {
     const exportData = datosUnidadesGlobal.map(reg => ({
         "ID Registro": reg.ID_Registro,
         "Unidad": reg.ID_Unidad,
-        "Serial": reg.Serial,
+        "VIN": reg.VIN,
         "Marca": reg.Marca,
         "Modelo": reg.Modelo,
         "Color": reg.Color,

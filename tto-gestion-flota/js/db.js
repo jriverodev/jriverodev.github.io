@@ -13,14 +13,64 @@ var dbTTOCC = null;
 if (typeof Dexie !== 'undefined') {
     dbTTOCC = new Dexie("TTOCC_PWA_Database");
 
-    // Esquema de IndexedDB cifrado
+    // Esquema de IndexedDB cifrado + sincronización offline-first
     dbTTOCC.version(1).stores({
-        mantenimientos: 'id, timestamp',
-        activos: 'idUnidad, timestamp',
-        colaOffline: '++idSync, accion, timestamp'
+        mantenimientos: 'id, sync_status, updated_at, timestamp',
+        activos: 'id, sync_status, updated_at, idUnidad, timestamp',
+        colaOffline: '++idSync, accion, sync_status, updated_at, timestamp',
+        registros: 'id, sync_status, updated_at',
+        registros_activos: 'id, sync_status, updated_at'
+    });
+
+    dbTTOCC.open().catch((error) => {
+        console.warn("[Dexie] No se pudo abrir la base local:", error);
     });
 } else {
     console.warn("[Dexie] La librería Dexie.js no está cargada en el contexto global.");
+}
+
+function generarIdCliente() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+    }
+    return `ttocc-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+async function persistirRegistroLocal(tableName, datos) {
+    if (!dbTTOCC || !tableName) return null;
+    const table = dbTTOCC.table(tableName);
+    const registro = {
+        ...(datos || {}),
+        id: datos && (datos.id || datos.ID_Registro || datos.id_registro) ? String(datos.id || datos.ID_Registro || datos.id_registro) : generarIdCliente(),
+        sync_status: datos && datos.sync_status ? datos.sync_status : 'pending',
+        updated_at: datos && datos.updated_at ? datos.updated_at : new Date().toISOString(),
+        timestamp: datos && datos.timestamp ? datos.timestamp : new Date().toISOString()
+    };
+    await table.put(registro);
+    return registro;
+}
+
+async function leerRegistrosLocales(tableName) {
+    if (!dbTTOCC || !tableName) return [];
+    const table = dbTTOCC.table(tableName);
+    const rows = await table.toArray();
+    return Array.isArray(rows) ? rows : [];
+}
+
+async function marcarRegistroSincronizado(tableName, id) {
+    if (!dbTTOCC || !tableName || !id) return;
+    const current = await dbTTOCC.table(tableName).get(String(id));
+    if (!current) return;
+    await dbTTOCC.table(tableName).put({
+        ...current,
+        sync_status: 'synced',
+        updated_at: new Date().toISOString()
+    });
+}
+
+async function eliminarRegistroLocal(tableName, id) {
+    if (!dbTTOCC || !tableName || !id) return;
+    await dbTTOCC.table(tableName).delete(String(id));
 }
 
 // =========================================================================

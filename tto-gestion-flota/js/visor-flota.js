@@ -105,7 +105,7 @@ async function cargarDatosAnaliticos() {
             return {
                 ID_Unidad: idUnidad,
                 Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
-                Serial: getV(["SERIAL"]) || u["Serial"] || "S/I",
+                VIN: getV(["VIN"]) || u["VIN"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || "",
                 Modelo: normalized["MODELO"] || u["Modelo"] || "",
                 Color: normalized["COLOR"] || u["Color"] || "",
@@ -122,6 +122,7 @@ async function cargarDatosAnaliticos() {
         });
 
         poblarSelectorTipoVehiculo(datosActivosGlobal);
+        poblarSelectorEstatus(datosActivosGlobal);
         calcularKpisGlobales(datosActivosGlobal);
         renderizarVisor(datosActivosGlobal);
 
@@ -142,6 +143,18 @@ function poblarSelectorTipoVehiculo(datos) {
     });
 }
 
+function poblarSelectorEstatus(datos) {
+    const select = document.getElementById("visor-filtro-estatus");
+    if (!select) return;
+
+    const estatusSet = new Set(datos.map(d => String(d.Estatus_Final || d.Estatus || "").trim()).filter(Boolean));
+    const estatus = Array.from(estatusSet).sort((a,b) => a.localeCompare(b, 'es'));
+    select.innerHTML = '<option value="">TODOS LOS ESTATUS</option>';
+    estatus.forEach(e => {
+        select.innerHTML += `<option value="${escapeHTML(e)}">${escapeHTML(e)}</option>`;
+    });
+}
+
 function calcularKpisGlobales(datos) {
     let total = datos.length;
     let liviana = datos.filter(r => r.Tipo_Flota === "Liviana").length;
@@ -157,12 +170,13 @@ function filtrarVisor() {
     const query = document.getElementById("visor-busqueda").value.toLowerCase().trim();
     const flota = document.getElementById("visor-filtro-flota").value;
     const tipoVehiculo = document.getElementById("visor-filtro-tipo-vehiculo") ? document.getElementById("visor-filtro-tipo-vehiculo").value : "";
+    const estatus = document.getElementById("visor-filtro-estatus") ? document.getElementById("visor-filtro-estatus").value : "";
 
     const filtrados = datosActivosGlobal.filter(reg => {
         const matchesBusqueda = !query ||
             String(reg.ID_Unidad || "").toLowerCase().includes(query) ||
             String(reg.Placa || "").toLowerCase().includes(query) ||
-            String(reg.Serial || "").toLowerCase().includes(query) ||
+            String(reg.VIN || "").toLowerCase().includes(query) ||
             String(reg.Marca || "").toLowerCase().includes(query) ||
             String(reg.Modelo || "").toLowerCase().includes(query) ||
             String(reg.Gerencia || "").toLowerCase().includes(query) ||
@@ -170,8 +184,9 @@ function filtrarVisor() {
 
         const matchesFlota = !flota || reg.Tipo_Flota === flota;
         const matchesTipoVehiculo = !tipoVehiculo || String(reg.Tipo_Vehiculo || "").trim().toUpperCase() === tipoVehiculo.trim().toUpperCase();
+        const matchesEstatus = !estatus || String(reg.Estatus_Final || reg.Estatus || "").trim().toUpperCase() === estatus.trim().toUpperCase();
 
-        return matchesBusqueda && matchesFlota && matchesTipoVehiculo;
+        return matchesBusqueda && matchesFlota && matchesTipoVehiculo && matchesEstatus;
     });
 
     const kpiFiltradoEl = document.getElementById("kpiFiltrado");
@@ -187,6 +202,8 @@ function limpiarFiltrosVisor() {
     document.getElementById("visor-filtro-flota").value = "";
     const selectTipo = document.getElementById("visor-filtro-tipo-vehiculo");
     if (selectTipo) selectTipo.value = "";
+    const selectEstatus = document.getElementById("visor-filtro-estatus");
+    if (selectEstatus) selectEstatus.value = "";
 
     const kpiFiltradoEl = document.getElementById("kpiFiltrado");
     if (kpiFiltradoEl) {
@@ -234,10 +251,10 @@ function renderizarVisor(datos) {
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 font-mono text-[11px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Placa / Serial</span>
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Placa / VIN</span>
                     <div>
                         <span class="text-slate-800 dark:text-slate-200 font-bold uppercase block">${escapeHTML(reg.Placa)}</span>
-                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Serial)}</span>
+                        <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.VIN)}</span>
                     </div>
                  </td>
 
@@ -351,7 +368,7 @@ async function exportarAExcel() {
     const exportData = datosActivosGlobal.map(reg => ({
         "ID Unidad": reg.ID_Unidad,
         "Placa": reg.Placa,
-        "Serial Chasis": reg.Serial,
+        "VIN Chasis": reg.VIN,
         "Marca": reg.Marca,
         "Modelo": reg.Modelo,
         "Color": reg.Color,
