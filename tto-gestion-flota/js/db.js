@@ -280,6 +280,7 @@ async function guardarActivosLocalSeguro(lista) {
     try {
         const paqueteCifrado = await TTOCC_CRYPTO.cifrarDatos(lista);
         await dbTTOCC.activos.put({
+            id: 'MAESTRO_ACTIVOS',
             idUnidad: 'MAESTRO_ACTIVOS',
             timestamp: new Date().toISOString(),
             payload: paqueteCifrado
