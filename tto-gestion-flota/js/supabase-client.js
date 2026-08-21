@@ -35,7 +35,22 @@
       return supabaseClient;
     }
 
-    console.warn('[Supabase] supabase-js (createClient) not found. Include the library or provide createClient globally.');
+    // Dynamic load if not loaded yet
+    if (!window._supabaseScriptLoading) {
+      window._supabaseScriptLoading = true;
+      const scriptTag = document.createElement('script');
+      scriptTag.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      scriptTag.async = true;
+      scriptTag.onload = () => {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          supabaseClient = window.supabase.createClient(url, key);
+          window.TTOCC_SUPABASE_CLIENT = supabaseClient;
+        }
+      };
+      document.head.appendChild(scriptTag);
+    }
+
+    console.warn('[Supabase] supabase-js (createClient) loading dynamically via CDN...');
     return null;
   }
 

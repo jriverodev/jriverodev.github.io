@@ -14,12 +14,14 @@ if (typeof Dexie !== 'undefined') {
     dbTTOCC = new Dexie("TTOCC_PWA_Database");
 
     // Esquema de IndexedDB cifrado + sincronización offline-first
-    dbTTOCC.version(1).stores({
+    dbTTOCC.version(2).stores({
         mantenimientos: 'id, sync_status, updated_at, timestamp',
         activos: 'id, sync_status, updated_at, idUnidad, timestamp',
         colaOffline: '++idSync, accion, sync_status, updated_at, timestamp',
         registros: 'id, sync_status, updated_at',
-        registros_activos: 'id, sync_status, updated_at'
+        registros_activos: 'id, sync_status, updated_at',
+        historial_mantenimiento: 'id, sync_status, updated_at, timestamp',
+        maestro_activos: 'id, sync_status, updated_at, idUnidad, timestamp'
     });
 
     dbTTOCC.open().catch((error) => {
