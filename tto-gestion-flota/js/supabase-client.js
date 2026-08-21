@@ -7,8 +7,8 @@
 
   function ensureSupabaseClient() {
     if (supabaseClient) return supabaseClient;
-    const url = window.TTOCC_SUPABASE_URL || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL);
-    const key = window.TTOCC_SUPABASE_ANON_KEY || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY);
+    const url = window.TTOCC_SUPABASE_URL || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL) || "https://mfklcwrpgavaxznkxlra.supabase.co";
+    const key = window.TTOCC_SUPABASE_ANON_KEY || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ma2xjd3JwZ2F2YXh6bmt4bHJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODUzNjgsImV4cCI6MjA4MDg2MTM2OH0.2xHgsM4F3X0vw05PgVhpMF11w1lU6zT21cp6MlE5gNY";
     if (!url || !key) {
       console.warn('[Supabase] Missing URL / ANON_KEY. Supabase operations will be disabled until configured.');
       return null;
