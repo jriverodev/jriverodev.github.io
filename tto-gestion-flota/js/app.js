@@ -59,12 +59,20 @@ function toJsonResponse(payload, status = 200) {
 
 async function readLocalTable(tableName) {
     if (typeof leerRegistrosLocales === 'function') {
-        return await leerRegistrosLocales(tableName);
+        const rows = await leerRegistrosLocales(tableName);
+        if (rows && rows.length > 0) return rows;
     }
 
     if (typeof dbTTOCC !== 'undefined' && dbTTOCC && dbTTOCC.table) {
         try {
-            return await dbTTOCC.table(tableName).toArray();
+            if (dbTTOCC.tables.some(t => t.name === tableName)) {
+                return await dbTTOCC.table(tableName).toArray();
+            }
+            // Fallback aliases if version migration hasn't run yet
+            const alias = tableName === 'historial_mantenimiento' ? 'mantenimientos' : (tableName === 'maestro_activos' ? 'activos' : null);
+            if (alias && dbTTOCC.tables.some(t => t.name === alias)) {
+                return await dbTTOCC.table(alias).toArray();
+            }
         } catch (error) {
             console.warn('[Dexie] Error leyendo tabla local:', tableName, error);
         }
