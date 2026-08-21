@@ -81,23 +81,7 @@ Configurar Supabase y buckets de Storage (instrucciones)
      - Para producción: mantener el bucket privado y servir archivos mediante Signed URLs. En ese caso el código de cliente debe solicitar signed URLs vía funciones seguras (no con ANON KEY en cliente).
 
 3. Configurar RLS y tablas (Postgres)
-   - Crear la(s) tabla(s) que la app sincroniza. Ejemplo mínimo SQL para una tabla de mantenimientos:
-
-     -- Ejemplo: tabla mantenimientos
-     CREATE TABLE IF NOT EXISTS mantenimientos (
-       id TEXT PRIMARY KEY,
-       id_unidad TEXT,
-       marca TEXT,
-       flota TEXT,
-       nombre_taller TEXT,
-       observaciones TEXT,
-       foto_antes_url TEXT,
-       foto_despues_url TEXT,
-       datos JSONB,
-       updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-     );
-
-   - Habilitar Row Level Security (RLS) y añadir políticas de inserción/actualización según tu auth model. Para desarrollo rápido puedes desactivar RLS, pero en producción es imprescindible.
+   - Ejecutar la migración `migrations/enable_rls_policies.sql` en el Editor SQL de Supabase para habilitar Row Level Security y otorgar permisos de lectura/escritura pública (`anon` / `authenticated`) en `maestro_activos`, `historial_mantenimiento` y el bucket `ttocc-archivos`.
 
 4. Ajustes de seguridad y CORS
    - Si usas el ANON KEY en cliente, asegúrate de que las RLS policies permitan solo lo necesario.
