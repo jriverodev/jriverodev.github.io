@@ -106,9 +106,10 @@ const TTOCC_CRYPTO = (function() {
         const bytes = new Uint8Array(buf);
         let binary = '';
         const len = bytes.byteLength;
-        const chunkSize = 8192;
+        const chunkSize = 1024;
         for (let i = 0; i < len; i += chunkSize) {
-            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+            const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+            binary += String.fromCharCode.apply(null, chunk);
         }
         return btoa(binary);
     }
