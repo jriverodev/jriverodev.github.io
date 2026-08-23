@@ -100,10 +100,17 @@ const TTOCC_CRYPTO = (function() {
     }
 
     /**
-     * Convierte ArrayBuffer a Base64
+     * Convierte ArrayBuffer a Base64 (procesando por bloques para evitar Maximum Call Stack Size)
      */
     function bufferToBase64(buf) {
-        return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        const len = bytes.byteLength;
+        const chunkSize = 8192;
+        for (let i = 0; i < len; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        return btoa(binary);
     }
 
     /**
