@@ -164,9 +164,9 @@ async function handleLocalApiGateway(payload) {
             try {
                 // If editing, try fetching existing record from Supabase to preserve fields not sent
                 let recordExistente = {};
-                if (accion === 'editar') {
+                if (accion === 'editar' && id && String(id).toUpperCase() !== 'S/I') {
                     try {
-                        const { data: fetchOld } = await client.from('historial_mantenimiento').select('*').eq('id', String(id)).single();
+                        const { data: fetchOld } = await client.from('historial_mantenimiento').select('*').eq('id', String(id)).maybeSingle();
                         if (fetchOld) recordExistente = fetchOld;
                     } catch (eOld) {}
                 }
@@ -287,9 +287,9 @@ async function handleLocalApiGateway(payload) {
             try {
                 // If editing, try fetching existing record from Supabase to preserve fields not sent
                 let recordExistente = {};
-                if (accion === 'editar_activo') {
+                if (accion === 'editar_activo' && idUnidad && String(idUnidad).toUpperCase() !== 'S/I') {
                     try {
-                        const { data: fetchOld } = await client.from('maestro_activos').select('*').eq('id_unidad', String(idUnidad)).single();
+                        const { data: fetchOld } = await client.from('maestro_activos').select('*').eq('id_unidad', String(idUnidad)).maybeSingle();
                         if (fetchOld) recordExistente = fetchOld;
                     } catch (eOld) {}
                 }

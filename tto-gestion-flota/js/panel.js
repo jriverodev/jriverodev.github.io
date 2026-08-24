@@ -447,11 +447,15 @@ async function cargarTablaEditable() {
             let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
             let tareasArray = [];
             try {
-                if (tareasRaw) {
-                    tareasArray = typeof tareasRaw === "string" ? JSON.parse(tareasRaw) : tareasRaw;
+                if (Array.isArray(tareasRaw)) {
+                    tareasArray = tareasRaw;
+                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
+                    tareasArray = [tareasRaw];
+                } else if (typeof tareasRaw === "string" && tareasRaw.trim()) {
+                    tareasArray = JSON.parse(tareasRaw);
                 }
             } catch(e) { 
-                console.error("Error parseando JSON de tareas en registro", e); 
+                console.warn("No se pudo parsear tareas de string:", tareasRaw, e);
             }
 
             return {

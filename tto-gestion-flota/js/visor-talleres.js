@@ -179,10 +179,14 @@ async function cargarDatosAnaliticos() {
             let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
             let tareasArray = [];
             try {
-                if (tareasRaw) {
-                    tareasArray = typeof tareasRaw === "string" ? JSON.parse(tareasRaw) : tareasRaw;
+                if (Array.isArray(tareasRaw)) {
+                    tareasArray = tareasRaw;
+                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
+                    tareasArray = [tareasRaw];
+                } else if (typeof tareasRaw === "string" && tareasRaw.trim()) {
+                    tareasArray = JSON.parse(tareasRaw);
                 }
-            } catch(e) { console.error("Error parseando tareas", e); }
+            } catch(e) { console.warn("Error parseando tareas", e); }
 
             const rawId = getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I";
             const idUnidadRaw = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
