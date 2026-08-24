@@ -126,25 +126,18 @@
 
                 const path = `${id}/${baseKey}.${ext}`;
 
-                // Prefer Signed URL flow when sign endpoint is reachable (private buckets)
                 let uploadedUrl = null;
+
+                // Try direct upload to client storage first
                 try {
-                    // If a global helper exists, use it
-                    if (typeof window.requestSignedUrl === 'function') {
-                        // signature: requestSignedUrl(apiEndpoint, bucket, path, expires)
-                        const signed = await window.requestSignedUrl(signEndpoint, bucketName, path, 600);
-                        if (signed) {
-                            await fetch(signed, { method: 'PUT', headers: { 'Content-Type': mime }, body: base64ToBlob(base64data, mime) });
-                            // if bucket is public, construct public URL
-                            if (window.TTOCC_SUPABASE_URL && bucketPublicFlag) {
-                                uploadedUrl = `${window.TTOCC_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${path}`;
-                            } else {
-                                // store internal path for server-side resolve
-                                uploadedUrl = path;
-                            }
-                        }
-                    } else {
-                        // Fallback: call sign endpoint directly
+                    uploadedUrl = await uploadBase64ToStorage(client, bucketName, path, base64data);
+                } catch (eStorage) {
+                    console.warn('[Supabase Sync] Direct client storage upload error, trying sign endpoint:', eStorage);
+                }
+
+                // If direct upload returned no URL and a sign-upload helper is explicitly configured, try signEndpoint
+                if (!uploadedUrl && window.TTOCC_SIGN_UPLOAD_ENDPOINT) {
+                    try {
                         const res = await fetch(signEndpoint, {
                             method: 'POST',
                             headers: signHeaders,
@@ -159,28 +152,16 @@
                                     headers: { 'Content-Type': mime },
                                     body: base64ToBlob(base64data, mime)
                                 });
-                                if (!putRes.ok) {
-                                    console.warn('[Supabase Sync] upload to signed URL failed', await putRes.text());
-                                } else {
-                                    if (window.TTOCC_SUPABASE_URL && bucketPublicFlag) {
-                                        uploadedUrl = `${window.TTOCC_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${path}`;
-                                    } else {
-                                        uploadedUrl = path;
-                                    }
+                                if (putRes.ok) {
+                                    uploadedUrl = (window.TTOCC_SUPABASE_URL && bucketPublicFlag)
+                                        ? `${window.TTOCC_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${path}`
+                                        : path;
                                 }
                             }
-                        } else {
-                            const text = await res.text();
-                            console.warn('[Supabase Sync] sign-endpoint error', res.status, text);
-                            // As a fallback, attempt client upload (may fail for private buckets)
-                            const publicUrl = await uploadBase64ToStorage(client, bucketName, path, base64data);
-                            if (publicUrl) uploadedUrl = publicUrl;
                         }
+                    } catch (eSign) {
+                        console.warn('[Supabase Sync] sign endpoint fallback failed:', eSign);
                     }
-                } catch (e) {
-                    console.warn('[Supabase Sync] signed upload error, falling back to client upload', e);
-                    const publicUrl = await uploadBase64ToStorage(client, bucketName, path, base64data);
-                    if (publicUrl) uploadedUrl = publicUrl;
                 }
 
                 if (uploadedUrl) out[baseKey] = uploadedUrl;
