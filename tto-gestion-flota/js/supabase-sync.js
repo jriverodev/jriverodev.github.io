@@ -199,6 +199,27 @@
         }
     }
 
+    function parseCustomDateToISO(str) {
+        if (!str || typeof str !== 'string' || !str.trim() || str.trim().toUpperCase() === 'N/A' || str.trim().toUpperCase() === 'PENDIENTE' || str.trim().toUpperCase() === 'S/F') return null;
+        const cleanStr = str.trim();
+        const ddmmyyyy = cleanStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (ddmmyyyy) {
+            const day = parseInt(ddmmyyyy[1], 10);
+            const month = parseInt(ddmmyyyy[2], 10) - 1;
+            const year = parseInt(ddmmyyyy[3], 10);
+            const hour = parseInt(ddmmyyyy[4] || '0', 10);
+            const min = parseInt(ddmmyyyy[5] || '0', 10);
+            const sec = parseInt(ddmmyyyy[6] || '0', 10);
+            const d = new Date(Date.UTC(year, month, day, hour, min, sec));
+            return d.toISOString();
+        }
+        const isoDate = new Date(cleanStr);
+        if (!isNaN(isoDate.getTime())) {
+            return isoDate.toISOString();
+        }
+        return null;
+    }
+
     async function syncAndUpsert(tableName, rows, opts = {}) {
         // Default bucket for project assets
         const bucket = opts.bucket || 'ttocc-archivos';
@@ -213,11 +234,53 @@
             const id = String(r.id || r.ID_Registro || r.id_registro || r.id_unidad || r.ID_Unidad || (r.id && r.id.toString()) || (crypto && crypto.randomUUID ? crypto.randomUUID() : `c-${Date.now()}`));
             const recWithId = Object.assign({}, r, { id: id });
             const ready = await prepareRecordAssets(client, bucket, recWithId, id);
-            prepared.push(ready);
+
+            // Column field mappings & date sanitization
+            if (ready.flota && !ready.tipo_flota) ready.tipo_flota = ready.flota;
+            if (ready.nombre_taller_ext && !ready.taller_ext) ready.taller_ext = ready.nombre_taller_ext;
+            if (ready.unidad && !ready.id_unidad) ready.id_unidad = ready.unidad;
+
+            if (ready.fecha_ingreso) ready.fecha_ingreso = parseCustomDateToISO(ready.fecha_ingreso);
+            if (ready.fecha_salida) ready.fecha_salida = parseCustomDateToISO(ready.fecha_salida);
+            if (ready.ubicacion_taller_fecha) ready.ubicacion_taller_fecha = parseCustomDateToISO(ready.ubicacion_taller_fecha);
+
+            // Whitelist depending on table
+            let columnasPermitidas = [
+                'id', 'id_unidad', 'tipo_flota', 'nombre_taller', 'taller_ext', 'estatus',
+                'observaciones', 'marca', 'modelo', 'color', 'anio', 'vin', 'tipo_vehiculo',
+                'avance', 'foto_antes', 'foto_despues', 'fecha_ingreso', 'fecha_salida',
+                'gerencia', 'usuario', 'cargo_usuario', 'tareas', 'modificado_por', 'metadata', 'updated_at'
+            ];
+
+            if (tableName === 'maestro_activos' || tableName === 'activos' || tableName === 'registros_activos') {
+                columnasPermitidas = [
+                    'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
+                    'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
+                    'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
+                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'updated_at'
+                ];
+            }
+
+            const cleanRecord = {};
+            for (const col of columnasPermitidas) {
+                if (ready[col] !== undefined && ready[col] !== null) {
+                    cleanRecord[col] = ready[col];
+                }
+            }
+            if (tableName === 'maestro_activos' || tableName === 'activos' || tableName === 'registros_activos') {
+                cleanRecord.id_unidad = String(ready.id_unidad || ready.id);
+            } else {
+                cleanRecord.id = String(id);
+            }
+            cleanRecord.updated_at = new Date().toISOString();
+
+            prepared.push(cleanRecord);
         }
 
+        const conflictCol = (tableName === 'maestro_activos' || tableName === 'activos' || tableName === 'registros_activos') ? 'id_unidad' : 'id';
+
         try {
-            const upsertRes = await client.from(tableName).upsert(prepared, { onConflict: 'id' }).select();
+            const upsertRes = await client.from(tableName).upsert(prepared, { onConflict: conflictCol }).select();
             if (upsertRes.error) {
                 console.warn('[Supabase Sync] upsert error', upsertRes.error);
                 return { error: upsertRes.error };
