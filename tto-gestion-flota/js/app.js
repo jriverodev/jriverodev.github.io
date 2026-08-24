@@ -166,12 +166,30 @@ async function handleLocalApiGateway(payload) {
                 if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(id));
                 }
-                delete payloadRemoto.sync_status;
-                delete payloadRemoto.timestamp;
-                delete payloadRemoto.accion;
-                delete payloadRemoto.token;
 
-                const { error, data } = await client.from('historial_mantenimiento').upsert(payloadRemoto, { onConflict: 'id' }).select();
+                // Map field names to match historial_mantenimiento PostgreSQL schema
+                if (payloadRemoto.flota && !payloadRemoto.tipo_flota) payloadRemoto.tipo_flota = payloadRemoto.flota;
+                if (payloadRemoto.nombre_taller_ext && !payloadRemoto.taller_ext) payloadRemoto.taller_ext = payloadRemoto.nombre_taller_ext;
+                if (payloadRemoto.usuario && !payloadRemoto.usuario) payloadRemoto.usuario = payloadRemoto.usuario;
+
+                // Whitelist valid columns in historial_mantenimiento table
+                const columnasPermitidas = [
+                    'id', 'id_unidad', 'tipo_flota', 'nombre_taller', 'taller_ext', 'estatus',
+                    'observaciones', 'marca', 'modelo', 'color', 'anio', 'vin', 'tipo_vehiculo',
+                    'avance', 'foto_antes', 'foto_despues', 'fecha_ingreso', 'fecha_salida',
+                    'gerencia', 'usuario', 'cargo_usuario', 'tareas', 'modificado_por', 'metadata', 'updated_at'
+                ];
+
+                const recordSanitizado = {};
+                for (const col of columnasPermitidas) {
+                    if (payloadRemoto[col] !== undefined) {
+                        recordSanitizado[col] = payloadRemoto[col];
+                    }
+                }
+                recordSanitizado.id = String(id);
+                recordSanitizado.updated_at = new Date().toISOString();
+
+                const { error, data } = await client.from('historial_mantenimiento').upsert(recordSanitizado, { onConflict: 'id' }).select();
                 if (!error) {
                     registro.sync_status = 'synced';
                     if (typeof persistirRegistroLocal === 'function') {
@@ -227,12 +245,28 @@ async function handleLocalApiGateway(payload) {
                 if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
                 }
-                delete payloadRemoto.sync_status;
-                delete payloadRemoto.timestamp;
-                delete payloadRemoto.accion;
-                delete payloadRemoto.token;
 
-                const { error, data } = await client.from('maestro_activos').upsert(payloadRemoto, { onConflict: 'id_unidad' }).select();
+                // Map field names for maestro_activos PostgreSQL schema
+                if (payloadRemoto.flota && !payloadRemoto.tipo_flota) payloadRemoto.tipo_flota = payloadRemoto.flota;
+
+                // Whitelist valid columns in maestro_activos table
+                const columnasPermitidasActivos = [
+                    'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
+                    'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
+                    'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
+                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'updated_at'
+                ];
+
+                const recordSanitizado = {};
+                for (const col of columnasPermitidasActivos) {
+                    if (payloadRemoto[col] !== undefined) {
+                        recordSanitizado[col] = payloadRemoto[col];
+                    }
+                }
+                recordSanitizado.id_unidad = String(idUnidad);
+                recordSanitizado.updated_at = new Date().toISOString();
+
+                const { error, data } = await client.from('maestro_activos').upsert(recordSanitizado, { onConflict: 'id_unidad' }).select();
                 if (!error) {
                     registro.sync_status = 'synced';
                     if (typeof persistirRegistroLocal === 'function') {
