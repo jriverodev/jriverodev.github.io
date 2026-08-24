@@ -150,49 +150,123 @@ async function handleLocalApiGateway(payload) {
     if (accion === 'crear' || accion === 'editar') {
         const tableName = APP_CONFIG.TABLES.registros;
         const id = payload.id_registro || payload.id || payload.ID_Registro || generarIdCliente();
-        const registro = {
+        let registro = {
             ...payload,
             id: String(id),
+            id_unidad: payload.id_unidad || payload.unidad || payload.ID_Unidad || '',
             sync_status: 'pending',
             updated_at: new Date().toISOString(),
             timestamp: new Date().toISOString()
         };
+
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client) {
+            try {
+                let payloadRemoto = { ...registro };
+                if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
+                    payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(id));
+                }
+                delete payloadRemoto.sync_status;
+                delete payloadRemoto.timestamp;
+                delete payloadRemoto.accion;
+                delete payloadRemoto.token;
+
+                const { error, data } = await client.from('historial_mantenimiento').upsert(payloadRemoto, { onConflict: 'id' }).select();
+                if (!error) {
+                    registro.sync_status = 'synced';
+                    if (typeof persistirRegistroLocal === 'function') {
+                        await persistirRegistroLocal(tableName, registro);
+                    }
+                    return toJsonResponse({ status: 'SUCCESS', message: 'Registro guardado y sincronizado en Supabase.', datos: data || [registro] });
+                } else {
+                    console.warn('[Supabase] Error en upsert live crear/editar:', error);
+                }
+            } catch (e) {
+                console.warn('[Supabase] Excepción en guardar live:', e);
+            }
+        }
+
         if (typeof persistirRegistroLocal === 'function') {
             await persistirRegistroLocal(tableName, registro);
         }
-        return toJsonResponse({ status: 'SUCCESS', message: 'Registro guardado localmente.', datos: [registro] });
+        return toJsonResponse({ status: 'SUCCESS', message: 'Registro guardado localmente (pendiente de sync).', datos: [registro] });
     }
 
     if (accion === 'eliminar') {
         const id = payload.id_registro || payload.id;
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client && id) {
+            try {
+                await client.from('historial_mantenimiento').delete().eq('id', String(id));
+            } catch (e) {
+                console.warn('[Supabase] Error eliminando en Supabase:', e);
+            }
+        }
         if (typeof eliminarRegistroLocal === 'function') {
             await eliminarRegistroLocal(APP_CONFIG.TABLES.registros, id);
         }
-        return toJsonResponse({ status: 'SUCCESS', message: 'Registro eliminado localmente.' });
+        return toJsonResponse({ status: 'SUCCESS', message: 'Registro eliminado.' });
     }
 
     if (accion === 'crear_activo' || accion === 'editar_activo') {
         const tableName = APP_CONFIG.TABLES.activos;
-        const id = payload.id_unidad || payload.id || payload.ID_Unidad || generarIdCliente();
-        const registro = {
+        const idUnidad = payload.id_unidad || payload.id || payload.ID_Unidad || generarIdCliente();
+        let registro = {
             ...payload,
-            id: String(id),
+            id: String(idUnidad),
+            id_unidad: String(idUnidad),
             sync_status: 'pending',
             updated_at: new Date().toISOString(),
             timestamp: new Date().toISOString()
         };
+
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client) {
+            try {
+                let payloadRemoto = { ...registro };
+                if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
+                    payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
+                }
+                delete payloadRemoto.sync_status;
+                delete payloadRemoto.timestamp;
+                delete payloadRemoto.accion;
+                delete payloadRemoto.token;
+
+                const { error, data } = await client.from('maestro_activos').upsert(payloadRemoto, { onConflict: 'id_unidad' }).select();
+                if (!error) {
+                    registro.sync_status = 'synced';
+                    if (typeof persistirRegistroLocal === 'function') {
+                        await persistirRegistroLocal(tableName, registro);
+                    }
+                    return toJsonResponse({ status: 'SUCCESS', message: 'Activo guardado y sincronizado en Supabase.', datos: data || [registro] });
+                } else {
+                    console.warn('[Supabase] Error en upsert live activo:', error);
+                }
+            } catch (e) {
+                console.warn('[Supabase] Excepción en guardar activo live:', e);
+            }
+        }
+
         if (typeof persistirRegistroLocal === 'function') {
             await persistirRegistroLocal(tableName, registro);
         }
-        return toJsonResponse({ status: 'SUCCESS', message: 'Activo guardado localmente.', datos: [registro] });
+        return toJsonResponse({ status: 'SUCCESS', message: 'Activo guardado localmente (pendiente de sync).', datos: [registro] });
     }
 
     if (accion === 'eliminar_activo') {
-        const id = payload.id_unidad || payload.id;
-        if (typeof eliminarRegistroLocal === 'function') {
-            await eliminarRegistroLocal(APP_CONFIG.TABLES.activos, id);
+        const idUnidad = payload.id_unidad || payload.id;
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client && idUnidad) {
+            try {
+                await client.from('maestro_activos').delete().eq('id_unidad', String(idUnidad));
+            } catch (e) {
+                console.warn('[Supabase] Error eliminando activo en Supabase:', e);
+            }
         }
-        return toJsonResponse({ status: 'SUCCESS', message: 'Activo eliminado localmente.' });
+        if (typeof eliminarRegistroLocal === 'function') {
+            await eliminarRegistroLocal(APP_CONFIG.TABLES.activos, idUnidad);
+        }
+        return toJsonResponse({ status: 'SUCCESS', message: 'Activo eliminado.' });
     }
 
     return toJsonResponse({ status: 'ERROR', message: 'Acción no soportada en modo offline-first.' }, 400);
