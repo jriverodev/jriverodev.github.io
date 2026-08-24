@@ -162,15 +162,45 @@ async function handleLocalApiGateway(payload) {
         const client = ensureSupabaseClient();
         if (navigator.onLine && client) {
             try {
-                let payloadRemoto = { ...registro };
+                // If editing, try fetching existing record from Supabase to preserve fields not sent
+                let recordExistente = {};
+                if (accion === 'editar') {
+                    try {
+                        const { data: fetchOld } = await client.from('historial_mantenimiento').select('*').eq('id', String(id)).single();
+                        if (fetchOld) recordExistente = fetchOld;
+                    } catch (eOld) {}
+                }
+
+                let payloadRemoto = { ...recordExistente, ...registro };
                 if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(id));
                 }
 
-                // Map field names to match historial_mantenimiento PostgreSQL schema
+                // Field aliases mapping for Postgres schema
                 if (payloadRemoto.flota && !payloadRemoto.tipo_flota) payloadRemoto.tipo_flota = payloadRemoto.flota;
                 if (payloadRemoto.nombre_taller_ext && !payloadRemoto.taller_ext) payloadRemoto.taller_ext = payloadRemoto.nombre_taller_ext;
-                if (payloadRemoto.usuario && !payloadRemoto.usuario) payloadRemoto.usuario = payloadRemoto.usuario;
+                if (payloadRemoto.unidad && !payloadRemoto.id_unidad) payloadRemoto.id_unidad = payloadRemoto.unidad;
+
+                // Type conversions
+                if (payloadRemoto.avance !== undefined && payloadRemoto.avance !== null) {
+                    payloadRemoto.avance = parseInt(payloadRemoto.avance, 10) || 0;
+                }
+                if (payloadRemoto.anio !== undefined && payloadRemoto.anio !== null) {
+                    payloadRemoto.anio = parseInt(payloadRemoto.anio, 10) || null;
+                }
+
+                // Tareas JSON parsing if string
+                if (typeof payloadRemoto.tareas === 'string') {
+                    try { payloadRemoto.tareas = JSON.parse(payloadRemoto.tareas); } catch (eJson) {}
+                }
+
+                // Date formatting to ISO string
+                if (payloadRemoto.fecha_ingreso) {
+                    payloadRemoto.fecha_ingreso = parseCustomDateToISO(payloadRemoto.fecha_ingreso) || payloadRemoto.fecha_ingreso;
+                }
+                if (payloadRemoto.fecha_salida) {
+                    payloadRemoto.fecha_salida = parseCustomDateToISO(payloadRemoto.fecha_salida) || payloadRemoto.fecha_salida;
+                }
 
                 // Whitelist valid columns in historial_mantenimiento table
                 const columnasPermitidas = [
@@ -182,7 +212,7 @@ async function handleLocalApiGateway(payload) {
 
                 const recordSanitizado = {};
                 for (const col of columnasPermitidas) {
-                    if (payloadRemoto[col] !== undefined) {
+                    if (payloadRemoto[col] !== undefined && payloadRemoto[col] !== null) {
                         recordSanitizado[col] = payloadRemoto[col];
                     }
                 }
@@ -195,6 +225,24 @@ async function handleLocalApiGateway(payload) {
                     if (typeof persistirRegistroLocal === 'function') {
                         await persistirRegistroLocal(tableName, registro);
                     }
+
+                    // Update maestro_activos's ubicacion_taller and ubicacion_taller_fecha for this id_unidad
+                    const idUnidadRef = String(recordSanitizado.id_unidad || '').trim();
+                    if (idUnidadRef) {
+                        try {
+                            const tallerNombre = recordSanitizado.nombre_taller === "TALLER EXTERNO (Terceros)" && recordSanitizado.taller_ext
+                                ? `EXT: ${recordSanitizado.taller_ext}`
+                                : recordSanitizado.nombre_taller;
+                            await client.from('maestro_activos').update({
+                                ubicacion_taller: tallerNombre || 'Taller',
+                                ubicacion_taller_fecha: recordSanitizado.fecha_ingreso || new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            }).eq('id_unidad', idUnidadRef);
+                        } catch (eActivo) {
+                            console.warn('[Supabase] No se pudo actualizar maestro_activos desde taller:', eActivo);
+                        }
+                    }
+
                     return toJsonResponse({ status: 'SUCCESS', message: 'Registro guardado y sincronizado en Supabase.', datos: data || [registro] });
                 } else {
                     console.warn('[Supabase] Error en upsert live crear/editar:', error);
@@ -241,13 +289,32 @@ async function handleLocalApiGateway(payload) {
         const client = ensureSupabaseClient();
         if (navigator.onLine && client) {
             try {
-                let payloadRemoto = { ...registro };
+                // If editing, try fetching existing record from Supabase to preserve fields not sent
+                let recordExistente = {};
+                if (accion === 'editar_activo') {
+                    try {
+                        const { data: fetchOld } = await client.from('maestro_activos').select('*').eq('id_unidad', String(idUnidad)).single();
+                        if (fetchOld) recordExistente = fetchOld;
+                    } catch (eOld) {}
+                }
+
+                let payloadRemoto = { ...recordExistente, ...registro };
                 if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
                 }
 
                 // Map field names for maestro_activos PostgreSQL schema
                 if (payloadRemoto.flota && !payloadRemoto.tipo_flota) payloadRemoto.tipo_flota = payloadRemoto.flota;
+
+                // Type conversions
+                if (payloadRemoto.anio !== undefined && payloadRemoto.anio !== null) {
+                    payloadRemoto.anio = parseInt(payloadRemoto.anio, 10) || null;
+                }
+
+                // Date formatting to ISO
+                if (payloadRemoto.ubicacion_taller_fecha) {
+                    payloadRemoto.ubicacion_taller_fecha = parseCustomDateToISO(payloadRemoto.ubicacion_taller_fecha) || payloadRemoto.ubicacion_taller_fecha;
+                }
 
                 // Whitelist valid columns in maestro_activos table
                 const columnasPermitidasActivos = [
@@ -259,7 +326,7 @@ async function handleLocalApiGateway(payload) {
 
                 const recordSanitizado = {};
                 for (const col of columnasPermitidasActivos) {
-                    if (payloadRemoto[col] !== undefined) {
+                    if (payloadRemoto[col] !== undefined && payloadRemoto[col] !== null) {
                         recordSanitizado[col] = payloadRemoto[col];
                     }
                 }
@@ -457,6 +524,28 @@ function cerrarSesion() {
 // ==========================================
 // 4. UTILIDADES DE FORMATO Y FECHAS
 // ==========================================
+
+function parseCustomDateToISO(str) {
+    if (!str || typeof str !== 'string' || !str.trim()) return null;
+    const cleanStr = str.trim();
+    // DD-MM-YYYY HH:mm:ss or DD-MM-YYYY HH:mm or DD-MM-YYYY
+    const ddmmyyyy = cleanStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (ddmmyyyy) {
+        const day = parseInt(ddmmyyyy[1], 10);
+        const month = parseInt(ddmmyyyy[2], 10) - 1;
+        const year = parseInt(ddmmyyyy[3], 10);
+        const hour = parseInt(ddmmyyyy[4] || '0', 10);
+        const min = parseInt(ddmmyyyy[5] || '0', 10);
+        const sec = parseInt(ddmmyyyy[6] || '0', 10);
+        const d = new Date(Date.UTC(year, month, day, hour, min, sec));
+        return d.toISOString();
+    }
+    const isoDate = new Date(cleanStr);
+    if (!isNaN(isoDate.getTime())) {
+        return isoDate.toISOString();
+    }
+    return null;
+}
 
 function formatearFecha(fechaStr) {
     if (!fechaStr) return '-';
