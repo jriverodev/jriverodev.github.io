@@ -194,13 +194,9 @@ async function handleLocalApiGateway(payload) {
                     try { payloadRemoto.tareas = JSON.parse(payloadRemoto.tareas); } catch (eJson) {}
                 }
 
-                // Date formatting to ISO string
-                if (payloadRemoto.fecha_ingreso) {
-                    payloadRemoto.fecha_ingreso = parseCustomDateToISO(payloadRemoto.fecha_ingreso) || payloadRemoto.fecha_ingreso;
-                }
-                if (payloadRemoto.fecha_salida) {
-                    payloadRemoto.fecha_salida = parseCustomDateToISO(payloadRemoto.fecha_salida) || payloadRemoto.fecha_salida;
-                }
+                // Date formatting to ISO string (convert empty string / N/A / PENDIENTE to null)
+                payloadRemoto.fecha_ingreso = parseCustomDateToISO(payloadRemoto.fecha_ingreso);
+                payloadRemoto.fecha_salida = parseCustomDateToISO(payloadRemoto.fecha_salida);
 
                 // Whitelist valid columns in historial_mantenimiento table
                 const columnasPermitidas = [
@@ -311,10 +307,8 @@ async function handleLocalApiGateway(payload) {
                     payloadRemoto.anio = parseInt(payloadRemoto.anio, 10) || null;
                 }
 
-                // Date formatting to ISO
-                if (payloadRemoto.ubicacion_taller_fecha) {
-                    payloadRemoto.ubicacion_taller_fecha = parseCustomDateToISO(payloadRemoto.ubicacion_taller_fecha) || payloadRemoto.ubicacion_taller_fecha;
-                }
+                // Date formatting to ISO (convert empty string to null)
+                payloadRemoto.ubicacion_taller_fecha = parseCustomDateToISO(payloadRemoto.ubicacion_taller_fecha);
 
                 // Whitelist valid columns in maestro_activos table
                 const columnasPermitidasActivos = [
@@ -526,7 +520,7 @@ function cerrarSesion() {
 // ==========================================
 
 function parseCustomDateToISO(str) {
-    if (!str || typeof str !== 'string' || !str.trim()) return null;
+    if (!str || typeof str !== 'string' || !str.trim() || str.trim().toUpperCase() === 'N/A' || str.trim().toUpperCase() === 'PENDIENTE' || str.trim().toUpperCase() === 'S/F') return null;
     const cleanStr = str.trim();
     // DD-MM-YYYY HH:mm:ss or DD-MM-YYYY HH:mm or DD-MM-YYYY
     const ddmmyyyy = cleanStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
