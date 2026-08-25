@@ -49,6 +49,31 @@
         </div>
     </header>
 
+    <!-- MODAL DE ACCESO ADMIN -->
+    <div id="modalAdminAcceso" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-[28px] shadow-2xl p-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-600/10 text-purple-500 mb-4">
+                <i class="fa-solid fa-lock text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-1">Acceso Administrativo</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mb-6">Ingrese la clave de seguridad para administrar el backend</p>
+
+            <form onsubmit="verificarAccesoAdmin(event)" class="space-y-4" autocomplete="off">
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest text-left">Contraseña de Administrador</label>
+                    <input type="password" id="input-admin-pass" required placeholder="••••••••"
+                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white text-center focus:outline-none focus:border-purple-500 text-lg font-mono tracking-widest">
+                </div>
+                <div id="error-admin-pass" class="text-[11px] text-red-500 font-bold hidden bg-red-500/10 border border-red-500/20 py-2 rounded-xl">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Contraseña incorrecta.
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-purple-600/20 active:scale-95 cursor-pointer">
+                    Ingresar al Panel <i class="fa-solid fa-right-to-bracket ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <main class="max-w-7xl mx-auto w-full p-3 md:p-6 space-y-6 flex-grow">
 
         <!-- TABS DE NAVEGACIÓN -->

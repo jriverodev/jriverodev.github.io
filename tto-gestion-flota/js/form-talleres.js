@@ -279,7 +279,7 @@ async function verificarSesion() {
         try {
             const res = await fetch(APP_CONFIG.URL_API, {
                 method: "POST",
-                body: JSON.stringify({ accion: "validar_token", token: token })
+                body: JSON.stringify({ accion: "validar_token", token: token, modulo_requerido: "TALLERES" })
             });
             const data = await res.json();
             if (data.status === "SUCCESS" && data.valido) {
@@ -298,6 +298,9 @@ async function verificarSesion() {
     }
 
     cerrarSesion();
+    if (typeof poblarSelectOperadores === 'function') {
+        poblarSelectOperadores('input-operador', 'TALLERES');
+    }
     document.getElementById("modalIdentificacion").classList.remove("hidden");
 }
 
@@ -327,7 +330,8 @@ async function confirmarIdentidad(event) {
             body: JSON.stringify({
                 accion: "login",
                 usuario: operadorSanitizado,
-                password: passwordSanitizado
+                password: passwordSanitizado,
+                modulo_requerido: "TALLERES"
             })
         });
 

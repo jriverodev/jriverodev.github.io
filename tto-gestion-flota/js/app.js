@@ -99,10 +99,24 @@ async function handleLocalApiGateway(payload) {
                         if (!data.activo) {
                             return toJsonResponse({ status: 'ERROR', message: 'El usuario se encuentra inactivo o bloqueado.' }, 403);
                         }
+
+                        // Verificar permisos de módulo
+                        const moduloReq = String(payload.modulo_requerido || '').toUpperCase();
+                        const userMod = String(data.modulo || 'TODOS').toUpperCase();
+                        const userRol = String(data.rol_id || '').toLowerCase();
+
+                        if (userRol !== 'admin' && userMod !== 'TODOS' && moduloReq) {
+                            if (moduloReq === 'TALLERES' && userMod !== 'TALLERES' && userRol !== 'operador_talleres') {
+                                return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Talleres.' }, 403);
+                            }
+                            if (moduloReq === 'FLOTA' && userMod !== 'FLOTA' && userRol !== 'operador_flota') {
+                                return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Flota.' }, 403);
+                            }
+                        }
+
                         if (String(data.password_plain).trim() === String(payload.password).trim()) {
                             const generatedToken = (crypto && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Date.now());
-                            sessionStorage.setItem(OPERADOR_KEY, data.usuario);
-                            sessionStorage.setItem(SESSION_TOKEN_KEY, generatedToken);
+                            guardarSesion(generatedToken, data.usuario, data.rol_id, data.modulo);
                             return toJsonResponse({
                                 status: 'SUCCESS',
                                 token: generatedToken,
@@ -121,8 +135,7 @@ async function handleLocalApiGateway(payload) {
             }
 
             // Fallback para entorno local u offline
-            sessionStorage.setItem(OPERADOR_KEY, payload.usuario);
-            sessionStorage.setItem(SESSION_TOKEN_KEY, token || 'local-demo-token');
+            guardarSesion(token || 'local-demo-token', payload.usuario);
             return toJsonResponse({
                 status: 'SUCCESS',
                 token: token || 'local-demo-token',
@@ -136,9 +149,19 @@ async function handleLocalApiGateway(payload) {
     if (accion === 'validar_token') {
         const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
         const storedUser = sessionStorage.getItem(OPERADOR_KEY) || '';
+        const storedRol = sessionStorage.getItem('TTOCC_ROL') || '';
+        const storedMod = sessionStorage.getItem('TTOCC_MODULO') || '';
+
+        const moduloReq = String(payload && payload.modulo_requerido || '').toUpperCase();
+        let esPermitido = true;
+        if (storedRol !== 'admin' && storedMod && storedMod !== 'TODOS' && moduloReq) {
+            if (moduloReq === 'TALLERES' && storedMod !== 'TALLERES' && storedRol !== 'operador_talleres') esPermitido = false;
+            if (moduloReq === 'FLOTA' && storedMod !== 'FLOTA' && storedRol !== 'operador_flota') esPermitido = false;
+        }
+
         return toJsonResponse({
             status: 'SUCCESS',
-            valido: Boolean(storedToken && storedToken === (token || storedToken)),
+            valido: Boolean(storedToken && storedToken === (token || storedToken) && esPermitido),
             usuario: storedUser
         });
     }
@@ -538,9 +561,51 @@ function obtenerTokenSesion() {
     return sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
 }
 
-function guardarSesion(token, usuario) {
+function guardarSesion(token, usuario, rol = '', modulo = '') {
     sessionStorage.setItem(SESSION_TOKEN_KEY, token);
     sessionStorage.setItem(OPERADOR_KEY, usuario);
+    if (rol) sessionStorage.setItem('TTOCC_ROL', rol);
+    if (modulo) sessionStorage.setItem('TTOCC_MODULO', modulo);
+}
+
+async function poblarSelectOperadores(selectId, moduloRequerido) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const client = ensureSupabaseClient();
+    if (navigator.onLine && client) {
+        try {
+            const { data, error } = await client.from('usuarios')
+                .select('usuario, nombre_completo, modulo, rol_id, activo')
+                .eq('activo', true)
+                .order('usuario', { ascending: true });
+
+            if (!error && Array.isArray(data) && data.length > 0) {
+                const filtrados = data.filter(u => {
+                    if (!moduloRequerido) return true;
+                    const mod = String(u.modulo || 'TODOS').toUpperCase();
+                    const rol = String(u.rol_id || '').toLowerCase();
+                    if (mod === 'TODOS' || rol === 'admin') return true;
+                    if (moduloRequerido.toUpperCase() === 'TALLERES' && (mod === 'TALLERES' || rol === 'operador_talleres')) return true;
+                    if (moduloRequerido.toUpperCase() === 'FLOTA' && (mod === 'FLOTA' || rol === 'operador_flota')) return true;
+                    return false;
+                });
+
+                if (filtrados.length > 0) {
+                    select.innerHTML = '<option value="" disabled selected hidden>Seleccione Operador...</option>';
+                    filtrados.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.usuario;
+                        opt.textContent = u.usuario;
+                        select.appendChild(opt);
+                    });
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('[Supabase] Error poblando select de operadores:', e);
+        }
+    }
 }
 
 function cerrarSesion() {
