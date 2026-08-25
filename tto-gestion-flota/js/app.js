@@ -87,6 +87,40 @@ async function handleLocalApiGateway(payload) {
 
     if (accion === 'login') {
         if (payload && payload.usuario) {
+            const client = ensureSupabaseClient();
+            if (navigator.onLine && client) {
+                try {
+                    const { data, error } = await client.from('usuarios')
+                        .select('*')
+                        .eq('usuario', String(payload.usuario).toUpperCase().trim())
+                        .maybeSingle();
+
+                    if (!error && data) {
+                        if (!data.activo) {
+                            return toJsonResponse({ status: 'ERROR', message: 'El usuario se encuentra inactivo o bloqueado.' }, 403);
+                        }
+                        if (String(data.password_plain).trim() === String(payload.password).trim()) {
+                            const generatedToken = (crypto && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Date.now());
+                            sessionStorage.setItem(OPERADOR_KEY, data.usuario);
+                            sessionStorage.setItem(SESSION_TOKEN_KEY, generatedToken);
+                            return toJsonResponse({
+                                status: 'SUCCESS',
+                                token: generatedToken,
+                                usuario: data.usuario,
+                                modulo: data.modulo || 'TODOS',
+                                rol_id: data.rol_id || 'operador_talleres',
+                                message: 'Autenticación exitosa en Supabase.'
+                            });
+                        } else {
+                            return toJsonResponse({ status: 'ERROR', message: 'Contraseña incorrecta.' }, 401);
+                        }
+                    }
+                } catch (eAuth) {
+                    console.warn('[Supabase Auth] Fallo al consultar usuarios en Supabase:', eAuth);
+                }
+            }
+
+            // Fallback para entorno local u offline
             sessionStorage.setItem(OPERADOR_KEY, payload.usuario);
             sessionStorage.setItem(SESSION_TOKEN_KEY, token || 'local-demo-token');
             return toJsonResponse({

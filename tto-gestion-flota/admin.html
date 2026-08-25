@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración Backend - TTOCC</title>
+    <script src="./js/libs/browser@4.js"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-scheme: light dark;
+        }
+        @variant dark (&:where(.dark, .dark *));
+    </style>
+    <link rel="stylesheet" href="css/fontawesome/all.min.css">
+    <link rel="icon" href="data:,">
+
+    <script src="js/xlsx.full.min.js"></script>
+    <script src="js/app.js" defer></script>
+    <script src="js/dexie.min.js" defer></script>
+    <script src="js/db.js" defer></script>
+    <script src="js/supabase-client.js" defer></script>
+    <script src="js/supabase-sync.js" defer></script>
+    <script src="js/sync-manager.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/tema.js" defer></script>
+    <script src="js/admin.js" defer></script>
+</head>
+<body class="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-purple-500/30 transition-colors duration-300">
+
+    <header class="w-full bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center sticky top-0 z-40 backdrop-blur-md transition-colors">
+        <div class="flex items-center gap-2 md:gap-3">
+            <a href="index.html" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 p-2 rounded-xl transition-all cursor-pointer mr-1">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+            </a>
+            <div class="bg-purple-600/10 border border-purple-500/20 p-2 rounded-xl text-purple-500">
+                <i class="fa-solid fa-gears text-xl md:text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-slate-800 dark:text-white text-sm md:text-base tracking-[0.1em] uppercase leading-tight">Administración Backend</h1>
+                <p class="text-[9px] md:text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black block">Importación Masiva & Control de Usuarios (Supabase)</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="toggleTema()" title="Cambiar Tema" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-purple-400 p-2 md:px-4 md:py-2 rounded-full text-xs transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-1 cursor-pointer active:scale-95">
+                <i class="fa-solid fa-sun theme-toggle-icon text-sm md:text-xs"></i>
+                <span class="hidden md:inline uppercase font-black tracking-widest text-[10px]">Tema</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full p-3 md:p-6 space-y-6 flex-grow">
+
+        <!-- TABS DE NAVEGACIÓN -->
+        <div class="flex border-b border-slate-200 dark:border-slate-800 gap-4">
+            <button id="tab-btn-import" onclick="cambiarTabAdmin('import')" class="pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 cursor-pointer flex items-center gap-2">
+                <i class="fa-solid fa-file-csv"></i> Importación Masiva
+            </button>
+            <button id="tab-btn-usuarios" onclick="cambiarTabAdmin('usuarios')" class="pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-purple-500 cursor-pointer flex items-center gap-2">
+                <i class="fa-solid fa-users-gear"></i> Gestión de Usuarios & Roles
+            </button>
+        </div>
+
+        <!-- SECCIÓN 1: IMPORTACIÓN MASIVA -->
+        <section id="seccion-import" class="space-y-6">
+            <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+                <h2 class="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-upload text-purple-500"></i> Carga Masiva de Archivos a Supabase
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Seleccione la tabla destino y cargue su archivo CSV o Excel (.xlsx) con los datos exportados.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest">Tabla Destino</label>
+                        <select id="import-tabla-destino" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors cursor-pointer">
+                            <option value="maestro_activos">Maestro de Activos (maestro_activos)</option>
+                            <option value="historial_mantenimiento">Historial de Mantenimiento (historial_mantenimiento)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest">Seleccionar Archivo (CSV / Excel)</label>
+                        <input type="file" id="import-archivo-input" accept=".csv, .xlsx, .xls" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400 focus:outline-none focus:border-purple-500 transition-colors cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="procesarImportacionMasiva()" id="btn-iniciar-import" class="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-600/20 flex items-center gap-2 cursor-pointer active:scale-95">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Iniciar Importación a Supabase
+                    </button>
+                </div>
+            </div>
+
+            <!-- PROGRESO Y CONSOLA DE LOGS -->
+            <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 space-y-4 font-mono">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400 font-bold uppercase tracking-wider">Estado de Procesamiento</span>
+                    <span id="import-porcentaje" class="text-purple-400 font-black">0%</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                    <div id="import-barra-progreso" class="bg-purple-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="import-log-console" class="h-48 overflow-y-auto text-[11px] text-slate-300 bg-slate-900/80 rounded-2xl p-4 border border-slate-800/80 space-y-1">
+                    <p class="text-slate-500 italic">> Esperando inicio de importación...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: GESTIÓN DE USUARIOS Y ROLES -->
+        <section id="seccion-usuarios" class="hidden space-y-6">
+            <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex justify-between items-center flex-wrap gap-4">
+                <div>
+                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear text-purple-500"></i> Directorio de Usuarios de Acceso
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Administración de credenciales, roles y asignación de módulos en Supabase.</p>
+                </div>
+                <button onclick="abrirModalUsuario()" class="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-600/20 flex items-center gap-2 cursor-pointer active:scale-95">
+                    <i class="fa-solid fa-user-plus"></i> Crear Usuario
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-900 text-[9px] font-black tracking-[0.15em] text-slate-600 dark:text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase">
+                                <th class="p-4">Usuario</th>
+                                <th class="p-4">Nombre Completo</th>
+                                <th class="p-4">Rol</th>
+                                <th class="p-4">Módulo Asignado</th>
+                                <th class="p-4">Contraseña (PIN)</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaUsuariosCuerpo" class="divide-y divide-slate-200 dark:divide-slate-800/50 text-xs font-medium text-slate-700 dark:text-slate-300">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center text-slate-500 uppercase text-[10px] font-bold">Cargando usuarios desde Supabase...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL CREAR / EDITAR USUARIO -->
+    <div id="modalUsuario" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <h3 id="modal-usuario-titulo" class="text-xs uppercase tracking-widest font-black text-purple-600 dark:text-purple-400 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> Crear Nuevo Usuario
+                </h3>
+                <button onclick="cerrarModalUsuario()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="formUsuario" onsubmit="guardarUsuario(event)" class="space-y-4">
+                <input type="hidden" id="usr-id">
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Nombre de Usuario <span class="text-red-500">*</span></label>
+                    <input type="text" id="usr-usuario" required placeholder="Ej: CARLOS MENDOZA" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white uppercase focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="usr-nombre" placeholder="Ej: Carlos Mendoza" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Contraseña / PIN <span class="text-red-500">*</span></label>
+                        <input type="text" id="usr-password" required maxlength="10" placeholder="12345" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Rol</label>
+                        <select id="usr-rol" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500">
+                            <option value="operador_talleres">Operador Talleres</option>
+                            <option value="operador_flota">Operador Flota</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Módulo Permitido</label>
+                        <select id="usr-modulo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500">
+                            <option value="TALLERES">Módulo Talleres</option>
+                            <option value="FLOTA">Módulo Flota</option>
+                            <option value="TODOS">Todos los Módulos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Estado</label>
+                        <select id="usr-activo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500">
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo / Bloqueado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="cerrarModalUsuario()" class="px-5 py-2 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold uppercase">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-black uppercase">Guardar Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/60 hidden sm:block">
+        <p class="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black">
+          Sistema TTOCC — Módulo de Administración Backend Supabase
+        </p>
+    </footer>
+
+</body>
+</html>
