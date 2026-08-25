@@ -2,8 +2,40 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
-    cargarUsuariosSupabase();
+    validarAccesoAdmin();
 });
+
+function validarAccesoAdmin() {
+    const isAuth = sessionStorage.getItem("TTOCC_ADMIN_AUTH");
+    const modal = document.getElementById("modalAdminAcceso");
+    if (isAuth === "authorized") {
+        if (modal) modal.classList.add("hidden");
+        cargarUsuariosSupabase();
+    } else {
+        if (modal) modal.classList.remove("hidden");
+    }
+}
+
+function verificarAccesoAdmin(event) {
+    event.preventDefault();
+    const passInput = document.getElementById("input-admin-pass");
+    const errDiv = document.getElementById("error-admin-pass");
+
+    if (!passInput) return;
+    const val = passInput.value.trim();
+
+    if (val === "Raida17") {
+        sessionStorage.setItem("TTOCC_ADMIN_AUTH", "authorized");
+        document.getElementById("modalAdminAcceso").classList.add("hidden");
+        if (errDiv) errDiv.classList.add("hidden");
+        cargarUsuariosSupabase();
+        TTOCC_UI.success("Acceso Concedido", "Bienvenido al Panel de Administración Backend.");
+    } else {
+        if (errDiv) errDiv.classList.remove("hidden");
+        passInput.value = "";
+        passInput.focus();
+    }
+}
 
 function cambiarTabAdmin(tab) {
     const secImport = document.getElementById("seccion-import");
