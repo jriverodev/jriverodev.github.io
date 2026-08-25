@@ -58,7 +58,7 @@ async function verificarAccesoAdmin(event) {
     if (!esAutorizado) {
         try {
             const hash = await calcularSHA256(val);
-            // SHA-256 hash de Raida17
+            // SHA-256 hash de la clave
             const HASH_OFFLINE = "ea1452418669eda74e12e6558c2b7bd1ea13e47db3f5e00cbe888c85d8bada8f";
             if (hash === HASH_OFFLINE) {
                 esAutorizado = true;
