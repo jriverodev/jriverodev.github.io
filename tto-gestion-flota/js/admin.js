@@ -16,22 +16,69 @@ function validarAccesoAdmin() {
     }
 }
 
-function verificarAccesoAdmin(event) {
+async function calcularSHA256(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verificarAccesoAdmin(event) {
     event.preventDefault();
     const passInput = document.getElementById("input-admin-pass");
     const errDiv = document.getElementById("error-admin-pass");
 
     if (!passInput) return;
     const val = passInput.value.trim();
+    if (!val) return;
 
-    if (val === "Raida17") {
+    let esAutorizado = false;
+    const client = typeof ensureSupabaseClient === "function" ? ensureSupabaseClient() : null;
+
+    // 1. Validar contra Supabase si hay conexión
+    if (navigator.onLine && client) {
+        try {
+            const { data, error } = await client.from("usuarios")
+                .select("password_plain, rol_id, activo")
+                .eq("usuario", "ADMINISTRADOR")
+                .maybeSingle();
+
+            if (!error && data && data.activo) {
+                if (String(data.password_plain).trim() === val) {
+                    esAutorizado = true;
+                }
+            }
+        } catch (e) {
+            console.warn("[Admin Auth] Falló consulta en Supabase, recurriendo a hash offline:", e);
+        }
+    }
+
+    // 2. Fallback offline: verificar SHA-256 Hash de la clave
+    if (!esAutorizado) {
+        try {
+            const hash = await calcularSHA256(val);
+            // SHA-256 hash de Raida17
+            const HASH_OFFLINE = "ea1452418669eda74e12e6558c2b7bd1ea13e47db3f5e00cbe888c85d8bada8f";
+            if (hash === HASH_OFFLINE) {
+                esAutorizado = true;
+            }
+        } catch (eHash) {
+            console.error("[Admin Auth] Error calculando hash crypto:", eHash);
+        }
+    }
+
+    if (esAutorizado) {
         sessionStorage.setItem("TTOCC_ADMIN_AUTH", "authorized");
         document.getElementById("modalAdminAcceso").classList.add("hidden");
         if (errDiv) errDiv.classList.add("hidden");
         cargarUsuariosSupabase();
         TTOCC_UI.success("Acceso Concedido", "Bienvenido al Panel de Administración Backend.");
     } else {
-        if (errDiv) errDiv.classList.remove("hidden");
+        if (errDiv) {
+            errDiv.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> Contraseña incorrecta.`;
+            errDiv.classList.remove("hidden");
+        }
         passInput.value = "";
         passInput.focus();
     }
