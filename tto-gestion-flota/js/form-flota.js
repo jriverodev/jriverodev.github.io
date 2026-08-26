@@ -682,10 +682,26 @@ function abrirModalEditar(idUnidad) {
     const linkDoc = document.getElementById("link-doc-actual");
 
     if (reg.Documento_Url) {
-        linkDoc.href = reg.Documento_Url;
+        const docUrl = typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(reg.Documento_Url) : reg.Documento_Url;
+        linkDoc.href = docUrl;
         wrapperDoc.classList.remove("hidden");
+
+        let docImg = wrapperDoc.querySelector("img.doc-preview-img");
+        if (/\.(jpg|jpeg|png|webp)($|\?)/i.test(docUrl) || docUrl.startsWith("data:image/")) {
+            if (!docImg) {
+                docImg = document.createElement("img");
+                docImg.className = "doc-preview-img max-h-32 object-contain mt-2 rounded border border-slate-200 dark:border-slate-800 block";
+                wrapperDoc.appendChild(docImg);
+            }
+            docImg.src = docUrl;
+            docImg.classList.remove("hidden");
+        } else if (docImg) {
+            docImg.classList.add("hidden");
+        }
     } else {
         wrapperDoc.classList.add("hidden");
+        const docImg = wrapperDoc.querySelector("img.doc-preview-img");
+        if (docImg) docImg.classList.add("hidden");
     }
 
     document.getElementById("modalEditarRegistro").classList.remove("hidden");
