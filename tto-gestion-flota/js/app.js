@@ -552,6 +552,28 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
+    if (!urlStr || typeof urlStr !== 'string') return '';
+    const clean = urlStr.trim();
+    if (!clean) return '';
+
+    // Handle legacy Google Drive view links
+    if (clean.includes('drive.google.com/uc?')) {
+        const id = clean.split('id=')[1]?.split('&')[0];
+        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+    }
+
+    // Direct HTTP(S) URLs or Base64 data URIs are already valid
+    if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
+        return clean;
+    }
+
+    // Relative storage paths (e.g. "mantenimientos/123/foto.jpg" or "activos/V-102/doc.pdf")
+    const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
+    const cleanPath = clean.replace(/^\/+/, '');
+    return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
+}
+
 function debounce(func, wait = 250) {
     let timeout;
     return function (...args) {

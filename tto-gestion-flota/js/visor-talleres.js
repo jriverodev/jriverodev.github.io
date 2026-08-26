@@ -173,7 +173,9 @@ async function cargarDatosAnaliticos() {
             let normalized = {};
             for (let key in u) {
                 let val = u[key];
-                if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
+                if (typeof normalizarUrlStorage === 'function' && typeof val === 'string' && val.trim()) {
+                    val = normalizarUrlStorage(val);
+                } else if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
                     const id = val.split('id=')[1]?.split('&')[0];
                     if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
                 }
@@ -225,8 +227,8 @@ async function cargarDatosAnaliticos() {
                 Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "S/I",
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
                 Modificado_Por: getV(["MODIFICADO"]) || u["Modificado_Por"] || "S/I",
-                Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
-                Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
+                Foto_Antes: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(fotoAntesRaw) : fotoAntesRaw,
+                Foto_Despues: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(fotoDespuesRaw) : fotoDespuesRaw,
                 Tareas: tareasArray
             };
         });

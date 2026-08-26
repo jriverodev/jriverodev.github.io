@@ -462,6 +462,9 @@ async function cargarTablaEditable() {
                 console.warn("No se pudo parsear tareas de string:", tareasRaw, e);
             }
 
+            const fotoAntesRaw = normalized["FOTOANTES"] || u["Foto_Antes"] || "";
+            const fotoDespuesRaw = normalized["FOTODESPUES"] || u["Foto_Despues"] || "";
+
             return {
                 ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
                 ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
