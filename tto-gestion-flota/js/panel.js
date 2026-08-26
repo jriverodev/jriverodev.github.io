@@ -842,6 +842,10 @@ function abrirModalEditar(id) {
 
     limpiarPrevia('edit-foto-despues', 'preview-edit-despues');
 
+    if (registro.Foto_Despues) {
+        previsualizarImagen(registro.Foto_Despues, 'preview-edit-despues');
+    }
+
     document.getElementById("edit-id-registro").value = registro.ID_Registro;
     document.getElementById("edit-unidad").value = registro.ID_Unidad;
     document.getElementById("edit-marca").value = registro.Marca;

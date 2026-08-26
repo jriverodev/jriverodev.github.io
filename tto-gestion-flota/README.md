@@ -75,10 +75,8 @@ Configurar Supabase y buckets de Storage (instrucciones)
    - Anotar la URL del proyecto (ej. https://abcd1234.supabase.co) y la ANON KEY (o crear una clave con permisos adecuados para pruebas).
 
 2. Crear un bucket de Storage
-   - En la consola Supabase > Storage > Buckets: Crear un bucket (nombre recomendado: fotos).
-   - Política del bucket:
-     - Para pruebas rápidas: marcarlo como "public" para que getPublicUrl devuelva URLs accesibles.
-     - Para producción: mantener el bucket privado y servir archivos mediante Signed URLs. En ese caso el código de cliente debe solicitar signed URLs vía funciones seguras (no con ANON KEY en cliente).
+   - En la consola Supabase > Storage > Buckets: Crear el bucket con nombre exactamente `ttocc-archivos`.
+   - Marca la casilla **Public Bucket** ("Allow public access to objects in this bucket") para garantizar que las imágenes y documentos subidos sean accesibles públicamente mediante URLs HTTPS directas sin requerir signed URLs de lectura.
 
 3. Configurar RLS y tablas (Postgres)
    - Ejecutar la migración `migrations/enable_rls_policies.sql` en el Editor SQL de Supabase para habilitar Row Level Security y otorgar permisos de lectura/escritura pública (`anon` / `authenticated`) en `maestro_activos`, `historial_mantenimiento` y el bucket `ttocc-archivos`.

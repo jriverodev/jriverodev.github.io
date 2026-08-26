@@ -4,28 +4,46 @@
     function previsualizarImagenImpl(input, idContenedor) {
         const container = document.getElementById(idContenedor);
         if (!container) return;
-        const img = container.querySelector("img");
+        let img = container.querySelector("img");
 
-        if (input.files && input.files[0]) {
+        if (!img) {
+            img = document.createElement("img");
+            img.className = "w-full h-full object-contain";
+            container.appendChild(img);
+        }
+
+        if (typeof input === 'string') {
+            const url = typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(input) : input;
+            if (url && url.trim()) {
+                img.src = url;
+                container.classList.remove("hidden");
+            } else {
+                img.src = "";
+                container.classList.add("hidden");
+            }
+            return;
+        }
+
+        if (input && input.files && input.files[0]) {
             const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(input.files[0]) : { valido: true };
             if (!valRes.valido) {
                 if (window.TTOCC_UI && typeof TTOCC_UI.error === 'function') {
                     TTOCC_UI.error("Archivo no válido", valRes.mensaje);
                 }
                 input.value = "";
-                if (img) img.src = "";
+                img.src = "";
                 container.classList.add("hidden");
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                if (img) img.src = e.result;
+                img.src = e.result;
                 container.classList.remove("hidden");
             };
             reader.readAsDataURL(input.files[0]);
         } else {
-            if (img) img.src = "";
+            img.src = "";
             container.classList.add("hidden");
         }
     }
