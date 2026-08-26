@@ -481,6 +481,9 @@ async function cargarTablaEditable() {
                 console.warn("No se pudo parsear tareas de string:", tareasRaw, e);
             }
 
+            const fotoAntesRaw = normalized["FOTOANTES"] || u["Foto_Antes"] || "";
+            const fotoDespuesRaw = normalized["FOTODESPUES"] || u["Foto_Despues"] || "";
+
             return {
                 ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
                 ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
@@ -497,8 +500,8 @@ async function cargarTablaEditable() {
                 Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
-                Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
-                Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
+                Foto_Antes: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(fotoAntesRaw) : fotoAntesRaw,
+                Foto_Despues: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(fotoDespuesRaw) : fotoDespuesRaw,
                 Fecha_Ingreso: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
                 Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
                 Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "",

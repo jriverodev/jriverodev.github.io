@@ -316,6 +316,7 @@ async function cargarTablaActivos() {
             const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
             const idUnidad = String(rawId);
             const idKey = idUnidad.toUpperCase();
+            const docRaw = getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || "";
 
             return {
                 ID_Unidad: idUnidad,
@@ -332,7 +333,7 @@ async function cargarTablaActivos() {
                 Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
                 Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
-                Documento_Url: getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || ""
+                Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw) : docRaw
             };
         });
 
@@ -469,9 +470,11 @@ function previsualizarDocumento(input, idContenedor) {
 
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        const valRes = validarArchivoAdjunto(file);
+        const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(file) : { valido: true };
         if (!valRes.valido) {
-            TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            if (window.TTOCC_UI && typeof TTOCC_UI.error === 'function') {
+                TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            }
             input.value = "";
             container.classList.add("hidden");
             return;
@@ -479,6 +482,25 @@ function previsualizarDocumento(input, idContenedor) {
 
         const nombreSpan = container.querySelector("span");
         if (nombreSpan) nombreSpan.textContent = file.name;
+
+        let img = container.querySelector("img");
+        if (file.type && file.type.startsWith("image/")) {
+            if (!img) {
+                img = document.createElement("img");
+                img.className = "max-h-24 object-contain my-1 rounded border border-slate-200 dark:border-slate-800";
+                container.insertBefore(img, container.firstChild);
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.result;
+                img.classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+        } else if (img) {
+            img.classList.add("hidden");
+            img.src = "";
+        }
+
         container.classList.remove("hidden");
     } else {
         container.classList.add("hidden");
@@ -692,9 +714,33 @@ async function guardarEdicionModal(event) {
 
     let docBase64 = "";
     let docNombre = "";
+    let documento_url = "";
+
     if (docInput && docInput.files.length > 0) {
-        docBase64 = await transformarABase64(docInput.files[0]);
-        docNombre = docInput.files[0].name;
+        const file = docInput.files[0];
+        docNombre = file.name;
+
+        if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
+            try {
+                const client = ensureSupabaseClient();
+                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                    const path = `activos/${idUnidad}/${docNombre}`;
+                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    if (publicUrl) {
+                        documento_url = publicUrl;
+                    } else {
+                        docBase64 = await transformarABase64(file);
+                    }
+                } else {
+                    docBase64 = await transformarABase64(file);
+                }
+            } catch (e) {
+                console.warn('[Upload] Falló upload directo, usando base64 como fallback', e);
+                docBase64 = await transformarABase64(file);
+            }
+        } else {
+            docBase64 = await transformarABase64(file);
+        }
     }
 
     const payload = {
@@ -713,11 +759,17 @@ async function guardarEdicionModal(event) {
         gerencia: document.getElementById("edit-gerencia").value.trim().toUpperCase(),
         responsable_usuario: document.getElementById("edit-responsable-usuario").value.trim().toUpperCase(),
         cargo_usuario: document.getElementById("edit-cargo-usuario").value.trim().toUpperCase(),
-        documento_base64: docBase64,
-        documento_nombre: docNombre,
         documento_eliminar: documentoEliminarFlag,
         modificado_por: OPERADOR_ACTUAL
     };
+
+    if (documento_url) {
+        payload.documento_url = documento_url;
+        payload.documento_nombre = docNombre;
+    } else {
+        payload.documento_base64 = docBase64;
+        payload.documento_nombre = docNombre;
+    }
 
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);

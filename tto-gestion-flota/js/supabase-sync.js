@@ -47,7 +47,6 @@
     async function uploadBase64ToStorage(client, bucketName, path, base64data) {
         try {
             if (!base64data) return null;
-            // Attempt to sniff mime type from data URI
             let mime = 'image/jpeg';
             const dataUriMatch = String(base64data).match(/^data:([^;]+);base64,/);
             if (dataUriMatch) mime = dataUriMatch[1];
@@ -58,12 +57,12 @@
                 console.warn('[Supabase Storage] Error uploading', uploadRes.error);
                 return null;
             }
-            // Get public URL (may be internal object depending on bucket settings)
-            const urlRes = client.storage.from(bucketName).getPublicUrl(uploadRes.data.path || path);
-            // v2 returns { data: { publicUrl }, error }
+            const filePath = uploadRes.data && uploadRes.data.path ? uploadRes.data.path : path;
+            const urlRes = client.storage.from(bucketName).getPublicUrl(filePath);
             if (urlRes && urlRes.data && urlRes.data.publicUrl) return urlRes.data.publicUrl;
-            // fallback
-            return null;
+
+            const baseUrl = window.TTOCC_SUPABASE_URL || 'https://mfklcwrpgavaxznkxlra.supabase.co';
+            return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${filePath}`;
         } catch (e) {
             console.error('[Supabase Storage] Exception uploading base64', e);
             return null;
@@ -81,7 +80,9 @@
             const filePath = uploadRes.data && (uploadRes.data.path || uploadRes.data.Key || uploadRes.data.name) ? (uploadRes.data.path || uploadRes.data.Key || uploadRes.data.name) : path;
             const urlRes = client.storage.from(bucketName).getPublicUrl(filePath);
             if (urlRes && urlRes.data && urlRes.data.publicUrl) return urlRes.data.publicUrl;
-            return null;
+
+            const baseUrl = window.TTOCC_SUPABASE_URL || 'https://mfklcwrpgavaxznkxlra.supabase.co';
+            return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${filePath}`;
         } catch (e) {
             console.error('[Supabase Storage] Exception uploading file', e);
             return null;
