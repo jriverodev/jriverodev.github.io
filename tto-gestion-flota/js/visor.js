@@ -26,23 +26,32 @@ function tiempoTranscurrido(fechaInput) {
     if (fechaInput instanceof Date) {
         fecha = fechaInput;
     } else if (typeof fechaInput === 'string') {
-        const partesFechaHora = fechaInput.trim().split(" ");
-        const partesFecha = partesFechaHora[0].split("-");
-        if (partesFecha.length === 3) {
-            const dia = parseInt(partesFecha[0], 10);
-            const mes = parseInt(partesFecha[1], 10) - 1;
-            const anio = parseInt(partesFecha[2], 10);
-
-            let horas = 0;
-            let minutos = 0;
-            if (partesFechaHora[1]) {
-                const partesHora = partesFechaHora[1].split(":");
-                horas = parseInt(partesHora[0], 10) || 0;
-                minutos = parseInt(partesHora[1], 10) || 0;
-            }
-            fecha = new Date(anio, mes, dia, horas, minutos);
+        const str = fechaInput.trim();
+        if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+            fecha = new Date(str);
         } else {
-            fecha = new Date(fechaInput);
+            const partesFechaHora = str.split(" ");
+            const partesFecha = partesFechaHora[0].split("-");
+            if (partesFecha.length === 3) {
+                if (partesFecha[0].length === 4) {
+                    fecha = new Date(str);
+                } else {
+                    const dia = parseInt(partesFecha[0], 10);
+                    const mes = parseInt(partesFecha[1], 10) - 1;
+                    const anio = parseInt(partesFecha[2], 10);
+
+                    let horas = 0;
+                    let minutos = 0;
+                    if (partesFechaHora[1]) {
+                        const partesHora = partesFechaHora[1].split(":");
+                        horas = parseInt(partesHora[0], 10) || 0;
+                        minutos = parseInt(partesHora[1], 10) || 0;
+                    }
+                    fecha = new Date(anio, mes, dia, horas, minutos);
+                }
+            } else {
+                fecha = new Date(str);
+            }
         }
     } else {
         fecha = new Date(fechaInput);
@@ -148,13 +157,24 @@ async function cargarDatosAnaliticos() {
 
             let parsedFechaTimestamp = 0;
             if (fechaRegRaw && fechaRegRaw !== "N/A") {
-                const partesFechaHora = String(fechaRegRaw).trim().split(" ");
-                const partesFecha = partesFechaHora[0].split("-");
-                if (partesFecha.length === 3) {
-                    const d = parseInt(partesFecha[0], 10);
-                    const m = parseInt(partesFecha[1], 10) - 1;
-                    const y = parseInt(partesFecha[2], 10);
-                    parsedFechaTimestamp = new Date(y, m, d).getTime();
+                const strReg = String(fechaRegRaw).trim();
+                let dt;
+                if (strReg.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(strReg)) {
+                    dt = new Date(strReg);
+                } else {
+                    const partesFechaHora = strReg.split(" ");
+                    const partesFecha = partesFechaHora[0].split("-");
+                    if (partesFecha.length === 3 && partesFecha[0].length !== 4) {
+                        const d = parseInt(partesFecha[0], 10);
+                        const m = parseInt(partesFecha[1], 10) - 1;
+                        const y = parseInt(partesFecha[2], 10);
+                        dt = new Date(y, m, d);
+                    } else {
+                        dt = new Date(strReg);
+                    }
+                }
+                if (!isNaN(dt.getTime())) {
+                    parsedFechaTimestamp = dt.getTime();
                 }
             }
 
