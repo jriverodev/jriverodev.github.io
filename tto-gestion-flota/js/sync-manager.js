@@ -54,23 +54,23 @@
       const client = this.ensureClient();
       if (!client) return;
       const remoteTable = this.supabaseTableMap[localTable] || localTable;
-      const { data, error } = await client.from(remoteTable).select('*');
-      if (error) {
-        console.error('[SyncManager] pullAll error', error);
-        return;
+
+      let data = [];
+      if (typeof fetchAllSupabaseRows === 'function') {
+        data = await fetchAllSupabaseRows(client, remoteTable);
+      } else {
+        const { data: raw, error } = await client.from(remoteTable).select('*');
+        if (!error && raw) data = raw;
       }
+
       if (data && data.length) {
-        // Map columns to local schema as needed
         try {
-          // We'll store pulled data encrypted if the project expects that; use existing helpers when possible
           if (typeof guardarActivosLocalSeguro === 'function' && localTable === 'activos') {
             await guardarActivosLocalSeguro(data);
           } else if (window.TTOCC_DB && typeof window.TTOCC_DB.reemplazarRegistrosDesdePull === 'function') {
             await window.TTOCC_DB.reemplazarRegistrosDesdePull(localTable, data);
           } else if (dbTTOCC && dbTTOCC[localTable]) {
-            // fallback: put each row and mark as synced
             for (const r of data) {
-              const idKey = r.id || r.id_unidad || r.id_registro;
               await dbTTOCC[localTable].put({ ...r, sync_status: 'synced', updated_at: r.updated_at || new Date().toISOString() });
             }
           }

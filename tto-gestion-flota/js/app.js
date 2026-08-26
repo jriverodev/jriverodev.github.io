@@ -20,6 +20,33 @@ const APP_CONFIG = {
     }
 };
 
+async function fetchAllSupabaseRows(client, tableName, pageSize = 1000) {
+    if (!client) return [];
+    let allRows = [];
+    let from = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+        const to = from + pageSize - 1;
+        const { data, error } = await client.from(tableName).select('*').range(from, to);
+        if (error) {
+            console.warn(`[Supabase Pagination] Error fetching range ${from}-${to} for ${tableName}:`, error);
+            break;
+        }
+        if (data && data.length > 0) {
+            allRows = allRows.concat(data);
+            if (data.length < pageSize) {
+                hasMore = false;
+            } else {
+                from += pageSize;
+            }
+        } else {
+            hasMore = false;
+        }
+    }
+    return allRows;
+}
+
 function isSupabaseConfigured() {
     return Boolean(APP_CONFIG.SUPABASE_URL && APP_CONFIG.SUPABASE_ANON_KEY && window.supabase);
 }
@@ -170,8 +197,8 @@ async function handleLocalApiGateway(payload) {
         const client = ensureSupabaseClient();
         if (navigator.onLine && client) {
             try {
-                const { data, error } = await client.from('historial_mantenimiento').select('*');
-                if (!error && Array.isArray(data)) {
+                const data = await fetchAllSupabaseRows(client, 'historial_mantenimiento');
+                if (Array.isArray(data) && data.length > 0) {
                     if (typeof guardarMantenimientosLocalSeguro === 'function') {
                         await guardarMantenimientosLocalSeguro(data);
                     }
@@ -189,8 +216,8 @@ async function handleLocalApiGateway(payload) {
         const client = ensureSupabaseClient();
         if (navigator.onLine && client) {
             try {
-                const { data, error } = await client.from('maestro_activos').select('*');
-                if (!error && Array.isArray(data)) {
+                const data = await fetchAllSupabaseRows(client, 'maestro_activos');
+                if (Array.isArray(data) && data.length > 0) {
                     if (typeof guardarActivosLocalSeguro === 'function') {
                         await guardarActivosLocalSeguro(data);
                     }
