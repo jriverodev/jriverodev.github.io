@@ -494,6 +494,10 @@ async function cargarTablaEditable() {
 
         actualizarSelectGerencias();
 
+        if (typeof firmarUrlsDeRegistros === 'function') {
+            await firmarUrlsDeRegistros(listaRegistrosPanel, ['Foto_Antes', 'Foto_Despues']);
+        }
+
         if (listaRegistrosPanel.length === 0) {
             tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen unidades activas en el historial.</td></tr>`;
             return;
@@ -838,14 +842,19 @@ async function guardarNuevoRegistro(event) {
 /**
  * CONTROLADORES DE MODAL 2: DIAGNÓSTICO & CHECKLIST
  */
-function abrirModalEditar(id) {
+async function abrirModalEditar(id) {
     const registro = listaRegistrosPanel.find(r => String(r.ID_Registro) === String(id));
     if (!registro) return;
 
     limpiarPrevia('edit-foto-despues', 'preview-edit-despues');
 
     if (registro.Foto_Despues) {
-        previsualizarImagen(registro.Foto_Despues, 'preview-edit-despues');
+        let fotoUrl = registro.Foto_Despues;
+        if (typeof obtenerUrlFirmadaStorage === 'function') {
+            fotoUrl = await obtenerUrlFirmadaStorage(fotoUrl);
+            registro.Foto_Despues = fotoUrl;
+        }
+        previsualizarImagen(fotoUrl, 'preview-edit-despues');
     }
 
     document.getElementById("edit-id-registro").value = registro.ID_Registro;

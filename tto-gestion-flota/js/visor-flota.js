@@ -123,6 +123,10 @@ async function cargarDatosAnaliticos() {
             };
         });
 
+        if (typeof firmarUrlsDeRegistros === 'function') {
+            await firmarUrlsDeRegistros(datosActivosGlobal, ['Documento_Url']);
+        }
+
         poblarSelectorTipoVehiculo(datosActivosGlobal);
         poblarSelectorEstatus(datosActivosGlobal);
         calcularKpisGlobales(datosActivosGlobal);
