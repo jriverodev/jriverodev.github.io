@@ -205,6 +205,8 @@ async function cargarDatosAnaliticos() {
             const infoActivo = mapaActivosInfo[idUnidadKey] || {};
 
             const tallerNombre = getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado";
+            const fotoAntesRaw = normalized["FOTOANTES"] || u["Foto_Antes"] || "";
+            const fotoDespuesRaw = normalized["FOTODESPUES"] || u["Foto_Despues"] || "";
 
             return {
                 ID_Registro: String(rawId),
@@ -538,7 +540,7 @@ function abrirModalDetalle(id) {
     if (reg.Foto_Antes) {
         fotoAntes.innerHTML = `
             <a href="${escapeHTML(reg.Foto_Antes)}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
-                <img src="${escapeHTML(reg.Foto_Antes)}" class="w-full h-full object-contain">
+                <img src="${escapeHTML(reg.Foto_Antes)}" class="w-full h-full object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-[9px] font-black uppercase text-slate-500\'>IMAGEN NO DISPONIBLE</span>';">
             </a>`;
         fotoAntes.onclick = null;
     } else {
@@ -549,7 +551,7 @@ function abrirModalDetalle(id) {
     if (reg.Foto_Despues) {
         fotoDespues.innerHTML = `
             <a href="${escapeHTML(reg.Foto_Despues)}" class="pswp-link w-full h-full block" data-pswp-width="1200" data-pswp-height="900">
-                <img src="${escapeHTML(reg.Foto_Despues)}" class="w-full h-full object-contain">
+                <img src="${escapeHTML(reg.Foto_Despues)}" class="w-full h-full object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-[9px] font-black uppercase text-slate-500\'>IMAGEN NO DISPONIBLE</span>';">
             </a>`;
         fotoDespues.onclick = null;
     } else {
