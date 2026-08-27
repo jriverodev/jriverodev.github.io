@@ -173,9 +173,7 @@ async function cargarDatosAnaliticos() {
             let normalized = {};
             for (let key in u) {
                 let val = u[key];
-                if (typeof normalizarUrlStorage === 'function' && typeof val === 'string' && val.trim()) {
-                    val = normalizarUrlStorage(val);
-                } else if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
+                if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
                     const id = val.split('id=')[1]?.split('&')[0];
                     if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
                 }

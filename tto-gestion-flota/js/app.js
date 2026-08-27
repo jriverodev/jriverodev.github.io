@@ -568,6 +568,15 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
         return clean;
     }
 
+    // Only convert if string matches a relative storage path pattern or file extension
+    const esRutaStorage = /^mantenimientos\//i.test(clean) ||
+                          /^activos\//i.test(clean) ||
+                          /\.(jpg|jpeg|png|webp|pdf)($|\?)/i.test(clean);
+
+    if (!esRutaStorage) {
+        return clean;
+    }
+
     // Relative storage paths (e.g. "mantenimientos/123/foto.jpg" or "activos/V-102/doc.pdf")
     const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
     const cleanPath = clean.replace(/^\/+/, '');
