@@ -6,24 +6,46 @@
     'use strict';
 
     function base64ToBlob(base64Data, contentType = 'image/jpeg') {
-        const sliceSize = 1024;
-        const byteCharacters = atob(base64Data.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
-        const bytesLength = byteCharacters.length;
-        const slicesCount = Math.ceil(bytesLength / sliceSize);
-        const byteArrays = new Array(slicesCount);
-
-        for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
-            const begin = sliceIndex * sliceSize;
-            const end = Math.min(begin + sliceSize, bytesLength);
-
-            const bytes = new Array(end - begin);
-            for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
-                bytes[i] = byteCharacters.charCodeAt(offset);
-            }
-            byteArrays[sliceIndex] = new Uint8Array(bytes);
+        if (!base64Data || typeof base64Data !== 'string') {
+            return new Blob([], { type: contentType });
         }
 
-        return new Blob(byteArrays, { type: contentType });
+        // Clean raw base64 string or Data URI
+        let cleanB64 = base64Data.trim();
+        if (cleanB64.includes(',')) {
+            cleanB64 = cleanB64.split(',')[1];
+        }
+        // Remove any whitespace or line breaks
+        cleanB64 = cleanB64.replace(/\s/g, '');
+
+        // Fix padding if missing
+        while (cleanB64.length % 4 !== 0) {
+            cleanB64 += '=';
+        }
+
+        try {
+            const sliceSize = 1024;
+            const byteCharacters = atob(cleanB64);
+            const bytesLength = byteCharacters.length;
+            const slicesCount = Math.ceil(bytesLength / sliceSize);
+            const byteArrays = new Array(slicesCount);
+
+            for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+                const begin = sliceIndex * sliceSize;
+                const end = Math.min(begin + sliceSize, bytesLength);
+
+                const bytes = new Array(end - begin);
+                for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
+                    bytes[i] = byteCharacters.charCodeAt(offset);
+                }
+                byteArrays[sliceIndex] = new Uint8Array(bytes);
+            }
+
+            return new Blob(byteArrays, { type: contentType });
+        } catch (e) {
+            console.warn('[base64ToBlob] Failed to decode base64 string:', e);
+            return new Blob([], { type: contentType });
+        }
     }
 
     async function ensureClient() {
