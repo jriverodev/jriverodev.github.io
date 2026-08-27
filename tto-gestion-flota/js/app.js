@@ -590,6 +590,132 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
 }
 
+const TTOCC_SIGNED_URL_CACHE = new Map();
+
+function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
+    if (!urlOrPath || typeof urlOrPath !== 'string') return null;
+    const clean = urlOrPath.trim();
+    if (!clean || clean.startsWith('data:') || clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
+        return null;
+    }
+
+    if (clean.includes(`/storage/v1/object/public/${bucketDefault}/`)) {
+        return clean.split(`/storage/v1/object/public/${bucketDefault}/`)[1];
+    }
+    if (clean.includes(`/storage/v1/object/sign/${bucketDefault}/`)) {
+        return clean.split(`/storage/v1/object/sign/${bucketDefault}/`)[1]?.split('?')[0];
+    }
+    if (clean.includes(`/storage/v1/object/${bucketDefault}/`)) {
+        return clean.split(`/storage/v1/object/${bucketDefault}/`)[1]?.split('?')[0];
+    }
+
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+        return clean.replace(/^\/+/, '');
+    }
+
+    return null;
+}
+
+async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'ttocc-archivos') {
+    if (!urlOrPath || typeof urlOrPath !== 'string') return '';
+    const clean = urlOrPath.trim();
+    if (!clean) return '';
+
+    const path = extraerStoragePath(clean, bucketDefault);
+    if (!path) return clean; // Retain Base64 or Google Drive thumbnail links unchanged
+
+    const cacheKey = `${bucketDefault}:${path}`;
+    const cached = TTOCC_SIGNED_URL_CACHE.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now() + 60000) {
+        return cached.url;
+    }
+
+    const client = ensureSupabaseClient();
+    if (navigator.onLine && client && client.storage) {
+        try {
+            const { data, error } = await client.storage.from(bucketDefault).createSignedUrl(path, expiresIn);
+            if (!error && data && data.signedUrl) {
+                TTOCC_SIGNED_URL_CACHE.set(cacheKey, {
+                    url: data.signedUrl,
+                    expiresAt: Date.now() + (expiresIn * 1000)
+                });
+                return data.signedUrl;
+            }
+        } catch (e) {
+            console.warn('[Supabase Storage] Error obteniendo signedUrl para path:', path, e);
+        }
+    }
+
+    return normalizarUrlStorage(clean, bucketDefault);
+}
+
+async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'ttocc-archivos', expiresIn = 7200) {
+    if (!Array.isArray(registros) || registros.length === 0) return registros;
+    const client = ensureSupabaseClient();
+    if (!navigator.onLine || !client || !client.storage) return registros;
+
+    const pathsSet = new Set();
+    const mapRegToPaths = [];
+
+    registros.forEach((reg, index) => {
+        const itemMap = {};
+        campos.forEach(campo => {
+            const val = reg[campo];
+            if (val && typeof val === 'string') {
+                const path = extraerStoragePath(val, bucketDefault);
+                if (path) {
+                    pathsSet.add(path);
+                    itemMap[campo] = path;
+                }
+            }
+        });
+        mapRegToPaths[index] = itemMap;
+    });
+
+    const pathsToSign = Array.from(pathsSet).filter(p => {
+        const cacheKey = `${bucketDefault}:${p}`;
+        const cached = TTOCC_SIGNED_URL_CACHE.get(cacheKey);
+        return !(cached && cached.expiresAt > Date.now() + 60000);
+    });
+
+    if (pathsToSign.length > 0) {
+        try {
+            const { data, error } = await client.storage.from(bucketDefault).createSignedUrls(pathsToSign, expiresIn);
+            if (!error && Array.isArray(data)) {
+                data.forEach(resItem => {
+                    if (resItem && resItem.path && resItem.signedUrl) {
+                        const cacheKey = `${bucketDefault}:${resItem.path}`;
+                        TTOCC_SIGNED_URL_CACHE.set(cacheKey, {
+                            url: resItem.signedUrl,
+                            expiresAt: Date.now() + (expiresIn * 1000)
+                        });
+                    }
+                });
+            }
+        } catch (eBatch) {
+            console.warn('[Supabase Storage] Error en batch createSignedUrls:', eBatch);
+        }
+    }
+
+    registros.forEach((reg, index) => {
+        const itemMap = mapRegToPaths[index];
+        if (itemMap) {
+            campos.forEach(campo => {
+                const path = itemMap[campo];
+                if (path) {
+                    const cacheKey = `${bucketDefault}:${path}`;
+                    const cached = TTOCC_SIGNED_URL_CACHE.get(cacheKey);
+                    if (cached && cached.url) {
+                        reg[campo] = cached.url;
+                    }
+                }
+            });
+        }
+    });
+
+    return registros;
+}
+
 function debounce(func, wait = 250) {
     let timeout;
     return function (...args) {

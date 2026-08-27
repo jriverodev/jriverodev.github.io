@@ -58,6 +58,17 @@
                 return null;
             }
             const filePath = uploadRes.data && uploadRes.data.path ? uploadRes.data.path : path;
+
+            // Try signed URL first for private buckets
+            try {
+                const signedRes = await client.storage.from(bucketName).createSignedUrl(filePath, 7200);
+                if (signedRes && signedRes.data && signedRes.data.signedUrl) {
+                    return signedRes.data.signedUrl;
+                }
+            } catch (eSigned) {
+                console.warn('[Supabase Storage] Error creating signedUrl:', eSigned);
+            }
+
             const urlRes = client.storage.from(bucketName).getPublicUrl(filePath);
             if (urlRes && urlRes.data && urlRes.data.publicUrl) return urlRes.data.publicUrl;
 
@@ -78,6 +89,17 @@
                 return null;
             }
             const filePath = uploadRes.data && (uploadRes.data.path || uploadRes.data.Key || uploadRes.data.name) ? (uploadRes.data.path || uploadRes.data.Key || uploadRes.data.name) : path;
+
+            // Try signed URL first for private buckets
+            try {
+                const signedRes = await client.storage.from(bucketName).createSignedUrl(filePath, 7200);
+                if (signedRes && signedRes.data && signedRes.data.signedUrl) {
+                    return signedRes.data.signedUrl;
+                }
+            } catch (eSigned) {
+                console.warn('[Supabase Storage] Error creating signedUrl:', eSigned);
+            }
+
             const urlRes = client.storage.from(bucketName).getPublicUrl(filePath);
             if (urlRes && urlRes.data && urlRes.data.publicUrl) return urlRes.data.publicUrl;
 

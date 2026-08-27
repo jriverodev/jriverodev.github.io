@@ -342,6 +342,10 @@ async function cargarTablaActivos() {
             await guardarActivosLocalSeguro(listaActivosGlobal);
         }
 
+        if (typeof firmarUrlsDeRegistros === 'function') {
+            await firmarUrlsDeRegistros(listaActivosGlobal, ['Documento_Url']);
+        }
+
         if (listaActivosGlobal.length === 0) {
             tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">No existen activos registrados.</td></tr>`;
             return;
@@ -656,7 +660,7 @@ async function guardarNuevoRegistro(event) {
 /**
  * CONTROLADORES DE MODAL 2: EDICIÓN DE ACTIVO
  */
-function abrirModalEditar(idUnidad) {
+async function abrirModalEditar(idUnidad) {
     const reg = listaActivosGlobal.find(r => String(r.ID_Unidad) === String(idUnidad));
     if (!reg) return;
 
@@ -682,7 +686,13 @@ function abrirModalEditar(idUnidad) {
     const linkDoc = document.getElementById("link-doc-actual");
 
     if (reg.Documento_Url) {
-        const docUrl = typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(reg.Documento_Url) : reg.Documento_Url;
+        let docUrl = reg.Documento_Url;
+        if (typeof obtenerUrlFirmadaStorage === 'function') {
+            docUrl = await obtenerUrlFirmadaStorage(docUrl);
+            reg.Documento_Url = docUrl;
+        } else if (typeof normalizarUrlStorage === 'function') {
+            docUrl = normalizarUrlStorage(docUrl);
+        }
         linkDoc.href = docUrl;
         wrapperDoc.classList.remove("hidden");
 

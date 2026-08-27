@@ -205,6 +205,10 @@ async function cargarDatosAnaliticos() {
             };
         });
 
+        if (typeof firmarUrlsDeRegistros === 'function') {
+            await firmarUrlsDeRegistros(datosUnidadesGlobal, ['Foto_Antes', 'Foto_Despues']);
+        }
+
         calcularKpisGlobales(datosUnidadesGlobal);
         renderizarVisor(datosUnidadesGlobal);
 
@@ -396,9 +400,14 @@ function renderizarVisor(datos) {
     renderizarGraficos(conteoTalleres, porAtender, enProceso, listos);
 }
 
-function abrirModalDetalle(id) {
+async function abrirModalDetalle(id) {
     const reg = datosUnidadesGlobal.find(r => String(r.ID_Registro) === String(id));
     if (!reg) return;
+
+    if (typeof obtenerUrlFirmadaStorage === 'function') {
+        if (reg.Foto_Antes) reg.Foto_Antes = await obtenerUrlFirmadaStorage(reg.Foto_Antes);
+        if (reg.Foto_Despues) reg.Foto_Despues = await obtenerUrlFirmadaStorage(reg.Foto_Despues);
+    }
 
     document.getElementById("detalle-titulo-unidad").textContent = `UNIDAD: ${reg.ID_Unidad} - ${reg.Marca}`;
     document.getElementById("detalle-subtitulo-id").textContent = `ID REGISTRO: #${reg.ID_Registro} | FLOTA: ${reg.Tipo_Flota}`;
