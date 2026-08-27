@@ -165,9 +165,16 @@
                     }
                 }
 
-                if (uploadedUrl) out[baseKey] = uploadedUrl;
-                // Remove the _base64 field regardless
-                delete out[k];
+                if (uploadedUrl) {
+                    out[baseKey] = uploadedUrl;
+                    delete out[k];
+                } else if (!out[baseKey] && base64data) {
+                    // Retain data URI in target field if storage upload is unsuccessful
+                    out[baseKey] = base64data;
+                    delete out[k];
+                } else {
+                    delete out[k];
+                }
             }
 
             // If tareas is string, try parse to JSON

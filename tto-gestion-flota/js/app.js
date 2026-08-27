@@ -557,10 +557,17 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     const clean = urlStr.trim();
     if (!clean) return '';
 
-    // Handle legacy Google Drive view links
-    if (clean.includes('drive.google.com/uc?')) {
-        const id = clean.split('id=')[1]?.split('&')[0];
-        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+    // Handle all Google Drive URL variants to prevent CORB blocking
+    if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
+        let driveId = '';
+        if (clean.includes('id=')) {
+            driveId = clean.split('id=')[1]?.split('&')[0];
+        } else if (clean.includes('/file/d/')) {
+            driveId = clean.split('/file/d/')[1]?.split('/')[0];
+        }
+        if (driveId) {
+            return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`;
+        }
     }
 
     // Direct HTTP(S) URLs or Base64 data URIs are already valid

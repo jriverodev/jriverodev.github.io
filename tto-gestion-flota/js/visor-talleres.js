@@ -173,9 +173,11 @@ async function cargarDatosAnaliticos() {
             let normalized = {};
             for (let key in u) {
                 let val = u[key];
-                if (typeof val === 'string' && val.includes('drive.google.com/uc?')) {
-                    const id = val.split('id=')[1]?.split('&')[0];
-                    if (id) val = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+                if (typeof val === 'string' && (val.includes('drive.google.com') || val.includes('docs.google.com'))) {
+                    let driveId = '';
+                    if (val.includes('id=')) driveId = val.split('id=')[1]?.split('&')[0];
+                    else if (val.includes('/file/d/')) driveId = val.split('/file/d/')[1]?.split('/')[0];
+                    if (driveId) val = `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`;
                 }
                 normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = val;
             }
