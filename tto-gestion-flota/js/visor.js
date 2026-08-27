@@ -183,8 +183,10 @@ async function cargarDatosAnaliticos() {
             const fotoAntesRaw = normalized["FOTOANTES"] || u["Foto_Antes"] || "";
             const fotoDespuesRaw = normalized["FOTODESPUES"] || u["Foto_Despues"] || "";
 
+            const regIdRaw = getV(["IDREGISTRO", "REGISTRO"]) || normalized["ID"] || u["id"] || u["id_registro"] || u["ID_Registro"] || "S/I";
+
             return {
-                ID_Registro: getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I",
+                ID_Registro: String(regIdRaw),
                 ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
                 Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I",
                 Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",

@@ -199,7 +199,7 @@ async function cargarDatosAnaliticos() {
                 }
             } catch(e) { console.warn("Error parseando tareas", e); }
 
-            const rawId = getV(["IDREGISTRO", "REGISTRO"]) || u["ID_Registro"] || "S/I";
+            const rawId = getV(["IDREGISTRO", "REGISTRO"]) || normalized["ID"] || u["id"] || u["id_registro"] || u["ID_Registro"] || "S/I";
             const idUnidadRaw = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
             const idUnidadKey = String(idUnidadRaw).toUpperCase();
             const infoActivo = mapaActivosInfo[idUnidadKey] || {};
