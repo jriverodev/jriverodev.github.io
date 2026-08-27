@@ -102,7 +102,7 @@ async function cargarDatosAnaliticos() {
             const idUnidad = String(rawId);
             const idKey = idUnidad.toUpperCase();
 
-            const docRaw = getV(["DOCUMENTO", "DOC", "PDF"]) || u["Documento_Url"] || "";
+            const docRaw = getV(["DOCUMENTOURL", "DOCUMENTO_URL", "DOCUMENTO", "DOC", "PDF"]) || u["documento_url"] || u["Documento_Url"] || "";
 
             return {
                 ID_Unidad: idUnidad,
@@ -119,7 +119,8 @@ async function cargarDatosAnaliticos() {
                 Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
                 Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
-                Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw) : docRaw
+                Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw) : docRaw,
+                Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || u["documento_nombre"] || u["Documento_Nombre"] || ""
             };
         });
 
