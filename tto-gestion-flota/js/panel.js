@@ -450,18 +450,33 @@ async function cargarTablaEditable() {
                 return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
-            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
+            let tareasRaw = u["tareas"] !== undefined ? u["tareas"] : (u["Tareas"] !== undefined ? u["Tareas"] : getV(["TAREAS", "CHECKLIST", "TAREA"]));
             let tareasArray = [];
             try {
                 if (Array.isArray(tareasRaw)) {
                     tareasArray = tareasRaw;
-                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
-                    tareasArray = [tareasRaw];
                 } else if (typeof tareasRaw === "string" && tareasRaw.trim()) {
                     tareasArray = JSON.parse(tareasRaw);
+                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
+                    tareasArray = [tareasRaw];
                 }
-            } catch(e) { 
+            } catch(e) {
                 console.warn("No se pudo parsear tareas de string:", tareasRaw, e);
+            }
+
+            if (Array.isArray(tareasArray)) {
+                tareasArray = tareasArray.map(t => {
+                    if (typeof t === 'string') {
+                        try {
+                            const parsed = JSON.parse(t);
+                            if (typeof parsed === 'object' && parsed !== null) return parsed;
+                        } catch(e) {}
+                        return { texto: t, hecho: false };
+                    }
+                    return t;
+                });
+            } else {
+                tareasArray = [];
             }
 
             const fotoAntesRaw = normalized["FOTOANTES"] || u["Foto_Antes"] || "";
@@ -471,20 +486,20 @@ async function cargarTablaEditable() {
 
             return {
                 ID_Registro: String(regIdRaw),
-                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I",
-                Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",
-                Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
-                Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
-                Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "",
-                Marca: normalized["MARCA"] || u["Marca"] || "",
+                ID_Unidad: String(getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I"),
+                Tipo_Flota: String(getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I"),
+                Nombre_Taller: String(getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado"),
+                Nombre_Taller_Ext: String(getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || ""),
+                Estatus: String(normalized["ESTATUS"] || u["Estatus"] || "Por Atender"),
+                Observaciones: String(getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || ""),
+                Marca: String(normalized["MARCA"] || u["Marca"] || ""),
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
                 Foto_Antes: normalized["FOTOANTES"] || u["Foto_Antes"] || "",
                 Foto_Despues: normalized["FOTODESPUES"] || u["Foto_Despues"] || "",
-                Fecha_Ingreso: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
-                Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
-                Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "",
-                Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "",
+                Fecha_Ingreso: String(getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A"),
+                Fecha_Salida: String(normalized["FECHASALIDA"] || u["Fecha_Salida"] || ""),
+                Gerencia: String(getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || ""),
+                Usuario: String(getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || ""),
                 Tareas: tareasArray
             };
         });

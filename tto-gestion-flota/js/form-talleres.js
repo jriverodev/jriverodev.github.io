@@ -466,21 +466,36 @@ async function cargarTablaEditable() {
 
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
+                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
-            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
+            let tareasRaw = u["tareas"] !== undefined ? u["tareas"] : (u["Tareas"] !== undefined ? u["Tareas"] : getV(["TAREAS", "CHECKLIST", "TAREA"]));
             let tareasArray = [];
             try {
                 if (Array.isArray(tareasRaw)) {
                     tareasArray = tareasRaw;
-                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
-                    tareasArray = [tareasRaw];
                 } else if (typeof tareasRaw === "string" && tareasRaw.trim()) {
                     tareasArray = JSON.parse(tareasRaw);
+                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
+                    tareasArray = [tareasRaw];
                 }
             } catch(e) {
                 console.warn("No se pudo parsear tareas de string:", tareasRaw, e);
+            }
+
+            if (Array.isArray(tareasArray)) {
+                tareasArray = tareasArray.map(t => {
+                    if (typeof t === 'string') {
+                        try {
+                            const parsed = JSON.parse(t);
+                            if (typeof parsed === 'object' && parsed !== null) return parsed;
+                        } catch(e) {}
+                        return { texto: t, hecho: false };
+                    }
+                    return t;
+                });
+            } else {
+                tareasArray = [];
             }
 
             const fotoAntesRaw = normalized["FOTOANTES"] || u["Foto_Antes"] || "";
@@ -490,26 +505,26 @@ async function cargarTablaEditable() {
 
             return {
                 ID_Registro: String(regIdRaw),
-                ID_Unidad: getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I",
-                Nombre_Taller: getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado",
-                Nombre_Taller_Ext: getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || "",
-                Estatus: normalized["ESTATUS"] || u["Estatus"] || "Por Atender",
-                Observaciones: getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || "",
-                Marca: normalized["MARCA"] || u["Marca"] || "",
-                Modelo: normalized["MODELO"] || u["Modelo"] || "",
-                Color: normalized["COLOR"] || u["Color"] || "",
-                Anio: getV(["ANIO", "ANO"]) || u["Anio"] || "",
-                VIN: getV(["VIN"]) || u["VIN"] || "",
-                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
-                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
+                ID_Unidad: String(getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I"),
+                Tipo_Flota: String(getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I"),
+                Nombre_Taller: String(getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado"),
+                Nombre_Taller_Ext: String(getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || ""),
+                Estatus: String(normalized["ESTATUS"] || u["Estatus"] || "Por Atender"),
+                Observaciones: String(getV(["OBSERVACIONES", "DETALLE", "NOVEDAD", "OBS"]) || u["Observaciones"] || ""),
+                Marca: String(normalized["MARCA"] || u["Marca"] || ""),
+                Modelo: String(normalized["MODELO"] || u["Modelo"] || ""),
+                Color: String(normalized["COLOR"] || u["Color"] || ""),
+                Anio: String(getV(["ANIO", "ANO"]) || u["Anio"] || ""),
+                VIN: String(getV(["VIN"]) || u["VIN"] || ""),
+                Tipo_Vehiculo: String(getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || ""),
+                Cargo_Usuario: String(getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || ""),
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
                 Foto_Antes: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(fotoAntesRaw) : fotoAntesRaw,
                 Foto_Despues: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(fotoDespuesRaw) : fotoDespuesRaw,
-                Fecha_Ingreso: getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A",
-                Fecha_Salida: normalized["FECHASALIDA"] || u["Fecha_Salida"] || "",
-                Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "",
-                Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "",
+                Fecha_Ingreso: String(getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A"),
+                Fecha_Salida: String(normalized["FECHASALIDA"] || u["Fecha_Salida"] || ""),
+                Gerencia: String(getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || ""),
+                Usuario: String(getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || ""),
                 Tareas: tareasArray
             };
         });
