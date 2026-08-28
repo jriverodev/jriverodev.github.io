@@ -147,13 +147,32 @@ async function cargarDatosAnaliticos() {
                 return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
-            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
+            let tareasRaw = u["tareas"] !== undefined ? u["tareas"] : (u["Tareas"] !== undefined ? u["Tareas"] : getV(["TAREAS", "CHECKLIST", "TAREA"]));
             let tareasArray = [];
             try {
-                if (tareasRaw) {
-                    tareasArray = typeof tareasRaw === "string" ? JSON.parse(tareasRaw) : tareasRaw;
+                if (Array.isArray(tareasRaw)) {
+                    tareasArray = tareasRaw;
+                } else if (typeof tareasRaw === "string" && tareasRaw.trim()) {
+                    tareasArray = JSON.parse(tareasRaw);
+                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
+                    tareasArray = [tareasRaw];
                 }
             } catch(e) { console.error("Error parseando tareas", e); }
+
+            if (Array.isArray(tareasArray)) {
+                tareasArray = tareasArray.map(t => {
+                    if (typeof t === 'string') {
+                        try {
+                            const parsed = JSON.parse(t);
+                            if (typeof parsed === 'object' && parsed !== null) return parsed;
+                        } catch(e) {}
+                        return { texto: t, hecho: false };
+                    }
+                    return t;
+                });
+            } else {
+                tareasArray = [];
+            }
 
             const fechaRegRaw = getV(["FECHAING", "FECHA"]) || u["Fecha_Ingr"] || u["Fecha_Ingreso"] || "N/A";
 
