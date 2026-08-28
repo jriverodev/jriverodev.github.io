@@ -184,20 +184,35 @@ async function cargarDatosAnaliticos() {
 
             const getV = (terms) => {
                 const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
+                return (key !== undefined && normalized[key] !== null) ? normalized[key] : "";
             };
 
-            let tareasRaw = getV(["TAREAS", "CHECKLIST", "TAREA"]) || u["Tareas"] || "";
+            let tareasRaw = u["tareas"] !== undefined ? u["tareas"] : (u["Tareas"] !== undefined ? u["Tareas"] : getV(["TAREAS", "CHECKLIST", "TAREA"]));
             let tareasArray = [];
             try {
                 if (Array.isArray(tareasRaw)) {
                     tareasArray = tareasRaw;
-                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
-                    tareasArray = [tareasRaw];
                 } else if (typeof tareasRaw === "string" && tareasRaw.trim()) {
                     tareasArray = JSON.parse(tareasRaw);
+                } else if (typeof tareasRaw === "object" && tareasRaw !== null) {
+                    tareasArray = [tareasRaw];
                 }
             } catch(e) { console.warn("Error parseando tareas", e); }
+
+            if (Array.isArray(tareasArray)) {
+                tareasArray = tareasArray.map(t => {
+                    if (typeof t === 'string') {
+                        try {
+                            const parsed = JSON.parse(t);
+                            if (typeof parsed === 'object' && parsed !== null) return parsed;
+                        } catch(e) {}
+                        return { texto: t, hecho: false };
+                    }
+                    return t;
+                });
+            } else {
+                tareasArray = [];
+            }
 
             const rawId = getV(["IDREGISTRO", "REGISTRO"]) || normalized["ID"] || u["id"] || u["id_registro"] || u["ID_Registro"] || "S/I";
             const idUnidadRaw = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
