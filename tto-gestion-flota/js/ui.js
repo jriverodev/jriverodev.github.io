@@ -1,6 +1,5 @@
 /**
- * TTOCC_UI - Componentes Material 3 para Aplicaciones Web Móviles
- * Emula diálogos de Android 13+ (Material Design 3)
+ * TTOCC_UI - Componentes UI Unificados para Aplicaciones Web
  */
 
 const TTOCC_UI = (() => {
@@ -23,14 +22,13 @@ const TTOCC_UI = (() => {
             .m3-scrim-enter-active { opacity: 1; transition: opacity 0.4s linear; }
             .m3-scrim-exit { opacity: 1; }
             .m3-scrim-exit-active { opacity: 0; transition: opacity 0.3s linear; }
-            .m3-rounded-28 { border-radius: 28px; }
         `;
         document.head.appendChild(style);
     };
 
     const createScrim = () => {
         const scrim = document.createElement('div');
-        scrim.className = 'fixed inset-0 bg-slate-950/40 dark:bg-slate-950/80 backdrop-blur-sm m3-scrim-enter pointer-events-auto';
+        scrim.className = 'fixed inset-0 bg-slate-950/80 m3-scrim-enter pointer-events-auto';
         return scrim;
     };
 
@@ -40,11 +38,10 @@ const TTOCC_UI = (() => {
             const scrim = createScrim();
 
             const dialog = document.createElement('div');
-            // M3 Dialog Background en Dark Mode suele ser Surface Container (un poco más claro que el fondo puro)
-            dialog.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 m3-rounded-28 shadow-2xl w-full max-w-[320px] overflow-hidden m3-dialog-enter pointer-events-auto transition-colors';
+            dialog.className = 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl w-full max-w-[320px] overflow-hidden m3-dialog-enter pointer-events-auto transition-colors';
 
             let iconHtml = '';
-            let titleColor = 'text-slate-900 dark:text-slate-100';
+            let titleColor = 'text-slate-900 dark:text-slate-50';
 
             if (type === 'error') {
                 iconHtml = '<i class="fa-solid fa-circle-exclamation text-red-600 dark:text-red-500 mb-4 text-2xl"></i>';
@@ -61,16 +58,16 @@ const TTOCC_UI = (() => {
                 <div class="p-6">
                     <div class="flex flex-col items-center text-center">
                         <div class="opacity-90 mb-1">${iconHtml}</div>
-                        <h3 class="${titleColor} text-[22px] font-black tracking-tight mb-3 leading-tight transition-colors uppercase">${title}</h3>
+                        <h3 class="${titleColor} text-[20px] font-black tracking-tight mb-3 leading-tight transition-colors uppercase">${title}</h3>
                         <p class="text-slate-600 dark:text-slate-400 text-[13px] font-medium leading-relaxed transition-colors px-1">${message}</p>
                     </div>
                     <div class="mt-8 flex justify-center gap-2">
                         ${cancelText ? `
-                            <button id="m3-cancel" class="flex-1 px-4 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all cursor-pointer border border-transparent active:scale-95">
+                            <button id="m3-cancel" class="flex-1 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-all cursor-pointer active:scale-95">
                                 ${cancelText}
                             </button>
                         ` : ''}
-                        <button id="m3-confirm" class="flex-1 px-4 py-3 text-[11px] font-black uppercase tracking-[0.15em] bg-blue-600 text-white hover:bg-blue-500 rounded-full transition-all cursor-pointer shadow-lg shadow-blue-600/20 active:scale-95">
+                        <button id="m3-confirm" class="flex-1 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-all cursor-pointer active:scale-95">
                             ${confirmText}
                         </button>
                     </div>

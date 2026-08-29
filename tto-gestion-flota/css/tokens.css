@@ -1,0 +1,24 @@
+/* Color Tokens & Design Directives */
+:root {
+  --color-app-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-brand: #2563eb;
+  --radius-max: 8px;
+}
+
+.dark {
+  --color-app-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-brand: #2563eb;
+}
+
+body {
+  background-color: var(--color-app-bg);
+  color: var(--color-text-primary);
+}

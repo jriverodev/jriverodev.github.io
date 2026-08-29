@@ -333,7 +333,7 @@ function renderizarVisor(datos) {
 
         return `
             <tr id="fila-${idRegEscaped}"
-    class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">   
+    class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-lg mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
     
              <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[10px] border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
               <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">ID Registro</span>
@@ -408,7 +408,7 @@ function renderizarVisor(datos) {
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Detalle</span>
                     <div class="flex justify-end md:justify-center">
                         <button onclick="abrirModalDetalle('${idRegEscaped}')"
-                        class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer shadow-md shadow-slate-200 dark:shadow-black/20 transition-all active:scale-95">
+                        class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-[9px] font-black uppercase tracking-[0.2em] cursor-pointer active:scale-95">
                         Detalle
                         </button>
                     </div>
@@ -449,7 +449,7 @@ async function abrirModalDetalle(id) {
         const docFrag = document.createDocumentFragment();
         reg.Tareas.forEach(t => {
             const item = document.createElement("div");
-            item.className = "flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800/40 transition-colors";
+            item.className = "flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-slate-800/40 transition-colors";
 
             item.innerHTML = `
                 <i class="fa-solid ${t.hecho ? 'fa-circle-check text-emerald-500' : 'fa-circle-dot text-slate-400 dark:text-slate-600'} text-sm transition-colors"></i>

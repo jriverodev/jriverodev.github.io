@@ -403,7 +403,7 @@ function renderizarActivos(datos) {
 
         return `
              <tr id="fila-${idEscaped}"
-                 class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
+                 class="block md:table-row ${colorFila} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-lg mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 font-mono text-[11px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">ID Unidad:</span>
