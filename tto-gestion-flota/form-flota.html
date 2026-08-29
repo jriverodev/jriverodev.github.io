@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-950">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,44 +28,44 @@
     <script src="js/ui-utils.js" defer></script>
     <script src="js/form-flota.js" defer></script>
 </head>
-<body class="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans antialiased min-h-full pb-12 transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 font-sans antialiased min-h-full pb-12 transition-colors duration-300">
 
-    <header class="bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md transition-colors">
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="patio.html" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 p-2 rounded-xl transition-all cursor-pointer mr-1">
+                <a href="patio.html" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 p-2 rounded-lg transition-all cursor-pointer mr-1">
                     <i class="fa-solid fa-arrow-left text-sm"></i>
                 </a>
-                <div class="bg-emerald-600/10 border border-emerald-500/20 p-2 rounded-xl text-emerald-500">
+                <div class="bg-blue-600/10 border border-blue-500/20 p-2 rounded-lg text-blue-600 dark:text-blue-400">
                     <i class="fa-solid fa-bus text-sm"></i>
                 </div>
                 <div>
-                    <h1 class="text-xs uppercase tracking-[0.2em] font-black text-slate-800 dark:text-white">TTOCC System</h1>
-                    <p class="text-[9px] text-slate-500 uppercase tracking-widest font-black">Administración de Flota</p>
+                    <h1 class="text-xs uppercase tracking-[0.2em] font-black text-slate-900 dark:text-slate-50">TTOCC System</h1>
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black">Administración de Flota</p>
                 </div>
             </div>
 
-            <button onclick="abrirModalNuevo()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer active:scale-95">
+            <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
                 <i class="fa-solid fa-plus text-[10px]"></i> Registrar Activo
             </button>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden transition-colors">
-            <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center flex-wrap gap-2 transition-colors">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm overflow-hidden transition-colors">
+            <div class="p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-between items-center flex-wrap gap-2 transition-colors">
                 <div>
-                    <h2 class="text-xs uppercase tracking-[0.2em] font-black text-slate-800 dark:text-slate-300">Maestro de Activos Técnicos</h2>
-                    <p class="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black">Catálogo de unidades de transporte</p>
+                    <h2 class="text-xs uppercase tracking-[0.2em] font-black text-slate-900 dark:text-slate-50">Maestro de Activos Técnicos</h2>
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black">Catálogo de unidades de transporte</p>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="toggleTema()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
+                    <button onclick="toggleTema()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
                         <i class="fa-solid fa-sun theme-toggle-icon"></i>
                     </button>
-                    <button onclick="abrirFiltros()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
+                    <button onclick="abrirFiltros()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
                         <i class="fa-solid fa-filter text-[10px]"></i> Filtros
                     </button>
-                    <button onclick="cargarTablaActivos()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
+                    <button onclick="cargarTablaActivos()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95">
                         <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i> Sincronizar
                     </button>
                 </div>
@@ -74,7 +74,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="hidden md:table-header-group">
-                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[9px] uppercase font-black text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-950/40 tracking-[0.15em] transition-colors">
+                        <tr class="border-b border-slate-200 dark:border-slate-700 text-[9px] uppercase font-black text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 tracking-[0.15em] transition-colors">
                             <th class="p-4 font-mono">ID Unidad</th>
                             <th class="p-4">Placa / VIN</th>
                             <th class="p-4">Marca / Modelo / Color / Tipo</th>
@@ -85,90 +85,90 @@
                             <th class="p-4 text-center w-28">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaEditableCuerpo" class="block md:table-row-group divide-y divide-slate-100 dark:divide-slate-800/40 transition-colors"></tbody>
+                    <tbody id="tablaEditableCuerpo" class="block md:table-row-group divide-y divide-slate-200 dark:divide-slate-700 transition-colors"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
     <!-- MODAL 1: REGISTRAR NUEVO ACTIVO -->
-    <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 transition-colors overflow-y-auto max-h-[95vh]">
-            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
-                <h3 class="text-xs uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2 transition-colors">
+    <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-lg shadow-xl p-6 text-slate-700 dark:text-slate-300 transition-colors overflow-y-auto max-h-[95vh]">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4 transition-colors">
+                <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-plus text-sm"></i> Registrar Nuevo Vehículo / Activo
                 </h3>
-                <button onclick="cerrarModalNuevo()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="cerrarModalNuevo()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">ID Unidad <span class="text-red-500">*</span></label>
-                        <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <input type="text" id="add-unidad" required placeholder="Ej: V-102" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Placa <span class="text-red-500">*</span></label>
-                        <input type="text" id="add-placa" required placeholder="Ej: AA111AA" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <input type="text" id="add-placa" required placeholder="Ej: AA111AA" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">VIN <span class="text-red-500">*</span></label>
-                        <input type="text" id="add-vin" required placeholder="Ej: AJHD871927H" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <input type="text" id="add-vin" required placeholder="Ej: AJHD871927H" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca</label>
-                        <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-marca" placeholder="Ej: Ford / Mack" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Modelo</label>
-                        <input type="text" id="add-modelo" placeholder="Ej: Cargo 1722 / F-350" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-modelo" placeholder="Ej: Cargo 1722 / F-350" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Color</label>
-                        <input type="text" id="add-color" placeholder="Ej: Blanco / Rojo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-color" placeholder="Ej: Blanco / Rojo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Vehículo</label>
-                        <input type="text" id="add-tipo-vehiculo" placeholder="Ej: Camión / Pick-Up / Bus" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-tipo-vehiculo" placeholder="Ej: Camión / Pick-Up / Bus" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
-                        <select id="add-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
-                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
-                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
+                        <select id="add-flota" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50">Pesada</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Estatus Final</label>
-                        <input type="text" id="add-estatus-final" placeholder="Ej: Operativo / Inoperativo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-estatus-final" placeholder="Ej: Operativo / Inoperativo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Situación Actual</label>
-                        <input type="text" id="add-situacion-actual" placeholder="Ej: En taller / Asignado" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-situacion-actual" placeholder="Ej: En taller / Asignado" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Gerencia Usuaria</label>
-                        <input type="text" id="add-gerencia" placeholder="Ej: VP EYP TRANSPORTE" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-gerencia" placeholder="Ej: VP EYP TRANSPORTE" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Responsable Usuario</label>
-                        <input type="text" id="add-responsable-usuario" placeholder="Ej: CARLOS MENDOZA" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-responsable-usuario" placeholder="Ej: CARLOS MENDOZA" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Cargo de Usuario</label>
-                        <input type="text" id="add-cargo-usuario" placeholder="Ej: CHÓFER OPERADOR" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="add-cargo-usuario" placeholder="Ej: CHÓFER OPERADOR" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
@@ -176,16 +176,16 @@
                     <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
                         <i class="fa-solid fa-file-pdf mr-1"></i> Documento de la Unidad (PDF o Imagen)
                     </label>
-                    <input type="file" id="add-documento" accept="application/pdf,image/*" onchange="previsualizarDocumento(this, 'preview-add-doc')" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer transition-colors">
-                    <div id="preview-add-doc" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <input type="file" id="add-documento" accept="application/pdf,image/*" onchange="previsualizarDocumento(this, 'preview-add-doc')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-600 text-[11px] cursor-pointer transition-colors">
+                    <div id="preview-add-doc" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <span class="text-xs font-mono text-slate-700 dark:text-slate-300 truncate max-w-[280px]" id="add-doc-nombre"></span>
-                        <button type="button" onclick="limpiarPreviaDocumento('add-documento', 'preview-add-doc')" class="text-red-500 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        <button type="button" onclick="limpiarPreviaDocumento('add-documento', 'preview-add-doc')" class="text-red-600 hover:text-red-700 p-1"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <button type="button" onclick="cerrarModalNuevo()" class="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
-                    <button type="submit" id="btn-crear-submit" class="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20 active:scale-95">
+                <div class="flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <button type="button" onclick="cerrarModalNuevo()" class="px-6 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
+                    <button type="submit" id="btn-crear-submit" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
                         <i class="fa-solid fa-square-check"></i> Guardar Activo
                     </button>
                 </div>
@@ -194,117 +194,117 @@
     </div>
 
     <!-- MODAL 2: EDITAR ACTIVO -->
-    <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[28px] shadow-2xl p-6 text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[90vh] transition-colors">
-            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 transition-colors">
-                <h3 class="text-xs uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2 transition-colors">
+    <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-lg shadow-xl p-6 text-slate-700 dark:text-slate-300 overflow-y-auto max-h-[90vh] transition-colors">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4 transition-colors">
+                <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-pen-to-square"></i> Modificar Ficha del Vehículo
                 </h3>
-                <button onclick="cerrarModalEditar()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="cerrarModalEditar()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">ID Unidad (Bloqueado)</label>
-                        <input type="text" id="edit-id-unidad" readonly class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none transition-colors">
+                        <input type="text" id="edit-id-unidad" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Placa <span class="text-red-500">*</span></label>
-                        <input type="text" id="edit-placa" required class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <input type="text" id="edit-placa" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">VIN del Vehículo / Chasis <span class="text-red-500">*</span></label>
-                        <input type="text" id="edit-vin" required class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase font-mono tracking-wider transition-colors">
+                        <input type="text" id="edit-vin" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase font-mono tracking-wider transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca</label>
-                        <input type="text" id="edit-marca" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-marca" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Modelo</label>
-                        <input type="text" id="edit-modelo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-modelo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Color</label>
-                        <input type="text" id="edit-color" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-color" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Vehículo</label>
-                        <input type="text" id="edit-tipo-vehiculo" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-tipo-vehiculo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
-                        <select id="edit-flota" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs cursor-pointer transition-colors">
-                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Liviana</option>
-                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-950 dark:text-white">Pesada</option>
+                        <select id="edit-flota" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50">Pesada</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Estatus Final</label>
-                        <input type="text" id="edit-estatus-final" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-estatus-final" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Situación Actual</label>
-                        <input type="text" id="edit-situacion-actual" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-situacion-actual" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Gerencia Usuaria</label>
-                        <input type="text" id="edit-gerencia" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-gerencia" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Responsable Usuario</label>
-                        <input type="text" id="edit-responsable-usuario" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-responsable-usuario" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Cargo de Usuario</label>
-                        <input type="text" id="edit-cargo-usuario" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs uppercase transition-colors">
+                        <input type="text" id="edit-cargo-usuario" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Última Ubicación Taller (Auto-Calculada)</label>
-                    <input type="text" id="edit-ubicacion-taller" readonly class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-500 text-xs uppercase font-medium select-none transition-colors">
+                    <input type="text" id="edit-ubicacion-taller" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-500 text-xs uppercase font-medium select-none transition-colors">
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">
                         <i class="fa-solid fa-file-pdf mr-1"></i> Documento de la Unidad (PDF o Imagen)
                     </label>
-                    <div id="wrapper-doc-actual" class="hidden mb-2 p-2.5 bg-emerald-950/10 border border-emerald-500/20 rounded-xl flex items-center justify-between">
-                        <a id="link-doc-actual" href="#" target="_blank" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 hover:underline">
+                    <div id="wrapper-doc-actual" class="hidden mb-2 p-2.5 bg-blue-600/10 border border-blue-500/20 rounded-lg flex items-center justify-between">
+                        <a id="link-doc-actual" href="#" target="_blank" class="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 hover:underline">
                             <i class="fa-solid fa-file-lines text-sm"></i> Ver / Descargar Documento
                         </a>
-                        <button type="button" onclick="marcarEliminarDocumento()" class="text-xs text-red-500 hover:text-red-600 font-bold px-2 py-1 rounded bg-red-500/10 border border-red-500/20 cursor-pointer">
+                        <button type="button" onclick="marcarEliminarDocumento()" class="text-xs text-red-600 dark:text-red-400 hover:text-red-700 font-bold px-2 py-1 rounded bg-red-500/10 border border-red-500/20 cursor-pointer">
                             <i class="fa-solid fa-trash-can"></i> Eliminar
                         </button>
                     </div>
-                    <input type="file" id="edit-documento" accept="application/pdf,image/*" onchange="previsualizarDocumento(this, 'preview-edit-doc')" class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500 text-[11px] cursor-pointer transition-colors">
-                    <div id="preview-edit-doc" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <input type="file" id="edit-documento" accept="application/pdf,image/*" onchange="previsualizarDocumento(this, 'preview-edit-doc')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-600 text-[11px] cursor-pointer transition-colors">
+                    <div id="preview-edit-doc" class="hidden mt-2 p-2 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <span class="text-xs font-mono text-slate-700 dark:text-slate-300 truncate max-w-[280px]" id="edit-doc-nombre"></span>
-                        <button type="button" onclick="limpiarPreviaDocumento('edit-documento', 'preview-edit-doc')" class="text-red-500 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        <button type="button" onclick="limpiarPreviaDocumento('edit-documento', 'preview-edit-doc')" class="text-red-600 hover:text-red-700 p-1"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>
 
-                <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <button type="button" onclick="confirmarEliminarRegistro()" class="px-5 py-2.5 rounded-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer border border-red-500/20 active:scale-95">
+                <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <button type="button" onclick="confirmarEliminarRegistro()" class="px-5 py-2.5 rounded-lg bg-red-600/10 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer border border-red-500/20 active:scale-95">
                         <i class="fa-solid fa-trash-can"></i> Eliminar Activo
                     </button>
                     <div class="flex gap-3">
-                        <button type="button" onclick="cerrarModalEditar()" class="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
-                        <button type="submit" id="btn-editar-submit" class="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20 active:scale-95">
+                        <button type="button" onclick="cerrarModalEditar()" class="px-6 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
+                        <button type="submit" id="btn-editar-submit" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
                             <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
                         </button>
                     </div>
@@ -314,21 +314,21 @@
     </div>
 
     <!-- MODAL DE IDENTIFICACIÓN -->
-    <div id="modalIdentificacion" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-[28px] shadow-2xl p-8 transition-colors">
+    <div id="modalIdentificacion" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-lg shadow-xl p-8 transition-colors">
             <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600/10 text-emerald-600 mb-4 transition-colors">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 mb-4 transition-colors">
                     <i class="fa-solid fa-user-shield text-3xl"></i>
                 </div>
-                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight transition-colors">Acceso Restringido</h3>
+                <h3 class="text-xl font-black text-slate-900 dark:text-slate-50 uppercase tracking-tight transition-colors">Acceso Restringido</h3>
                 <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1 transition-colors">Seleccione su usuario e ingrese su clave de 5 dígitos</p>
             </div>
 
             <form onsubmit="confirmarIdentidad(event)" class="space-y-4" autocomplete="off">
                 <div>
-                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest transition-colors">Responsable de Turno</label>
+                    <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 tracking-widest transition-colors">Responsable de Turno</label>
                     <select id="input-operador" required
-                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs font-bold uppercase transition-all cursor-pointer">
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3.5 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs font-bold uppercase transition-all cursor-pointer">
                         <option value="" disabled selected hidden>Seleccione Operador...</option>
                         <option value="DEXCYBEL SALAZAR">DEXCYBEL SALAZAR</option>
                         <option value="JUAN ESCALONA">JUAN ESCALONA</option>
@@ -338,7 +338,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2 tracking-widest transition-colors">Contraseña (5 dígitos)</label>
+                    <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 tracking-widest transition-colors">Contraseña (5 dígitos)</label>
                     <input type="password"
                            id="input-password"
                            required
@@ -347,14 +347,14 @@
                            autocomplete="current-password"
                            placeholder="•••••"
                            title="La contraseña debe tener exactamente 5 caracteres alfanuméricos en minúsculas."
-                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white text-center focus:outline-none focus:border-emerald-500 text-lg font-mono tracking-widest transition-all">
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-5 py-3.5 text-slate-900 dark:text-slate-50 text-center focus:outline-none focus:border-blue-600 text-lg font-mono tracking-widest transition-all">
                 </div>
 
-                <div id="error-identificacion" class="text-[11px] text-red-500 font-bold text-center hidden bg-red-500/10 border border-red-500/20 py-2 rounded-xl">
+                <div id="error-identificacion" class="text-[11px] text-red-600 dark:text-red-400 font-bold text-center hidden bg-red-500/10 border border-red-500/20 py-2 rounded-lg">
                     <i class="fa-solid fa-triangle-exclamation mr-1"></i> Credenciales incorrectas o inválidas.
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all cursor-pointer shadow-lg shadow-emerald-600/15 active:scale-98">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-black uppercase tracking-widest text-xs transition-all cursor-pointer active:scale-95">
                     Ingresar al Sistema <i class="fa-solid fa-right-to-bracket ml-2"></i>
                 </button>
             </form>
@@ -362,22 +362,22 @@
     </div>
 
     <!-- BOTTOM SHEET DE FILTROS -->
-    <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
-        <div id="sheetContent" class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-[32px] shadow-2xl p-6 transition-transform translate-y-full duration-400 ease-[cubic-bezier(0.2,0,0,1)] border-t border-slate-200 dark:border-slate-800" onclick="event.stopPropagation()">
+    <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
+        <div id="sheetContent" class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-t-lg shadow-xl p-6 transition-transform translate-y-full duration-400 border-t border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
 
-            <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6 opacity-50"></div>
+            <div class="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded mx-auto mb-6 opacity-50"></div>
 
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-xs uppercase font-black tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-emerald-500"></i> Control de Búsqueda y Filtros
+                    <i class="fa-solid fa-sliders text-blue-600 dark:text-blue-400"></i> Control de Búsqueda y Filtros
                 </h3>
-                <button onclick="limpiarFiltros()" type="button" class="text-emerald-500 text-[10px] font-black uppercase tracking-wider hover:text-emerald-400 transition-colors cursor-pointer">
+                <button onclick="limpiarFiltros()" type="button" class="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider hover:text-blue-700 transition-colors cursor-pointer">
                     Limpiar todo
                 </button>
             </div>
 
             <div class="mb-6">
-                <label for="input-busqueda" class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Tipee un criterio de búsqueda</label>
+                <label for="input-busqueda" class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Tipee un criterio de búsqueda</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-xs"></i>
@@ -385,35 +385,35 @@
                     <input type="text"
                            id="input-busqueda"
                            oninput="filtrarActivos()"
-                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs rounded-xl pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-medium shadow-inner"
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 text-xs rounded-lg pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-600 transition-all font-medium"
                            placeholder="Buscar por Unidad, Placa, VIN, Marca, Modelo, Gerencia...">
                 </div>
             </div>
 
             <div class="mb-6">
-                <label class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 mb-2.5 tracking-wider">Filtrar por Flota</label>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Filtrar por Flota</label>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="toggleFiltroBadge(this, 'flota', 'Liviana')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                    <button onclick="toggleFiltroBadge(this, 'flota', 'Liviana')" type="button" class="filter-badge px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
                         Liviana
                     </button>
-                    <button onclick="toggleFiltroBadge(this, 'flota', 'Pesada')" type="button" class="filter-badge px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-700 cursor-pointer">
+                    <button onclick="toggleFiltroBadge(this, 'flota', 'Pesada')" type="button" class="filter-badge px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
                         Pesada
                     </button>
                 </div>
             </div>
 
-            <button onclick="cerrarFiltros()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[11px] mt-8 shadow-lg shadow-emerald-950/50 transition-all active:scale-95 cursor-pointer">
+            <button onclick="cerrarFiltros()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-black uppercase tracking-widest text-[11px] mt-8 transition-all active:scale-95 cursor-pointer">
                 Aplicar y Cerrar
             </button>
         </div>
     </div>
 
-    <footer class="w-full text-center py-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/60 hidden sm:block transition-colors">
+    <footer class="w-full text-center py-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 hidden sm:block transition-colors">
         <p class="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black transition-colors">
           TTOCC System - Administración de Flota
         </p>
-        <p class="text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-wider font-medium mt-0.5 transition-colors">
-          Desarrollado por <span class="font-bold text-slate-600 dark:text-slate-400">RIVEROJDU</span> &copy; 2026
+        <p class="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium mt-0.5 transition-colors">
+          Desarrollado por <span class="font-bold text-slate-600 dark:text-slate-300">RIVEROJDU</span> &copy; 2026
         </p>
      </footer>
 </body>

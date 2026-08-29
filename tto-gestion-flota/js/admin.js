@@ -93,13 +93,13 @@ function cambiarTabAdmin(tab) {
     if (tab === "import") {
         secImport.classList.remove("hidden");
         secUsuarios.classList.add("hidden");
-        btnImport.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 cursor-pointer flex items-center gap-2";
-        btnUsuarios.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-purple-500 cursor-pointer flex items-center gap-2";
+        btnImport.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 cursor-pointer flex items-center gap-2";
+        btnUsuarios.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center gap-2";
     } else {
         secImport.classList.add("hidden");
         secUsuarios.classList.remove("hidden");
-        btnUsuarios.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 cursor-pointer flex items-center gap-2";
-        btnImport.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-purple-500 cursor-pointer flex items-center gap-2";
+        btnUsuarios.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 cursor-pointer flex items-center gap-2";
+        btnImport.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center gap-2";
         cargarUsuariosSupabase();
     }
 }
@@ -371,7 +371,7 @@ async function cargarUsuariosSupabase() {
 
     tbody.innerHTML = `
         <tr>
-            <td colspan="7" class="p-6 text-center text-purple-400 font-bold uppercase text-[10px]">
+            <td colspan="7" class="p-6 text-center text-blue-600 dark:text-blue-400 font-bold uppercase text-[10px]">
                 <i class="fa-solid fa-spinner animate-spin mr-1"></i> Consultando usuarios en Supabase...
             </td>
         </tr>
@@ -414,19 +414,19 @@ function renderizarUsuarios(usuarios) {
         const activoFlag = Boolean(u.activo);
 
         const badgeEstado = activoFlag
-            ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase">Activo</span>`
-            : `<span class="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[9px] font-black uppercase">Inactivo</span>`;
+            ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase">Activo</span>`
+            : `<span class="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase">Inactivo</span>`;
 
         return `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors">
-                <td class="p-4 font-mono font-bold text-slate-900 dark:text-white uppercase">${usrEscaped}</td>
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                <td class="p-4 font-mono font-bold text-slate-900 dark:text-slate-50 uppercase">${usrEscaped}</td>
                 <td class="p-4 font-medium text-slate-700 dark:text-slate-300">${nombreEscaped}</td>
-                <td class="p-4 font-mono text-[10px] text-purple-600 dark:text-purple-400 font-black uppercase">${rolEscaped}</td>
+                <td class="p-4 font-mono text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase">${rolEscaped}</td>
                 <td class="p-4 font-mono text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">${moduloEscaped}</td>
                 <td class="p-4 font-mono text-xs text-slate-800 dark:text-slate-200">${passwordEscaped}</td>
                 <td class="p-4">${badgeEstado}</td>
                 <td class="p-4 text-center">
-                    <button onclick="editarUsuario('${idEscaped}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 hover:text-white text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer mr-1">
+                    <button onclick="editarUsuario('${idEscaped}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer mr-1">
                         <i class="fa-solid fa-user-pen"></i> Editar
                     </button>
                 </td>

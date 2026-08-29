@@ -608,7 +608,7 @@ function renderizarMatriz(datos) {
 
         return `
              <tr id="fila-${regIdEscaped}"
-    class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-xl mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
+    class="block md:table-row ${colorFila || 'bg-white dark:bg-transparent'} border border-slate-200 dark:border-slate-800/40 md:border-none md:border-b md:border-slate-200 md:dark:border-slate-800/20 rounded-lg mb-3 md:mb-0 p-3 md:p-0 shadow-sm dark:shadow-none transition-colors">
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-1.5 font-mono text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">ID Registro:</span>
                     <div class="text-right md:text-left">
@@ -654,7 +654,7 @@ function renderizarMatriz(datos) {
 
                     <div class="flex gap-1.5 justify-end md:justify-center">
                     <button onclick="abrirModalEditar('${regIdEscaped}')"
-                      class="bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-cyan-500 dark:hover:border-cyan-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
+                      class="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm dark:shadow-md cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all active:scale-95"
                         title="Planificación y Control Avanzado">
                         <i class="fa-solid fa-list-check"></i> <span class="md:hidden">Gestionar</span>
                     </button>
