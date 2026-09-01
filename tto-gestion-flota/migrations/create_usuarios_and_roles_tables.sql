@@ -50,4 +50,4 @@ DROP POLICY IF EXISTS "Permitir lectura publica usuarios" ON usuarios;
 CREATE POLICY "Permitir lectura publica usuarios" ON usuarios FOR SELECT TO anon, authenticated USING (true);
 
 DROP POLICY IF EXISTS "Permitir escritura publica usuarios" ON usuarios;
-CREATE POLICY "Permitir escritura publica usuarios" ON usuarios FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir escritura solo autenticados" ON usuarios FOR ALL TO authenticated USING (true) WITH CHECK (true);

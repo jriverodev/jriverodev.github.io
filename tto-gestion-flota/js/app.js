@@ -113,64 +113,97 @@ async function handleLocalApiGateway(payload) {
     const token = payload && payload.token;
 
     if (accion === 'login') {
-        if (payload && payload.usuario) {
-            const client = ensureSupabaseClient();
-            if (navigator.onLine && client) {
-                try {
-                    const { data, error } = await client.from('usuarios')
-                        .select('*')
-                        .eq('usuario', String(payload.usuario).toUpperCase().trim())
-                        .maybeSingle();
+        const usernameReq = String(payload && payload.usuario || '').toUpperCase().trim();
+        const passwordReq = String(payload && payload.password || '').toLowerCase().trim();
 
-                    if (!error && data) {
-                        if (!data.activo) {
+        if (!usernameReq || !passwordReq) {
+            return toJsonResponse({ status: 'ERROR', message: 'Seleccione operador e ingrese la contraseña.' }, 400);
+        }
+
+        const client = ensureSupabaseClient();
+        if (navigator.onLine && client) {
+            try {
+                const { data, error } = await client.from('usuarios')
+                    .select('*')
+                    .eq('usuario', usernameReq)
+                    .maybeSingle();
+
+                if (error) {
+                    console.warn('[Supabase Auth] Error al consultar usuario:', error);
+                } else if (!data) {
+                    return toJsonResponse({ status: 'ERROR', message: 'Usuario no registrado.' }, 401);
+                } else {
+                    if (!data.activo) {
+                        return toJsonResponse({ status: 'ERROR', message: 'El usuario se encuentra inactivo o bloqueado.' }, 403);
+                    }
+
+                    // Verificar permisos de módulo
+                    const moduloReq = String(payload.modulo_requerido || '').toUpperCase();
+                    const userMod = String(data.modulo || 'TODOS').toUpperCase();
+                    const userRol = String(data.rol_id || '').toLowerCase();
+
+                    if (userRol !== 'admin' && userMod !== 'TODOS' && moduloReq) {
+                        if (moduloReq === 'TALLERES' && userMod !== 'TALLERES' && userRol !== 'operador_talleres') {
+                            return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Talleres.' }, 403);
+                        }
+                        if (moduloReq === 'FLOTA' && userMod !== 'FLOTA' && userRol !== 'operador_flota') {
+                            return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Flota.' }, 403);
+                        }
+                    }
+
+                    const dbPass = String(data.password_plain || '').toLowerCase().trim();
+                    if (dbPass === passwordReq) {
+                        const generatedToken = (crypto && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Date.now());
+                        guardarSesion(generatedToken, data.usuario, data.rol_id, data.modulo);
+                        return toJsonResponse({
+                            status: 'SUCCESS',
+                            token: generatedToken,
+                            usuario: data.usuario,
+                            modulo: data.modulo || 'TODOS',
+                            rol_id: data.rol_id || 'operador_talleres',
+                            message: 'Autenticación exitosa.'
+                        });
+                    } else {
+                        return toJsonResponse({ status: 'ERROR', message: 'Contraseña incorrecta para el usuario seleccionado.' }, 401);
+                    }
+                }
+            } catch (eAuth) {
+                console.warn('[Supabase Auth] Excepción al autenticar en Supabase:', eAuth);
+            }
+        }
+
+        // Fallback offline: verificar contra caché local de usuarios
+        try {
+            const cachedRaw = localStorage.getItem('TTOCC_USUARIOS_CACHE');
+            if (cachedRaw) {
+                const cachedUsers = JSON.parse(cachedRaw);
+                if (Array.isArray(cachedUsers)) {
+                    const matchUser = cachedUsers.find(u => String(u.usuario || '').toUpperCase().trim() === usernameReq);
+                    if (matchUser) {
+                        if (!matchUser.activo) {
                             return toJsonResponse({ status: 'ERROR', message: 'El usuario se encuentra inactivo o bloqueado.' }, 403);
                         }
-
-                        // Verificar permisos de módulo
-                        const moduloReq = String(payload.modulo_requerido || '').toUpperCase();
-                        const userMod = String(data.modulo || 'TODOS').toUpperCase();
-                        const userRol = String(data.rol_id || '').toLowerCase();
-
-                        if (userRol !== 'admin' && userMod !== 'TODOS' && moduloReq) {
-                            if (moduloReq === 'TALLERES' && userMod !== 'TALLERES' && userRol !== 'operador_talleres') {
-                                return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Talleres.' }, 403);
-                            }
-                            if (moduloReq === 'FLOTA' && userMod !== 'FLOTA' && userRol !== 'operador_flota') {
-                                return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Flota.' }, 403);
-                            }
-                        }
-
-                        if (String(data.password_plain).trim() === String(payload.password).trim()) {
-                            const generatedToken = (crypto && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Date.now());
-                            guardarSesion(generatedToken, data.usuario, data.rol_id, data.modulo);
+                        const dbPass = String(matchUser.password_plain || '').toLowerCase().trim();
+                        if (dbPass === passwordReq) {
+                            const generatedToken = 'tok-offline-' + Date.now();
+                            guardarSesion(generatedToken, matchUser.usuario, matchUser.rol_id, matchUser.modulo);
                             return toJsonResponse({
                                 status: 'SUCCESS',
                                 token: generatedToken,
-                                usuario: data.usuario,
-                                modulo: data.modulo || 'TODOS',
-                                rol_id: data.rol_id || 'operador_talleres',
-                                message: 'Autenticación exitosa en Supabase.'
+                                usuario: matchUser.usuario,
+                                modulo: matchUser.modulo || 'TODOS',
+                                rol_id: matchUser.rol_id || 'operador_talleres',
+                                message: 'Autenticación offline exitosa.'
                             });
                         } else {
-                            return toJsonResponse({ status: 'ERROR', message: 'Contraseña incorrecta.' }, 401);
+                            return toJsonResponse({ status: 'ERROR', message: 'Contraseña incorrecta para el usuario seleccionado.' }, 401);
                         }
                     }
-                } catch (eAuth) {
-                    console.warn('[Supabase Auth] Fallo al consultar usuarios en Supabase:', eAuth);
                 }
             }
+        } catch (eOff) {}
 
-            // Fallback para entorno local u offline
-            guardarSesion(token || 'local-demo-token', payload.usuario);
-            return toJsonResponse({
-                status: 'SUCCESS',
-                token: token || 'local-demo-token',
-                usuario: payload.usuario,
-                message: 'Sesión local creada.'
-            });
-        }
-        return toJsonResponse({ status: 'ERROR', message: 'Faltan credenciales.' }, 401);
+        return toJsonResponse({ status: 'ERROR', message: 'Usuario no registrado o credenciales incorrectas.' }, 401);
     }
 
     if (accion === 'validar_token') {
@@ -767,11 +800,15 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
     if (navigator.onLine && client) {
         try {
             const { data, error } = await client.from('usuarios')
-                .select('usuario, nombre_completo, modulo, rol_id, activo')
+                .select('usuario, nombre_completo, modulo, rol_id, activo, password_plain')
                 .eq('activo', true)
                 .order('usuario', { ascending: true });
 
             if (!error && Array.isArray(data) && data.length > 0) {
+                try {
+                    localStorage.setItem('TTOCC_USUARIOS_CACHE', JSON.stringify(data));
+                } catch (eCache) {}
+
                 const filtrados = data.filter(u => {
                     if (!moduloRequerido) return true;
                     const mod = String(u.modulo || 'TODOS').toUpperCase();
@@ -787,7 +824,7 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
                     filtrados.forEach(u => {
                         const opt = document.createElement('option');
                         opt.value = u.usuario;
-                        opt.textContent = u.usuario;
+                        opt.textContent = `${u.nombre_completo || u.usuario} (${u.usuario})`;
                         select.appendChild(opt);
                     });
                     return;
@@ -797,6 +834,35 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
             console.warn('[Supabase] Error poblando select de operadores:', e);
         }
     }
+
+    try {
+        const cachedRaw = localStorage.getItem('TTOCC_USUARIOS_CACHE');
+        if (cachedRaw) {
+            const cachedData = JSON.parse(cachedRaw);
+            if (Array.isArray(cachedData) && cachedData.length > 0) {
+                const filtrados = cachedData.filter(u => {
+                    if (!u.activo) return false;
+                    if (!moduloRequerido) return true;
+                    const mod = String(u.modulo || 'TODOS').toUpperCase();
+                    const rol = String(u.rol_id || '').toLowerCase();
+                    if (mod === 'TODOS' || rol === 'admin') return true;
+                    if (moduloRequerido.toUpperCase() === 'TALLERES' && (mod === 'TALLERES' || rol === 'operador_talleres')) return true;
+                    if (moduloRequerido.toUpperCase() === 'FLOTA' && (mod === 'FLOTA' || rol === 'operador_flota')) return true;
+                    return false;
+                });
+
+                if (filtrados.length > 0) {
+                    select.innerHTML = '<option value="" disabled selected hidden>Seleccione Operador...</option>';
+                    filtrados.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.usuario;
+                        opt.textContent = `${u.nombre_completo || u.usuario} (${u.usuario})`;
+                        select.appendChild(opt);
+                    });
+                }
+            }
+        }
+    } catch (eFallback) {}
 }
 
 function cerrarSesion() {

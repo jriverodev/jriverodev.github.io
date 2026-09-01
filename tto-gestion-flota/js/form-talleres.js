@@ -313,10 +313,10 @@ async function confirmarIdentidad(event) {
 
     if (!selectOperador || !inputPassword) return;
 
-    const operadorSanitizado = selectOperador.value.toUpperCase().replace(/[^A-Z ]/g, "");
-    const passwordSanitizado = inputPassword.value.trim().toLowerCase();
+    const operadorVal = selectOperador.value.trim().toUpperCase();
+    const passwordVal = inputPassword.value.trim().toLowerCase();
 
-    if (!operadorSanitizado || !passwordSanitizado) {
+    if (!operadorVal || !passwordVal) {
         if (divError) {
             divError.textContent = "Seleccione operador e ingrese la contraseña.";
             divError.classList.remove('hidden');
@@ -329,8 +329,8 @@ async function confirmarIdentidad(event) {
             method: "POST",
             body: JSON.stringify({
                 accion: "login",
-                usuario: operadorSanitizado,
-                password: passwordSanitizado,
+                usuario: operadorVal,
+                password: passwordVal,
                 modulo_requerido: "TALLERES"
             })
         });
@@ -338,7 +338,7 @@ async function confirmarIdentidad(event) {
         const res = await response.json();
 
         if (res.status === "SUCCESS" && res.token) {
-            guardarSesion(res.token, res.usuario);
+            guardarSesion(res.token, res.usuario, res.rol_id, res.modulo);
             OPERADOR_ACTUAL = res.usuario;
             window.operadorActivo = res.usuario;
 
