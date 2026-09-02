@@ -620,7 +620,7 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     // Relative storage paths (e.g. "mantenimientos/123/foto.jpg" or "activos/V-102/doc.pdf")
     const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
     const cleanPath = clean.replace(/^\/+/, '');
-    return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
+    return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${idUnidad}/${cleanPath}`;
 }
 
 const TTOCC_SIGNED_URL_CACHE = new Map();
