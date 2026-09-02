@@ -401,7 +401,7 @@ function renderizarActivos(datos) {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
         let badgeDocumento = (reg.Documento_Url && String(reg.Documento_Url).trim() !== "")
-            ? `<a href="${escapeHTML(reg.Documento_Url)}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-wider hover:underline transition-all">
+            ? `<a href="${escapeHTML(reg.Documento_Url)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(reg.Documento_Nombre || 'documento_unidad')}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-wider hover:underline transition-all">
                 <i class="fa-solid fa-file-pdf"></i> Ver / Descargar
                </a>`
             : `<span class="text-[9px] text-slate-400 dark:text-slate-600 italic">Sin Documento</span>`;
@@ -574,23 +574,23 @@ async function guardarNuevoRegistro(event) {
     let docBase64 = "";
     let docNombre = "";
     let documento_url = "";
+    const idUnidad = document.getElementById("add-unidad").value.trim().toUpperCase() || (crypto && crypto.randomUUID ? crypto.randomUUID() : `tmp-${Date.now()}`);
 
     if (docInput && docInput.files.length > 0) {
         const file = docInput.files[0];
         docNombre = file.name;
 
-        // If online and Supabase client available, try uploading directly to Storage
+        // Subida directa a Supabase Storage asegurando la ruta completa del archivo
         if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
             try {
                 const client = ensureSupabaseClient();
                 if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
-                    const idUnidad = document.getElementById("add-unidad").value.trim().toUpperCase() || (crypto && crypto.randomUUID ? crypto.randomUUID() : `tmp-${Date.now()}`);
+                    // Ruta directa al archivo estático dentro de la subcarpeta del activo
                     const path = `activos/${idUnidad}/${docNombre}`;
                     const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
                     if (publicUrl) {
                         documento_url = publicUrl;
                     } else {
-                        // fallback to base64
                         docBase64 = await transformarABase64(file);
                     }
                 } else {
@@ -608,7 +608,7 @@ async function guardarNuevoRegistro(event) {
     const payload = {
         accion: "crear_activo",
         token: obtenerTokenSesion(),
-        id_unidad: document.getElementById("add-unidad").value.trim().toUpperCase(),
+        id_unidad: idUnidad,
         placa: document.getElementById("add-placa").value.trim().toUpperCase(),
         vin: document.getElementById("add-vin").value.trim().toUpperCase(),
         marca: document.getElementById("add-marca").value.trim().toUpperCase(),
@@ -758,6 +758,7 @@ async function guardarEdicionModal(event) {
             try {
                 const client = ensureSupabaseClient();
                 if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                    // Ruta directa asegurando la ruta de la carpeta del activo y el archivo estático
                     const path = `activos/${idUnidad}/${docNombre}`;
                     const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
                     if (publicUrl) {
