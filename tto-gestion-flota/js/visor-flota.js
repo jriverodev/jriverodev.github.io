@@ -94,33 +94,33 @@ async function cargarDatosAnaliticos() {
             }
 
             const getV = (terms) => {
-                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
+                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t) && normalized[k] !== null && String(normalized[k]).trim() !== ""));
+                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]).trim() : "";
             };
 
-            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
+            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || u["id_unidad"] || "S/I";
             const idUnidad = String(rawId);
             const idKey = idUnidad.toUpperCase();
 
-            const docRaw = getV(["DOCUMENTOURL", "DOCUMENTO_URL", "DOCUMENTO", "DOC", "PDF"]) || u["documento_url"] || u["Documento_Url"] || "";
+            const docRaw = getV(["DOCUMENTOURL", "DOCUMENTO_URL", "DOCUMENTO", "DOC", "PDF"]) || (u["documento_url"] && String(u["documento_url"]).trim()) || (u["Documento_Url"] && String(u["Documento_Url"]).trim()) || "";
 
             return {
                 ID_Unidad: idUnidad,
-                Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
-                VIN: getV(["VIN"]) || u["VIN"] || "S/I",
-                Marca: normalized["MARCA"] || u["Marca"] || "",
-                Modelo: normalized["MODELO"] || u["Modelo"] || "",
-                Color: normalized["COLOR"] || u["Color"] || "",
-                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
-                Estatus_Final: getV(["ESTATUSFINAL", "ESTATUS"]) || u["Estatus_Final"] || "",
-                Situacion_Actual: getV(["SITUACIONACTUAL", "SITUACION"]) || u["Situacion_Actual"] || "",
-                Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
-                Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
-                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
-                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
+                Placa: getV(["PLACA"]) || u["Placa"] || u["placa"] || "S/I",
+                VIN: getV(["VIN"]) || u["VIN"] || u["vin"] || "S/I",
+                Marca: normalized["MARCA"] || u["Marca"] || u["marca"] || "",
+                Modelo: normalized["MODELO"] || u["Modelo"] || u["modelo"] || "",
+                Color: normalized["COLOR"] || u["Color"] || u["color"] || "",
+                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || u["tipo_vehiculo"] || "",
+                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || u["tipo_flota"] || u["flota"] || "Liviana",
+                Estatus_Final: getV(["ESTATUSFINAL", "ESTATUS"]) || u["Estatus_Final"] || u["estatus_final"] || "",
+                Situacion_Actual: getV(["SITUACIONACTUAL", "SITUACION"]) || u["Situacion_Actual"] || u["situacion_actual"] || "",
+                Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || u["gerencia"] || "",
+                Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || u["responsable_usuario"] || "",
+                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || u["cargo_usuario"] || "",
+                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || u["ubicacion_taller"] || "Sin Historial Taller",
                 Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw) : docRaw,
-                Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || u["documento_nombre"] || u["Documento_Nombre"] || ""
+                Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || (u["documento_nombre"] && String(u["documento_nombre"]).trim()) || (u["Documento_Nombre"] && String(u["Documento_Nombre"]).trim()) || ""
             };
         });
 
@@ -240,7 +240,7 @@ function renderizarVisor(datos) {
 
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
-        let badgeDocumento = reg.Documento_Url
+        let badgeDocumento = (reg.Documento_Url && String(reg.Documento_Url).trim() !== "")
             ? `<a href="${escapeHTML(reg.Documento_Url)}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-wider hover:underline transition-all">
                 <i class="fa-solid fa-file-pdf"></i> Ver / Descargar
                </a>`
