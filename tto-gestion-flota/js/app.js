@@ -585,7 +585,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
+function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-archivos') {
     if (!urlStr || typeof urlStr !== 'string') return '';
     const clean = urlStr.trim();
     if (!clean) return '';
@@ -620,6 +620,12 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     // Relative storage paths (e.g. "mantenimientos/123/foto.jpg" or "activos/V-102/doc.pdf")
     const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
     const cleanPath = clean.replace(/^\/+/, '');
+
+    // Si solo es el nombre del archivo (ej. "documento.pdf") y le pasaron la unidad, le antepone la subcarpeta
+    if (idUnidad && !cleanPath.includes('/')) {
+        cleanPath = `${idUnidad}/${cleanPath}`;
+    }
+    
     return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
 }
 
