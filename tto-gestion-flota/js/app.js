@@ -618,10 +618,48 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     }
 
     // Relative storage paths (e.g. "mantenimientos/123/foto.jpg" or "activos/V-102/doc.pdf")
-    const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
+   /* const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
     const cleanPath = clean.replace(/^\/+/, '');
     return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
+}  */
+
+
+
+
+
+
+
+
+
+const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
+    let cleanPath = clean.replace(/^\/+/, '');
+
+    // Si ya es una URL HTTP completa
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+        // Si es una URL pública de Supabase pero no tiene la subcarpeta de la unidad, se la inyecta
+        if (idUnidad && clean.includes(`/${bucketDefault}/`) && !clean.includes(`/${bucketDefault}/${idUnidad}/`)) {
+            return clean.replace(`/${bucketDefault}/`, `/${bucketDefault}/${idUnidad}/`);
+        }
+        return clean;
+    }
+
+    // Si solo es el nombre del archivo (ej. "documento.pdf") y le pasaron la unidad, le antepone la subcarpeta
+    if (idUnidad && !cleanPath.includes('/')) {
+        cleanPath = `${idUnidad}/${cleanPath}`;
+    }
+
+return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
 }
+
+
+
+
+
+
+
+
+
+    
 
 const TTOCC_SIGNED_URL_CACHE = new Map();
 
