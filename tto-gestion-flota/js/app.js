@@ -585,6 +585,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+/*
 function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     if (!urlStr || typeof urlStr !== 'string') return '';
     const clean = urlStr.trim();
@@ -647,7 +648,93 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
     }
 
     return null;
+}*/
+
+
+function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-archivos') {
+    if (!urlStr || typeof urlStr !== 'string') return '';
+    const clean = urlStr.trim();
+    if (!clean) return '';
+
+    // Manejo de variantes de Google Drive para evitar bloqueos por CORB
+    if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
+        let driveId = '';
+        if (clean.includes('id=')) {
+            driveId = clean.split('id=')[1]?.split('&')[0];
+        } else if (clean.includes('/file/d/')) {
+            driveId = clean.split('/file/d/')[1]?.split('/')[0];
+        }
+        if (driveId) {
+            return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`;
+        }
+    }
+
+    // Data URIs se devuelven directamente
+    if (clean.startsWith('data:')) {
+        return clean;
+    }
+
+    const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
+    const unidadStr = idUnidad ? String(idUnidad).trim() : '';
+
+    // Si ya es una URL HTTP(S) completa
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+        // Si apunta a nuestro bucket de Supabase pero no contiene la carpeta de la unidad, la inyectamos
+        if (unidadStr && clean.includes(`/${bucketDefault}/`) && !clean.includes(`/${bucketDefault}/${unidadStr}/`)) {
+            return clean.replace(`/${bucketDefault}/`, `/${bucketDefault}/${unidadStr}/`);
+        }
+        return clean;
+    }
+
+    // Comprobar si la cadena cumple el patrón de una ruta de storage o extensión permitida
+    const esRutaStorage = /^mantenimientos\//i.test(clean) ||
+                          /^activos\//i.test(clean) ||
+                          /\.(jpg|jpeg|png|webp|pdf)($|\?)/i.test(clean);
+
+    if (!esRutaStorage) {
+        return clean;
+    }
+
+    // Construcción de ruta relativa ("documento.pdf" -> "54366/documento.pdf")
+    let cleanPath = clean.replace(/^\/+/, '');
+    if (unidadStr && !cleanPath.includes('/')) {
+        cleanPath = `${unidadStr}/${cleanPath}`;
+    }
+
+    return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
 }
+
+const TTOCC_SIGNED_URL_CACHE = new Map();
+
+function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
+    if (!urlOrPath || typeof urlOrPath !== 'string') return null;
+    const clean = urlOrPath.trim();
+    if (!clean || clean.startsWith('data:') || clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
+        return null;
+    }
+
+    if (clean.includes(`/storage/v1/object/public/${bucketDefault}/`)) {
+        return clean.split(`/storage/v1/object/public/${bucketDefault}/`)[1];
+    }
+    if (clean.includes(`/storage/v1/object/sign/${bucketDefault}/`)) {
+        return clean.split(`/storage/v1/object/sign/${bucketDefault}/`)[1]?.split('?')[0];
+    }
+    if (clean.includes(`/storage/v1/object/${bucketDefault}/`)) {
+        return clean.split(`/storage/v1/object/${bucketDefault}/`)[1]?.split('?')[0];
+    }
+
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+        return clean.replace(/^\/+/, '');
+    }
+
+    return null;
+}
+
+
+
+
+
+
 
 async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'ttocc-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return '';
