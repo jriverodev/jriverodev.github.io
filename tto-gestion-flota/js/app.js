@@ -412,6 +412,10 @@ async function handleLocalApiGateway(payload) {
                 }
 
                 let payloadRemoto = { ...recordExistente, ...registro };
+                if (payloadRemoto.documento_eliminar) {
+                    payloadRemoto.documento_url = null;
+                    payloadRemoto.documento_nombre = null;
+                }
                 if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
                 }
