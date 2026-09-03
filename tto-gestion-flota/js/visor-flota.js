@@ -94,17 +94,8 @@ async function cargarDatosAnaliticos() {
             }
 
             const getV = (terms) => {
-                for (const term of terms) {
-                    const cleanTerm = term.toUpperCase().replace(/_/g, "").replace(/\s/g, "");
-                    if (normalized[cleanTerm] !== undefined && normalized[cleanTerm] !== null && String(normalized[cleanTerm]).trim() !== "") {
-                        return String(normalized[cleanTerm]).trim();
-                    }
-                    const foundKey = Object.keys(normalized).find(k => k.includes(cleanTerm) && normalized[k] !== null && String(normalized[k]).trim() !== "");
-                    if (foundKey !== undefined) {
-                        return String(normalized[foundKey]).trim();
-                    }
-                }
-                return "";
+                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t) && normalized[k] !== null && String(normalized[k]).trim() !== ""));
+                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]).trim() : "";
             };
 
             const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || u["id_unidad"] || "S/I";

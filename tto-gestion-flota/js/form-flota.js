@@ -336,21 +336,21 @@ async function cargarTablaActivos() {
 
             return {
                 ID_Unidad: idUnidad,
-                Placa: getV(["PLACA"]) || u["Placa"] || u["placa"] || "S/I",
-                VIN: getV(["VIN"]) || u["VIN"] || u["vin"] || "S/I",
-                Marca: normalized["MARCA"] || u["Marca"] || u["marca"] || "",
-                Modelo: normalized["MODELO"] || u["Modelo"] || u["modelo"] || "",
-                Color: normalized["COLOR"] || u["Color"] || u["color"] || "",
-                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || u["tipo_vehiculo"] || "",
-                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || u["tipo_flota"] || u["flota"] || "Liviana",
-                Estatus_Final: getV(["ESTATUSFINAL", "ESTATUS"]) || u["Estatus_Final"] || u["estatus_final"] || "",
-                Situacion_Actual: getV(["SITUACIONACTUAL", "SITUACION"]) || u["Situacion_Actual"] || u["situacion_actual"] || "",
-                Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || u["gerencia"] || "",
-                Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || u["responsable_usuario"] || "",
-                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || u["cargo_usuario"] || "",
-                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || u["ubicacion_taller"] || "Sin Historial Taller",
-                Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw) : docRaw,
-                Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || (u["documento_nombre"] && String(u["documento_nombre"]).trim()) || (u["Documento_Nombre"] && String(u["Documento_Nombre"]).trim()) || ""
+                Placa: getV(["PLACA"]) || u["Placa"] || "S/I",
+                VIN: getV(["VIN"]) || u["VIN"] || "S/I",
+                Marca: normalized["MARCA"] || u["Marca"] || "",
+                Modelo: normalized["MODELO"] || u["Modelo"] || "",
+                Color: normalized["COLOR"] || u["Color"] || "",
+                Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
+                Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
+                Estatus_Final: getV(["ESTATUSFINAL", "ESTATUS"]) || u["Estatus_Final"] || "",
+                Situacion_Actual: getV(["SITUACIONACTUAL", "SITUACION"]) || u["Situacion_Actual"] || "",
+                Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
+                Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
+                Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
+                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
+                Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw, idUnidad) : docRaw,
+                Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || u["documento_nombre"] || u["Documento_Nombre"] || ""
             };
         });
 
