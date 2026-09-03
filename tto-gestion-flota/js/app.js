@@ -611,6 +611,7 @@ function normalizarUrlStorage(urlStr, bucketDefault = 'ttocc-archivos') {
     // Only convert if string matches a relative storage path pattern or file extension
     const esRutaStorage = /^mantenimientos\//i.test(clean) ||
                           /^activos\//i.test(clean) ||
+                          /^[^\/]+\//i.test(clean) ||
                           /\.(jpg|jpeg|png|webp|pdf)($|\?)/i.test(clean);
 
     if (!esRutaStorage) {
