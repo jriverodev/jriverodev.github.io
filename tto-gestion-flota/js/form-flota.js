@@ -316,14 +316,23 @@ async function cargarTablaActivos() {
             }
 
             const getV = (terms) => {
-                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
-                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
+                for (const term of terms) {
+                    const cleanTerm = term.toUpperCase().replace(/_/g, "").replace(/\s/g, "");
+                    if (normalized[cleanTerm] !== undefined && normalized[cleanTerm] !== null && String(normalized[cleanTerm]).trim() !== "") {
+                        return String(normalized[cleanTerm]).trim();
+                    }
+                    const foundKey = Object.keys(normalized).find(k => k.includes(cleanTerm) && normalized[k] !== null && String(normalized[k]).trim() !== "");
+                    if (foundKey !== undefined) {
+                        return String(normalized[foundKey]).trim();
+                    }
+                }
+                return "";
             };
 
-            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I";
+            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || u["id_unidad"] || "S/I";
             const idUnidad = String(rawId);
             const idKey = idUnidad.toUpperCase();
-            const docRaw = getV(["DOCUMENTOURL", "DOCUMENTO_URL", "DOCUMENTO", "DOC", "PDF"]) || u["documento_url"] || u["Documento_Url"] || "";
+            const docRaw = getV(["DOCUMENTOURL", "DOCUMENTO_URL", "DOCUMENTO", "DOC", "PDF"]) || (u["documento_url"] && String(u["documento_url"]).trim()) || (u["Documento_Url"] && String(u["Documento_Url"]).trim()) || "";
 
             return {
                 ID_Unidad: idUnidad,
@@ -400,7 +409,7 @@ function renderizarActivos(datos) {
     const htmlFilas = [...datos].reverse().map(reg => {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
-        let badgeDocumento = reg.Documento_Url
+        let badgeDocumento = (reg.Documento_Url && String(reg.Documento_Url).trim() !== "")
             ? `<a href="${escapeHTML(reg.Documento_Url)}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-wider hover:underline transition-all">
                 <i class="fa-solid fa-file-pdf"></i> Ver / Descargar
                </a>`

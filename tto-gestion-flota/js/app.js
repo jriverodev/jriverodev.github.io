@@ -611,6 +611,7 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
     // Verificar si coincide con una ruta o extensión de Storage
     const esRutaStorage = /^mantenimientos\//i.test(clean) ||
                           /^activos\//i.test(clean) ||
+                          /^[^\/]+\//i.test(clean) ||
                           /\.(jpg|jpeg|png|webp|pdf)($|\?)/i.test(clean);
 
     if (!esRutaStorage) {
