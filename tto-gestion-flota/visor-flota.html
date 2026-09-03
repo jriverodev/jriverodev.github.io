@@ -105,6 +105,15 @@
                     <option value="">TODOS LOS TIPOS</option>
                 </select>
             </div>
+
+            <div class="w-full sm:w-52">
+                <label class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-widest">Entradas a Talleres</label>
+                <select id="visor-filtro-entradas-taller" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors">
+                    <option value="">TODAS LAS UNIDADES</option>
+                    <option value="con_taller">SOLO CON ENTRADA A TALLER</option>
+                    <option value="sin_taller">SIN HISTORIAL TALLER</option>
+                </select>
+            </div>
             <button onclick="limpiarFiltrosVisor()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2.5 rounded-lg transition-all border border-slate-200 dark:border-slate-700 cursor-pointer" title="Limpiar Filtros">
                 <i class="fa-solid fa-filter-circle-xmark"></i>
             </button>
@@ -188,6 +197,24 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- CONTROLES DE PAGINACIÓN -->
+            <div id="contenedorPaginacion" class="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-200 dark:border-slate-700/80 transition-colors hidden">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="infoPaginacion">
+                    Mostrando 0 - 0 de 0 activos
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnPaginaAnterior" onclick="cambiarPagina(-1)" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                    </button>
+                    <span id="labelPaginaActual" class="text-xs font-mono font-black text-slate-800 dark:text-slate-200 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                        1 / 1
+                    </span>
+                    <button id="btnPaginaSiguiente" onclick="cambiarPagina(1)" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer">
+                        Siguiente <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
