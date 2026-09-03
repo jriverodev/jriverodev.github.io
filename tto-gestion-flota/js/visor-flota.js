@@ -2,9 +2,12 @@
 "use strict";
 
 let datosActivosGlobal = [];
+let datosFiltradosGlobal = [];
 let mapaUltimoTaller = {};
 let instanciaChartFlota = null;
 let instanciaChartMarcas = null;
+let paginaActual = 1;
+const TAMANO_PAGINA = 20;
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarDatosAnaliticos();
@@ -187,6 +190,7 @@ function filtrarVisor() {
     const flota = document.getElementById("visor-filtro-flota").value;
     const tipoVehiculo = document.getElementById("visor-filtro-tipo-vehiculo") ? document.getElementById("visor-filtro-tipo-vehiculo").value : "";
     const estatus = document.getElementById("visor-filtro-estatus") ? document.getElementById("visor-filtro-estatus").value : "";
+    const entradasTaller = document.getElementById("visor-filtro-entradas-taller") ? document.getElementById("visor-filtro-entradas-taller").value : "";
 
     const filtrados = datosActivosGlobal.filter(reg => {
         const matchesBusqueda = !query ||
@@ -202,7 +206,12 @@ function filtrarVisor() {
         const matchesTipoVehiculo = !tipoVehiculo || String(reg.Tipo_Vehiculo || "").trim().toUpperCase() === tipoVehiculo.trim().toUpperCase();
         const matchesEstatus = !estatus || String(reg.Estatus_Final || reg.Estatus || "").trim().toUpperCase() === estatus.trim().toUpperCase();
 
-        return matchesBusqueda && matchesFlota && matchesTipoVehiculo && matchesEstatus;
+        const tieneEntradaTaller = reg.Ubicacion_Taller && !String(reg.Ubicacion_Taller).toLowerCase().includes("sin historial");
+        const matchesTaller = !entradasTaller ||
+            (entradasTaller === "con_taller" && tieneEntradaTaller) ||
+            (entradasTaller === "sin_taller" && !tieneEntradaTaller);
+
+        return matchesBusqueda && matchesFlota && matchesTipoVehiculo && matchesEstatus && matchesTaller;
     });
 
     const kpiFiltradoEl = document.getElementById("kpiFiltrado");
@@ -210,6 +219,7 @@ function filtrarVisor() {
         kpiFiltradoEl.textContent = filtrados.length;
     }
 
+    paginaActual = 1;
     renderizarVisor(filtrados);
 }
 
@@ -220,32 +230,86 @@ function limpiarFiltrosVisor() {
     if (selectTipo) selectTipo.value = "";
     const selectEstatus = document.getElementById("visor-filtro-estatus");
     if (selectEstatus) selectEstatus.value = "";
+    const selectTaller = document.getElementById("visor-filtro-entradas-taller");
+    if (selectTaller) selectTaller.value = "";
 
     const kpiFiltradoEl = document.getElementById("kpiFiltrado");
     if (kpiFiltradoEl) {
         kpiFiltradoEl.textContent = datosActivosGlobal.length;
     }
 
+    paginaActual = 1;
     renderizarVisor(datosActivosGlobal);
 }
 
-function renderizarVisor(datos) {
+function cambiarPagina(delta) {
+    const totalPaginas = Math.ceil(datosFiltradosGlobal.length / TAMANO_PAGINA) || 1;
+    const nuevaPagina = paginaActual + delta;
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+        paginaActual = nuevaPagina;
+        renderizarVisor(datosFiltradosGlobal, true);
+    }
+}
+
+function actualizarPaginacionUI(totalItems) {
+    const contenedorPaginacion = document.getElementById("contenedorPaginacion");
+    if (!contenedorPaginacion) return;
+
+    if (totalItems <= TAMANO_PAGINA) {
+        contenedorPaginacion.classList.add("hidden");
+        return;
+    }
+
+    contenedorPaginacion.classList.remove("hidden");
+
+    const totalPaginas = Math.ceil(totalItems / TAMANO_PAGINA) || 1;
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+
+    const inicio = (paginaActual - 1) * TAMANO_PAGINA + 1;
+    const fin = Math.min(paginaActual * TAMANO_PAGINA, totalItems);
+
+    const infoEl = document.getElementById("infoPaginacion");
+    if (infoEl) infoEl.textContent = `Mostrando ${inicio} - ${fin} de ${totalItems} activos`;
+
+    const labelEl = document.getElementById("labelPaginaActual");
+    if (labelEl) labelEl.textContent = `${paginaActual} / ${totalPaginas}`;
+
+    const btnAnt = document.getElementById("btnPaginaAnterior");
+    if (btnAnt) btnAnt.disabled = paginaActual === 1;
+
+    const btnSig = document.getElementById("btnPaginaSiguiente");
+    if (btnSig) btnSig.disabled = paginaActual === totalPaginas;
+}
+
+function renderizarVisor(datos, mantenerPagina = false) {
     const tbody = document.getElementById("tablaCuerpo");
     if (!tbody) return;
 
-    if (datos.length === 0) {
+    datosFiltradosGlobal = datos || [];
+    if (!mantenerPagina) {
+        paginaActual = 1;
+    }
+
+    if (datosFiltradosGlobal.length === 0) {
         tbody.innerHTML = `<tr class="block md:table-row"><td colspan="7" class="block md:table-cell p-6 text-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">No existen activos que coincidan con los filtros</td></tr>`;
+        actualizarPaginacionUI(0);
         renderizarGraficos(0, 0, {});
         return;
     }
 
-    let liviana = datos.filter(r => r.Tipo_Flota === "Liviana").length;
-    let pesada = datos.filter(r => r.Tipo_Flota === "Pesada").length;
+    let liviana = datosFiltradosGlobal.filter(r => r.Tipo_Flota === "Liviana").length;
+    let pesada = datosFiltradosGlobal.filter(r => r.Tipo_Flota === "Pesada").length;
 
     let conteoMarcas = {};
-
-    const htmlFilas = [...datos].reverse().map(reg => {
+    datosFiltradosGlobal.forEach(reg => {
         conteoMarcas[reg.Marca || "S/I"] = (conteoMarcas[reg.Marca || "S/I"] || 0) + 1;
+    });
+
+    const datosInvertidos = [...datosFiltradosGlobal].reverse();
+    const inicio = (paginaActual - 1) * TAMANO_PAGINA;
+    const paginaDatos = datosInvertidos.slice(inicio, inicio + TAMANO_PAGINA);
+
+    const htmlFilas = paginaDatos.map(reg => {
 
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
@@ -312,6 +376,7 @@ function renderizarVisor(datos) {
     });
 
     tbody.innerHTML = htmlFilas.join('');
+    actualizarPaginacionUI(datosFiltradosGlobal.length);
     renderizarGraficos(liviana, pesada, conteoMarcas);
 }
 

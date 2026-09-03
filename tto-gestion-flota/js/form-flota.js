@@ -16,13 +16,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Almacenes de control en memoria global
 var listaActivosGlobal = [];
+var datosFiltradosFlota = [];
 var mapaUltimoTaller = {};
 var OPERADOR_ACTUAL = "";
 var FILTROS_ACTIVOS = {
     busqueda: "",
-    flota: ""
+    flota: "",
+    taller: ""
 };
 var documentoEliminarFlag = false;
+var paginaActualFlota = 1;
+const TAMANO_PAGINA_FLOTA = 20;
 
 const CLAVE_COLA_OFFLINE_FLOTA = "TTOCC_COLA_PETICIONES_OFFLINE_FLOTA";
 const CLAVE_RESPALDO_FLOTA = "TTOCC_RESPALDO_LOCAL_FLOTA";
@@ -197,27 +201,30 @@ function toggleFiltroBadge(btn, tipo, valor) {
         FILTROS_ACTIVOS[tipo] = "";
         btn.classList.remove("bg-emerald-600", "text-white", "border-emerald-600");
     } else {
-        document.querySelectorAll(".filter-badge").forEach(b => {
+        document.querySelectorAll(`.filter-badge-${tipo}`).forEach(b => {
             b.classList.remove("bg-emerald-600", "text-white", "border-emerald-600");
         });
         FILTROS_ACTIVOS[tipo] = valor;
         btn.classList.add("bg-emerald-600", "text-white", "border-emerald-600");
     }
+    paginaActualFlota = 1;
     filtrarActivos();
 }
 
 function limpiarFiltros() {
-    FILTROS_ACTIVOS = { busqueda: "", flota: "" };
+    FILTROS_ACTIVOS = { busqueda: "", flota: "", taller: "" };
     document.getElementById("input-busqueda").value = "";
     document.querySelectorAll(".filter-badge").forEach(b => {
         b.classList.remove("bg-emerald-600", "text-white", "border-emerald-600");
     });
+    paginaActualFlota = 1;
     renderizarActivos(listaActivosGlobal);
 }
 
 function filtrarActivos() {
     const query = document.getElementById("input-busqueda").value.toLowerCase().trim();
     const flota = FILTROS_ACTIVOS.flota;
+    const tallerFiltro = FILTROS_ACTIVOS.taller;
 
     const filtrados = listaActivosGlobal.filter(reg => {
         const matchesBusqueda = !query ||
@@ -231,9 +238,15 @@ function filtrarActivos() {
 
         const matchesFlota = !flota || reg.Tipo_Flota === flota;
 
-        return matchesBusqueda && matchesFlota;
+        const tieneEntradaTaller = reg.Ubicacion_Taller && !String(reg.Ubicacion_Taller).toLowerCase().includes("sin historial");
+        const matchesTaller = !tallerFiltro ||
+            (tallerFiltro === "con_taller" && tieneEntradaTaller) ||
+            (tallerFiltro === "sin_taller" && !tieneEntradaTaller);
+
+        return matchesBusqueda && matchesFlota && matchesTaller;
     });
 
+    paginaActualFlota = 1;
     renderizarActivos(filtrados);
 }
 
@@ -397,16 +410,65 @@ async function cargarTablaActivos() {
 /**
  * Renderiza la lista de activos con sanitización y enlace a documento
  */
-function renderizarActivos(datos) {
-    const tbody = document.getElementById("tablaEditableCuerpo");
-    if (!tbody) return;
+function cambiarPagina(delta) {
+    const totalPaginas = Math.ceil(datosFiltradosFlota.length / TAMANO_PAGINA_FLOTA) || 1;
+    const nuevaPagina = paginaActualFlota + delta;
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+        paginaActualFlota = nuevaPagina;
+        renderizarActivos(datosFiltradosFlota, true);
+    }
+}
 
-    if (datos.length === 0) {
-        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin activos que coincidan con la búsqueda.</td></tr>`;
+function actualizarPaginacionUI(totalItems) {
+    const contenedorPaginacion = document.getElementById("contenedorPaginacion");
+    if (!contenedorPaginacion) return;
+
+    if (totalItems <= TAMANO_PAGINA_FLOTA) {
+        contenedorPaginacion.classList.add("hidden");
         return;
     }
 
-    const htmlFilas = [...datos].reverse().map(reg => {
+    contenedorPaginacion.classList.remove("hidden");
+
+    const totalPaginas = Math.ceil(totalItems / TAMANO_PAGINA_FLOTA) || 1;
+    if (paginaActualFlota > totalPaginas) paginaActualFlota = totalPaginas;
+
+    const inicio = (paginaActualFlota - 1) * TAMANO_PAGINA_FLOTA + 1;
+    const fin = Math.min(paginaActualFlota * TAMANO_PAGINA_FLOTA, totalItems);
+
+    const infoEl = document.getElementById("infoPaginacion");
+    if (infoEl) infoEl.textContent = `Mostrando ${inicio} - ${fin} de ${totalItems} activos`;
+
+    const labelEl = document.getElementById("labelPaginaActual");
+    if (labelEl) labelEl.textContent = `${paginaActualFlota} / ${totalPaginas}`;
+
+    const btnAnt = document.getElementById("btnPaginaAnterior");
+    if (btnAnt) btnAnt.disabled = paginaActualFlota === 1;
+
+    const btnSig = document.getElementById("btnPaginaSiguiente");
+    if (btnSig) btnSig.disabled = paginaActualFlota === totalPaginas;
+}
+
+function renderizarActivos(datos, mantenerPagina = false) {
+    const tbody = document.getElementById("tablaEditableCuerpo");
+    if (!tbody) return;
+
+    datosFiltradosFlota = datos || [];
+    if (!mantenerPagina) {
+        paginaActualFlota = 1;
+    }
+
+    if (datosFiltradosFlota.length === 0) {
+        tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-slate-500 text-xs font-bold uppercase">Sin activos que coincidan con la búsqueda.</td></tr>`;
+        actualizarPaginacionUI(0);
+        return;
+    }
+
+    const datosInvertidos = [...datosFiltradosFlota].reverse();
+    const inicio = (paginaActualFlota - 1) * TAMANO_PAGINA_FLOTA;
+    const paginaDatos = datosInvertidos.slice(inicio, inicio + TAMANO_PAGINA_FLOTA);
+
+    const htmlFilas = paginaDatos.map(reg => {
         let colorFila = "bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:bg-emerald-500/[0.02] dark:hover:bg-emerald-950/20";
 
         let badgeDocumento = (reg.Documento_Url && String(reg.Documento_Url).trim() !== "")
@@ -483,6 +545,7 @@ function renderizarActivos(datos) {
     });
 
     tbody.innerHTML = htmlFilas.join('');
+    actualizarPaginacionUI(datosFiltradosFlota.length);
 }
 
 function previsualizarDocumento(input, idContenedor) {
