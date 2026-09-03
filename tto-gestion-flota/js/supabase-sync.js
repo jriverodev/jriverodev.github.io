@@ -211,6 +211,9 @@
 
                 if (uploadedUrl) {
                     out[baseKey] = uploadedUrl;
+                    if (baseKey === 'documento_url' || baseKey === 'documento') {
+                        out.documento_nombre = `${baseKey === 'documento_url' ? 'documento' : baseKey}.${ext}`;
+                    }
                     delete out[k];
                 } else if (!out[baseKey] && base64data) {
                     // Retain data URI in target field if storage upload is unsuccessful

@@ -586,7 +586,9 @@ async function guardarNuevoRegistro(event) {
 
     if (docInput && docInput.files.length > 0) {
         const file = docInput.files[0];
-        docNombre = file.name;
+        const extMatch = file.name ? file.name.match(/\.([a-zA-Z0-9]+)$/) : null;
+        const ext = extMatch ? extMatch[1].toLowerCase() : "pdf";
+        docNombre = `documento.${ext}`;
 
         // If online and Supabase client available, try uploading directly to Storage
         if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
@@ -761,7 +763,9 @@ async function guardarEdicionModal(event) {
 
     if (docInput && docInput.files.length > 0) {
         const file = docInput.files[0];
-        docNombre = file.name;
+        const extMatch = file.name ? file.name.match(/\.([a-zA-Z0-9]+)$/) : null;
+        const ext = extMatch ? extMatch[1].toLowerCase() : "pdf";
+        docNombre = `documento.${ext}`;
 
         if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
             try {
