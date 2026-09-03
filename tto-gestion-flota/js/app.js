@@ -590,7 +590,7 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
     const clean = urlStr.trim();
     if (!clean) return '';
 
-    // Handle all Google Drive URL variants to prevent CORB blocking
+    // Manejo de URLs de Google Drive para evitar bloqueos por CORS/CORB
     if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
         let driveId = '';
         if (clean.includes('id=')) {
@@ -603,12 +603,12 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
         }
     }
 
-    // Direct HTTP(S) URLs or Base64 data URIs are already valid
+    // Si ya es una URL completa (HTTP/HTTPS) o Base64 Data URI, se retorna tal cual
     if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
         return clean;
     }
 
-    // Only convert if string matches a relative storage path pattern or file extension
+    // Verificar si coincide con una ruta o extensión de Storage
     const esRutaStorage = /^mantenimientos\//i.test(clean) ||
                           /^activos\//i.test(clean) ||
                           /\.(jpg|jpeg|png|webp|pdf)($|\?)/i.test(clean);
@@ -617,15 +617,19 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
         return clean;
     }
 
-    // Relative storage paths (e.g. "mantenimientos/123/foto.jpg" or "activos/V-102/doc.pdf")
-    const baseUrl = APP_CONFIG.SUPABASE_URL || window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co";
-    const cleanPath = clean.replace(/^\/+/, '');
+    // Obtener la URL base de forma segura (soporta cuando APP_CONFIG no está definido)
+    const baseUrl = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG?.SUPABASE_URL)
+        || window?.TTOCC_SUPABASE_URL 
+        || "https://mfklcwrpgavaxznkxlra.supabase.co";
 
-    // Si solo es el nombre del archivo (ej. "documento.pdf") y le pasaron la unidad, le antepone la subcarpeta
+    // 'let' en lugar de 'const' para permitir reasignación
+    let cleanPath = clean.replace(/^\/+/, '');
+
+    // Si solo es el nombre del archivo y se pasó idUnidad, antepone la subcarpeta
     if (idUnidad && !cleanPath.includes('/')) {
         cleanPath = `${idUnidad}/${cleanPath}`;
     }
-    
+
     return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
 }
 
@@ -634,6 +638,7 @@ const TTOCC_SIGNED_URL_CACHE = new Map();
 function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return null;
     const clean = urlOrPath.trim();
+    
     if (!clean || clean.startsWith('data:') || clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
         return null;
     }
@@ -654,7 +659,6 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
 
     return null;
 }
-
 async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'ttocc-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return '';
     const clean = urlOrPath.trim();
