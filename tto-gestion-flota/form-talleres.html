@@ -346,7 +346,7 @@
         </div>
     </div>
 
-    <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
+    <!--div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-lg shadow-xl p-6 text-slate-700 dark:text-slate-300 overflow-y-auto max-h-[90vh] transition-colors">
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4 transition-colors">
                 <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
@@ -447,7 +447,148 @@
                 </div>
             </form>
         </div>
+    </div-->
+
+
+
+
+
+
+
+<div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
+    <!-- Contenedor principal con flex flex-col y overflow-hidden -->
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-lg shadow-xl overflow-hidden text-slate-700 dark:text-slate-300 max-h-[90vh] flex flex-col transition-colors">
+        
+        <!-- 1. CABECERA FIJA -->
+        <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900 transition-colors">
+            <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
+            </h3>
+            <button type="button" onclick="cerrarModalEditar()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- FORMULARIO CONTENEDOR (Flex-1 y flex-col para organizar el cuerpo y el pie) -->
+        <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)" class="flex flex-col flex-1 min-h-0">
+            <input type="hidden" id="edit-id-registro">
+
+            <!-- 2. CUERPO DESPLAZABLE (overflow-y-auto y flex-grow) -->
+            <div class="flex-grow overflow-y-auto p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">ID Unidad (Protegido)</label>
+                        <input type="text" id="edit-unidad" disabled class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-500 text-xs font-mono font-bold select-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Marca del Vehículo</label>
+                        <input type="text" id="edit-marca" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Tipo de Flota</label>
+                        <select id="edit-flota" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs cursor-pointer transition-colors">
+                            <option value="Liviana" class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50">Liviana</option>
+                            <option value="Pesada" class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50">Pesada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Estatus Operativo</label>
+                        <select id="edit-estatus" onchange="evaluarEstatusModal(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs cursor-pointer font-bold transition-colors">
+                            <option value="Por Atender">⚠️ Por Atender</option>
+                            <option value="En Proceso">⚙️ En Proceso</option>
+                            <option value="Listo">✅ Ya Operativa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Gerencia Usuaria</label>
+                        <select id="edit-gerencia" class="buscador w-full"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Usuario / Chofer</label>
+                        <input type="text" id="edit-chofer" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs uppercase transition-colors">
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-900 transition-colors">
+                    <label class="block text-[10px] uppercase tracking-wider font-black text-blue-600 dark:text-blue-400 mb-2 transition-colors">
+                        <i class="fa-solid fa-clipboard-list mr-1"></i> Diagnóstico de Reparaciones
+                    </label>
+
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="edit-nueva-tarea" placeholder="Ej: Cambio de filtros..." class="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-xs transition-colors">
+                        <button type="button" onclick="agregarTareaModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="edit-container-tareas" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div>
+
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 transition-colors">
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold transition-colors">Avance Real Calculado:</span>
+                        <span id="edit-lbl-avance-calculado" class="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-950 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 transition-colors">0%</span>
+                    </div>
+                </div>
+
+                <div id="wrapper-foto-despues" class="hidden p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg transition-all">
+                    <label class="block text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 mb-1 transition-colors">
+                        <i class="fa-solid fa-camera mr-1"></i> Evidencia Final (Foto Después)
+                    </label>
+                    <input type="file" id="edit-foto-despues" accept="image/*" onchange="previsualizarImagen(this, 'preview-edit-despues')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 text-[11px] cursor-pointer transition-colors">
+                    <div id="preview-edit-despues" class="hidden mt-2 relative w-full aspect-video bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+                        <img src="" class="w-full h-full object-contain">
+                        <button type="button" onclick="limpiarPrevia('edit-foto-despues', 'preview-edit-despues')" class="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded text-[10px] transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 transition-colors">Bitácora de Observaciones</label>
+                    <textarea id="edit-observa" rows="2" placeholder="Notas sobre el cierre o estatus del mantenimiento..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-600 text-xs resize-none transition-colors"></textarea>
+                </div>
+            </div>
+
+            <!-- 3. PIE FIJO -->
+            <div class="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center transition-colors">
+                <button type="button" onclick="confirmarEliminarRegistro()" class="px-5 py-2.5 rounded-lg bg-red-600/10 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer border border-red-500/20 active:scale-95">
+                    <i class="fa-solid fa-trash-can"></i> Eliminar
+                </button>
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModalEditar()" class="px-6 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
+                    <button type="submit" id="btn-editar-submit" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </form>
+
     </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+    
+
+
+
+    
 
     <div id="modalIdentificacion" class="fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-lg shadow-2xl p-8 transition-colors">
