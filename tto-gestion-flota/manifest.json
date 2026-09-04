@@ -1,7 +1,7 @@
 {
-  "name": "Control de Flota - SIAGOP",
+  "name": "SIAGOP Movil",
   "short_name": "SIAGOP Vista Gerencial Flota",
-  "description": "Sistema unificado de gestión de flota pesada y liviana en talleres de mantenimiento TTOCC",
+  "description": "Sistema unificado de gestión de flota pesada y liviana en talleres de mantenimiento SIAGOP",
   "start_url": "https://ttoccgestionmtto.vercel.app/index.html",
   "scope": "https://ttoccgestionmtto.vercel.app/",
   "display": "standalone",
