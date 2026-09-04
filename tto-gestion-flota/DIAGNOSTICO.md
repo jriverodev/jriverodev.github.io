@@ -1,4 +1,4 @@
-# Diagnóstico Técnico - TTOCC System
+# Diagnóstico Técnico - SIAGOP Móvil
 
 ## 1. Arquitectura del Sistema
 El sistema es una **PWA (Progressive Web App)** que utiliza:
