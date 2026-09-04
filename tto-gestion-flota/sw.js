@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ttocc-flota-v17';
+const CACHE_NAME = 'siagop-movil-v18';
 
 const ASSETS = [
   './',
