@@ -1,5 +1,5 @@
 ---
-name: TTOCC Industrial Dark
+name: SIAGOP Móvil Industrial Dark
 version: alpha
 description: A high-density, industrial-grade design system for fleet management and maintenance tracking.
 colors:
