@@ -1,4 +1,4 @@
-README — TTOCC (instrucciones rápidas)
+README — SIAGOP Móvil (instrucciones rápidas)
 
 Resumen rápido
 - Se consolidaron funciones de preview/limpieza de imágenes en un módulo compartido: js/ui-utils.js
