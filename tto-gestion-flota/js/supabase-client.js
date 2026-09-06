@@ -13,10 +13,19 @@
       console.warn('[Supabase] Missing URL / ANON_KEY. Supabase operations will be disabled until configured.');
       return null;
     }
+
+    const clientOptions = {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    };
+
     // If createClient is available globally (supabase-js lib), use it
     if (typeof createClient === 'function') {
       try {
-        supabaseClient = createClient(url, key);
+        supabaseClient = createClient(url, key, clientOptions);
       } catch (e) {
         console.warn('[Supabase] createClient error', e);
         supabaseClient = null;
@@ -27,7 +36,7 @@
     // Try window.supabase.createClient
     if (window.supabase && typeof window.supabase.createClient === 'function') {
       try {
-        supabaseClient = window.supabase.createClient(url, key);
+        supabaseClient = window.supabase.createClient(url, key, clientOptions);
       } catch (e) {
         console.warn('[Supabase] window.supabase.createClient error', e);
         supabaseClient = null;
@@ -43,7 +52,7 @@
       scriptTag.async = true;
       scriptTag.onload = () => {
         if (window.supabase && typeof window.supabase.createClient === 'function') {
-          supabaseClient = window.supabase.createClient(url, key);
+          supabaseClient = window.supabase.createClient(url, key, clientOptions);
           window.SIAGOP_SUPABASE_CLIENT = supabaseClient;
         }
       };

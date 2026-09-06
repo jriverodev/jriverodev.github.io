@@ -1,4 +1,4 @@
-/* SIAGOP System - Estilos Globales de Modales y Capas Z-Index */
+/* SIAGOP System - Estilos Globales de Modales, Capas Z-Index y Footer Móvil */
 
 /* 1. Bottom Nav en capa z-40 */
 nav.fixed.bottom-0,
@@ -21,10 +21,41 @@ nav.fixed.bottom-0,
   z-index: 60 !important;
 }
 
-/* 3. Ajuste de altura y padding inferior para que el footer del modal no quede tapado por la barra de navegación */
+/* 3. Ajuste de altura, scroll y padding de seguridad en pantallas móviles */
 .modal-content-body,
 [id^="modal"] > div {
-  max-height: calc(100vh - 4rem) !important;
+  max-height: calc(100vh - 3.5rem) !important;
   overflow-y: auto !important;
-  padding-bottom: 4rem !important;
+  padding-bottom: 6rem !important;
+}
+
+/* 4. Optimización de Botones del Pie de Formulario en Módulos Móviles */
+[id^="modal"] form .flex.justify-end,
+[id^="modal"] form .flex.justify-between {
+  position: sticky;
+  bottom: -0.5rem;
+  background-color: var(--color-slate-900, #0f172a);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  z-index: 10;
+}
+
+/* En temas claros, ajustar fondo del pie pegajoso */
+.light [id^="modal"] form .flex.justify-end,
+.light [id^="modal"] form .flex.justify-between {
+  background-color: #ffffff;
+}
+
+/* Botones con área táctil óptima en móviles */
+[id^="modal"] button[type="submit"],
+[id^="modal"] button[type="button"] {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  touch-action: manipulation;
 }

@@ -1,6 +1,6 @@
 /**
- * SIAGOP System - Gatekeeper Access Control
- * auth-gatekeeper.js - Control de acceso multi-tenant y validación RPC de organización/usuario.
+ * SIAGOP System - Gatekeeper Access Control & Session Manager
+ * js/auth-gatekeeper.js - Control de acceso de 2 niveles y persistencia de sesión.
  */
 "use strict";
 
@@ -9,25 +9,78 @@
     const USER_ID_KEY = 'SIAGOP_USER_ID';
 
     /**
-     * Revisa el acceso del usuario mediante la función RPC 'validar_acceso_usuario'.
+     * Nivel 1: Verificación de acceso global.
+     * Revisa la sesión persistente en Supabase/localStorage al cargar la página.
+     */
+    async function verificarAccesoGlobal() {
+        const paginaActual = window.location.pathname.split('/').pop() || 'index.html';
+        if (paginaActual === 'registro-organizacion.html') return;
+
+        const client = (typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null) ||
+                       (window.SIAGOP_SG && window.SIAGOP_SG.ensureSupabaseClient ? window.SIAGOP_SG.ensureSupabaseClient() : null);
+
+        let session = null;
+
+        if (client && client.auth && typeof client.auth.getSession === 'function') {
+            try {
+                const { data } = await client.auth.getSession();
+                session = data?.session || null;
+            } catch (e) {
+                console.warn('[Gatekeeper] Error obteniendo sesión de Supabase:', e);
+            }
+        }
+
+        // Fallback local en localStorage si la app está offline
+        const localUserId = localStorage.getItem('siagop_user_id') || sessionStorage.getItem(USER_ID_KEY);
+
+        // SI NO HAY SESIÓN Y NO ESTÁ EN EL LOGIN/DESTINO PÚBLICO
+        if (!session && !localUserId && paginaActual !== 'index.html' && paginaActual !== '') {
+            document.body.style.display = 'none';
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // SI HAY SESIÓN ACTIVA Y ESTÁ EN INDEX.HTML (Login Principal)
+        if ((session || localUserId) && (paginaActual === 'index.html' || paginaActual === '')) {
+            window.location.href = 'panel.html';
+            return;
+        }
+
+        // Guardar/actualizar datos clave en localStorage para disponibilidad offline
+        if (session && session.user) {
+            localStorage.setItem('siagop_user_id', session.user.id);
+            sessionStorage.setItem(USER_ID_KEY, session.user.id);
+            if (session.user.user_metadata?.organizacion_nombre) {
+                localStorage.setItem('organizacion_nombre', session.user.user_metadata.organizacion_nombre);
+                sessionStorage.setItem(ORG_NOMBRE_KEY, session.user.user_metadata.organizacion_nombre);
+            }
+        }
+
+        // Inyectar el nombre de la organización en el header
+        const orgNombre = localStorage.getItem('organizacion_nombre') || sessionStorage.getItem(ORG_NOMBRE_KEY) || 'Gerencia de Transporte Terrestre Occidente';
+        actualizarHeaderOrganizacion(orgNombre);
+
+        if (session?.user?.id || localUserId) {
+            await validarAccesoGatekeeper(session?.user?.id || localUserId);
+        }
+    }
+
+    /**
+     * Nivel 2: Revisa el acceso del usuario mediante la función RPC 'validar_acceso_usuario'.
      * @param {string} userId - ID del usuario en Supabase (UUID o texto id)
      * @returns {Promise<{permitido: boolean, mensaje: string, organizacion_nombre?: string}>}
      */
     async function validarAccesoGatekeeper(userId) {
         if (!userId) {
-            const storedUserId = sessionStorage.getItem(USER_ID_KEY);
-            if (!storedUserId) {
-                return { permitido: true, mensaje: 'Sesión sin usuario ID explícito.' };
-            }
-            userId = storedUserId;
+            userId = localStorage.getItem('siagop_user_id') || sessionStorage.getItem(USER_ID_KEY);
+            if (!userId) return { permitido: true, mensaje: 'Sin ID explícito.' };
         }
 
         const client = (typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null) ||
                        (window.SIAGOP_SG && window.SIAGOP_SG.ensureSupabaseClient ? window.SIAGOP_SG.ensureSupabaseClient() : null);
 
         if (!client || !navigator.onLine) {
-            // Si no hay conexión o cliente no disponible, permitimos paso local si hay sesión activa
-            const storedOrg = sessionStorage.getItem(ORG_NOMBRE_KEY);
+            const storedOrg = localStorage.getItem('organizacion_nombre') || sessionStorage.getItem(ORG_NOMBRE_KEY);
             return {
                 permitido: true,
                 mensaje: 'Modo offline-first activo.',
@@ -40,7 +93,6 @@
 
             if (error) {
                 console.warn('[Gatekeeper] Error llamando RPC validar_acceso_usuario:', error);
-                // Si la función RPC falla pero hay sesión local, no bloqueamos abruptamente a menos que sea error explícito
                 return { permitido: true, mensaje: 'No se pudo verificar gatekeeper en vivo.' };
             }
 
@@ -55,9 +107,9 @@
             }
 
             if (resultado.organizacion_nombre) {
+                localStorage.setItem('organizacion_nombre', resultado.organizacion_nombre);
                 sessionStorage.setItem(ORG_NOMBRE_KEY, resultado.organizacion_nombre);
             }
-            sessionStorage.setItem(USER_ID_KEY, String(userId));
 
             actualizarHeaderOrganizacion(resultado.organizacion_nombre);
 
@@ -79,16 +131,15 @@
     async function bloquearUsuarioEInactivar(mensajeError) {
         console.warn('[Gatekeeper] Bloqueando acceso:', mensajeError);
 
-        // 1. Cerrar sesión en Supabase auth si aplica
         const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
         if (client && client.auth && typeof client.auth.signOut === 'function') {
             try { await client.auth.signOut(); } catch (e) {}
         }
 
-        // 2. Limpiar sessionStorage
+        localStorage.removeItem('siagop_user_id');
+        localStorage.removeItem('organizacion_nombre');
         sessionStorage.clear();
 
-        // 3. Purgar caché IndexedDB
         if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && typeof dbSIAGOP.delete === 'function') {
             try {
                 await dbSIAGOP.delete();
@@ -98,14 +149,26 @@
             }
         }
 
-        // 4. Desplegar Modal No Descartable
         mostrarModalBloqueoGatekeeper(mensajeError);
     }
 
     /**
-     * Genera e inyecta el modal undismissable en la pantalla.
-     * @param {string} mensaje
+     * Cierre de Sesión Definitivo.
+     * Destruye tokens de Supabase, localStorage y sessionStorage.
      */
+    async function cerrarSesionDefinitiva() {
+        const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
+        if (client && client.auth && typeof client.auth.signOut === 'function') {
+            try { await client.auth.signOut(); } catch (e) {}
+        }
+
+        localStorage.removeItem('siagop_user_id');
+        localStorage.removeItem('organizacion_nombre');
+        sessionStorage.clear();
+
+        window.location.href = 'index.html';
+    }
+
     function mostrarModalBloqueoGatekeeper(mensaje) {
         let modal = document.getElementById('modal-gatekeeper-bloqueo');
         if (modal) modal.remove();
@@ -127,9 +190,9 @@
                 </div>
 
                 <div class="pt-2">
-                    <a href="index.html" class="inline-block w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-red-600/20 active:scale-95">
+                    <button type="button" onclick="window.SIAGOP_GATEKEEPER.cerrarSesionDefinitiva()" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-red-600/20 active:scale-95 cursor-pointer">
                         <i class="fa-solid fa-right-from-bracket mr-2"></i> Volver al Inicio
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -151,29 +214,22 @@
     function actualizarHeaderOrganizacion(nombreOrg) {
         const elHeaderOrg = document.getElementById('header-organizacion-nombre') || document.getElementById('header-org-name');
         if (elHeaderOrg) {
-            const orgText = nombreOrg || sessionStorage.getItem(ORG_NOMBRE_KEY) || 'Gerencia de Transporte Terrestre Occidente';
+            const orgText = nombreOrg || localStorage.getItem('organizacion_nombre') || sessionStorage.getItem(ORG_NOMBRE_KEY) || 'Gerencia de Transporte Terrestre Occidente';
             elHeaderOrg.textContent = orgText;
         }
     }
 
     // Exportar al objeto global SIAGOP_GATEKEEPER
     window.SIAGOP_GATEKEEPER = {
+        verificarAccesoGlobal,
         validarAccesoGatekeeper,
         bloquearUsuarioEInactivar,
+        cerrarSesionDefinitiva,
         mostrarModalBloqueoGatekeeper,
         actualizarHeaderOrganizacion
     };
 
-    // Auto-ejecución al cargar el DOM si hay sesión
-    document.addEventListener('DOMContentLoaded', () => {
-        const userId = sessionStorage.getItem(USER_ID_KEY);
-        const orgNombre = sessionStorage.getItem(ORG_NOMBRE_KEY);
-        if (orgNombre) {
-            actualizarHeaderOrganizacion(orgNombre);
-        }
-        if (userId) {
-            validarAccesoGatekeeper(userId);
-        }
-    });
+    // Auto-ejecución al cargar el DOM
+    document.addEventListener('DOMContentLoaded', verificarAccesoGlobal);
 
 })();
