@@ -13,6 +13,9 @@
      * Revisa la sesión persistente en Supabase/localStorage al cargar la página.
      */
     async function verificarAccesoGlobal() {
+        // Garantizar visibilidad del body por defecto
+        if (document.body) document.body.style.display = '';
+
         const paginaActual = window.location.pathname.split('/').pop() || 'index.html';
         if (paginaActual === 'registro-organizacion.html') return;
 
@@ -30,21 +33,26 @@
             }
         }
 
-        // Fallback local en localStorage si la app está offline
+        // Fallback local en localStorage o sessionStorage si la app está offline
         const localUserId = localStorage.getItem('siagop_user_id') || sessionStorage.getItem(USER_ID_KEY);
+        const localToken = sessionStorage.getItem('SIAGOP_SESSION_TOKEN');
 
-        // SI NO HAY SESIÓN Y NO ESTÁ EN EL LOGIN/DESTINO PÚBLICO
-        if (!session && !localUserId && paginaActual !== 'index.html' && paginaActual !== '') {
+        // SI NO HAY SESIÓN NI TOKEN LOCAL Y NO ESTÁ EN INDEX.HTML
+        if (!session && !localUserId && !localToken && paginaActual !== 'index.html' && paginaActual !== '') {
             document.body.style.display = 'none';
             window.location.href = 'index.html';
             return;
         }
 
-        // SI HAY SESIÓN ACTIVA Y ESTÁ EN INDEX.HTML (Login Principal)
-        if ((session || localUserId) && (paginaActual === 'index.html' || paginaActual === '')) {
+        // SI HAY SESIÓN O TOKEN Y INTENTA ACCEDER A INDEX.HTML
+        if ((session || localUserId || localToken) && (paginaActual === 'index.html' || paginaActual === '')) {
+            // Permitir navegación fluida al panel principal
             window.location.href = 'panel.html';
             return;
         }
+
+        // Asegurar que el cuerpo sea visible para renderizar la interfaz
+        if (document.body) document.body.style.display = '';
 
         // Guardar/actualizar datos clave en localStorage para disponibilidad offline
         if (session && session.user) {
