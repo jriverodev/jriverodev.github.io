@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Registro - SIAGOP / TTOCC</title>
+    <script src="./js/libs/browser@4.js"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-scheme: light dark;
+        }
+        @variant dark (&:where(.dark, .dark *));
+    </style>
+    <link rel="stylesheet" href="css/fontawesome/all.min.css">
+    <script src="js/tema.js" defer></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white antialiased">
+
+    <header class="w-full bg-slate-900/80 border-b border-slate-800 px-6 py-4 flex justify-between items-center backdrop-blur-md sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-lg border border-slate-700 transition-all active:scale-95">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+            </a>
+            <div class="bg-blue-600/10 p-2.5 rounded-lg border border-blue-500/20 text-blue-400">
+                <i class="fa-solid fa-building-circle-check text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-black uppercase tracking-widest text-white">SIAGOP Multi-Tenant</h1>
+                <p class="text-[9px] text-slate-400 uppercase tracking-widest font-black">Registro Comercial de Organización</p>
+            </div>
+        </div>
+
+        <button onclick="toggleTema()" title="Cambiar Tema" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-lg border border-slate-700 transition-all cursor-pointer active:scale-95">
+            <i class="fa-solid fa-sun theme-toggle-icon"></i>
+        </button>
+    </header>
+
+    <main class="max-w-xl mx-auto w-full px-4 py-8 flex-grow flex flex-col justify-center">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 mb-4">
+                    <i class="fa-solid fa-file-contract text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-black uppercase tracking-tight text-white mb-2">Solicitar Alta de Organización</h2>
+                <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                    Complete el formulario para solicitar la activación de su tenant en la plataforma SIAGOP. La solicitud será enviada directamente vía WhatsApp.
+                </p>
+            </div>
+
+            <form id="formRegistroOrg" onsubmit="enviarSolicitudWhatsApp(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1.5">
+                        Nombre de la Organización <span class="text-blue-500">*</span>
+                    </label>
+                    <input type="text" id="org-nombre" required placeholder="Ej: Contratista Transpetro C.A."
+                           class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-all placeholder-slate-600 font-medium">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1.5">
+                            Tipo de Organización <span class="text-blue-500">*</span>
+                        </label>
+                        <select id="org-tipo" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-medium cursor-pointer">
+                            <option value="GERENCIA">GERENCIA</option>
+                            <option value="CONTRATISTA">CONTRATISTA</option>
+                            <option value="TALLER_EXTERNO">TALLER EXTERNO</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1.5">
+                            RIF / Código Interno <span class="text-blue-500">*</span>
+                        </label>
+                        <input type="text" id="org-rif" required placeholder="Ej: J-12345678-9"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white uppercase focus:outline-none focus:border-blue-500 transition-all placeholder-slate-600 font-medium">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1.5">
+                            Persona de Contacto <span class="text-blue-500">*</span>
+                        </label>
+                        <input type="text" id="org-contacto" required placeholder="Ej: Ing. Pedro Pérez"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-all placeholder-slate-600 font-medium">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1.5">
+                            Estimado de Flota <span class="text-blue-500">*</span>
+                        </label>
+                        <input type="number" id="org-flota" required min="1" placeholder="Ej: 25 unidades"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-all placeholder-slate-600 font-medium">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-600/20 active:scale-95 cursor-pointer flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Enviar Solicitud por WhatsApp
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="w-full text-center py-4 border-t border-slate-800 bg-slate-900">
+        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-black">
+            SIAGOP — Sistema Integrado de Gestión Operativa
+        </p>
+    </footer>
+
+    <script>
+        function enviarSolicitudWhatsApp(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('org-nombre').value.trim();
+            const tipo = document.getElementById('org-tipo').value;
+            const rif = document.getElementById('org-rif').value.trim();
+            const contacto = document.getElementById('org-contacto').value.trim();
+            const flota = document.getElementById('org-flota').value.trim();
+
+            const mensaje = `📌 *SOLICITUD DE REGISTRO DE ORGANIZACIÓN (SIAGOP)*\n\n` +
+                `🏢 *Organización:* ${nombre}\n` +
+                `🏷️ *Tipo:* ${tipo}\n` +
+                `🆔 *RIF/Código:* ${rif}\n` +
+                `👤 *Contacto:* ${contacto}\n` +
+                `🚛 *Flota Estimada:* ${flota} unidades\n\n` +
+                `Solicito la evaluación y activación del plan para nuestro tenant.`;
+
+            const url = `https://wa.me/584121052340?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+    </script>
+
+</body>
+</html>

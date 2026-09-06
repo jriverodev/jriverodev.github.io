@@ -87,19 +87,35 @@ async function verificarAccesoAdmin(event) {
 function cambiarTabAdmin(tab) {
     const secImport = document.getElementById("seccion-import");
     const secUsuarios = document.getElementById("seccion-usuarios");
+    const secRoles = document.getElementById("seccion-roles");
+
     const btnImport = document.getElementById("tab-btn-import");
     const btnUsuarios = document.getElementById("tab-btn-usuarios");
+    const btnRoles = document.getElementById("tab-btn-roles");
+
+    const activeClass = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 cursor-pointer flex items-center gap-2";
+    const inactiveClass = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center gap-2";
+
+    if (secImport) secImport.classList.add("hidden");
+    if (secUsuarios) secUsuarios.classList.add("hidden");
+    if (secRoles) secRoles.classList.add("hidden");
+
+    if (btnImport) btnImport.className = inactiveClass;
+    if (btnUsuarios) btnUsuarios.className = inactiveClass;
+    if (btnRoles) btnRoles.className = inactiveClass;
 
     if (tab === "import") {
-        secImport.classList.remove("hidden");
-        secUsuarios.classList.add("hidden");
-        btnImport.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 cursor-pointer flex items-center gap-2";
-        btnUsuarios.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center gap-2";
+        if (secImport) secImport.classList.remove("hidden");
+        if (btnImport) btnImport.className = activeClass;
+    } else if (tab === "roles") {
+        if (secRoles) secRoles.classList.remove("hidden");
+        if (btnRoles) btnRoles.className = activeClass;
+        if (window.TTOCC_ROLES && typeof window.TTOCC_ROLES.cargarRolesTenant === 'function') {
+            window.TTOCC_ROLES.cargarRolesTenant();
+        }
     } else {
-        secImport.classList.add("hidden");
-        secUsuarios.classList.remove("hidden");
-        btnUsuarios.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 cursor-pointer flex items-center gap-2";
-        btnImport.className = "pb-3 px-2 text-xs font-black uppercase tracking-wider border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center gap-2";
+        if (secUsuarios) secUsuarios.classList.remove("hidden");
+        if (btnUsuarios) btnUsuarios.className = activeClass;
         cargarUsuariosSupabase();
     }
 }

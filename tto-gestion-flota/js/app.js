@@ -154,13 +154,22 @@ async function handleLocalApiGateway(payload) {
                     const dbPass = String(data.password_plain || '').toLowerCase().trim();
                     if (dbPass === passwordReq) {
                         const generatedToken = (crypto && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Date.now());
-                        guardarSesion(generatedToken, data.usuario, data.rol_id, data.modulo);
+                        guardarSesion(generatedToken, data.usuario, data.rol_id, data.modulo, data.id);
+
+                        if (window.TTOCC_GATEKEEPER && typeof window.TTOCC_GATEKEEPER.validarAccesoGatekeeper === 'function') {
+                            const gkRes = await window.TTOCC_GATEKEEPER.validarAccesoGatekeeper(data.id);
+                            if (gkRes && gkRes.permitido === false) {
+                                return toJsonResponse({ status: 'ERROR', message: gkRes.mensaje || 'Acceso restringido por Gatekeeper.' }, 403);
+                            }
+                        }
+
                         return toJsonResponse({
                             status: 'SUCCESS',
                             token: generatedToken,
                             usuario: data.usuario,
                             modulo: data.modulo || 'TODOS',
                             rol_id: data.rol_id || 'operador_talleres',
+                            user_id: data.id,
                             message: 'Autenticación exitosa.'
                         });
                     } else {
@@ -800,11 +809,12 @@ function obtenerTokenSesion() {
     return sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
 }
 
-function guardarSesion(token, usuario, rol = '', modulo = '') {
+function guardarSesion(token, usuario, rol = '', modulo = '', userId = '') {
     sessionStorage.setItem(SESSION_TOKEN_KEY, token);
     sessionStorage.setItem(OPERADOR_KEY, usuario);
     if (rol) sessionStorage.setItem('TTOCC_ROL', rol);
     if (modulo) sessionStorage.setItem('TTOCC_MODULO', modulo);
+    if (userId) sessionStorage.setItem('TTOCC_USER_ID', userId);
 }
 
 async function poblarSelectOperadores(selectId, moduloRequerido) {
