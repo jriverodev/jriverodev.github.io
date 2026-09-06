@@ -1,7 +1,7 @@
 {
-  "name": "Control de Flota - Visor",
-  "short_name": "TTOCC Visor Gerencial",
-  "description": "Visor de estatus de flota en talleres TTO",
+  "name": "SIAGOP - Visor Gerencial",
+  "short_name": "SIAGOP Visor",
+  "description": "Visor de estatus de flota en talleres SIAGOP",
   "start_url": "./visor.html",
   "scope": "./visor.html", 
   "display": "standalone",

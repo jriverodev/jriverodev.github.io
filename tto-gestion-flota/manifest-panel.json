@@ -1,7 +1,7 @@
 {
-  "name": "Control de Flota - Panel",
-  "short_name": "TTOCC Taller MTTO",
-  "description": "Panel de gestión de flota pesada y liviana",
+  "name": "SIAGOP - Panel de Control",
+  "short_name": "SIAGOP Taller",
+  "description": "Panel de gestión de flota pesada y liviana SIAGOP",
   "start_url": "./panel.html",
   "display": "standalone",
   "background_color": "#020617",
