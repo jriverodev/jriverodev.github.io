@@ -444,7 +444,7 @@ function actualizarGraficosVivos() {
 }
 
 async function exportarAExcel() {
-    if (datosActivosGlobal.length === 0) return TTOCC_UI.error("Error", "No hay datos para exportar.");
+    if (datosActivosGlobal.length === 0) return SIAGOP_UI.error("Error", "No hay datos para exportar.");
 
     const exportData = datosActivosGlobal.map(reg => ({
         "ID Unidad": reg.ID_Unidad,
@@ -469,7 +469,7 @@ async function exportarAExcel() {
     XLSX.utils.book_append_sheet(libro, hoja, "Catálogo de Activos");
 
     const fecha = new Date().toISOString().slice(0, 10);
-    const nombreArchivo = `TTOCC_Maestro_Activos_${fecha}.xlsx`;
+    const nombreArchivo = `SIAGOP_Maestro_Activos_${fecha}.xlsx`;
 
     // Detectar si la app corre como APK / Nativa
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
@@ -494,7 +494,7 @@ async function exportarAExcel() {
 
         } catch (error) {
             console.error("Error guardando Excel en APK:", error);
-            TTOCC_UI.error("Error de Exportación", "No se pudo guardar el archivo en el dispositivo.");
+            SIAGOP_UI.error("Error de Exportación", "No se pudo guardar el archivo en el dispositivo.");
         }
     } else {
         // Comportamiento normal para la versión Web
@@ -506,11 +506,11 @@ async function exportarAExcel() {
  
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
-    if (datosActivosGlobal.length === 0) return TTOCC_UI.error("Error", "No hay datos para exportar.");
+    if (datosActivosGlobal.length === 0) return SIAGOP_UI.error("Error", "No hay datos para exportar.");
 
     html2pdf().set({
         margin: 0.3,
-        filename: `Reporte_TTOCC_Maestro_Activos.pdf`,
+        filename: `Reporte_SIAGOP_Maestro_Activos.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }

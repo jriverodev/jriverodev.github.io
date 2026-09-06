@@ -28,8 +28,8 @@ var documentoEliminarFlag = false;
 var paginaActualFlota = 1;
 const TAMANO_PAGINA_FLOTA = 20;
 
-const CLAVE_COLA_OFFLINE_FLOTA = "TTOCC_COLA_PETICIONES_OFFLINE_FLOTA";
-const CLAVE_RESPALDO_FLOTA = "TTOCC_RESPALDO_LOCAL_FLOTA";
+const CLAVE_COLA_OFFLINE_FLOTA = "SIAGOP_COLA_PETICIONES_OFFLINE_FLOTA";
+const CLAVE_RESPALDO_FLOTA = "SIAGOP_RESPALDO_LOCAL_FLOTA";
 
 function encolarPeticionOffline(payload) {
     if (typeof encolarOperacionOffline === 'function') {
@@ -56,8 +56,8 @@ async function procesarColaOffline() {
     const cola = JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE_FLOTA) || "[]");
     if (cola.length === 0) return;
 
-    if (window.TTOCC_UI) {
-        TTOCC_UI.info("Sincronizando...", `Enviando ${cola.length} operación(es) de activos guardada(s) sin conexión.`);
+    if (window.SIAGOP_UI) {
+        SIAGOP_UI.info("Sincronizando...", `Enviando ${cola.length} operación(es) de activos guardada(s) sin conexión.`);
     }
 
     const colaPendiente = [...cola];
@@ -88,7 +88,7 @@ async function procesarColaOffline() {
  */
 async function verificarSesion() {
     const token = obtenerTokenSesion();
-    const sesionUser = sessionStorage.getItem("TTOCC_OPERADOR");
+    const sesionUser = sessionStorage.getItem("SIAGOP_OPERADOR");
 
     if (token && sesionUser) {
         try {
@@ -398,8 +398,8 @@ async function cargarTablaActivos() {
         if (respaldoLocal && respaldoLocal.length > 0) {
             listaActivosGlobal = respaldoLocal;
             renderizarActivos(listaActivosGlobal);
-            if (window.TTOCC_UI) {
-                TTOCC_UI.warning("Modo Offline Activo", "Mostrando activos guardados localmente.");
+            if (window.SIAGOP_UI) {
+                SIAGOP_UI.warning("Modo Offline Activo", "Mostrando activos guardados localmente.");
             }
         } else {
             tbody.innerHTML = `<tr class="block md:table-row"><td colspan="8" class="block md:table-cell p-6 text-center text-red-500 font-bold text-xs">Error de enlace y sin respaldo local.</td></tr>`;
@@ -556,8 +556,8 @@ function previsualizarDocumento(input, idContenedor) {
         const file = input.files[0];
         const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(file) : { valido: true };
         if (!valRes.valido) {
-            if (window.TTOCC_UI && typeof TTOCC_UI.error === 'function') {
-                TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            if (window.SIAGOP_UI && typeof SIAGOP_UI.error === 'function') {
+                SIAGOP_UI.error("Documento no válido", valRes.mensaje);
             }
             input.value = "";
             container.classList.add("hidden");
@@ -601,7 +601,7 @@ function limpiarPreviaDocumento(idInput, idContenedor) {
 function marcarEliminarDocumento() {
     documentoEliminarFlag = true;
     document.getElementById("wrapper-doc-actual").classList.add("hidden");
-    TTOCC_UI.info("Documento Marcado", "El documento actual se eliminará al guardar los cambios.");
+    SIAGOP_UI.info("Documento Marcado", "El documento actual se eliminará al guardar los cambios.");
 }
 
 function transformarABase64(file) {
@@ -635,7 +635,7 @@ async function guardarNuevoRegistro(event) {
     if (docInput && docInput.files.length > 0) {
         const valRes = validarArchivoAdjunto(docInput.files[0]);
         if (!valRes.valido) {
-            TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            SIAGOP_UI.error("Documento no válido", valRes.mensaje);
             return;
         }
     }
@@ -657,10 +657,10 @@ async function guardarNuevoRegistro(event) {
         if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
             try {
                 const client = ensureSupabaseClient();
-                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                if (client && window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage === 'function') {
                     const idUnidad = document.getElementById("add-unidad").value.trim().toUpperCase() || (crypto && crypto.randomUUID ? crypto.randomUUID() : `tmp-${Date.now()}`);
                     const path = `activos/${idUnidad}/${docNombre}`;
-                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    const publicUrl = await window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage(client, 'siagop-archivos', path, file);
                     if (publicUrl) {
                         documento_url = publicUrl;
                     } else {
@@ -709,7 +709,7 @@ async function guardarNuevoRegistro(event) {
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);
         cerrarModalNuevo();
-        TTOCC_UI.warning("Sin Conexión", "El activo se guardó localmente. Se subirá automáticamente al recuperar internet.");
+        SIAGOP_UI.warning("Sin Conexión", "El activo se guardó localmente. Se subirá automáticamente al recuperar internet.");
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Guardar Activo`;
         return;
@@ -724,15 +724,15 @@ async function guardarNuevoRegistro(event) {
         if (res.status === "SUCCESS") {
             cerrarModalNuevo();
             await cargarTablaActivos();
-            TTOCC_UI.success("Activo Creado", "El vehículo ha sido registrado con éxito en el Maestro de Activos.");
+            SIAGOP_UI.success("Activo Creado", "El vehículo ha sido registrado con éxito en el Maestro de Activos.");
         } else {
-            TTOCC_UI.error("Error de Servidor", res.message);
+            SIAGOP_UI.error("Error de Servidor", res.message);
         }
     } catch (err) {
         console.warn("Fallo de red al crear activo. Encolando offline...", err);
         encolarPeticionOffline(payload);
         cerrarModalNuevo();
-        TTOCC_UI.warning("Modo Offline", "La solicitud fue guardada en el dispositivo.");
+        SIAGOP_UI.warning("Modo Offline", "La solicitud fue guardada en el dispositivo.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-square-check"></i> Guardar Activo`;
@@ -812,7 +812,7 @@ async function guardarEdicionModal(event) {
     if (docInput && docInput.files.length > 0) {
         const valRes = validarArchivoAdjunto(docInput.files[0]);
         if (!valRes.valido) {
-            TTOCC_UI.error("Documento no válido", valRes.mensaje);
+            SIAGOP_UI.error("Documento no válido", valRes.mensaje);
             return;
         }
     }
@@ -833,9 +833,9 @@ async function guardarEdicionModal(event) {
         if (navigator.onLine && (typeof ensureSupabaseClient === 'function')) {
             try {
                 const client = ensureSupabaseClient();
-                if (client && window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.uploadFileToStorage === 'function') {
+                if (client && window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage === 'function') {
                     const path = `activos/${idUnidad}/${docNombre}`;
-                    const publicUrl = await window.TTOCC_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
+                    const publicUrl = await window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage(client, 'siagop-archivos', path, file);
                     if (publicUrl) {
                         documento_url = publicUrl;
                     } else {
@@ -884,7 +884,7 @@ async function guardarEdicionModal(event) {
     if (!navigator.onLine) {
         encolarPeticionOffline(payload);
         cerrarModalEditar();
-        TTOCC_UI.warning("Sin Conexión", "La edición se guardó localmente. Se sincronizará automáticamente.");
+        SIAGOP_UI.warning("Sin Conexión", "La edición se guardó localmente. Se sincronizará automáticamente.");
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
         return;
@@ -899,15 +899,15 @@ async function guardarEdicionModal(event) {
         if (res.status === "SUCCESS") {
             cerrarModalEditar();
             await cargarTablaActivos();
-            TTOCC_UI.success("Activo Actualizado", "Los datos técnicos del vehículo han sido actualizados.");
+            SIAGOP_UI.success("Activo Actualizado", "Los datos técnicos del vehículo han sido actualizados.");
         } else {
-            TTOCC_UI.error("Error al Guardar", res.message);
+            SIAGOP_UI.error("Error al Guardar", res.message);
         }
     } catch (err) {
         console.warn("Fallo de red en edición de activo. Encolando...", err);
         encolarPeticionOffline(payload);
         cerrarModalEditar();
-        TTOCC_UI.warning("Sin Conexión", "Cambios retenidos en dispositivo.");
+        SIAGOP_UI.warning("Sin Conexión", "Cambios retenidos en dispositivo.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
@@ -920,7 +920,7 @@ async function guardarEdicionModal(event) {
 async function confirmarEliminarRegistro() {
     const idUnidad = document.getElementById("edit-id-unidad").value;
 
-    const confirmacion = await TTOCC_UI.confirm(
+    const confirmacion = await SIAGOP_UI.confirm(
         "¿Eliminar Activo?",
         `Esta acción borrará definitivamente la unidad ${escapeHTML(idUnidad)} y sus documentos asociados del Maestro de Activos.`,
         "Eliminar",
@@ -929,7 +929,7 @@ async function confirmarEliminarRegistro() {
 
     if (!confirmacion) return;
 
-    const confirmacionFinal = await TTOCC_UI.confirm(
+    const confirmacionFinal = await SIAGOP_UI.confirm(
         "Confirmación Final",
         "¿Está seguro de querer remover este activo de la flota de manera permanente?",
         "SÍ, ELIMINAR",
@@ -960,7 +960,7 @@ async function confirmarEliminarRegistro() {
         encolarPeticionOffline(payload);
         cerrarModalEditar();
         modalContent.innerHTML = originalContentHtml;
-        TTOCC_UI.warning("Eliminación Encolada", "Se procesará el borrado al restablecerse la conexión.");
+        SIAGOP_UI.warning("Eliminación Encolada", "Se procesará el borrado al restablecerse la conexión.");
         return;
     }
 
@@ -976,9 +976,9 @@ async function confirmarEliminarRegistro() {
             cerrarModalEditar();
             setTimeout(() => { modalContent.innerHTML = originalContentHtml; }, 500);
             await cargarTablaActivos();
-            TTOCC_UI.success("Activo Eliminado", "La unidad ha sido removida con éxito.");
+            SIAGOP_UI.success("Activo Eliminado", "La unidad ha sido removida con éxito.");
         } else {
-            TTOCC_UI.error("Error al Eliminar", res.message);
+            SIAGOP_UI.error("Error al Eliminar", res.message);
             modalContent.innerHTML = originalContentHtml;
         }
     } catch (err) {
@@ -986,6 +986,6 @@ async function confirmarEliminarRegistro() {
         encolarPeticionOffline(payload);
         cerrarModalEditar();
         modalContent.innerHTML = originalContentHtml;
-        TTOCC_UI.warning("Sin Conexión", "La eliminación se enviará automáticamente al reconectarse.");
+        SIAGOP_UI.warning("Sin Conexión", "La eliminación se enviará automáticamente al reconectarse.");
     }
 }

@@ -1,12 +1,12 @@
 /**
- * TTOCC System - Gatekeeper Access Control
+ * SIAGOP System - Gatekeeper Access Control
  * auth-gatekeeper.js - Control de acceso multi-tenant y validación RPC de organización/usuario.
  */
 "use strict";
 
 (function () {
-    const ORG_NOMBRE_KEY = 'TTOCC_ORG_NOMBRE';
-    const USER_ID_KEY = 'TTOCC_USER_ID';
+    const ORG_NOMBRE_KEY = 'SIAGOP_ORG_NOMBRE';
+    const USER_ID_KEY = 'SIAGOP_USER_ID';
 
     /**
      * Revisa el acceso del usuario mediante la función RPC 'validar_acceso_usuario'.
@@ -23,7 +23,7 @@
         }
 
         const client = (typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null) ||
-                       (window.TTOCC_SG && window.TTOCC_SG.ensureSupabaseClient ? window.TTOCC_SG.ensureSupabaseClient() : null);
+                       (window.SIAGOP_SG && window.SIAGOP_SG.ensureSupabaseClient ? window.SIAGOP_SG.ensureSupabaseClient() : null);
 
         if (!client || !navigator.onLine) {
             // Si no hay conexión o cliente no disponible, permitimos paso local si hay sesión activa
@@ -89,9 +89,9 @@
         sessionStorage.clear();
 
         // 3. Purgar caché IndexedDB
-        if (typeof dbTTOCC !== 'undefined' && dbTTOCC && typeof dbTTOCC.delete === 'function') {
+        if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && typeof dbSIAGOP.delete === 'function') {
             try {
-                await dbTTOCC.delete();
+                await dbSIAGOP.delete();
                 console.log('[Gatekeeper] Caché local IndexedDB purgado.');
             } catch (eDb) {
                 console.warn('[Gatekeeper] Error al purgar IndexedDB:', eDb);
@@ -156,8 +156,8 @@
         }
     }
 
-    // Exportar al objeto global TTOCC_GATEKEEPER
-    window.TTOCC_GATEKEEPER = {
+    // Exportar al objeto global SIAGOP_GATEKEEPER
+    window.SIAGOP_GATEKEEPER = {
         validarAccesoGatekeeper,
         bloquearUsuarioEInactivar,
         mostrarModalBloqueoGatekeeper,

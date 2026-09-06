@@ -12,6 +12,7 @@
         @variant dark (&:where(.dark, .dark *));
     </style>
     <link rel="stylesheet" href="css/fontawesome/all.min.css">
+    <link rel="stylesheet" href="css/modals-layering.css">
     <link rel="icon" href="data:,">
 
     <script src="js/xlsx.full.min.js"></script>
@@ -29,6 +30,7 @@
     <script src="js/header-led.js" defer></script>
     <script src="js/BottomNav.js" defer></script>
     <script src="js/roles.js" defer></script>
+    <script src="js/profile-header.js" defer></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500/30 transition-colors duration-300">
 
@@ -148,7 +150,7 @@
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400">Administración de roles internos asignados al tenant activo en Supabase.</p>
                 </div>
-                <button onclick="window.TTOCC_ROLES.abrirModalRol()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+                <button onclick="window.SIAGOP_ROLES.abrirModalRol()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
                     <i class="fa-solid fa-plus"></i> Crear Nuevo Rol
                 </button>
             </div>
@@ -221,10 +223,10 @@
                 <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2">
                     <i class="fa-solid fa-user-shield"></i> Crear Nuevo Rol de Organización
                 </h3>
-                <button onclick="window.TTOCC_ROLES.cerrarModalRol()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="window.SIAGOP_ROLES.cerrarModalRol()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <form id="formCrearRol" onsubmit="window.TTOCC_ROLES.crearNuevoRolTenant(event)" class="space-y-4">
+            <form id="formCrearRol" onsubmit="window.SIAGOP_ROLES.crearNuevoRolTenant(event)" class="space-y-4">
                 <div>
                     <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Nombre del Rol <span class="text-red-500">*</span></label>
                     <input type="text" id="rol-nombre" required placeholder="Ej: Inspector de Mantenimiento" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600">
@@ -241,7 +243,7 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <button type="button" onclick="window.TTOCC_ROLES.cerrarModalRol()" class="px-5 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-bold uppercase">Cancelar</button>
+                    <button type="button" onclick="window.SIAGOP_ROLES.cerrarModalRol()" class="px-5 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-bold uppercase">Cancelar</button>
                     <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase">Guardar Rol</button>
                 </div>
             </form>

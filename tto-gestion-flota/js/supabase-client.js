@@ -1,14 +1,14 @@
 // js/supabase-client.js
 // Simple Supabase client helper. Exponer ensureSupabaseClient() que devuelve el cliente singleton.
-// Dependencia: window.TTOCC_SUPABASE_URL y window.TTOCC_SUPABASE_ANON_KEY (o APP_CONFIG equivalents)
+// Dependencia: window.SIAGOP_SUPABASE_URL y window.SIAGOP_SUPABASE_ANON_KEY (o APP_CONFIG equivalents)
 
 (function () {
   let supabaseClient = null;
 
   function ensureSupabaseClient() {
     if (supabaseClient) return supabaseClient;
-    const url = window.TTOCC_SUPABASE_URL || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL) || "https://mfklcwrpgavaxznkxlra.supabase.co";
-    const key = window.TTOCC_SUPABASE_ANON_KEY || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ma2xjd3JwZ2F2YXh6bmt4bHJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODUzNjgsImV4cCI6MjA4MDg2MTM2OH0.2xHgsM4F3X0vw05PgVhpMF11w1lU6zT21cp6MlE5gNY";
+    const url = window.SIAGOP_SUPABASE_URL || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL) || "https://mfklcwrpgavaxznkxlra.supabase.co";
+    const key = window.SIAGOP_SUPABASE_ANON_KEY || (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ma2xjd3JwZ2F2YXh6bmt4bHJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODUzNjgsImV4cCI6MjA4MDg2MTM2OH0.2xHgsM4F3X0vw05PgVhpMF11w1lU6zT21cp6MlE5gNY";
     if (!url || !key) {
       console.warn('[Supabase] Missing URL / ANON_KEY. Supabase operations will be disabled until configured.');
       return null;
@@ -44,7 +44,7 @@
       scriptTag.onload = () => {
         if (window.supabase && typeof window.supabase.createClient === 'function') {
           supabaseClient = window.supabase.createClient(url, key);
-          window.TTOCC_SUPABASE_CLIENT = supabaseClient;
+          window.SIAGOP_SUPABASE_CLIENT = supabaseClient;
         }
       };
       document.head.appendChild(scriptTag);
@@ -54,6 +54,6 @@
     return null;
   }
 
-  window.TTOCC_SG = window.TTOCC_SG || {};
-  window.TTOCC_SG.ensureSupabaseClient = ensureSupabaseClient;
+  window.SIAGOP_SG = window.SIAGOP_SG || {};
+  window.SIAGOP_SG.ensureSupabaseClient = ensureSupabaseClient;
 })();

@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function validarAccesoAdmin() {
-    const isAuth = sessionStorage.getItem("TTOCC_ADMIN_AUTH");
+    const isAuth = sessionStorage.getItem("SIAGOP_ADMIN_AUTH");
     const modal = document.getElementById("modalAdminAcceso");
     if (isAuth === "authorized") {
         if (modal) modal.classList.add("hidden");
@@ -69,11 +69,11 @@ async function verificarAccesoAdmin(event) {
     }
 
     if (esAutorizado) {
-        sessionStorage.setItem("TTOCC_ADMIN_AUTH", "authorized");
+        sessionStorage.setItem("SIAGOP_ADMIN_AUTH", "authorized");
         document.getElementById("modalAdminAcceso").classList.add("hidden");
         if (errDiv) errDiv.classList.add("hidden");
         cargarUsuariosSupabase();
-        TTOCC_UI.success("Acceso Concedido", "Bienvenido al Panel de Administración Backend.");
+        SIAGOP_UI.success("Acceso Concedido", "Bienvenido al Panel de Administración Backend.");
     } else {
         if (errDiv) {
             errDiv.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> Contraseña incorrecta.`;
@@ -110,8 +110,8 @@ function cambiarTabAdmin(tab) {
     } else if (tab === "roles") {
         if (secRoles) secRoles.classList.remove("hidden");
         if (btnRoles) btnRoles.className = activeClass;
-        if (window.TTOCC_ROLES && typeof window.TTOCC_ROLES.cargarRolesTenant === 'function') {
-            window.TTOCC_ROLES.cargarRolesTenant();
+        if (window.SIAGOP_ROLES && typeof window.SIAGOP_ROLES.cargarRolesTenant === 'function') {
+            window.SIAGOP_ROLES.cargarRolesTenant();
         }
     } else {
         if (secUsuarios) secUsuarios.classList.remove("hidden");
@@ -213,7 +213,7 @@ async function procesarImportacionMasiva() {
     const btnSubmit = document.getElementById("btn-iniciar-import");
 
     if (!inputFileInput || !inputFileInput.files || inputFileInput.files.length === 0) {
-        TTOCC_UI.error("Sin Archivo", "Por favor seleccione un archivo CSV o Excel.");
+        SIAGOP_UI.error("Sin Archivo", "Por favor seleccione un archivo CSV o Excel.");
         return;
     }
 
@@ -221,7 +221,7 @@ async function procesarImportacionMasiva() {
     const client = typeof ensureSupabaseClient === "function" ? ensureSupabaseClient() : null;
 
     if (!client) {
-        TTOCC_UI.error("Supabase Error", "No se pudo conectar con el cliente de Supabase.");
+        SIAGOP_UI.error("Supabase Error", "No se pudo conectar con el cliente de Supabase.");
         return;
     }
 
@@ -295,12 +295,12 @@ async function procesarImportacionMasiva() {
 
         actualizarProgresoImportacion(100);
         logAdminMessage(`PROCESO FINALIZADO. Se importaron ${insertadosCount} de ${total} registros en '${tablaTarget}'.`, "success");
-        TTOCC_UI.success("Importación Completada", `Se enviaron ${insertadosCount} registros a la tabla '${tablaTarget}' en Supabase.`);
+        SIAGOP_UI.success("Importación Completada", `Se enviaron ${insertadosCount} registros a la tabla '${tablaTarget}' en Supabase.`);
 
     } catch (err) {
         console.error("Error en importación masiva:", err);
         logAdminMessage(`FALLO CRÍTICO: ${err.message}`, "error");
-        TTOCC_UI.error("Error de Importación", err.message);
+        SIAGOP_UI.error("Error de Importación", err.message);
     } finally {
         btnSubmit.disabled = false;
     }
@@ -484,7 +484,7 @@ async function guardarUsuario(event) {
     event.preventDefault();
     const client = typeof ensureSupabaseClient === "function" ? ensureSupabaseClient() : null;
     if (!client) {
-        TTOCC_UI.error("Error", "No se pudo conectar con Supabase.");
+        SIAGOP_UI.error("Error", "No se pudo conectar con Supabase.");
         return;
     }
 
@@ -513,9 +513,9 @@ async function guardarUsuario(event) {
 
         cerrarModalUsuario();
         await cargarUsuariosSupabase();
-        TTOCC_UI.success("Usuario Guardado", `Credenciales de ${usuarioVal} actualizadas correctamente.`);
+        SIAGOP_UI.success("Usuario Guardado", `Credenciales de ${usuarioVal} actualizadas correctamente.`);
     } catch (err) {
         console.error("Error guardando usuario:", err);
-        TTOCC_UI.error("Error al Guardar", err.message);
+        SIAGOP_UI.error("Error al Guardar", err.message);
     }
 }

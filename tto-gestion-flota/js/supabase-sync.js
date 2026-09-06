@@ -1,6 +1,6 @@
 // js/supabase-sync.js
 // Helpers para subir imágenes base64 a Supabase Storage y para realizar upserts con subida de assets.
-// Expone window.TTOCC_SUPABASE_SYNC.syncAndUpsert(tableName, rows, opts)
+// Expone window.SIAGOP_SUPABASE_SYNC.syncAndUpsert(tableName, rows, opts)
 
 (function () {
     'use strict';
@@ -49,18 +49,18 @@
     }
 
     async function ensureClient() {
-        if (window.TTOCC_SUPABASE_CLIENT) return window.TTOCC_SUPABASE_CLIENT;
+        if (window.SIAGOP_SUPABASE_CLIENT) return window.SIAGOP_SUPABASE_CLIENT;
         if (typeof ensureSupabaseClient === 'function') {
             const client = ensureSupabaseClient();
             if (client) return client;
         }
         if (window.supabase && typeof window.supabase.createClient === 'function') {
             // If app provided keys on window, try to create
-            const url = window.TTOCC_SUPABASE_URL || '';
-            const key = window.TTOCC_SUPABASE_ANON_KEY || '';
+            const url = window.SIAGOP_SUPABASE_URL || '';
+            const key = window.SIAGOP_SUPABASE_ANON_KEY || '';
             if (url && key) {
-                window.TTOCC_SUPABASE_CLIENT = window.supabase.createClient(url, key);
-                return window.TTOCC_SUPABASE_CLIENT;
+                window.SIAGOP_SUPABASE_CLIENT = window.supabase.createClient(url, key);
+                return window.SIAGOP_SUPABASE_CLIENT;
             }
         }
         return null;
@@ -94,7 +94,7 @@
             const urlRes = client.storage.from(bucketName).getPublicUrl(filePath);
             if (urlRes && urlRes.data && urlRes.data.publicUrl) return urlRes.data.publicUrl;
 
-            const baseUrl = window.TTOCC_SUPABASE_URL || 'https://mfklcwrpgavaxznkxlra.supabase.co';
+            const baseUrl = window.SIAGOP_SUPABASE_URL || 'https://mfklcwrpgavaxznkxlra.supabase.co';
             return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${filePath}`;
         } catch (e) {
             console.error('[Supabase Storage] Exception uploading base64', e);
@@ -125,7 +125,7 @@
             const urlRes = client.storage.from(bucketName).getPublicUrl(filePath);
             if (urlRes && urlRes.data && urlRes.data.publicUrl) return urlRes.data.publicUrl;
 
-            const baseUrl = window.TTOCC_SUPABASE_URL || 'https://mfklcwrpgavaxznkxlra.supabase.co';
+            const baseUrl = window.SIAGOP_SUPABASE_URL || 'https://mfklcwrpgavaxznkxlra.supabase.co';
             return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${filePath}`;
         } catch (e) {
             console.error('[Supabase Storage] Exception uploading file', e);
@@ -142,11 +142,11 @@
             const keys = Object.keys(out);
 
             // Signing endpoint and auth helpers (configurable via globals)
-            const signEndpoint = window.TTOCC_SIGN_UPLOAD_ENDPOINT || '/api/sign-upload';
+            const signEndpoint = window.SIAGOP_SIGN_UPLOAD_ENDPOINT || '/api/sign-upload';
             const signHeaders = { 'Content-Type': 'application/json' };
-            if (window.TTOCC_SIGN_UPLOAD_API_KEY) signHeaders['x-api-key'] = window.TTOCC_SIGN_UPLOAD_API_KEY;
-            if (window.TTOCC_SIGN_UPLOAD_JWT) signHeaders['Authorization'] = 'Bearer ' + window.TTOCC_SIGN_UPLOAD_JWT;
-            const bucketPublicFlag = window.TTOCC_BUCKET_PUBLIC === true || window.TTOCC_BUCKET_PUBLIC === 'true' || false;
+            if (window.SIAGOP_SIGN_UPLOAD_API_KEY) signHeaders['x-api-key'] = window.SIAGOP_SIGN_UPLOAD_API_KEY;
+            if (window.SIAGOP_SIGN_UPLOAD_JWT) signHeaders['Authorization'] = 'Bearer ' + window.SIAGOP_SIGN_UPLOAD_JWT;
+            const bucketPublicFlag = window.SIAGOP_BUCKET_PUBLIC === true || window.SIAGOP_BUCKET_PUBLIC === 'true' || false;
 
             for (const k of keys) {
                 if (!k.endsWith('_base64')) continue;
@@ -181,7 +181,7 @@
                 }
 
                 // If direct upload returned no URL and a sign-upload helper is explicitly configured, try signEndpoint
-                if (!uploadedUrl && window.TTOCC_SIGN_UPLOAD_ENDPOINT) {
+                if (!uploadedUrl && window.SIAGOP_SIGN_UPLOAD_ENDPOINT) {
                     try {
                         const res = await fetch(signEndpoint, {
                             method: 'POST',
@@ -198,8 +198,8 @@
                                     body: base64ToBlob(base64data, mime)
                                 });
                                 if (putRes.ok) {
-                                    uploadedUrl = (window.TTOCC_SUPABASE_URL && bucketPublicFlag)
-                                        ? `${window.TTOCC_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${path}`
+                                    uploadedUrl = (window.SIAGOP_SUPABASE_URL && bucketPublicFlag)
+                                        ? `${window.SIAGOP_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${bucketName}/${path}`
                                         : path;
                                 }
                             }
@@ -258,7 +258,7 @@
 
     async function syncAndUpsert(tableName, rows, opts = {}) {
         // Default bucket for project assets
-        const bucket = opts.bucket || 'ttocc-archivos';
+        const bucket = opts.bucket || 'siagop-archivos';
         const client = await ensureClient();
         if (!client) {
             console.warn('[Supabase Sync] Supabase client not available.');
@@ -328,7 +328,7 @@
         }
     }
 
-    window.TTOCC_SUPABASE_SYNC = {
+    window.SIAGOP_SUPABASE_SYNC = {
         uploadBase64ToStorage,
         prepareRecordAssets,
         syncAndUpsert
