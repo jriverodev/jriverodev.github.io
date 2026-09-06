@@ -1,5 +1,5 @@
 /**
- * TTOCC System - Gestión de Base de Datos Local Cifrada con Dexie.js y Web Crypto API
+ * SIAGOP System - Gestión de Base de Datos Local Cifrada con Dexie.js y Web Crypto API
  * db.js - Persistencia Cifrada en IndexedDB (AES-GCM con PBKDF2)
  */
 "use strict";
@@ -8,13 +8,13 @@
 // 1. INICIALIZACIÓN DE DEXIE.JS (INDEXEDDB SCHEMA)
 // =========================================================================
 
-var dbTTOCC = null;
+var dbSIAGOP = null;
 
 if (typeof Dexie !== 'undefined') {
-    dbTTOCC = new Dexie("TTOCC_PWA_Database");
+    dbSIAGOP = new Dexie("SIAGOP_PWA_Database");
 
     // Esquema de IndexedDB cifrado + sincronización offline-first
-    dbTTOCC.version(2).stores({
+    dbSIAGOP.version(2).stores({
         mantenimientos: 'id, sync_status, updated_at, timestamp',
         activos: 'id, sync_status, updated_at, idUnidad, timestamp',
         colaOffline: '++idSync, accion, sync_status, updated_at, timestamp',
@@ -24,7 +24,7 @@ if (typeof Dexie !== 'undefined') {
         maestro_activos: 'id, sync_status, updated_at, idUnidad, timestamp'
     });
 
-    dbTTOCC.open().catch((error) => {
+    dbSIAGOP.open().catch((error) => {
         console.warn("[Dexie] No se pudo abrir la base local:", error);
     });
 } else {
@@ -35,13 +35,13 @@ function generarIdCliente() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') {
         return window.crypto.randomUUID();
     }
-    return `ttocc-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    return `siagop-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 async function persistirRegistroLocal(tableName, datos) {
-    if (!dbTTOCC || !tableName) return null;
+    if (!dbSIAGOP || !tableName) return null;
     try {
-        const table = dbTTOCC.table(tableName);
+        const table = dbSIAGOP.table(tableName);
         const registro = {
             ...(datos || {}),
             id: datos && (datos.id || datos.ID_Registro || datos.id_registro) ? String(datos.id || datos.ID_Registro || datos.id_registro) : generarIdCliente(),
@@ -58,9 +58,9 @@ async function persistirRegistroLocal(tableName, datos) {
 }
 
 async function leerRegistrosLocales(tableName) {
-    if (!dbTTOCC || !tableName) return [];
+    if (!dbSIAGOP || !tableName) return [];
     try {
-        const table = dbTTOCC.table(tableName);
+        const table = dbSIAGOP.table(tableName);
         const rows = await table.toArray();
         return Array.isArray(rows) ? rows : [];
     } catch (e) {
@@ -70,11 +70,11 @@ async function leerRegistrosLocales(tableName) {
 }
 
 async function marcarRegistroSincronizado(tableName, id) {
-    if (!dbTTOCC || !tableName || !id) return;
+    if (!dbSIAGOP || !tableName || !id) return;
     try {
-        const current = await dbTTOCC.table(tableName).get(String(id));
+        const current = await dbSIAGOP.table(tableName).get(String(id));
         if (!current) return;
-        await dbTTOCC.table(tableName).put({
+        await dbSIAGOP.table(tableName).put({
             ...current,
             sync_status: 'synced',
             updated_at: new Date().toISOString()
@@ -85,9 +85,9 @@ async function marcarRegistroSincronizado(tableName, id) {
 }
 
 async function eliminarRegistroLocal(tableName, id) {
-    if (!dbTTOCC || !tableName || !id) return;
+    if (!dbSIAGOP || !tableName || !id) return;
     try {
-        await dbTTOCC.table(tableName).delete(String(id));
+        await dbSIAGOP.table(tableName).delete(String(id));
     } catch (e) {
         console.warn("[Dexie] Error en eliminarRegistroLocal:", tableName, id, e);
     }
@@ -97,7 +97,7 @@ async function eliminarRegistroLocal(tableName, id) {
 // 2. MÓDULO DE CIFRADO Y DESCIFRADO (AES-GCM + PBKDF2 mediante SubtleCrypto)
 // =========================================================================
 
-const TTOCC_CRYPTO = (function() {
+const SIAGOP_CRYPTO = (function() {
     const ENCODING = 'utf-8';
     const SALT_BYTES = 16;
     const IV_BYTES = 12;
@@ -153,7 +153,7 @@ const TTOCC_CRYPTO = (function() {
             const token = obtenerTokenSesion();
             if (token) return token;
         }
-        return "TTOCC_INDUSTRIAL_SECRET_PWA_KEY_2026";
+        return "SIAGOP_INDUSTRIAL_SECRET_PWA_KEY_2026";
     }
 
     /**
@@ -269,10 +269,10 @@ const TTOCC_CRYPTO = (function() {
  * Guarda la lista de mantenimientos de forma cifrada en Dexie.js
  */
 async function guardarMantenimientosLocalSeguro(lista) {
-    if (!dbTTOCC) return;
+    if (!dbSIAGOP) return;
     try {
-        const paqueteCifrado = await TTOCC_CRYPTO.cifrarDatos(lista);
-        await dbTTOCC.mantenimientos.put({
+        const paqueteCifrado = await SIAGOP_CRYPTO.cifrarDatos(lista);
+        await dbSIAGOP.mantenimientos.put({
             id: 'MATRIZ_PRINCIPAL',
             timestamp: new Date().toISOString(),
             payload: paqueteCifrado
@@ -286,11 +286,11 @@ async function guardarMantenimientosLocalSeguro(lista) {
  * Recupera y descifra la lista de mantenimientos almacenada en Dexie.js
  */
 async function obtenerMantenimientosLocalSeguro() {
-    if (!dbTTOCC) return [];
+    if (!dbSIAGOP) return [];
     try {
-        const registro = await dbTTOCC.mantenimientos.get('MATRIZ_PRINCIPAL');
+        const registro = await dbSIAGOP.mantenimientos.get('MATRIZ_PRINCIPAL');
         if (!registro || !registro.payload) return [];
-        const datos = await TTOCC_CRYPTO.descifrarDatos(registro.payload);
+        const datos = await SIAGOP_CRYPTO.descifrarDatos(registro.payload);
         return Array.isArray(datos) ? datos : [];
     } catch (e) {
         console.error("[Dexie] Error obteniendo mantenimientos de IndexedDB:", e);
@@ -302,10 +302,10 @@ async function obtenerMantenimientosLocalSeguro() {
  * Guarda la lista de activos de forma cifrada en Dexie.js
  */
 async function guardarActivosLocalSeguro(lista) {
-    if (!dbTTOCC) return;
+    if (!dbSIAGOP) return;
     try {
-        const paqueteCifrado = await TTOCC_CRYPTO.cifrarDatos(lista);
-        await dbTTOCC.activos.put({
+        const paqueteCifrado = await SIAGOP_CRYPTO.cifrarDatos(lista);
+        await dbSIAGOP.activos.put({
             id: 'MAESTRO_ACTIVOS',
             idUnidad: 'MAESTRO_ACTIVOS',
             timestamp: new Date().toISOString(),
@@ -320,11 +320,11 @@ async function guardarActivosLocalSeguro(lista) {
  * Recupera y descifra la lista de activos almacenada en Dexie.js
  */
 async function obtenerActivosLocalSeguro() {
-    if (!dbTTOCC) return [];
+    if (!dbSIAGOP) return [];
     try {
-        const registro = await dbTTOCC.activos.get('MAESTRO_ACTIVOS');
+        const registro = await dbSIAGOP.activos.get('MAESTRO_ACTIVOS');
         if (!registro || !registro.payload) return [];
-        const datos = await TTOCC_CRYPTO.descifrarDatos(registro.payload);
+        const datos = await SIAGOP_CRYPTO.descifrarDatos(registro.payload);
         return Array.isArray(datos) ? datos : [];
     } catch (e) {
         console.error("[Dexie] Error obteniendo activos de IndexedDB:", e);
@@ -336,10 +336,10 @@ async function obtenerActivosLocalSeguro() {
  * Encola una operación offline cifrada en IndexedDB
  */
 async function encolarOfflineSeguro(accion, payload) {
-    if (!dbTTOCC) return;
+    if (!dbSIAGOP) return;
     try {
-        const paqueteCifrado = await TTOCC_CRYPTO.cifrarDatos(payload);
-        await dbTTOCC.colaOffline.add({
+        const paqueteCifrado = await SIAGOP_CRYPTO.cifrarDatos(payload);
+        await dbSIAGOP.colaOffline.add({
             accion: accion,
             timestamp: new Date().toISOString(),
             payload: paqueteCifrado
@@ -353,12 +353,12 @@ async function encolarOfflineSeguro(accion, payload) {
  * Obtiene todas las operaciones offline cifradas acumuladas en IndexedDB
  */
 async function obtenerColaOfflineSegura() {
-    if (!dbTTOCC) return [];
+    if (!dbSIAGOP) return [];
     try {
-        const registros = await dbTTOCC.colaOffline.toArray();
+        const registros = await dbSIAGOP.colaOffline.toArray();
         const resultados = [];
         for (const reg of registros) {
-            const payloadDescifrado = await TTOCC_CRYPTO.descifrarDatos(reg.payload);
+            const payloadDescifrado = await SIAGOP_CRYPTO.descifrarDatos(reg.payload);
             resultados.push({
                 idSync: reg.idSync,
                 accion: reg.accion,
@@ -377,9 +377,9 @@ async function obtenerColaOfflineSegura() {
  * Elimina una operación procesada de la cola offline de IndexedDB
  */
 async function eliminarItemColaOfflineSegura(idSync) {
-    if (!dbTTOCC) return;
+    if (!dbSIAGOP) return;
     try {
-        await dbTTOCC.colaOffline.delete(idSync);
+        await dbSIAGOP.colaOffline.delete(idSync);
     } catch (e) {
         console.error("[Dexie] Error eliminando elemento de cola offline:", e);
     }

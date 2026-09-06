@@ -1,5 +1,5 @@
 /**
- * TTOCC - Gestión de Flota
+ * SIAGOP - Gestión de Flota
  * app.js - Lógica Global, Utilidades, Sanitización XSS, Gestión de Sesión, Debounce y Sincronización Cifrada
  */
 "use strict";
@@ -10,8 +10,8 @@
 
 const APP_CONFIG = {
     URL_API: "https://script.google.com/macros/s/AKfycbzBfFYRZVu2Q3BKQDJ-EfnL1jtpEx2zFK3hgfgdugumIke6Lh4SUfCxsqynuHd2s6R3jw/exec",
-    SUPABASE_URL: window.TTOCC_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co",
-    SUPABASE_ANON_KEY: window.TTOCC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ma2xjd3JwZ2F2YXh6bmt4bHJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODUzNjgsImV4cCI6MjA4MDg2MTM2OH0.2xHgsM4F3X0vw05PgVhpMF11w1lU6zT21cp6MlE5gNY",
+    SUPABASE_URL: window.SIAGOP_SUPABASE_URL || "https://mfklcwrpgavaxznkxlra.supabase.co",
+    SUPABASE_ANON_KEY: window.SIAGOP_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ma2xjd3JwZ2F2YXh6bmt4bHJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODUzNjgsImV4cCI6MjA4MDg2MTM2OH0.2xHgsM4F3X0vw05PgVhpMF11w1lU6zT21cp6MlE5gNY",
     TABLES: {
         registros: "historial_mantenimiento",
         mantenimientos: "historial_mantenimiento",
@@ -52,8 +52,8 @@ function isSupabaseConfigured() {
 }
 
 function ensureSupabaseClient() {
-    if (window.TTOCC_SUPABASE_CLIENT) {
-        return window.TTOCC_SUPABASE_CLIENT;
+    if (window.SIAGOP_SUPABASE_CLIENT) {
+        return window.SIAGOP_SUPABASE_CLIENT;
     }
 
     if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_ANON_KEY) {
@@ -61,8 +61,8 @@ function ensureSupabaseClient() {
     }
 
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-        window.TTOCC_SUPABASE_CLIENT = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
-        return window.TTOCC_SUPABASE_CLIENT;
+        window.SIAGOP_SUPABASE_CLIENT = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+        return window.SIAGOP_SUPABASE_CLIENT;
     }
 
     const scriptTag = document.createElement('script');
@@ -70,7 +70,7 @@ function ensureSupabaseClient() {
     scriptTag.async = true;
     scriptTag.onload = () => {
         if (window.supabase && typeof window.supabase.createClient === 'function') {
-            window.TTOCC_SUPABASE_CLIENT = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+            window.SIAGOP_SUPABASE_CLIENT = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
         }
     };
     document.head.appendChild(scriptTag);
@@ -90,15 +90,15 @@ async function readLocalTable(tableName) {
         if (rows && rows.length > 0) return rows;
     }
 
-    if (typeof dbTTOCC !== 'undefined' && dbTTOCC && dbTTOCC.table) {
+    if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && dbSIAGOP.table) {
         try {
-            if (dbTTOCC.tables.some(t => t.name === tableName)) {
-                return await dbTTOCC.table(tableName).toArray();
+            if (dbSIAGOP.tables.some(t => t.name === tableName)) {
+                return await dbSIAGOP.table(tableName).toArray();
             }
             // Fallback aliases if version migration hasn't run yet
             const alias = tableName === 'historial_mantenimiento' ? 'mantenimientos' : (tableName === 'maestro_activos' ? 'activos' : null);
-            if (alias && dbTTOCC.tables.some(t => t.name === alias)) {
-                return await dbTTOCC.table(alias).toArray();
+            if (alias && dbSIAGOP.tables.some(t => t.name === alias)) {
+                return await dbSIAGOP.table(alias).toArray();
             }
         } catch (error) {
             console.warn('[Dexie] Error leyendo tabla local:', tableName, error);
@@ -156,8 +156,8 @@ async function handleLocalApiGateway(payload) {
                         const generatedToken = (crypto && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Date.now());
                         guardarSesion(generatedToken, data.usuario, data.rol_id, data.modulo, data.id);
 
-                        if (window.TTOCC_GATEKEEPER && typeof window.TTOCC_GATEKEEPER.validarAccesoGatekeeper === 'function') {
-                            const gkRes = await window.TTOCC_GATEKEEPER.validarAccesoGatekeeper(data.id);
+                        if (window.SIAGOP_GATEKEEPER && typeof window.SIAGOP_GATEKEEPER.validarAccesoGatekeeper === 'function') {
+                            const gkRes = await window.SIAGOP_GATEKEEPER.validarAccesoGatekeeper(data.id);
                             if (gkRes && gkRes.permitido === false) {
                                 return toJsonResponse({ status: 'ERROR', message: gkRes.mensaje || 'Acceso restringido por Gatekeeper.' }, 403);
                             }
@@ -183,7 +183,7 @@ async function handleLocalApiGateway(payload) {
 
         // Fallback offline: verificar contra caché local de usuarios
         try {
-            const cachedRaw = localStorage.getItem('TTOCC_USUARIOS_CACHE');
+            const cachedRaw = localStorage.getItem('SIAGOP_USUARIOS_CACHE');
             if (cachedRaw) {
                 const cachedUsers = JSON.parse(cachedRaw);
                 if (Array.isArray(cachedUsers)) {
@@ -218,8 +218,8 @@ async function handleLocalApiGateway(payload) {
     if (accion === 'validar_token') {
         const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
         const storedUser = sessionStorage.getItem(OPERADOR_KEY) || '';
-        const storedRol = sessionStorage.getItem('TTOCC_ROL') || '';
-        const storedMod = sessionStorage.getItem('TTOCC_MODULO') || '';
+        const storedRol = sessionStorage.getItem('SIAGOP_ROL') || '';
+        const storedMod = sessionStorage.getItem('SIAGOP_MODULO') || '';
 
         const moduloReq = String(payload && payload.modulo_requerido || '').toUpperCase();
         let esPermitido = true;
@@ -298,8 +298,8 @@ async function handleLocalApiGateway(payload) {
                 }
 
                 let payloadRemoto = { ...recordExistente, ...registro };
-                if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
-                    payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(id));
+                if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
+                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(id));
                 }
 
                 // Field aliases mapping for Postgres schema
@@ -425,8 +425,8 @@ async function handleLocalApiGateway(payload) {
                     payloadRemoto.documento_url = null;
                     payloadRemoto.documento_nombre = null;
                 }
-                if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.prepareRecordAssets === 'function') {
-                    payloadRemoto = await window.TTOCC_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
+                if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
+                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(idUnidad));
                 }
 
                 // Map field names for maestro_activos PostgreSQL schema
@@ -529,7 +529,7 @@ if (originalFetch) {
 }
 
 async function syncData() {
-    if (!dbTTOCC || !navigator.onLine) {
+    if (!dbSIAGOP || !navigator.onLine) {
         return false;
     }
 
@@ -541,7 +541,7 @@ async function syncData() {
     const tables = Object.keys(APP_CONFIG.TABLES).filter((key) => key !== 'colaOffline');
     for (const key of tables) {
         const tableName = APP_CONFIG.TABLES[key];
-        const rows = await dbTTOCC.table(tableName).where('sync_status').equals('pending').toArray();
+        const rows = await dbSIAGOP.table(tableName).where('sync_status').equals('pending').toArray();
         if (!rows.length) continue;
 
         const payload = rows.map((row) => ({
@@ -552,10 +552,10 @@ async function syncData() {
         }));
 
             // Prefer using the optional helper that uploads images to Storage then upserts
-            if (window.TTOCC_SUPABASE_SYNC && typeof window.TTOCC_SUPABASE_SYNC.syncAndUpsert === 'function') {
-                const res = await window.TTOCC_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'ttocc-archivos' });
+            if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.syncAndUpsert === 'function') {
+                const res = await window.SIAGOP_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'siagop-archivos' });
                 if (res.error) {
-                    console.warn('[Supabase] Error sincronizando tabla via TTOCC_SUPABASE_SYNC:', tableName, res.error);
+                    console.warn('[Supabase] Error sincronizando tabla via SIAGOP_SUPABASE_SYNC:', tableName, res.error);
                     return false;
                 }
                 const rows = res.data || payload;
@@ -578,10 +578,10 @@ async function syncData() {
         return true;
 }
 
-const CACHE_KEY = 'ttocc_mantenimientos';
-const SYNC_QUEUE_KEY = 'ttocc_sync_queue';
-const SESSION_TOKEN_KEY = 'TTOCC_SESSION_TOKEN';
-const OPERADOR_KEY = 'TTOCC_OPERADOR';
+const CACHE_KEY = 'siagop_mantenimientos';
+const SYNC_QUEUE_KEY = 'siagop_sync_queue';
+const SESSION_TOKEN_KEY = 'SIAGOP_SESSION_TOKEN';
+const OPERADOR_KEY = 'SIAGOP_OPERADOR';
 
 
 // ==========================================
@@ -598,7 +598,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-archivos') {
+function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'siagop-archivos') {
     if (!urlStr || typeof urlStr !== 'string') return '';
     const clean = urlStr.trim();
     if (!clean) return '';
@@ -633,7 +633,7 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
 
     // Obtener la URL base de forma segura (soporta cuando APP_CONFIG no está definido)
     const baseUrl = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG?.SUPABASE_URL)
-        || window?.TTOCC_SUPABASE_URL 
+        || window?.SIAGOP_SUPABASE_URL
         || "https://mfklcwrpgavaxznkxlra.supabase.co";
 
     // 'let' en lugar de 'const' para permitir reasignación
@@ -647,9 +647,9 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
     return `${baseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucketDefault}/${cleanPath}`;
 }
 
-const TTOCC_SIGNED_URL_CACHE = new Map();
+const SIAGOP_SIGNED_URL_CACHE = new Map();
 
-function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
+function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return null;
     const clean = urlOrPath.trim();
     
@@ -673,7 +673,7 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
 
     return null;
 }
-async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'ttocc-archivos') {
+async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'siagop-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return '';
     const clean = urlOrPath.trim();
     if (!clean) return '';
@@ -682,7 +682,7 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
     if (!path) return clean; // Retain Base64 or Google Drive thumbnail links unchanged
 
     const cacheKey = `${bucketDefault}:${path}`;
-    const cached = TTOCC_SIGNED_URL_CACHE.get(cacheKey);
+    const cached = SIAGOP_SIGNED_URL_CACHE.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 60000) {
         return cached.url;
     }
@@ -692,7 +692,7 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
         try {
             const { data, error } = await client.storage.from(bucketDefault).createSignedUrl(path, expiresIn);
             if (!error && data && data.signedUrl) {
-                TTOCC_SIGNED_URL_CACHE.set(cacheKey, {
+                SIAGOP_SIGNED_URL_CACHE.set(cacheKey, {
                     url: data.signedUrl,
                     expiresAt: Date.now() + (expiresIn * 1000)
                 });
@@ -706,7 +706,7 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
     return normalizarUrlStorage(clean, bucketDefault);
 }
 
-async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'ttocc-archivos', expiresIn = 7200) {
+async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'siagop-archivos', expiresIn = 7200) {
     if (!Array.isArray(registros) || registros.length === 0) return registros;
     const client = ensureSupabaseClient();
     if (!navigator.onLine || !client || !client.storage) return registros;
@@ -731,7 +731,7 @@ async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_De
 
     const pathsToSign = Array.from(pathsSet).filter(p => {
         const cacheKey = `${bucketDefault}:${p}`;
-        const cached = TTOCC_SIGNED_URL_CACHE.get(cacheKey);
+        const cached = SIAGOP_SIGNED_URL_CACHE.get(cacheKey);
         return !(cached && cached.expiresAt > Date.now() + 60000);
     });
 
@@ -742,7 +742,7 @@ async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_De
                 data.forEach(resItem => {
                     if (resItem && resItem.path && resItem.signedUrl) {
                         const cacheKey = `${bucketDefault}:${resItem.path}`;
-                        TTOCC_SIGNED_URL_CACHE.set(cacheKey, {
+                        SIAGOP_SIGNED_URL_CACHE.set(cacheKey, {
                             url: resItem.signedUrl,
                             expiresAt: Date.now() + (expiresIn * 1000)
                         });
@@ -761,7 +761,7 @@ async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_De
                 const path = itemMap[campo];
                 if (path) {
                     const cacheKey = `${bucketDefault}:${path}`;
-                    const cached = TTOCC_SIGNED_URL_CACHE.get(cacheKey);
+                    const cached = SIAGOP_SIGNED_URL_CACHE.get(cacheKey);
                     if (cached && cached.url) {
                         reg[campo] = cached.url;
                     }
@@ -812,9 +812,9 @@ function obtenerTokenSesion() {
 function guardarSesion(token, usuario, rol = '', modulo = '', userId = '') {
     sessionStorage.setItem(SESSION_TOKEN_KEY, token);
     sessionStorage.setItem(OPERADOR_KEY, usuario);
-    if (rol) sessionStorage.setItem('TTOCC_ROL', rol);
-    if (modulo) sessionStorage.setItem('TTOCC_MODULO', modulo);
-    if (userId) sessionStorage.setItem('TTOCC_USER_ID', userId);
+    if (rol) sessionStorage.setItem('SIAGOP_ROL', rol);
+    if (modulo) sessionStorage.setItem('SIAGOP_MODULO', modulo);
+    if (userId) sessionStorage.setItem('SIAGOP_USER_ID', userId);
 }
 
 async function poblarSelectOperadores(selectId, moduloRequerido) {
@@ -831,7 +831,7 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
 
             if (!error && Array.isArray(data) && data.length > 0) {
                 try {
-                    localStorage.setItem('TTOCC_USUARIOS_CACHE', JSON.stringify(data));
+                    localStorage.setItem('SIAGOP_USUARIOS_CACHE', JSON.stringify(data));
                 } catch (eCache) {}
 
                 const filtrados = data.filter(u => {
@@ -861,7 +861,7 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
     }
 
     try {
-        const cachedRaw = localStorage.getItem('TTOCC_USUARIOS_CACHE');
+        const cachedRaw = localStorage.getItem('SIAGOP_USUARIOS_CACHE');
         if (cachedRaw) {
             const cachedData = JSON.parse(cachedRaw);
             if (Array.isArray(cachedData) && cachedData.length > 0) {

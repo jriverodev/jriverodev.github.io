@@ -1,0 +1,30 @@
+/* SIAGOP System - Estilos Globales de Modales y Capas Z-Index */
+
+/* 1. Bottom Nav en capa z-40 */
+nav.fixed.bottom-0,
+#siagop-bottom-nav,
+#ttocc-bottom-nav {
+  z-index: 40 !important;
+}
+
+/* 2. Elevamos los modales por encima de la Bottom Nav (z-60 o superior) */
+.modal-overlay,
+.modal-container,
+[id^="modal-form-"],
+[id^="modal-visor-"],
+#modalNuevoRegistro,
+#modalEditarRegistro,
+#modalSeleccionarUnidad,
+#modalIdentificacion,
+#modalUsuario,
+#modalCrearRol {
+  z-index: 60 !important;
+}
+
+/* 3. Ajuste de altura y padding inferior para que el footer del modal no quede tapado por la barra de navegación */
+.modal-content-body,
+[id^="modal"] > div {
+  max-height: calc(100vh - 4rem) !important;
+  overflow-y: auto !important;
+  padding-bottom: 4rem !important;
+}

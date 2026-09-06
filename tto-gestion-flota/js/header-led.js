@@ -1,5 +1,5 @@
 /**
- * TTOCC System - Header & LED Network Status Indicator Component
+ * SIAGOP System - Header & LED Network Status Indicator Component
  * js/header-led.js
  */
 "use strict";
@@ -8,7 +8,7 @@
     let ledElement = null;
 
     function inicializarHeaderLed() {
-        const orgNombre = sessionStorage.getItem('TTOCC_ORG_NOMBRE') || 'Gerencia de Transporte Terrestre Occidente';
+        const orgNombre = sessionStorage.getItem('SIAGOP_ORG_NOMBRE') || 'Gerencia de Transporte Terrestre Occidente';
 
         // Actualizar elementos con id u identificador de organización
         const orgContainers = document.querySelectorAll('#header-organizacion-nombre, .header-org-nombre');
@@ -63,7 +63,7 @@
         });
     }
 
-    window.TTOCC_HEADER_LED = {
+    window.SIAGOP_HEADER_LED = {
         inicializarHeaderLed,
         actualizarEstadoLed
     };

@@ -1,5 +1,5 @@
 /**
- * TTOCC System - Custom Tenant Roles Management Module
+ * SIAGOP System - Custom Tenant Roles Management Module
  * js/roles.js - Acceso restringido a rol 'admin', filtrado por organizacion_id y creación de roles personalizados.
  */
 "use strict";
@@ -10,7 +10,7 @@
         const contenedorTabla = document.getElementById('tablaRolesTenantCuerpo');
         if (!contenedorTabla) return;
 
-        const userRol = String(sessionStorage.getItem('TTOCC_ROL') || '').toLowerCase();
+        const userRol = String(sessionStorage.getItem('SIAGOP_ROL') || '').toLowerCase();
         if (userRol !== 'admin') {
             contenedorTabla.innerHTML = `
                 <tr>
@@ -34,7 +34,7 @@
 
         try {
             // Extraer organizacion_id del usuario activo
-            const userId = sessionStorage.getItem('TTOCC_USER_ID') || '';
+            const userId = sessionStorage.getItem('SIAGOP_USER_ID') || '';
             let userOrgId = null;
 
             if (userId) {
@@ -104,7 +104,7 @@
 
         try {
             // Obtener el organizacion_id del usuario activo
-            const userId = sessionStorage.getItem('TTOCC_USER_ID') || '';
+            const userId = sessionStorage.getItem('SIAGOP_USER_ID') || '';
             let userOrgId = '11111111-1111-1111-1111-111111111111'; // Default Matriz ID
 
             if (userId) {
@@ -171,7 +171,7 @@
         } catch (e) { return fechaStr; }
     }
 
-    window.TTOCC_ROLES = {
+    window.SIAGOP_ROLES = {
         cargarRolesTenant,
         crearNuevoRolTenant,
         abrirModalRol,

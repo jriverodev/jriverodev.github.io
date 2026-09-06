@@ -1,14 +1,14 @@
 /**
- * TTOCC_UI - Componentes UI Unificados para Aplicaciones Web
+ * SIAGOP_UI - Componentes UI Unificados para Aplicaciones Web
  */
 
-const TTOCC_UI = (() => {
+const SIAGOP_UI = (() => {
     let dialogContainer = null;
 
     const init = () => {
         if (dialogContainer) return;
         dialogContainer = document.createElement('div');
-        dialogContainer.id = 'ttocc-ui-dialog-root';
+        dialogContainer.id = 'siagop-ui-dialog-root';
         dialogContainer.className = 'fixed inset-0 z-[200] flex items-center justify-center p-6 pointer-events-none overflow-hidden';
         document.body.appendChild(dialogContainer);
 
@@ -109,3 +109,68 @@ const TTOCC_UI = (() => {
             show({ title, message, confirmText, cancelText, type: 'warning' })
     };
 })();
+
+// Manejo del botón físico Atrás en Android (Capacitor)
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+        const { App } = window.Capacitor.Plugins;
+
+        App.addListener('backButton', ({ canGoBack }) => {
+            const paginaActual = window.location.pathname.split('/').pop() || 'index.html';
+
+            // 1. Si hay un modal abierto, cerrarlo primero en lugar de navegar
+            const modalAbierto = document.querySelector('.modal-container:not(.hidden), [dialog][open], [id^="modal"]:not(.hidden)');
+            if (modalAbierto) {
+                modalAbierto.classList.add('hidden');
+                return;
+            }
+
+            // 2. Si estamos en una vista secundaria, regresar al panel principal
+            if (paginaActual !== 'panel.html' && paginaActual !== 'index.html' && paginaActual !== '') {
+                window.location.href = 'panel.html';
+                return;
+            }
+
+            // 3. Si ya estamos en panel.html, mostrar diálogo de confirmación para salir
+            if (paginaActual === 'panel.html') {
+                mostrarModalConfirmarSalida(App);
+            }
+        });
+    }
+});
+
+function mostrarModalConfirmarSalida(CapacitorApp) {
+    if (document.getElementById('modal-salir-app')) return;
+
+    const modalHTML = `
+    <div id="modal-salir-app" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl animate-fade-in">
+        <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
+          <i class="fa-solid fa-right-from-bracket text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2 uppercase tracking-tight">¿Salir de SIAGOP Móvil?</h3>
+        <p class="text-slate-400 text-xs mb-6">¿Estás seguro de que deseas cerrar la aplicación?</p>
+        <div class="flex gap-3">
+          <button id="btn-cancelar-salida" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase rounded-lg transition active:scale-95 cursor-pointer">
+            Cancelar
+          </button>
+          <button id="btn-confirmar-salida" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase rounded-lg transition active:scale-95 cursor-pointer">
+            Salir
+          </button>
+        </div>
+      </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    document.getElementById('btn-cancelar-salida').addEventListener('click', () => {
+        document.getElementById('modal-salir-app').remove();
+    });
+
+    document.getElementById('btn-confirmar-salida').addEventListener('click', () => {
+        if (CapacitorApp && typeof CapacitorApp.exitApp === 'function') {
+            CapacitorApp.exitApp();
+        }
+    });
+}

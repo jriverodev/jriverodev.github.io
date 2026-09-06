@@ -1,5 +1,5 @@
 // Shared UI utilities: image preview and cleanup
-// Expose as window.TTOCC_UI_UTILS so existing code can call via globals
+// Expose as window.SIAGOP_UI_UTILS so existing code can call via globals
 (function () {
     function previsualizarImagenImpl(input, idContenedor) {
         const container = document.getElementById(idContenedor);
@@ -27,8 +27,8 @@
         if (input && input.files && input.files[0]) {
             const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(input.files[0]) : { valido: true };
             if (!valRes.valido) {
-                if (window.TTOCC_UI && typeof TTOCC_UI.error === 'function') {
-                    TTOCC_UI.error("Archivo no válido", valRes.mensaje);
+                if (window.SIAGOP_UI && typeof SIAGOP_UI.error === 'function') {
+                    SIAGOP_UI.error("Archivo no válido", valRes.mensaje);
                 }
                 input.value = "";
                 img.src = "";
@@ -60,20 +60,20 @@
     }
 
     // Expose a namespaced util and also define globals for backward compatibility
-    window.TTOCC_UI_UTILS = window.TTOCC_UI_UTILS || {};
-    window.TTOCC_UI_UTILS.previsualizarImagen = previsualizarImagenImpl;
-    window.TTOCC_UI_UTILS.limpiarPrevia = limpiarPreviaImpl;
+    window.SIAGOP_UI_UTILS = window.SIAGOP_UI_UTILS || {};
+    window.SIAGOP_UI_UTILS.previsualizarImagen = previsualizarImagenImpl;
+    window.SIAGOP_UI_UTILS.limpiarPrevia = limpiarPreviaImpl;
 
     // Backwards-compatible globals (some code calls these functions directly)
     if (typeof window.previsualizarImagen !== 'function') {
         window.previsualizarImagen = function(input, idContenedor) {
-            return window.TTOCC_UI_UTILS.previsualizarImagen(input, idContenedor);
+            return window.SIAGOP_UI_UTILS.previsualizarImagen(input, idContenedor);
         };
     }
 
     if (typeof window.limpiarPrevia !== 'function') {
         window.limpiarPrevia = function(idInput, idContenedor) {
-            return window.TTOCC_UI_UTILS.limpiarPrevia(idInput, idContenedor);
+            return window.SIAGOP_UI_UTILS.limpiarPrevia(idInput, idContenedor);
         };
     }
 
@@ -103,8 +103,8 @@
 
     function addDebugFooterButtons() {
         // Only show debug buttons in dev-like environments or when explicitly enabled.
-        // Recommended: keep hidden in production. Enable via URL ?dev or by setting window.TTOCC_DEBUG_UI = true.
-        if (!(isDevMode() || window.TTOCC_DEBUG_UI === true)) return;
+        // Recommended: keep hidden in production. Enable via URL ?dev or by setting window.SIAGOP_DEBUG_UI = true.
+        if (!(isDevMode() || window.SIAGOP_DEBUG_UI === true)) return;
 
         const pair = findPreviewPair();
         const footer = document.querySelector('footer');
@@ -140,8 +140,8 @@
                 try {
                     if (typeof window.previsualizarImagen === 'function') {
                         window.previsualizarImagen(tempInput, p.container);
-                    } else if (window.TTOCC_UI_UTILS && window.TTOCC_UI_UTILS.previsualizarImagen) {
-                        window.TTOCC_UI_UTILS.previsualizarImagen(tempInput, p.container);
+                    } else if (window.SIAGOP_UI_UTILS && window.SIAGOP_UI_UTILS.previsualizarImagen) {
+                        window.SIAGOP_UI_UTILS.previsualizarImagen(tempInput, p.container);
                     } else {
                         alert('Función de previsualización no disponible.');
                     }
@@ -171,8 +171,8 @@
             }
             if (typeof window.limpiarPrevia === 'function') {
                 window.limpiarPrevia(p.input, p.container);
-            } else if (window.TTOCC_UI_UTILS && window.TTOCC_UI_UTILS.limpiarPrevia) {
-                window.TTOCC_UI_UTILS.limpiarPrevia(p.input, p.container);
+            } else if (window.SIAGOP_UI_UTILS && window.SIAGOP_UI_UTILS.limpiarPrevia) {
+                window.SIAGOP_UI_UTILS.limpiarPrevia(p.input, p.container);
             } else {
                 alert('Función limpiarPrevia no disponible.');
             }

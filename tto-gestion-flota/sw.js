@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siagop-movil-v18';
+const CACHE_NAME = 'siagop-movil-v19';
 
 const ASSETS = [
   './',
@@ -10,6 +10,8 @@ const ASSETS = [
   './form-flota.html',
   './visor-talleres.html',
   './visor-flota.html',
+  './registro-organizacion.html',
+  './admin.html',
   './manifest.json',
   './manifest-panel.json',
   './manifest-visor.json',
@@ -22,14 +24,23 @@ const ASSETS = [
   './js/visor-flota.js',
   './js/ui.js',
   './js/tema.js',
+  './js/auth-gatekeeper.js',
+  './js/header-led.js',
+  './js/BottomNav.js',
+  './js/roles.js',
+  './js/profile-header.js',
+  './js/supabase-client.js',
+  './js/supabase-sync.js',
+  './js/sync-manager.js',
   './js/libs/browser@4.js',
   './css/fontawesome/all.min.css',
+  './css/modals-layering.css',
   './js/chart.js',
   './js/xlsx.full.min.js',
   './css/photoswipe.css'
 ];
 
-// Instalación
+// Instalación con precarga tolerante a fallos
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -41,7 +52,7 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activación y limpieza de cachés antiguas
+// Activación y purga de cachés anteriores
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
@@ -51,17 +62,17 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Intercepción de peticiones (GET local o CDN)
+// Estrategia Stale-While-Revalidate para recursos estáticos y exclusión de apis dinámicas
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   
-  // Evitar interceptar llamadas a la API de Google Apps Script o Supabase API
+  // Excluir de caché llamadas a Google Apps Script, Supabase Rest/RPC o Supabase Storage dinámico
   if (e.request.url.includes('script.google.com') || e.request.url.includes('supabase.co')) return;
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       const fetchPromise = fetch(e.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
         }

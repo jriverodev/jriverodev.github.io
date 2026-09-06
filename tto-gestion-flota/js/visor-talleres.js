@@ -655,7 +655,7 @@ function actualizarGraficosVivos() {
 
 async function exportarAExcel() {
     if (datosUnidadesGlobal.length === 0) {
-        return TTOCC_UI.error("Error de Exportación", "No hay datos disponibles en el visor para generar el archivo Excel.");
+        return SIAGOP_UI.error("Error de Exportación", "No hay datos disponibles en el visor para generar el archivo Excel.");
     }
 
     const exportData = datosUnidadesGlobal.map(reg => ({
@@ -689,7 +689,7 @@ async function exportarAExcel() {
     XLSX.utils.book_append_sheet(libro, hoja, "Historial Completo");
 
     const fecha = new Date().toISOString().slice(0, 10);
-    const nombreArchivo = `TTOCC_Historial_Completo_${fecha}.xlsx`;
+    const nombreArchivo = `SIAGOP_Historial_Completo_${fecha}.xlsx`;
 
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
         try {
@@ -710,7 +710,7 @@ async function exportarAExcel() {
 
         } catch (error) {
             console.error("Error guardando Excel en APK:", error);
-            TTOCC_UI.error("Error", "No se pudo guardar el archivo Excel en el dispositivo.");
+            SIAGOP_UI.error("Error", "No se pudo guardar el archivo Excel en el dispositivo.");
         }
     } else {
         XLSX.writeFile(libro, nombreArchivo);
@@ -719,11 +719,11 @@ async function exportarAExcel() {
 /*  
 function exportarAPDF() {
     const elemento = document.getElementById("contenedorTablaReporte");
-    if (datosUnidadesGlobal.length === 0) return TTOCC_UI.error("Error de Exportación", "No hay datos para exportar a PDF.");
+    if (datosUnidadesGlobal.length === 0) return SIAGOP_UI.error("Error de Exportación", "No hay datos para exportar a PDF.");
 
     html2pdf().set({
         margin: 0.3,
-        filename: `Reporte_TTOCC_Gerencial.pdf`,
+        filename: `Reporte_SIAGOP_Gerencial.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, backgroundColor: '#0b1329', useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
