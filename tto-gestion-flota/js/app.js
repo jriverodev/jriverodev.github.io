@@ -1189,23 +1189,25 @@ function inicializarMonitoreoRed() {
         Network.addListener('networkStatusChange', status => {
             if (status.connected) {
                 console.log('[Red Nativa] Conexión restablecida.');
-                mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'exito');
+               /* mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'exito');*/
                 procesarSincronizacionPendiente();
             } else {
-                console.warn('[Red Nativa] Conexión perdida. Operando en modo Offline.');
-                mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');
+               /* console.warn('[Red Nativa] Conexión perdida. Operando en modo Offline.');*/
+                console.log('[Red Nativa] Conexión perdida. Operando en modo Offline.');
+               /* mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');*/
             }
         });
     } else {
         window.addEventListener('online', () => {
             console.log('[Red Web] Conexión restablecida.');
-            mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'exito');
+           /* mostrarNotificacion('Conexión restablecida. Sincronizando datos...', 'exito');*/
             procesarSincronizacionPendiente();
         });
 
         window.addEventListener('offline', () => {
-            console.warn('[Red Web] Conexión perdida. Operando en modo Offline.');
-            mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');
+           /* console.warn('[Red Web] Conexión perdida. Operando en modo Offline.');*/
+            console.log('[Red Web] Conexión perdida. Operando en modo Offline.');
+          /*  mostrarNotificacion('Modo sin conexión activo. Los cambios se guardarán localmente.', 'advertencia');*/
         });
     }
 }
