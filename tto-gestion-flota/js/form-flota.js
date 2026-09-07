@@ -576,13 +576,15 @@ function previsualizarDocumento(input, idContenedor) {
             }
             const reader = new FileReader();
             reader.onload = (e) => {
-                img.src = e.result;
-                img.classList.remove("hidden");
+                if (e && e.target && e.target.result) {
+                    img.setAttribute("src", e.target.result);
+                    img.classList.remove("hidden");
+                }
             };
             reader.readAsDataURL(file);
         } else if (img) {
             img.classList.add("hidden");
-            img.src = "";
+            img.removeAttribute("src");
         }
 
         container.classList.remove("hidden");
@@ -660,7 +662,7 @@ async function guardarNuevoRegistro(event) {
                 if (client && window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage === 'function') {
                     const idUnidad = document.getElementById("add-unidad").value.trim().toUpperCase() || (crypto && crypto.randomUUID ? crypto.randomUUID() : `tmp-${Date.now()}`);
                     const path = `activos/${idUnidad}/${docNombre}`;
-                    const publicUrl = await window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage(client, 'siagop-archivos', path, file);
+                    const publicUrl = await window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
                     if (publicUrl) {
                         documento_url = publicUrl;
                     } else {
@@ -835,7 +837,7 @@ async function guardarEdicionModal(event) {
                 const client = ensureSupabaseClient();
                 if (client && window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage === 'function') {
                     const path = `activos/${idUnidad}/${docNombre}`;
-                    const publicUrl = await window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage(client, 'siagop-archivos', path, file);
+                    const publicUrl = await window.SIAGOP_SUPABASE_SYNC.uploadFileToStorage(client, 'ttocc-archivos', path, file);
                     if (publicUrl) {
                         documento_url = publicUrl;
                     } else {

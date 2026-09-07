@@ -258,12 +258,14 @@
 
     async function syncAndUpsert(tableName, rows, opts = {}) {
         // Default bucket for project assets
-        const bucket = opts.bucket || 'siagop-archivos';
+        const bucket = opts.bucket || 'ttocc-archivos';
         const client = await ensureClient();
         if (!client) {
             console.warn('[Supabase Sync] Supabase client not available.');
             return { error: 'no_client' };
         }
+
+        const activeOrgId = localStorage.getItem('siagop_user_org_id') || sessionStorage.getItem('SIAGOP_USER_ORG_ID') || '11111111-1111-1111-1111-111111111111';
 
         const prepared = [];
         for (const r of rows) {
@@ -285,7 +287,7 @@
                 'id', 'id_unidad', 'tipo_flota', 'nombre_taller', 'taller_ext', 'estatus',
                 'observaciones', 'marca', 'modelo', 'color', 'anio', 'vin', 'tipo_vehiculo',
                 'avance', 'foto_antes', 'foto_despues', 'fecha_ingreso', 'fecha_salida',
-                'gerencia', 'usuario', 'cargo_usuario', 'tareas', 'modificado_por', 'metadata', 'updated_at'
+                'gerencia', 'usuario', 'cargo_usuario', 'tareas', 'modificado_por', 'metadata', 'organizacion_id', 'updated_at'
             ];
 
             if (tableName === 'maestro_activos' || tableName === 'activos' || tableName === 'registros_activos') {
@@ -293,7 +295,7 @@
                     'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
                     'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
                     'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
-                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'updated_at'
+                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
                 ];
             }
 
@@ -308,6 +310,7 @@
             } else {
                 cleanRecord.id = String(id);
             }
+            cleanRecord.organizacion_id = ready.organizacion_id || activeOrgId;
             cleanRecord.updated_at = new Date().toISOString();
 
             prepared.push(cleanRecord);

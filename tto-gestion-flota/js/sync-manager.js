@@ -118,7 +118,7 @@
             if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
               try {
                 const idForPath = String(payload.id || payload.ID_Registro || payload.id_registro || payload.id_unidad || payload.id_unidad || (crypto && crypto.randomUUID ? crypto.randomUUID() : `c-${Date.now()}`));
-                payload = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payload, idForPath);
+                payload = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payload, idForPath);
               } catch (e) {
                 console.warn('[SyncManager] prepareRecordAssets failed for row', row, e);
               }
