@@ -149,7 +149,11 @@ async function cargarDatosAnaliticos() {
     const tbody = document.getElementById("tablaCuerpo");
     try {
         if (tbody) {
-            tbody.innerHTML = `<tr class="block md:table-row"><td colspan="10" class="block md:table-cell p-6 text-center text-cyan-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando datos de Historial...</td></tr>`;
+            if (window.SIAGOP_UI_UTILS && typeof window.SIAGOP_UI_UTILS.renderizarSkeletonTabla === 'function') {
+                tbody.innerHTML = window.SIAGOP_UI_UTILS.renderizarSkeletonTabla(6, 10);
+            } else {
+                tbody.innerHTML = `<tr class="block md:table-row"><td colspan="10" class="block md:table-cell p-6 text-center text-cyan-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sincronizando datos de Historial...</td></tr>`;
+            }
         }
 
         await obtenerMapaActivos();

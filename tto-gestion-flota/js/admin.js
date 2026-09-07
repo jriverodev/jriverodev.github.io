@@ -385,13 +385,17 @@ async function cargarUsuariosSupabase() {
     const tbody = document.getElementById("tablaUsuariosCuerpo");
     if (!tbody) return;
 
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="7" class="p-6 text-center text-blue-600 dark:text-blue-400 font-bold uppercase text-[10px]">
-                <i class="fa-solid fa-spinner animate-spin mr-1"></i> Consultando usuarios en Supabase...
-            </td>
-        </tr>
-    `;
+    if (window.SIAGOP_UI_UTILS && typeof window.SIAGOP_UI_UTILS.renderizarSkeletonTabla === 'function') {
+        tbody.innerHTML = window.SIAGOP_UI_UTILS.renderizarSkeletonTabla(5, 7);
+    } else {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="p-6 text-center text-blue-600 dark:text-blue-400 font-bold uppercase text-[10px]">
+                    <i class="fa-solid fa-spinner animate-spin mr-1"></i> Consultando usuarios en Supabase...
+                </td>
+            </tr>
+        `;
+    }
 
     const client = typeof ensureSupabaseClient === "function" ? ensureSupabaseClient() : null;
     if (!client) {

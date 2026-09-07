@@ -21,6 +21,10 @@
             return;
         }
 
+        if (window.SIAGOP_UI_UTILS && typeof window.SIAGOP_UI_UTILS.renderizarSkeletonTabla === 'function') {
+            contenedorTabla.innerHTML = window.SIAGOP_UI_UTILS.renderizarSkeletonTabla(4, 4);
+        }
+
         const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
         if (!client || !navigator.onLine) {
             contenedorTabla.innerHTML = `

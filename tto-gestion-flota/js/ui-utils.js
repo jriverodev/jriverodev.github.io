@@ -61,10 +61,38 @@
         }
     }
 
+    function renderizarSkeletonTablaImpl(filas = 5, columnas = 6) {
+        let rowsHtml = '';
+        for (let r = 0; r < filas; r++) {
+            let colsHtml = '';
+            for (let c = 0; c < columnas; c++) {
+                colsHtml += `<td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700/80 rounded-lg animate-pulse w-full"></div></td>`;
+            }
+            rowsHtml += `<tr class="border-b border-slate-200 dark:border-slate-800">${colsHtml}</tr>`;
+        }
+        return rowsHtml;
+    }
+
+    function renderizarSkeletonTarjetasImpl(cantidad = 4) {
+        let cardsHtml = '';
+        for (let i = 0; i < cantidad; i++) {
+            cardsHtml += `
+                <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-5 shadow-sm space-y-3 animate-pulse">
+                    <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-lg w-1/2"></div>
+                    <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg w-1/3"></div>
+                    <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-lg w-3/4"></div>
+                </div>
+            `;
+        }
+        return cardsHtml;
+    }
+
     // Expose a namespaced util and also define globals for backward compatibility
     window.SIAGOP_UI_UTILS = window.SIAGOP_UI_UTILS || {};
     window.SIAGOP_UI_UTILS.previsualizarImagen = previsualizarImagenImpl;
     window.SIAGOP_UI_UTILS.limpiarPrevia = limpiarPreviaImpl;
+    window.SIAGOP_UI_UTILS.renderizarSkeletonTabla = renderizarSkeletonTablaImpl;
+    window.SIAGOP_UI_UTILS.renderizarSkeletonTarjetas = renderizarSkeletonTarjetasImpl;
 
     // Backwards-compatible globals (some code calls these functions directly)
     if (typeof window.previsualizarImagen !== 'function') {
