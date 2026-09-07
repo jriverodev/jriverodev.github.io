@@ -6,8 +6,8 @@ Resumen rápido
 - Añadido un debug UI (botones) para facilitar pruebas de preview/limpieza. Por defecto aparece sólo en entornos "dev" o si se activa explícitamente.
 
 Qué contiene js/ui-utils.js
-- window.TTOCC_UI_UTILS.previsualizarImagen(inputElement, idContenedor)
-- window.TTOCC_UI_UTILS.limpiarPrevia(idInput, idContenedor)
+- window.SIAGOP_UI_UTILS.previsualizarImagen(inputElement, idContenedor)
+- window.SIAGOP_UI_UTILS.limpiarPrevia(idInput, idContenedor)
 - Además define globales compat: window.previsualizarImagen y window.limpiarPrevia
 - Botones de debug (Debug: Seleccionar Imagen (Preview) y Debug: Limpiar Preview) que se muestran sólo en dev o si se habilita manualmente.
 
@@ -15,7 +15,7 @@ Dónde se hicieron cambios relevantes
 - Nuevo: js/ui-utils.js
 - Modificados: js/form-talleres.js, js/panel.js (ahora delegan a TTOCC_UI_UTILS con fallback)
 - HTML: index.html, panel.html, form-talleres.html, form-flota.html — se añadió <script src="js/ui-utils.js" defer></script>
-- index.html: se añadió activación explícita de debug en la cabecera para facilitar pruebas: <script>window.TTOCC_DEBUG_UI = true;</script>
+- index.html: se añadió activación explícita de debug en la cabecera para facilitar pruebas: <script>window.SIAGOP_DEBUG_UI = true;</script>
 
 Cómo probar localmente
 1. Servir los archivos estáticos (ejemplo con Python 3):
@@ -33,9 +33,9 @@ Cómo probar localmente
 Cómo activar el Debug UI
 - Opciones:
   1) (rápido) Añadir ?dev al final de la URL: http://localhost:8000/panel.html?dev
-  2) Definir la variable global antes de cargar js/ui-utils.js en la página: <script>window.TTOCC_DEBUG_UI = true;</script>
+  2) Definir la variable global antes de cargar js/ui-utils.js en la página: <script>window.SIAGOP_DEBUG_UI = true;</script>
      - Esto ya se colocó en index.html por defecto.
-  3) Ejecutar en consola del navegador: window.TTOCC_DEBUG_UI = true; y recargar la página.
+  3) Ejecutar en consola del navegador: window.SIAGOP_DEBUG_UI = true; y recargar la página.
 
 Comprobación estática de JS (sintaxis)
 - Para revisar sintaxis JS en Windows PowerShell (se usó node --check):
@@ -45,12 +45,12 @@ Comprobación estática de JS (sintaxis)
     Get-ChildItem -Path . -Recurse -File -Filter *.js | Where-Object { $_.FullName -notmatch '\\node_modules\\' -and $_.FullName -notmatch '\\.git\\' } | ForEach-Object { Write-Output "Checking: $($_.FullName)"; node --check $($_.FullName) }
 
 Notas y recomendaciones
-- El debug UI está diseñado para no mostrarse en producción salvo que se habilite explícitamente (window.TTOCC_DEBUG_UI = true). Esto evita exponer herramientas de depuración inadvertidamente.
+- El debug UI está diseñado para no mostrarse en producción salvo que se habilite explícitamente (window.SIAGOP_DEBUG_UI = true). Esto evita exponer herramientas de depuración inadvertidamente.
 - js/ui-utils.js mantiene un fallback global (window.previsualizarImagen/limpiarPrevia) para compatibilidad con código existente.
 - Se recomienda probar las páginas en localhost y hacer pruebas de flujo offline/online si usas las funcionalidades de cola y sincronización (Supabase).
 
 Siguiente pasos sugeridos (opcional)
-- Conectar las variables de Supabase en APP_CONFIG o window.TTOCC_SUPABASE_URL/ANON_KEY para pruebas E2E.
+- Conectar las variables de Supabase en APP_CONFIG o window.SIAGOP_SUPABASE_URL/ANON_KEY para pruebas E2E.
 - Añadir un README de despliegue con CSP (se actualizó vercel.json previamente para supabase).
 
 Comportamiento de sincronización Talleres → Maestro_Activos (importante)
@@ -75,11 +75,11 @@ Configurar Supabase y buckets de Storage (instrucciones)
    - Anotar la URL del proyecto (ej. https://abcd1234.supabase.co) y la ANON KEY (o crear una clave con permisos adecuados para pruebas).
 
 2. Crear un bucket de Storage
-   - En la consola Supabase > Storage > Buckets: Crear el bucket con nombre exactamente `ttocc-archivos`.
+   - En la consola Supabase > Storage > Buckets: Crear el bucket con nombre exactamente `siagop-archivos`.
    - Marca la casilla **Public Bucket** ("Allow public access to objects in this bucket") para garantizar que las imágenes y documentos subidos sean accesibles públicamente mediante URLs HTTPS directas sin requerir signed URLs de lectura.
 
 3. Configurar RLS y tablas (Postgres)
-   - Ejecutar la migración `migrations/enable_rls_policies.sql` en el Editor SQL de Supabase para habilitar Row Level Security y otorgar permisos de lectura/escritura pública (`anon` / `authenticated`) en `maestro_activos`, `historial_mantenimiento` y el bucket `ttocc-archivos`.
+   - Ejecutar la migración `migrations/enable_rls_policies.sql` en el Editor SQL de Supabase para habilitar Row Level Security y otorgar permisos de lectura/escritura pública (`anon` / `authenticated`) en `maestro_activos`, `historial_mantenimiento` y el bucket `siagop-archivos`.
 
 4. Ajustes de seguridad y CORS
    - Si usas el ANON KEY en cliente, asegúrate de que las RLS policies permitan solo lo necesario.
@@ -90,14 +90,14 @@ Configurar Supabase y buckets de Storage (instrucciones)
    - Opción A (rápida, no recomendada para producción): insertar en index.html (o un archivo de configuración cargado antes de app.js):
 
        <script>
-         window.TTOCC_SUPABASE_URL = 'https://abcd1234.supabase.co';
-         window.TTOCC_SUPABASE_ANON_KEY = 'eyJhbGciOi...';
+         window.SIAGOP_SUPABASE_URL = 'https://abcd1234.supabase.co';
+         window.SIAGOP_SUPABASE_ANON_KEY = 'eyJhbGciOi...';
        </script>
 
    - Opción B (recomendada): colocar las variables en APP_CONFIG en el servidor o en un archivo de entorno y exponerlas de forma segura al cliente (ej. mediante un servidor que inyecte variables en tiempo de despliegue).
 
 6. Comprobar uploads y sync
-   - Crear un registro desde la UI mientras está online: la app intentará subir files vía TTOCC_SUPABASE_SYNC.uploadFileToStorage si está disponible y luego enviará payload con foto_* URL en lugar de base64.
+   - Crear un registro desde la UI mientras está online: la app intentará subir files vía SIAGOP_SUPABASE_SYNC.uploadFileToStorage si está disponible y luego enviará payload con foto_* URL en lugar de base64.
    - Si el bucket es público, la app usa getPublicUrl para incluir la URL en el registro.
    - Si el bucket es privado, implementa un endpoint seguro que devuelva Signed URLs para que la app pueda subir/leer archivos sin exponer credenciales sensibles.
 
@@ -109,8 +109,8 @@ Configurar Supabase y buckets de Storage (instrucciones)
 
 8. Ejemplo rápido de prueba en consola
    - En la consola del navegador puedes inyectar temporalmente las variables y probar:
-       window.TTOCC_SUPABASE_URL = 'https://abcd1234.supabase.co';
-       window.TTOCC_SUPABASE_ANON_KEY = 'eyJhbGciOi...';
+       window.SIAGOP_SUPABASE_URL = 'https://abcd1234.supabase.co';
+       window.SIAGOP_SUPABASE_ANON_KEY = 'eyJhbGciOi...';
      Recargar la página y luego probar subir una imagen desde el modal. Verifica que la URL devuelta apunte al bucket "fotos".
 
 Si quieres, puedo generar los SQL de ejemplo como archivos .sql y añadir una guía paso a paso para crear las políticas RLS básicas (ej. permitir insert/upsert a usuarios autenticados). También puedo mostrar snippets para implementar un endpoint serverless que proporcione Signed URLs de forma segura.
