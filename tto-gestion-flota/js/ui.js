@@ -101,13 +101,19 @@ const SIAGOP_UI = (() => {
         });
     };
 
-    return {
+    const instance = {
         alert: (title, message) => show({ title, message }),
+        info: (title, message) => show({ title, message, type: 'info' }),
+        warning: (title, message) => show({ title, message, type: 'warning' }),
         success: (title, message) => show({ title, message, type: 'success' }),
         error: (title, message) => show({ title, message, type: 'error' }),
         confirm: (title, message, confirmText = 'Aceptar', cancelText = 'Cancelar') =>
             show({ title, message, confirmText, cancelText, type: 'warning' })
     };
+
+    window.SIAGOP_UI = instance;
+    window.TTOCC_UI = instance;
+    return instance;
 })();
 
 // Manejo del botón físico Atrás en Android (Capacitor)
