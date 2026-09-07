@@ -170,7 +170,7 @@
     </main>
 
     <!-- MODAL BÚSQUEDA / SELECCIÓN DE UNIDAD DE FLOTA -->
-    <div id="modalSeleccionarUnidad" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[140] hidden p-4">
+    <div id="modalSeleccionarUnidad" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[70] hidden p-4">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-lg shadow-xl p-6 text-slate-700 dark:text-slate-300 overflow-y-auto max-h-[85vh] transition-colors">
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
                 <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2">
@@ -245,14 +245,16 @@
             </table>
         </div>
 
-        <!-- 3. PIE FIJO -->
+        
+
+    </div>
+    <!-- 3. PIE FIJO -->
         <div class="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-end transition-colors">
             <button type="button" onclick="cerrarModalSeleccionarUnidad()" class="px-6 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">
                 Cerrar
             </button>
         </div>
-
-    </div>
+    
 </div>
   
 <div id="modalNuevoRegistro" class="fixed inset-0 z-50 flex hidden items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm transition-opacity duration-300">
