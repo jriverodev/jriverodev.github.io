@@ -663,7 +663,7 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
         return null;
     }
 
-    const bucketsToMatch = [bucketDefault, 'ttocc-archivos', 'siagop-archivos'];
+    const bucketsToMatch = [bucketDefault, 'siagop-archivos'];
     for (const b of bucketsToMatch) {
         if (clean.includes(`/storage/v1/object/public/${b}/`)) {
             return clean.split(`/storage/v1/object/public/${b}/`)[1];
