@@ -663,14 +663,17 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
         return null;
     }
 
-    if (clean.includes(`/storage/v1/object/public/${bucketDefault}/`)) {
-        return clean.split(`/storage/v1/object/public/${bucketDefault}/`)[1];
-    }
-    if (clean.includes(`/storage/v1/object/sign/${bucketDefault}/`)) {
-        return clean.split(`/storage/v1/object/sign/${bucketDefault}/`)[1]?.split('?')[0];
-    }
-    if (clean.includes(`/storage/v1/object/${bucketDefault}/`)) {
-        return clean.split(`/storage/v1/object/${bucketDefault}/`)[1]?.split('?')[0];
+    const bucketsToMatch = [bucketDefault, 'ttocc-archivos', 'siagop-archivos'];
+    for (const b of bucketsToMatch) {
+        if (clean.includes(`/storage/v1/object/public/${b}/`)) {
+            return clean.split(`/storage/v1/object/public/${b}/`)[1];
+        }
+        if (clean.includes(`/storage/v1/object/sign/${b}/`)) {
+            return clean.split(`/storage/v1/object/sign/${b}/`)[1]?.split('?')[0];
+        }
+        if (clean.includes(`/storage/v1/object/${b}/`)) {
+            return clean.split(`/storage/v1/object/${b}/`)[1]?.split('?')[0];
+        }
     }
 
     if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
