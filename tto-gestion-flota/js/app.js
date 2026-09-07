@@ -299,7 +299,7 @@ async function handleLocalApiGateway(payload) {
 
                 let payloadRemoto = { ...recordExistente, ...registro };
                 if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
-                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(id));
+                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(id));
                 }
 
                 // Field aliases mapping for Postgres schema
@@ -429,7 +429,7 @@ async function handleLocalApiGateway(payload) {
                     payloadRemoto.documento_nombre = null;
                 }
                 if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
-                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
+                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(idUnidad));
                 }
 
                 // Map field names for maestro_activos PostgreSQL schema
@@ -559,7 +559,7 @@ async function syncData() {
 
             // Prefer using the optional helper that uploads images to Storage then upserts
             if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.syncAndUpsert === 'function') {
-                const res = await window.SIAGOP_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'ttocc-archivos' });
+                const res = await window.SIAGOP_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'siagop-archivos' });
                 if (res.error) {
                     console.warn('[Supabase] Error sincronizando tabla via SIAGOP_SUPABASE_SYNC:', tableName, res.error);
                     return false;
@@ -604,7 +604,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-archivos') {
+function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'siagop-archivos') {
     if (!urlStr || typeof urlStr !== 'string') return '';
     const clean = urlStr.trim();
     if (!clean) return '';
@@ -655,7 +655,7 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-arch
 
 const SIAGOP_SIGNED_URL_CACHE = new Map();
 
-function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
+function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return null;
     const clean = urlOrPath.trim();
     
@@ -679,7 +679,7 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
 
     return null;
 }
-async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'ttocc-archivos') {
+async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'siagop-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return '';
     const clean = urlOrPath.trim();
     if (!clean) return '';
@@ -712,7 +712,7 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
     return normalizarUrlStorage(clean, bucketDefault);
 }
 
-async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'ttocc-archivos', expiresIn = 7200) {
+async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'siagop-archivos', expiresIn = 7200) {
     if (!Array.isArray(registros) || registros.length === 0) return registros;
     const client = ensureSupabaseClient();
     if (!navigator.onLine || !client || !client.storage) return registros;
