@@ -299,7 +299,7 @@ async function handleLocalApiGateway(payload) {
 
                 let payloadRemoto = { ...recordExistente, ...registro };
                 if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
-                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(id));
+                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(id));
                 }
 
                 // Field aliases mapping for Postgres schema
@@ -324,12 +324,14 @@ async function handleLocalApiGateway(payload) {
                 payloadRemoto.fecha_ingreso = parseCustomDateToISO(payloadRemoto.fecha_ingreso);
                 payloadRemoto.fecha_salida = parseCustomDateToISO(payloadRemoto.fecha_salida);
 
+                const activeOrgId = payloadRemoto.organizacion_id || localStorage.getItem('siagop_user_org_id') || sessionStorage.getItem('SIAGOP_USER_ORG_ID') || '11111111-1111-1111-1111-111111111111';
+
                 // Whitelist valid columns in historial_mantenimiento table
                 const columnasPermitidas = [
                     'id', 'id_unidad', 'tipo_flota', 'nombre_taller', 'taller_ext', 'estatus',
                     'observaciones', 'marca', 'modelo', 'color', 'anio', 'vin', 'tipo_vehiculo',
                     'avance', 'foto_antes', 'foto_despues', 'fecha_ingreso', 'fecha_salida',
-                    'gerencia', 'usuario', 'cargo_usuario', 'tareas', 'modificado_por', 'metadata', 'updated_at'
+                    'gerencia', 'usuario', 'cargo_usuario', 'tareas', 'modificado_por', 'metadata', 'organizacion_id', 'updated_at'
                 ];
 
                 const recordSanitizado = {};
@@ -339,6 +341,7 @@ async function handleLocalApiGateway(payload) {
                     }
                 }
                 recordSanitizado.id = String(id);
+                recordSanitizado.organizacion_id = activeOrgId;
                 recordSanitizado.updated_at = new Date().toISOString();
 
                 const { error, data } = await client.from('historial_mantenimiento').upsert(recordSanitizado, { onConflict: 'id' }).select();
@@ -426,7 +429,7 @@ async function handleLocalApiGateway(payload) {
                     payloadRemoto.documento_nombre = null;
                 }
                 if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
-                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(idUnidad));
+                    payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payloadRemoto, String(idUnidad));
                 }
 
                 // Map field names for maestro_activos PostgreSQL schema
@@ -440,12 +443,14 @@ async function handleLocalApiGateway(payload) {
                 // Date formatting to ISO (convert empty string to null)
                 payloadRemoto.ubicacion_taller_fecha = parseCustomDateToISO(payloadRemoto.ubicacion_taller_fecha);
 
+                const activeOrgIdActivo = payloadRemoto.organizacion_id || localStorage.getItem('siagop_user_org_id') || sessionStorage.getItem('SIAGOP_USER_ORG_ID') || '11111111-1111-1111-1111-111111111111';
+
                 // Whitelist valid columns in maestro_activos table
                 const columnasPermitidasActivos = [
                     'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
                     'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
                     'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
-                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'updated_at'
+                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
                 ];
 
                 const recordSanitizado = {};
@@ -455,6 +460,7 @@ async function handleLocalApiGateway(payload) {
                     }
                 }
                 recordSanitizado.id_unidad = String(idUnidad);
+                recordSanitizado.organizacion_id = activeOrgIdActivo;
                 recordSanitizado.updated_at = new Date().toISOString();
 
                 const { error, data } = await client.from('maestro_activos').upsert(recordSanitizado, { onConflict: 'id_unidad' }).select();
@@ -553,7 +559,7 @@ async function syncData() {
 
             // Prefer using the optional helper that uploads images to Storage then upserts
             if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.syncAndUpsert === 'function') {
-                const res = await window.SIAGOP_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'siagop-archivos' });
+                const res = await window.SIAGOP_SUPABASE_SYNC.syncAndUpsert(tableName, payload, { bucket: 'ttocc-archivos' });
                 if (res.error) {
                     console.warn('[Supabase] Error sincronizando tabla via SIAGOP_SUPABASE_SYNC:', tableName, res.error);
                     return false;
@@ -598,7 +604,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'siagop-archivos') {
+function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'ttocc-archivos') {
     if (!urlStr || typeof urlStr !== 'string') return '';
     const clean = urlStr.trim();
     if (!clean) return '';
@@ -649,7 +655,7 @@ function normalizarUrlStorage(urlStr, idUnidad = '', bucketDefault = 'siagop-arc
 
 const SIAGOP_SIGNED_URL_CACHE = new Map();
 
-function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
+function extraerStoragePath(urlOrPath, bucketDefault = 'ttocc-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return null;
     const clean = urlOrPath.trim();
     
@@ -673,7 +679,7 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
 
     return null;
 }
-async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'siagop-archivos') {
+async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefault = 'ttocc-archivos') {
     if (!urlOrPath || typeof urlOrPath !== 'string') return '';
     const clean = urlOrPath.trim();
     if (!clean) return '';
@@ -706,7 +712,7 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
     return normalizarUrlStorage(clean, bucketDefault);
 }
 
-async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'siagop-archivos', expiresIn = 7200) {
+async function firmarUrlsDeRegistros(registros, campos = ['Foto_Antes', 'Foto_Despues', 'Documento_Url'], bucketDefault = 'ttocc-archivos', expiresIn = 7200) {
     if (!Array.isArray(registros) || registros.length === 0) return registros;
     const client = ensureSupabaseClient();
     if (!navigator.onLine || !client || !client.storage) return registros;

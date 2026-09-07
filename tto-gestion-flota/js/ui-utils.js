@@ -14,11 +14,11 @@
 
         if (typeof input === 'string') {
             const url = typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(input) : input;
-            if (url && url.trim()) {
-                img.src = url;
+            if (url && url.trim() && url !== 'undefined' && url !== 'null') {
+                img.setAttribute("src", url);
                 container.classList.remove("hidden");
             } else {
-                img.src = "";
+                img.removeAttribute("src");
                 container.classList.add("hidden");
             }
             return;
@@ -31,19 +31,21 @@
                     SIAGOP_UI.error("Archivo no válido", valRes.mensaje);
                 }
                 input.value = "";
-                img.src = "";
+                img.removeAttribute("src");
                 container.classList.add("hidden");
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                img.src = e.result;
-                container.classList.remove("hidden");
+                if (e && e.target && e.target.result) {
+                    img.setAttribute("src", e.target.result);
+                    container.classList.remove("hidden");
+                }
             };
             reader.readAsDataURL(input.files[0]);
         } else {
-            img.src = "";
+            img.removeAttribute("src");
             container.classList.add("hidden");
         }
     }
@@ -54,7 +56,7 @@
         const container = document.getElementById(idContenedor);
         if (container) {
             const img = container.querySelector("img");
-            if (img) img.src = "";
+            if (img) img.removeAttribute("src");
             container.classList.add("hidden");
         }
     }
@@ -102,13 +104,10 @@
     }
 
     function addDebugFooterButtons() {
-        // Only show debug buttons in dev-like environments or when explicitly enabled.
-        // Recommended: keep hidden in production. Enable via URL ?dev or by setting window.SIAGOP_DEBUG_UI = true.
         if (!(isDevMode() || window.SIAGOP_DEBUG_UI === true)) return;
 
         const pair = findPreviewPair();
         const footer = document.querySelector('footer');
-        const containerEl = footer || document.body;
 
         const wrapper = document.createElement('div');
         wrapper.style.display = 'flex';
@@ -181,11 +180,9 @@
         wrapper.appendChild(btnPreview);
         wrapper.appendChild(btnClear);
 
-        // style wrapper lightly so it doesn't break layout
         wrapper.style.padding = '6px';
 
         if (footer) {
-            // append to footer's right side
             const right = document.createElement('div');
             right.style.display = 'flex';
             right.style.justifyContent = 'flex-end';
@@ -194,7 +191,6 @@
             right.className = 'dev-debug-wrapper';
             footer.appendChild(right);
         } else {
-            // floating small panel
             const floatDiv = document.createElement('div');
             floatDiv.style.position = 'fixed';
             floatDiv.style.right = '12px';

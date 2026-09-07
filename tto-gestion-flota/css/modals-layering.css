@@ -7,51 +7,58 @@ nav.fixed.bottom-0,
   z-index: 40 !important;
 }
 
-/* 2. Elevamos los modales por encima de la Bottom Nav (z-60 o superior) */
+/* 2. Elevamos los modales por encima de la Bottom Nav (z-60) */
 .modal-overlay,
 .modal-container,
 [id^="modal-form-"],
 [id^="modal-visor-"],
 #modalNuevoRegistro,
 #modalEditarRegistro,
-#modalSeleccionarUnidad,
 #modalIdentificacion,
 #modalUsuario,
 #modalCrearRol {
   z-index: 60 !important;
 }
 
-/* 3. Ajuste de altura, scroll y padding de seguridad en pantallas móviles */
-.modal-content-body,
-[id^="modal"] > div {
-  max-height: calc(100vh - 3.5rem) !important;
-  overflow-y: auto !important;
-  padding-bottom: 6rem !important;
+/* 3. Modal Selector de Unidades por encima de todos los demás modales (z-80) */
+#modalSeleccionarUnidad {
+  z-index: 80 !important;
 }
 
-/* 4. Optimización de Botones del Pie de Formulario en Módulos Móviles */
+/* 4. Ajuste de altura, scroll y padding de seguridad en pantallas móviles */
+.modal-content-body,
+[id^="modal"] > div {
+  max-height: calc(100vh - 4rem) !important;
+  overflow-y: auto !important;
+  padding-bottom: 5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Formularios internos expandibles */
+[id^="modal"] form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* 5. Botones de Pie de Formulario Fijos/Sticky en la parte inferior */
 [id^="modal"] form .flex.justify-end,
 [id^="modal"] form .flex.justify-between {
   position: sticky;
-  bottom: -0.5rem;
-  background-color: var(--color-slate-900, #0f172a);
+  bottom: 0;
+  background-color: inherit;
   padding-top: 1rem;
-  padding-bottom: 1rem;
-  margin-top: 1rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.15);
-  z-index: 10;
+  padding-bottom: 1.5rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  z-index: 20;
 }
 
-/* En temas claros, ajustar fondo del pie pegajoso */
-.light [id^="modal"] form .flex.justify-end,
-.light [id^="modal"] form .flex.justify-between {
-  background-color: #ffffff;
-}
-
-/* Botones con área táctil óptima en móviles */
+/* Botones táctiles optimizados */
 [id^="modal"] button[type="submit"],
 [id^="modal"] button[type="button"] {
-  min-height: 44px;
+  min-height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
