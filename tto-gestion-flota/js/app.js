@@ -1176,7 +1176,7 @@ async function procesarSincronizacionPendiente(key = SYNC_QUEUE_KEY) {
 
     if (pendienteSincronizar.length === 0) {
         console.log('[Sync Complete] Todos los registros locales están en la nube.');
-        mostrarNotificacion('Sincronización con la nube completada.', 'exito');
+       /* mostrarNotificacion('Sincronización con la nube completada.', 'exito'); *\
     }
 }
 
