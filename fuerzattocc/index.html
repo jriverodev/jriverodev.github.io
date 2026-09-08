@@ -2,166 +2,553 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PWA Control de Fuerza Laboral</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Control de Fuerza Laboral</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Material Design Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
   <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
   <style>
-    :root { --primary: #003366; --accent: #0056b3; --bg: #f4f6f9; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; }
-    h1, h2, h3 { color: var(--primary); margin-top: 0; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-    .form-group { display: flex; flex-direction: column; }
-    label { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; text-transform: uppercase; }
-    input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
-    .section-title { grid-column: 1 / -1; background: #e9ecef; padding: 6px 10px; font-weight: bold; font-size: 13px; border-left: 4px solid var(--primary); margin-top: 10px; }
+    :root {
+      --md-sys-color-primary: #0b57d0;
+      --md-sys-color-on-primary: #ffffff;
+      --md-sys-color-primary-container: #d3e3fd;
+      --md-sys-color-on-primary-container: #041e49;
+      --md-sys-color-surface: #f8f9fa;
+      --md-sys-color-surface-container-low: #f0f4f9;
+      --md-sys-color-surface-container: #e9eef6;
+      --md-sys-color-surface-container-high: #e1e8f5;
+      --md-sys-color-on-surface: #1f1f1f;
+      --md-sys-color-on-surface-variant: #444746;
+      --md-sys-color-outline: #747775;
+      --md-sys-color-outline-variant: #c4c7c5;
+      --md-sys-color-error: #ba1a1a;
+      --md-sys-color-error-container: #ffdad6;
+      --md-sys-color-on-error-container: #410002;
+      --md-sys-color-success: #146c2e;
+      --md-sys-color-success-container: #c4eed0;
+      --md-sys-color-warning: #7d5200;
+      --md-sys-color-warning-container: #ffdea8;
 
-    /* Botones */
-    .btn-group { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
-    button { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
-    .btn-main { background: var(--primary); color: white; }
-    .btn-sync { background: #28a745; color: white; }
-    .btn-secondary { background: #6c757d; color: white; }
+      --md-shape-corner-extra-small: 4px;
+      --md-shape-corner-small: 8px;
+      --md-shape-corner-medium: 12px;
+      --md-shape-corner-large: 16px;
+      --md-shape-corner-full: 9999px;
+    }
 
-    /* Indicadores y Muestras */
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; text-align: center; }
-    .bg-rojo { background-color: #d9534f; }
-    .bg-amarillo { background-color: #f0ad4e; color: #111; }
-    .bg-verde { background-color: #5cb85c; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* Tabla */
-    .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: var(--primary); color: white; }
-    tr:nth-child(even) { background-color: #f9f9f9; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      padding-bottom: 80px; /* Space for Bottom Nav */
+    }
+
+    /* Top App Bar */
+    .md-top-app-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background-color: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .md-top-app-bar .title-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .md-top-app-bar h1 {
+      font-size: 20px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    /* Layout Containers & Views */
+    .app-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .view-section {
+      display: none;
+    }
+    .view-section.active {
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Material Cards */
+    .md-card {
+      background-color: #ffffff;
+      border-radius: var(--md-shape-corner-large);
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .md-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .md-card-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface);
+      margin: 0;
+    }
+
+    /* Material Section Sub-headers */
+    .md-section-header {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--md-sys-color-primary);
+      text-transform: uppercase;
+      margin: 20px 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Material Grid */
+    .md-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    /* Material Outlined Input / Select / File */
+    .md-text-field {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      margin-bottom: 4px;
+    }
+    .md-text-field label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-bottom: 6px;
+    }
+    .md-text-field input, .md-text-field select {
+      font-family: inherit;
+      font-size: 14px;
+      height: 48px;
+      padding: 0 16px;
+      border: 1px solid var(--md-sys-color-outline);
+      border-radius: var(--md-shape-corner-small);
+      background-color: #ffffff;
+      color: var(--md-sys-color-on-surface);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .md-text-field input:focus, .md-text-field select:focus {
+      border-color: var(--md-sys-color-primary);
+      border-width: 2px;
+      padding: 0 15px; /* Adjust for 2px border */
+    }
+    .md-text-field input[type="file"] {
+      padding: 10px;
+      height: auto;
+    }
+
+    /* Buttons */
+    .md-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 48px;
+      padding: 0 24px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--md-shape-corner-full);
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+    }
+    .md-button-filled {
+      background-color: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+    }
+    .md-button-filled:hover {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .md-button-tonal {
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
+    .md-button-outlined {
+      background-color: transparent;
+      border: 1px solid var(--md-sys-color-outline);
+      color: var(--md-sys-color-primary);
+    }
+    .md-button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    /* Chips (Alert Badges) */
+    .md-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: var(--md-shape-corner-small);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .md-chip-success {
+      background-color: var(--md-sys-color-success-container);
+      color: var(--md-sys-color-success);
+    }
+    .md-chip-warning {
+      background-color: var(--md-sys-color-warning-container);
+      color: var(--md-sys-color-warning);
+    }
+    .md-chip-error {
+      background-color: var(--md-sys-color-error-container);
+      color: var(--md-sys-color-error);
+    }
+
+    /* Material Table & Search */
+    .md-search-bar {
+      display: flex;
+      align-items: center;
+      background-color: var(--md-sys-color-surface-container-low);
+      border-radius: var(--md-shape-corner-full);
+      padding: 0 16px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+    .md-search-bar input {
+      border: none;
+      background: transparent;
+      outline: none;
+      width: 100%;
+      margin-left: 12px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: var(--md-shape-corner-medium);
+      border: 1px solid var(--md-sys-color-outline-variant);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      background-color: var(--md-sys-color-surface-container);
+      color: var(--md-sys-color-on-surface-variant);
+      font-weight: 500;
+      text-align: left;
+      padding: 12px 16px;
+    }
+    td {
+      padding: 12px 16px;
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    /* Bottom Navigation Bar (Android UI standard) */
+    .md-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      background-color: var(--md-sys-color-surface-container-low);
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+    .md-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--md-sys-color-on-surface-variant);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: var(--md-shape-corner-full);
+      transition: color 0.2s;
+    }
+    .md-nav-item .icon-wrapper {
+      width: 48px;
+      height: 28px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+      transition: background-color 0.2s;
+    }
+    .md-nav-item.active {
+      color: var(--md-sys-color-on-surface);
+    }
+    .md-nav-item.active .icon-wrapper {
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
   </style>
 </head>
 <body>
 
-  <h1>Control de Fuerza Laboral (Offline PWA)</h1>
-
-  <!-- CONFIGURACIÓN DE CONEXIÓN A GOOGLE APPS SCRIPT -->
-  <div class="card">
-    <h2>Configuración de Sincronización</h2>
-    <div class="grid">
-      <div class="form-group" style="grid-column: 1 / -1;">
-        <label>URL de Google Apps Script (Web App)</label>
-        <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-      </div>
+  <!-- Top App Bar -->
+  <header class="md-top-app-bar">
+    <div class="title-container">
+      <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">badge</span>
+      <h1>Fuerza Laboral PWA</h1>
     </div>
-    <div class="btn-group">
-      <button type="button" class="btn-secondary" onclick="saveGasUrl()">Guardar Configuración URL</button>
-    </div>
-  </div>
+    <span class="material-symbols-outlined" id="onlineIndicator" style="color: var(--md-sys-color-success);" title="En línea">wifi</span>
+  </header>
 
-  <!-- FORMULARIO DE REGISTRO / EDICION -->
-  <div class="card">
-    <h2>Gestión de Trabajador</h2>
-    <form id="workerForm">
-      <div class="grid">
+  <main class="app-container">
 
-        <!-- SECCIÓN 1: DATOS BÁSICOS -->
-        <div class="section-title">1. DATOS BÁSICOS Y DE IDENTIFICACIÓN</div>
-        <div class="form-group"><label>ITEM</label><input type="text" id="item"></div>
-        <div class="form-group"><label>N° Personal</label><input type="text" id="nPersonal"></div>
-        <div class="form-group"><label>Cédula (*)</label><input type="text" id="cedula" required></div>
-        <div class="form-group"><label>Nombre y Apellido (*)</label><input type="text" id="nombreApellido" required></div>
-
-        <!-- SECCIÓN 2: POSICIÓN Y NÓMINA -->
-        <div class="section-title">2. DATOS DE POSICIÓN Y NÓMINA</div>
-        <div class="form-group"><label>Puesto Funcional</label><input type="text" id="puestoFuncional"></div>
-        <div class="form-group"><label>Posición SAP</label><input type="text" id="posicionSap"></div>
-        <div class="form-group"><label>Descrip de la Posic</label><input type="text" id="descripPosic"></div>
-        <div class="form-group"><label>Nómina del Trabajador</label><input type="text" id="nomina"></div>
-        <div class="form-group"><label>Indicador del Trabajador</label><input type="text" id="indicador"></div>
-
-        <!-- SECCIÓN 3: ESTATUS -->
-        <div class="section-title">3. ESTATUS OPERATIVO</div>
-        <div class="form-group"><label>Estatus de Condición</label><input type="text" id="estatusCondicion"></div>
-        <div class="form-group"><label>Status de FL</label><input type="text" id="statusFl"></div>
-
-        <!-- SECCIÓN 4: ESTRUCTURA ORGANIZATIVA -->
-        <div class="section-title">4. ESTRUCTURA ORGANIZATIVA</div>
-        <div class="form-group"><label>Dirección Adjunta / Habilitadora</label><input type="text" id="dirAdjunta"></div>
-        <div class="form-group"><label>Gerencia 1ra Línea Org</label><input type="text" id="gcia1raLinea"></div>
-        <div class="form-group"><label>Gcia 2da Línea Org</label><input type="text" id="gcia2daLinea"></div>
-        <div class="form-group"><label>Gcia 3era Línea Org</label><input type="text" id="gcia3eraLinea"></div>
-
-        <!-- SECCIÓN 5: UBICACIÓN Y CONTACTO -->
-        <div class="section-title">5. UBICACIÓN Y CONTACTO</div>
-        <div class="form-group"><label>Instalación / Edificio</label><input type="text" id="instalacionEdif"></div>
-        <div class="form-group"><label>Localidad Trabajo</label><input type="text" id="localidadTrabajo"></div>
-        <div class="form-group"><label>Extensión de Oficina</label><input type="text" id="extensionOfic"></div>
-        <div class="form-group"><label>Celular</label><input type="text" id="celular"></div>
-
-        <!-- SECCIÓN 6: SUPERVISOR -->
-        <div class="section-title">6. DATOS DEL SUPERVISOR</div>
-        <div class="form-group"><label>Cédula del Supervisor</label><input type="text" id="cedulaSupervisor"></div>
-        <div class="form-group"><label>Nombre del Supervisor</label><input type="text" id="nombreSupervisor"></div>
-        <div class="form-group"><label>Indicador del Supervisor</label><input type="text" id="indicadorSupervisor"></div>
-        <div class="form-group"><label>Teléfono Supervisor</label><input type="text" id="telefonoSupervisor"></div>
-
-        <!-- SECCIÓN 7: ASIGNACIÓN Y VIVIENDA -->
-        <div class="section-title">7. ASIGNACIÓN Y VIVIENDA</div>
-        <div class="form-group"><label>FL/RRHH Responsable</label><input type="text" id="flRrhhResponsable"></div>
-        <div class="form-group"><label>Ubicación de Asignación</label><input type="text" id="ubicacionAsignacion"></div>
-        <div class="form-group"><label>Dirección Habitación</label><input type="text" id="direccionHabitacion"></div>
-        <div class="form-group"><label>Municipio Vivienda</label><input type="text" id="municipioVivienda"></div>
-
-        <!-- SECCIÓN 8: CONTROL DE FECHAS (SISTEMA DE ALERTAS) -->
-        <div class="section-title">8. ALERTAS Y FECHAS DE VENCIMIENTO</div>
-        <div class="form-group"><label>Fecha Nacimiento</label><input type="date" id="fechaNacimiento"></div>
-        <div class="form-group"><label>Fecha Aniversario</label><input type="date" id="fechaAniversario"></div>
-        <div class="form-group"><label>Venc. Licencia Manejar</label><input type="date" id="vencLicencia"></div>
-        <div class="form-group"><label>Venc. Cédula Identidad</label><input type="date" id="vencCedula"></div>
-        <div class="form-group"><label>Venc. Carta Médica</label><input type="date" id="vencCartaMedica"></div>
-
-        <!-- SECCIÓN 9: ANEXO DE DOCUMENTOS -->
-        <div class="section-title">9. ANEXO DIGITAL</div>
-        <div class="form-group">
-          <label>Cargar Archivo/Foto (PDF/PNG)</label>
-          <input type="file" id="fileAnexo" accept="image/*,application/pdf">
+    <!-- VISTA 1: REGISTRO / FORMULARIO -->
+    <section id="viewForm" class="view-section active">
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">person_add</span>
+          <h2 class="md-card-title">Gestión de Trabajador</h2>
         </div>
 
+        <form id="workerForm">
+
+          <!-- SECCIÓN 1: DATOS BÁSICOS -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">id_card</span>
+            1. Datos Básicos y de Identificación
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>ITEM</label><input type="text" id="item"></div>
+            <div class="md-text-field"><label>N° Personal</label><input type="text" id="nPersonal"></div>
+            <div class="md-text-field"><label>Cédula (*)</label><input type="text" id="cedula" required></div>
+            <div class="md-text-field"><label>Nombre y Apellido (*)</label><input type="text" id="nombreApellido" required></div>
+          </div>
+
+          <!-- SECCIÓN 2: POSICIÓN Y NÓMINA -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">work</span>
+            2. Datos de Posición y Nómina
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>Puesto Funcional</label><input type="text" id="puestoFuncional"></div>
+            <div class="md-text-field"><label>Posición SAP</label><input type="text" id="posicionSap"></div>
+            <div class="md-text-field"><label>Descripción Posición</label><input type="text" id="descripPosic"></div>
+            <div class="md-text-field"><label>Nómina del Trabajador</label><input type="text" id="nomina"></div>
+            <div class="md-text-field"><label>Indicador del Trabajador</label><input type="text" id="indicador"></div>
+          </div>
+
+          <!-- SECCIÓN 3: ESTATUS -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">rule</span>
+            3. Estatus Operativo
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>Estatus de Condición</label><input type="text" id="estatusCondicion"></div>
+            <div class="md-text-field"><label>Status de FL</label><input type="text" id="statusFl"></div>
+          </div>
+
+          <!-- SECCIÓN 4: ESTRUCTURA ORGANIZATIVA -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">account_tree</span>
+            4. Estructura Organizativa
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>Dirección Adjunta / Habilitadora</label><input type="text" id="dirAdjunta"></div>
+            <div class="md-text-field"><label>Gerencia 1ra Línea</label><input type="text" id="gcia1raLinea"></div>
+            <div class="md-text-field"><label>Gcia 2da Línea</label><input type="text" id="gcia2daLinea"></div>
+            <div class="md-text-field"><label>Gcia 3era Línea</label><input type="text" id="gcia3eraLinea"></div>
+          </div>
+
+          <!-- SECCIÓN 5: UBICACIÓN Y CONTACTO -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">location_on</span>
+            5. Ubicación y Contacto
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>Instalación / Edificio</label><input type="text" id="instalacionEdif"></div>
+            <div class="md-text-field"><label>Localidad Trabajo</label><input type="text" id="localidadTrabajo"></div>
+            <div class="md-text-field"><label>Extensión Oficina</label><input type="text" id="extensionOfic"></div>
+            <div class="md-text-field"><label>Celular</label><input type="tel" id="celular"></div>
+          </div>
+
+          <!-- SECCIÓN 6: SUPERVISOR -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">supervisor_account</span>
+            6. Datos del Supervisor
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>Cédula Supervisor</label><input type="text" id="cedulaSupervisor"></div>
+            <div class="md-text-field"><label>Nombre Supervisor</label><input type="text" id="nombreSupervisor"></div>
+            <div class="md-text-field"><label>Indicador Supervisor</label><input type="text" id="indicadorSupervisor"></div>
+            <div class="md-text-field"><label>Teléfono Supervisor</label><input type="tel" id="telefonoSupervisor"></div>
+          </div>
+
+          <!-- SECCIÓN 7: ASIGNACIÓN Y VIVIENDA -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">home</span>
+            7. Asignación y Vivienda
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>FL/RRHH Responsable</label><input type="text" id="flRrhhResponsable"></div>
+            <div class="md-text-field"><label>Ubicación Asignación</label><input type="text" id="ubicacionAsignacion"></div>
+            <div class="md-text-field"><label>Dirección Habitación</label><input type="text" id="direccionHabitacion"></div>
+            <div class="md-text-field"><label>Municipio Vivienda</label><input type="text" id="municipioVivienda"></div>
+          </div>
+
+          <!-- SECCIÓN 8: CONTROL DE FECHAS (ALERTAS) -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">event</span>
+            8. Alertas y Fechas de Vencimiento
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field"><label>Fecha Nacimiento</label><input type="date" id="fechaNacimiento"></div>
+            <div class="md-text-field"><label>Fecha Aniversario</label><input type="date" id="fechaAniversario"></div>
+            <div class="md-text-field"><label>Venc. Licencia Manejar</label><input type="date" id="vencLicencia"></div>
+            <div class="md-text-field"><label>Venc. Cédula Identidad</label><input type="date" id="vencCedula"></div>
+            <div class="md-text-field"><label>Venc. Carta Médica</label><input type="date" id="vencCartaMedica"></div>
+          </div>
+
+          <!-- SECCIÓN 9: ANEXO -->
+          <div class="md-section-header">
+            <span class="material-symbols-outlined" style="font-size: 18px;">attach_file</span>
+            9. Anexo Digital
+          </div>
+          <div class="md-grid">
+            <div class="md-text-field" style="grid-column: 1 / -1;">
+              <label>Cargar Archivo/Foto (PDF/PNG)</label>
+              <input type="file" id="fileAnexo" accept="image/*,application/pdf">
+            </div>
+          </div>
+
+          <div class="md-button-group">
+            <button type="submit" class="md-button md-button-filled">
+              <span class="material-symbols-outlined">save</span>
+              Guardar Localmente
+            </button>
+            <button type="button" class="md-button md-button-tonal" onclick="syncWithGoogleSheets()">
+              <span class="material-symbols-outlined">cloud_upload</span>
+              Sincronizar Nube
+            </button>
+          </div>
+
+        </form>
       </div>
+    </section>
 
-      <div class="btn-group">
-        <button type="submit" class="btn-main">Guardar Localmente</button>
-        <button type="button" class="btn-sync" onclick="syncWithGoogleSheets()">Sincronizar Nube (Google)</button>
+    <!-- VISTA 2: LISTADO DE REGISTROS -->
+    <section id="viewList" class="view-section">
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">group</span>
+          <h2 class="md-card-title">Trabajadores Registrados</h2>
+        </div>
+
+        <div class="md-search-bar">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-on-surface-variant);">search</span>
+          <input type="text" id="search" placeholder="Buscar por Nombre o Cédula..." onkeyup="renderTable()">
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Cédula</th>
+                <th>Nombre y Apellido</th>
+                <th>Puesto</th>
+                <th>Licencia</th>
+                <th>Cédula Doc</th>
+                <th>Carta Médica</th>
+                <th>Anexo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
       </div>
-    </form>
-  </div>
+    </section>
 
-  <!-- TABLA Y LISTADO CON FILTROS -->
-  <div class="card">
-    <h2>Registros Guardados</h2>
-    <div class="form-group" style="margin-bottom: 15px;">
-      <input type="text" id="search" placeholder="Buscar por Nombre o Cédula..." onkeyup="renderTable()">
-    </div>
+    <!-- VISTA 3: CONFIGURACIÓN -->
+    <section id="viewSettings" class="view-section">
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">settings</span>
+          <h2 class="md-card-title">Configuración de Sincronización</h2>
+        </div>
 
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Cédula</th>
-            <th>Nombre y Apellido</th>
-            <th>Puesto</th>
-            <th>Licencia</th>
-            <th>Cédula Doc</th>
-            <th>Carta Médica</th>
-            <th>Anexo</th>
-            <th>Sincro</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </div>
+        <div class="md-text-field" style="margin-bottom: 16px;">
+          <label>URL de Google Apps Script (Web App)</label>
+          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+        </div>
+
+        <div class="md-button-group">
+          <button type="button" class="md-button md-button-filled" onclick="saveGasUrl()">
+            <span class="material-symbols-outlined">save</span>
+            Guardar URL
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Bar (Android M3 Standard) -->
+  <nav class="md-bottom-nav">
+    <button class="md-nav-item active" onclick="switchTab('viewForm', this)">
+      <div class="icon-wrapper"><span class="material-symbols-outlined">edit_note</span></div>
+      <span>Registro</span>
+    </button>
+    <button class="md-nav-item" onclick="switchTab('viewList', this)">
+      <div class="icon-wrapper"><span class="material-symbols-outlined">table_rows</span></div>
+      <span>Registros</span>
+    </button>
+    <button class="md-nav-item" onclick="switchTab('viewSettings', this)">
+      <div class="icon-wrapper"><span class="material-symbols-outlined">settings</span></div>
+      <span>Ajustes</span>
+    </button>
+  </nav>
 
 <script>
-  // Inicialización de la Base de Datos Dexie (IndexedDB)
+  // Inicialización Dexie.js
   const db = new Dexie("FuerzaLaboralDB");
   db.version(1).stores({
     workers: 'cedula, nombreApellido, syncStatus'
@@ -171,24 +558,35 @@
   let currentBase64File = null;
   let currentFileName = null;
 
-  // Cargar URL de Google Apps Script guardada
+  // Cambiar pestañas (Android Navigation)
+  function switchTab(viewId, navBtn) {
+    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+    document.querySelectorAll('.md-nav-item').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById(viewId).classList.add('active');
+    navBtn.classList.add('active');
+
+    if (viewId === 'viewList') renderTable();
+  }
+
+  // Cargar URL Google Apps Script
   function initGasUrl() {
-    const savedUrl = localStorage.getItem('fuerzattocc_gas_url') || "COLOCA_AQUI_LA_URL_DE_TU_WEB_APP_SCRIPT";
-    document.getElementById('gasUrlInput').value = savedUrl.includes("COLOCA_AQUI") ? "" : savedUrl;
+    const savedUrl = localStorage.getItem('fuerzattocc_gas_url') || "";
+    document.getElementById('gasUrlInput').value = savedUrl;
   }
 
   function saveGasUrl() {
     const url = document.getElementById('gasUrlInput').value.trim();
     if (url) {
       localStorage.setItem('fuerzattocc_gas_url', url);
-      alert("¡URL de Google Apps Script guardada exitosamente!");
+      alert("¡URL de Google Apps Script guardada!");
     } else {
       localStorage.removeItem('fuerzattocc_gas_url');
-      alert("Configuración de URL borrada.");
+      alert("Configuración de URL eliminada.");
     }
   }
 
-  // Convertir archivos a Base64 para guardado offline
+  // Base64 File handler
   document.getElementById('fileAnexo').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -201,7 +599,7 @@
     }
   });
 
-  // Evento Guardar en Base de Datos Local
+  // Guardado Local
   workerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -251,24 +649,24 @@
     renderTable();
   });
 
-  // Lógica para Evaluar Alertas Semáforo (Fechas de Vencimiento)
+  // Material Badges / Semáforo
   function getSemaforo(fechaStr) {
-    if (!fechaStr) return '<span class="badge bg-verde">N/A</span>';
+    if (!fechaStr) return '<span class="md-chip md-chip-success">N/A</span>';
 
     const hoy = new Date();
     const fecha = new Date(fechaStr);
     const diffDias = Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24));
 
     if (diffDias < 0) {
-      return `<span class="badge bg-rojo">VENCIDO (${diffDias}d)</span>`;
+      return `<span class="md-chip md-chip-error">Vencido (${diffDias}d)</span>`;
     } else if (diffDias <= 30) {
-      return `<span class="badge bg-amarillo">POR VENCER (${diffDias}d)</span>`;
+      return `<span class="md-chip md-chip-warning">Por vencer (${diffDias}d)</span>`;
     } else {
-      return `<span class="badge bg-verde">AL DÍA</span>`;
+      return `<span class="md-chip md-chip-success">Al día</span>`;
     }
   }
 
-  // Renderizar la Tabla
+  // Render Tabla
   async function renderTable() {
     const search = document.getElementById('search').value.toLowerCase();
     const workers = await db.workers.toArray();
@@ -283,25 +681,26 @@
     filtered.forEach(w => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${w.cedula}</td>
+        <td><b>${w.cedula}</b></td>
         <td>${w.nombreApellido}</td>
-        <td>${w.puestoFuncional || ''}</td>
+        <td>${w.puestoFuncional || '-'}</td>
         <td>${getSemaforo(w.vencLicencia)}</td>
         <td>${getSemaforo(w.vencCedula)}</td>
         <td>${getSemaforo(w.vencCartaMedica)}</td>
-        <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank">Ver Doc</a>` : (w.fileName || 'Sin Archivo')}</td>
-        <td><b>${w.syncStatus}</b></td>
+        <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank" style="color:var(--md-sys-color-primary);">Doc</a>` : (w.fileName || '-')}</td>
+        <td><span class="md-chip ${w.syncStatus === 'EN_NUBE' ? 'md-chip-success' : 'md-chip-warning'}">${w.syncStatus}</span></td>
       `;
       tbody.appendChild(tr);
     });
   }
 
-  // Sincronización Backend con Google Apps Script API
+  // Sincronización Google Apps Script
   async function syncWithGoogleSheets() {
-    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url') || "COLOCA_AQUI_LA_URL_DE_TU_WEB_APP_SCRIPT";
+    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url');
 
-    if(!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("COLOCA_AQUI")) {
-      alert("Por favor ingresa y guarda primero la URL de tu Google Apps Script en el panel de configuración.");
+    if(!GAS_WEB_APP_URL) {
+      alert("Configura e ingresa la URL de tu Google Apps Script en la pestaña 'Ajustes'.");
+      switchTab('viewSettings', document.querySelectorAll('.md-nav-item')[2]);
       return;
     }
 
@@ -326,21 +725,21 @@
           w.syncStatus = 'EN_NUBE';
           if (resData.urls && resData.urls[w.cedula]) {
             w.docUrl = resData.urls[w.cedula];
-            w.fileData = null; // Liberar almacenamiento Base64 local
+            w.fileData = null;
           }
           await db.workers.put(w);
         }
-        alert("¡Sincronización Exitosa con la Nube de Google!");
+        alert("¡Sincronización Exitosa con Google Drive y Sheets!");
         renderTable();
       } else {
-        alert("Error reportado por Google Apps Script: " + (resData.message || "Desconocido"));
+        alert("Error de Google Apps Script: " + (resData.message || "Desconocido"));
       }
     } catch (e) {
-      alert("Error al conectar con la API de Google Apps Script. Revisa tu URL o conexión.");
+      alert("Error al conectar con Google Apps Script. Verifica la URL y la conexión a internet.");
     }
   }
 
-  // Registrar Service Worker para soporte Offline
+  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
   }
