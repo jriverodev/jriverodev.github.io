@@ -201,15 +201,16 @@
     </div>
 
     <div id="modalNuevoRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-lg shadow-xl p-6 text-slate-700 dark:text-slate-300 transition-colors overflow-y-auto max-h-[95vh]">
-            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4 transition-colors">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-lg shadow-xl text-slate-700 dark:text-slate-300 transition-colors max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0 transition-colors">
                 <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-truck-ramp-box text-sm"></i> Registrar Nueva Entrada a Taller
                 </h3>
                 <button onclick="cerrarModalNuevo()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)">
+            <form id="formNuevoRegistro" onsubmit="guardarNuevoRegistro(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-body-scroll flex-grow overflow-y-auto p-6 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
                         <div class="flex justify-between items-center mb-1">
@@ -303,7 +304,9 @@
                     <textarea id="add-observa" rows="3" placeholder="Detalles de la falla reportada..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-600 text-xs resize-none transition-colors"></textarea>
                 </div>
 
-                <div class="flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+                </div>
+
+                <div class="modal-footer-fixed p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 shrink-0 transition-colors">
                     <button type="button" onclick="cerrarModalNuevo()" class="px-6 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95">Cancelar</button>
                     <button type="submit" id="btn-crear-submit" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer active:scale-95">
                         <i class="fa-solid fa-square-check"></i> Registrar Ingreso
@@ -314,15 +317,16 @@
     </div>
 
     <div id="modalEditarRegistro" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-lg shadow-xl p-6 text-slate-700 dark:text-slate-300 overflow-y-auto max-h-[90vh] transition-colors">
-            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4 transition-colors">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-lg rounded-lg shadow-xl text-slate-700 dark:text-slate-300 max-h-[90vh] flex flex-col overflow-hidden transition-colors">
+            <div class="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0 transition-colors">
                 <h3 class="text-xs uppercase tracking-widest font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-list-check"></i> Planificación y Control de Tareas
                 </h3>
                 <button onclick="cerrarModalEditar()" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)">
+            <form id="formEditarRegistro" onsubmit="guardarEdicionModal(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="modal-body-scroll flex-grow overflow-y-auto p-6 space-y-4">
                 <input type="hidden" id="edit-id-registro">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -401,7 +405,9 @@
                     <textarea id="edit-observa" rows="2" placeholder="Notas sobre el cierre o estatus del mantenimiento..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-600 text-xs resize-none transition-colors"></textarea>
                 </div>
 
-                <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-4">
+                </div>
+
+                <div class="modal-footer-fixed p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0 transition-colors">
                     <button type="button" onclick="confirmarEliminarRegistro()" class="px-5 py-2.5 rounded-lg bg-red-600/10 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer border border-red-500/20 active:scale-95">
                         <i class="fa-solid fa-trash-can"></i> Eliminar
                     </button>
