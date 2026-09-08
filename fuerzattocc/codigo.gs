@@ -1,4 +1,4 @@
-const FOLDER_ID = "COLOCA_AQUI_EL_ID_DE_LA_CARPETA_EN_GOOGLE_DRIVE";
+const FOLDER_ID = "1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg";
 
 /**
  * Endpoint GET para verificar el estado de la API desde el navegador o pruebas HTTP.
