@@ -250,12 +250,48 @@ const defaultDatabase = `09776933 ,DELGADO RICARDO,MTTO
 
 // Captura de elementos de la interfaz (DOM)
 const txtData = document.getElementById('txtData');
+const txtPrefix = document.getElementById('txtPrefix');
+const lblPreviewNomenclatura = document.getElementById('lblPreviewNomenclatura');
 const compressedInput = document.getElementById('compressedInput');
 const processBtn = document.getElementById('processBtn');
 const logOutput = document.getElementById('logOutput');
 const warningTxt = document.getElementById('warningTxt');
 
 let empleadosMap = new Map();
+
+// Cargar prefijo guardado en localStorage
+if (txtPrefix) {
+    const savedPrefix = localStorage.getItem('renombrapdf_prefix');
+    if (savedPrefix !== null) {
+        txtPrefix.value = savedPrefix;
+    }
+}
+
+// Función para sanitizar nombres de archivos (eliminar caracteres no permitidos por SO)
+function sanitizeFileName(str) {
+    return str.replace(/[/\\?%*:|"<>]/g, '').trim();
+}
+
+// Actualizar vista previa de la nomenclatura
+function updateNomenclaturaPreview() {
+    if (!lblPreviewNomenclatura) return;
+    const rawPrefix = txtPrefix ? txtPrefix.value.trim() : '';
+    const cleanPrefix = sanitizeFileName(rawPrefix);
+    if (cleanPrefix) {
+        lblPreviewNomenclatura.textContent = `${cleanPrefix} 12345678 NOMBRE APELLIDO.pdf`;
+    } else {
+        lblPreviewNomenclatura.textContent = `12345678 NOMBRE APELLIDO.pdf`;
+    }
+}
+
+if (txtPrefix) {
+    txtPrefix.addEventListener('input', () => {
+        const rawPrefix = txtPrefix.value;
+        localStorage.setItem('renombrapdf_prefix', rawPrefix);
+        updateNomenclaturaPreview();
+    });
+    updateNomenclaturaPreview();
+}
 
 // Consola visual en pantalla
 function log(message) {
@@ -387,7 +423,13 @@ processBtn.addEventListener('click', async () => {
 
                 if (empleadosMap.has(cedulaExtraida)) {
                     const datos = empleadosMap.get(cedulaExtraida);
-                    const nuevoNombre = `${cedulaExtraida} - ${datos.nombre}.pdf`;
+                    const rawPrefix = txtPrefix ? txtPrefix.value.trim() : '';
+                    const cleanPrefix = sanitizeFileName(rawPrefix);
+
+                    const nuevoNombre = cleanPrefix
+                        ? `${cleanPrefix} ${cedulaExtraida} ${datos.nombre}.pdf`
+                        : `${cedulaExtraida} ${datos.nombre}.pdf`;
+
                     const rutaDestino = `${datos.proceso}/${nuevoNombre}`;
                     
                     nuevoZip.file(rutaDestino, archivo.blob);
