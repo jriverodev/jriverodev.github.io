@@ -1,1 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Control de Fuerza Laboral</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+  <style>
+    :root { --primary: #003366; --accent: #0056b3; --bg: #f4f6f9; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; }
+    h1, h2, h3 { color: var(--primary); margin-top: 0; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .form-group { display: flex; flex-direction: column; }
+    label { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; text-transform: uppercase; }
+    input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+    .section-title { grid-column: 1 / -1; background: #e9ecef; padding: 6px 10px; font-weight: bold; font-size: 13px; border-left: 4px solid var(--primary); margin-top: 10px; }
 
+    /* Botones */
+    .btn-group { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+    .btn-main { background: var(--primary); color: white; }
+    .btn-sync { background: #28a745; color: white; }
+
+    /* Indicadores y Muestras */
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; text-align: center; }
+    .bg-rojo { background-color: #d9534f; }
+    .bg-amarillo { background-color: #f0ad4e; color: #111; }
+    .bg-verde { background-color: #5cb85c; }
+
+    /* Tabla */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: var(--primary); color: white; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+  <h1>Control de Fuerza Laboral (Offline PWA)</h1>
+
+  <!-- FORMULARIO DE REGISTRO / EDICION -->
+  <div class="card">
+    <h2>Gestión de Trabajador</h2>
+    <form id="workerForm">
+      <div class="grid">
+
+        <!-- SECCIÓN 1: DATOS BÁSICOS -->
+        <div class="section-title">1. DATOS BÁSICOS Y DE IDENTIFICACIÓN</div>
+        <div class="form-group"><label>ITEM</label><input type="text" id="item"></div>
+        <div class="form-group"><label>N° Personal</label><input type="text" id="nPersonal"></div>
+        <div class="form-group"><label>Cédula (*)</label><input type="text" id="cedula" required></div>
+        <div class="form-group"><label>Nombre y Apellido (*)</label><input type="text" id="nombreApellido" required></div>
+
+        <!-- SECCIÓN 2: POSICIÓN Y NÓMINA -->
+        <div class="section-title">2. DATOS DE POSICIÓN Y NÓMINA</div>
+        <div class="form-group"><label>Puesto Funcional</label><input type="text" id="puestoFuncional"></div>
+        <div class="form-group"><label>Posición SAP</label><input type="text" id="posicionSap"></div>
+        <div class="form-group"><label>Descrip de la Posic</label><input type="text" id="descripPosic"></div>
+        <div class="form-group"><label>Nómina del Trabajador</label><input type="text" id="nomina"></div>
+        <div class="form-group"><label>Indicador del Trabajador</label><input type="text" id="indicador"></div>
+
+        <!-- SECCIÓN 3: ESTATUS -->
+        <div class="section-title">3. ESTATUS OPERATIVO</div>
+        <div class="form-group"><label>Estatus de Condición</label><input type="text" id="estatusCondicion"></div>
+        <div class="form-group"><label>Status de FL</label><input type="text" id="statusFl"></div>
+
+        <!-- SECCIÓN 4: ESTRUCTURA ORGANIZATIVA -->
+        <div class="section-title">4. ESTRUCTURA ORGANIZATIVA</div>
+        <div class="form-group"><label>Dirección Adjunta / Habilitadora</label><input type="text" id="dirAdjunta"></div>
+        <div class="form-group"><label>Gerencia 1ra Línea Org</label><input type="text" id="gcia1raLinea"></div>
+        <div class="form-group"><label>Gcia 2da Línea Org</label><input type="text" id="gcia2daLinea"></div>
+        <div class="form-group"><label>Gcia 3era Línea Org</label><input type="text" id="gcia3eraLinea"></div>
+
+        <!-- SECCIÓN 5: UBICACIÓN Y CONTACTO -->
+        <div class="section-title">5. UBICACIÓN Y CONTACTO</div>
+        <div class="form-group"><label>Instalación / Edificio</label><input type="text" id="instalacionEdif"></div>
+        <div class="form-group"><label>Localidad Trabajo</label><input type="text" id="localidadTrabajo"></div>
+        <div class="form-group"><label>Extensión de Oficina</label><input type="text" id="extensionOfic"></div>
+        <div class="form-group"><label>Celular</label><input type="text" id="celular"></div>
+
+        <!-- SECCIÓN 6: SUPERVISOR -->
+        <div class="section-title">6. DATOS DEL SUPERVISOR</div>
+        <div class="form-group"><label>Cédula del Supervisor</label><input type="text" id="cedulaSupervisor"></div>
+        <div class="form-group"><label>Nombre del Supervisor</label><input type="text" id="nombreSupervisor"></div>
+        <div class="form-group"><label>Indicador del Supervisor</label><input type="text" id="indicadorSupervisor"></div>
+        <div class="form-group"><label>Teléfono Supervisor</label><input type="text" id="telefonoSupervisor"></div>
+
+        <!-- SECCIÓN 7: ASIGNACIÓN Y VIVIENDA -->
+        <div class="section-title">7. ASIGNACIÓN Y VIVIENDA</div>
+        <div class="form-group"><label>FL/RRHH Responsable</label><input type="text" id="flRrhhResponsable"></div>
+        <div class="form-group"><label>Ubicación de Asignación</label><input type="text" id="ubicacionAsignacion"></div>
+        <div class="form-group"><label>Dirección Habitación</label><input type="text" id="direccionHabitacion"></div>
+        <div class="form-group"><label>Municipio Vivienda</label><input type="text" id="municipioVivienda"></div>
+
+        <!-- SECCIÓN 8: CONTROL DE FECHAS (SISTEMA DE ALERTAS) -->
+        <div class="section-title">8. ALERTAS Y FECHAS DE VENCIMIENTO</div>
+        <div class="form-group"><label>Fecha Nacimiento</label><input type="date" id="fechaNacimiento"></div>
+        <div class="form-group"><label>Fecha Aniversario</label><input type="date" id="fechaAniversario"></div>
+        <div class="form-group"><label>Venc. Licencia Manejar</label><input type="date" id="vencLicencia"></div>
+        <div class="form-group"><label>Venc. Cédula Identidad</label><input type="date" id="vencCedula"></div>
+        <div class="form-group"><label>Venc. Carta Médica</label><input type="date" id="vencCartaMedica"></div>
+
+        <!-- SECCIÓN 9: ANEXO DE DOCUMENTOS -->
+        <div class="section-title">9. ANEXO DIGITAL</div>
+        <div class="form-group">
+          <label>Cargar Archivo/Foto (PDF/PNG)</label>
+          <input type="file" id="fileAnexo" accept="image/*,application/pdf">
+        </div>
+
+      </div>
+
+      <div class="btn-group">
+        <button type="submit" class="btn-main">Guardar Localmente</button>
+        <button type="button" class="btn-sync" onclick="syncWithGoogleSheets()">Sincronizar Nube (Google)</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABLA Y LISTADO CON FILTROS -->
+  <div class="card">
+    <h2>Registros Guardados</h2>
+    <div class="form-group" style="margin-bottom: 15px;">
+      <input type="text" id="search" placeholder="Buscar por Nombre o Cédula..." onkeyup="renderTable()">
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Cédula</th>
+            <th>Nombre y Apellido</th>
+            <th>Puesto</th>
+            <th>Licencia</th>
+            <th>Cédula Doc</th>
+            <th>Carta Médica</th>
+            <th>Anexo</th>
+            <th>Sincro</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  // Inicialización de la Base de Datos Dexie (IndexedDB)
+  const db = new Dexie("FuerzaLaboralDB");
+  db.version(1).stores({
+    workers: 'cedula, nombreApellido, syncStatus'
+  });
+
+  const workerForm = document.getElementById('workerForm');
+  let currentBase64File = null;
+  let currentFileName = null;
+
+  // Convertir archivos a Base64 para guardado offline
+  document.getElementById('fileAnexo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      currentFileName = file.name;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        currentBase64File = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Evento Guardar en Base de Datos Local
+  workerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const workerData = {
+      item: document.getElementById('item').value,
+      nPersonal: document.getElementById('nPersonal').value,
+      cedula: document.getElementById('cedula').value,
+      nombreApellido: document.getElementById('nombreApellido').value,
+      puestoFuncional: document.getElementById('puestoFuncional').value,
+      posicionSap: document.getElementById('posicionSap').value,
+      descripPosic: document.getElementById('descripPosic').value,
+      nomina: document.getElementById('nomina').value,
+      indicador: document.getElementById('indicador').value,
+      estatusCondicion: document.getElementById('estatusCondicion').value,
+      statusFl: document.getElementById('statusFl').value,
+      dirAdjunta: document.getElementById('dirAdjunta').value,
+      gcia1raLinea: document.getElementById('gcia1raLinea').value,
+      gcia2daLinea: document.getElementById('gcia2daLinea').value,
+      gcia3eraLinea: document.getElementById('gcia3eraLinea').value,
+      instalacionEdif: document.getElementById('instalacionEdif').value,
+      localidadTrabajo: document.getElementById('localidadTrabajo').value,
+      extensionOfic: document.getElementById('extensionOfic').value,
+      celular: document.getElementById('celular').value,
+      cedulaSupervisor: document.getElementById('cedulaSupervisor').value,
+      nombreSupervisor: document.getElementById('nombreSupervisor').value,
+      indicadorSupervisor: document.getElementById('indicadorSupervisor').value,
+      telefonoSupervisor: document.getElementById('telefonoSupervisor').value,
+      flRrhhResponsable: document.getElementById('flRrhhResponsable').value,
+      ubicacionAsignacion: document.getElementById('ubicacionAsignacion').value,
+      direccionHabitacion: document.getElementById('direccionHabitacion').value,
+      municipioVivienda: document.getElementById('municipioVivienda').value,
+      fechaNacimiento: document.getElementById('fechaNacimiento').value,
+      fechaAniversario: document.getElementById('fechaAniversario').value,
+      vencLicencia: document.getElementById('vencLicencia').value,
+      vencCedula: document.getElementById('vencCedula').value,
+      vencCartaMedica: document.getElementById('vencCartaMedica').value,
+      fileData: currentBase64File,
+      fileName: currentFileName,
+      syncStatus: 'PENDIENTE'
+    };
+
+    await db.workers.put(workerData);
+    alert("¡Trabajador guardado localmente!");
+    workerForm.reset();
+    currentBase64File = null;
+    currentFileName = null;
+    renderTable();
+  });
+
+  // Lógica para Evaluar Alertas Semáforo (Fechas de Vencimiento)
+  function getSemaforo(fechaStr) {
+    if (!fechaStr) return '<span class="badge bg-verde">N/A</span>';
+
+    const hoy = new Date();
+    const fecha = new Date(fechaStr);
+    const diffDias = Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24));
+
+    if (diffDias < 0) {
+      return `<span class="badge bg-rojo">VENCIDO (${diffDias}d)</span>`;
+    } else if (diffDias <= 30) {
+      return `<span class="badge bg-amarillo">POR VENCER (${diffDias}d)</span>`;
+    } else {
+      return `<span class="badge bg-verde">AL DÍA</span>`;
+    }
+  }
+
+  // Renderizar la Tabla
+  async function renderTable() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const workers = await db.workers.toArray();
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    const filtered = workers.filter(w =>
+      w.cedula.toLowerCase().includes(search) ||
+      w.nombreApellido.toLowerCase().includes(search)
+    );
+
+    filtered.forEach(w => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${w.cedula}</td>
+        <td>${w.nombreApellido}</td>
+        <td>${w.puestoFuncional || ''}</td>
+        <td>${getSemaforo(w.vencLicencia)}</td>
+        <td>${getSemaforo(w.vencCedula)}</td>
+        <td>${getSemaforo(w.vencCartaMedica)}</td>
+        <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank">Ver Doc</a>` : (w.fileName || 'Sin Archivo')}</td>
+        <td><b>${w.syncStatus}</b></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Sincronización Backend con Google Apps Script API
+  async function syncWithGoogleSheets() {
+    const GAS_WEB_APP_URL = "COLOCA_AQUI_LA_URL_DE_TU_WEB_APP_SCRIPT";
+
+    if(GAS_WEB_APP_URL.includes("COLOCA_AQUI")) {
+      alert("Configura primero la URL de tu Google Apps Script en la función syncWithGoogleSheets().");
+      return;
+    }
+
+    const unsyncedWorkers = await db.workers.where('syncStatus').equals('PENDIENTE').toArray();
+
+    if (unsyncedWorkers.length === 0) {
+      alert("No hay registros pendientes por sincronizar.");
+      return;
+    }
+
+    try {
+      const response = await fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "SYNC", records: unsyncedWorkers })
+      });
+
+      const resData = await response.json();
+
+      if (resData.status === "success") {
+        for (let w of unsyncedWorkers) {
+          w.syncStatus = 'EN_NUBE';
+          if (resData.urls && resData.urls[w.cedula]) {
+            w.docUrl = resData.urls[w.cedula];
+            w.fileData = null; // Liberar almacenamiento Base64 local
+          }
+          await db.workers.put(w);
+        }
+        alert("¡Sincronización Exitosa con la Nube de Google!");
+        renderTable();
+      }
+    } catch (e) {
+      alert("Error al conectar con la API de Google Apps Script.");
+    }
+  }
+
+  // Registrar Service Worker para soporte Offline
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+
+  window.onload = renderTable;
+</script>
+</body>
+</html>
