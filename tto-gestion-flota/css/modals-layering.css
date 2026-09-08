@@ -16,49 +16,54 @@ nav.fixed.bottom-0,
 #modalEditarRegistro,
 #modalIdentificacion,
 #modalUsuario,
-#modalCrearRol {
+#modalCrearRol,
+#modalSeleccionarUnidad {
   z-index: 60 !important;
 }
 
-/* 3. Modal Selector de Unidades por encima de todos los demás modales (z-80) */
+/* Modal Selector de Unidades por encima de otros modales (z-80) */
 #modalSeleccionarUnidad {
   z-index: 80 !important;
 }
 
-/* 4. Ajuste de altura, scroll y padding de seguridad en pantallas móviles */
-.modal-content-body,
-[id^="modal"] > div {
-  max-height: calc(100vh - 4rem) !important;
-  overflow-y: auto !important;
-  padding-bottom: 5rem !important;
+/* 3. Estructura de Modal Dialog con Cabecera y Pie Fijos y Cuerpo Scrollable */
+.modal-dialog-card,
+[id^="modal"] > .bg-white,
+[id^="modal"] > .dark\:bg-slate-800,
+[id^="modal"] > .dark\:bg-slate-900 {
   display: flex !important;
   flex-direction: column !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
 }
 
-/* Formularios internos expandibles */
+/* El formulario dentro del card llena la altura */
 [id^="modal"] form {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
-/* 5. Botones de Pie de Formulario Fijos/Sticky en la parte inferior */
-[id^="modal"] form .flex.justify-end,
-[id^="modal"] form .flex.justify-between {
-  position: sticky;
-  bottom: 0;
-  background-color: inherit;
-  padding-top: 1rem;
-  padding-bottom: 1.5rem;
-  margin-top: auto;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
-  z-index: 20;
+/* Solamente el cuerpo del formulario desplaza verticalmente */
+.modal-body-scroll {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Pie de modal fijo sin espacio extra innecesario en la parte inferior */
+.modal-footer-fixed {
+  flex-shrink: 0 !important;
+  z-index: 10 !important;
+  margin-top: auto !important;
 }
 
 /* Botones táctiles optimizados */
 [id^="modal"] button[type="submit"],
 [id^="modal"] button[type="button"] {
-  min-height: 46px;
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
