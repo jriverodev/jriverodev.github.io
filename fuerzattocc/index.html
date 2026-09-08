@@ -22,6 +22,7 @@
     button { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
     .btn-main { background: var(--primary); color: white; }
     .btn-sync { background: #28a745; color: white; }
+    .btn-secondary { background: #6c757d; color: white; }
 
     /* Indicadores y Muestras */
     .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; text-align: center; }
@@ -40,6 +41,20 @@
 <body>
 
   <h1>Control de Fuerza Laboral (Offline PWA)</h1>
+
+  <!-- CONFIGURACIÓN DE CONEXIÓN A GOOGLE APPS SCRIPT -->
+  <div class="card">
+    <h2>Configuración de Sincronización</h2>
+    <div class="grid">
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label>URL de Google Apps Script (Web App)</label>
+        <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+      </div>
+    </div>
+    <div class="btn-group">
+      <button type="button" class="btn-secondary" onclick="saveGasUrl()">Guardar Configuración URL</button>
+    </div>
+  </div>
 
   <!-- FORMULARIO DE REGISTRO / EDICION -->
   <div class="card">
@@ -156,6 +171,23 @@
   let currentBase64File = null;
   let currentFileName = null;
 
+  // Cargar URL de Google Apps Script guardada
+  function initGasUrl() {
+    const savedUrl = localStorage.getItem('fuerzattocc_gas_url') || "COLOCA_AQUI_LA_URL_DE_TU_WEB_APP_SCRIPT";
+    document.getElementById('gasUrlInput').value = savedUrl.includes("COLOCA_AQUI") ? "" : savedUrl;
+  }
+
+  function saveGasUrl() {
+    const url = document.getElementById('gasUrlInput').value.trim();
+    if (url) {
+      localStorage.setItem('fuerzattocc_gas_url', url);
+      alert("¡URL de Google Apps Script guardada exitosamente!");
+    } else {
+      localStorage.removeItem('fuerzattocc_gas_url');
+      alert("Configuración de URL borrada.");
+    }
+  }
+
   // Convertir archivos a Base64 para guardado offline
   document.getElementById('fileAnexo').addEventListener('change', function(e) {
     const file = e.target.files[0];
@@ -266,10 +298,10 @@
 
   // Sincronización Backend con Google Apps Script API
   async function syncWithGoogleSheets() {
-    const GAS_WEB_APP_URL = "COLOCA_AQUI_LA_URL_DE_TU_WEB_APP_SCRIPT";
+    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url') || "COLOCA_AQUI_LA_URL_DE_TU_WEB_APP_SCRIPT";
 
-    if(GAS_WEB_APP_URL.includes("COLOCA_AQUI")) {
-      alert("Configura primero la URL de tu Google Apps Script en la función syncWithGoogleSheets().");
+    if(!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("COLOCA_AQUI")) {
+      alert("Por favor ingresa y guarda primero la URL de tu Google Apps Script en el panel de configuración.");
       return;
     }
 
@@ -283,6 +315,7 @@
     try {
       const response = await fetch(GAS_WEB_APP_URL, {
         method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "SYNC", records: unsyncedWorkers })
       });
 
@@ -299,9 +332,11 @@
         }
         alert("¡Sincronización Exitosa con la Nube de Google!");
         renderTable();
+      } else {
+        alert("Error reportado por Google Apps Script: " + (resData.message || "Desconocido"));
       }
     } catch (e) {
-      alert("Error al conectar con la API de Google Apps Script.");
+      alert("Error al conectar con la API de Google Apps Script. Revisa tu URL o conexión.");
     }
   }
 
@@ -310,7 +345,10 @@
     navigator.serviceWorker.register('sw.js');
   }
 
-  window.onload = renderTable;
+  window.onload = function() {
+    initGasUrl();
+    renderTable();
+  };
 </script>
 </body>
 </html>

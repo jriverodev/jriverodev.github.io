@@ -1,10 +1,27 @@
 const FOLDER_ID = "COLOCA_AQUI_EL_ID_DE_LA_CARPETA_EN_GOOGLE_DRIVE";
 
+/**
+ * Endpoint GET para verificar el estado de la API desde el navegador o pruebas HTTP.
+ */
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "online",
+    service: "Control de Fuerza Laboral API",
+    timestamp: new Date().toISOString()
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Endpoint POST para recibir peticiones de sincronización desde la PWA.
+ */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     const driveUrls = {};
+
+    // Asegurar encabezados si la hoja está vacía
+    ensureHeaders(sheet);
 
     if (data.action === "SYNC") {
       data.records.forEach(r => {
@@ -16,7 +33,7 @@ function doPost(e) {
           driveUrls[r.cedula] = docUrl;
         }
 
-        // Estructura ordenada de las 33 Columnas
+        // Estructura ordenada de las 34 Columnas (33 campos + Fecha actualización)
         const rowData = [
           r.item || "",
           r.nPersonal || "",
@@ -45,7 +62,7 @@ function doPost(e) {
           r.ubicacionAsignacion || "",
           r.direccionHabitacion || "",
           r.municipioVivienda || "",
-          // Campos Anexos
+          // Campos Anexos y Alertas
           r.fechaNacimiento || "",
           r.fechaAniversario || "",
           r.vencLicencia || "",
@@ -65,9 +82,16 @@ function doPost(e) {
 
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        urls: driveUrls
+        urls: driveUrls,
+        processedCount: data.records.length
       })).setMimeType(ContentService.MimeType.JSON);
     }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: "Acción no reconocida"
+    })).setMimeType(ContentService.MimeType.JSON);
+
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
@@ -76,7 +100,34 @@ function doPost(e) {
   }
 }
 
+/**
+ * Crea la fila de encabezados si la hoja está totalmente vacía.
+ */
+function ensureHeaders(sheet) {
+  if (sheet.getLastRow() === 0) {
+    const headers = [
+      "ITEM", "N° PERSONAL", "CEDULA", "NOMBRE Y APELLIDO", "PUESTO FUNCIONAL",
+      "POSICION SAP", "DESCRIP DE LA POSIC", "NOMINA DEL TRABAJADOR", "INDICADOR DEL TRABAJADOR",
+      "ESTATUS DE CONDICION", "STATUS DE FL", "DIRECCION ADJUNTA / HABILITADORA",
+      "GERENCIA 1RA LINEA ORG", "GCIA 2DA LINEA ORG", "GCIA 3ERA LINEA ORG",
+      "INSTALACION / EDIFICIO", "LOCALIDAD TRABAJO", "EXTENSION DE OFICINA", "CELULAR",
+      "CÉDULA DEL SUPERVISOR", "NOMBRE DEL SUPERVISOR", "INDICADOR DEL SUPERVISOR", "TELÉFONO SUPERVISOR",
+      "FL/RRHH RESPONSABLE", "UBICACIÓN DE ASIGNACIÓN", "DIRECCIÓN HABITACIÓN", "MUNICIPIO VIVIENDA",
+      "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC. LICENCIA", "VENC. CÉDULA", "VENC. CARTA MÉDICA",
+      "URL DOCUMENTO (DRIVE)", "FECHA ACTUALIZACIÓN"
+    ];
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#003366").setFontColor("#FFFFFF");
+  }
+}
+
+/**
+ * Sube archivos codificados en Base64 a Google Drive.
+ */
 function uploadFileToDrive(base64Data, fileName, cedula) {
+  if (!FOLDER_ID || FOLDER_ID.includes("COLOCA_AQUI")) {
+    throw new Error("ID de carpeta de Google Drive no configurado en FOLDER_ID.");
+  }
   const folder = DriveApp.getFolderById(FOLDER_ID);
   const contentType = base64Data.split(';')[0].split(':')[1];
   const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
@@ -86,10 +137,13 @@ function uploadFileToDrive(base64Data, fileName, cedula) {
   return file.getUrl();
 }
 
+/**
+ * Busca el número de fila existente utilizando la columna 3 (CÉDULA).
+ */
 function findRowByCedula(sheet, cedula) {
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][2] == cedula) return i + 1; // Columna 3 (CÉDULA)
+    if (String(data[i][2]).trim() === String(cedula).trim()) return i + 1;
   }
   return -1;
 }
