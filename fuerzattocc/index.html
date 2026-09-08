@@ -167,7 +167,7 @@
     .md-text-field input:focus, .md-text-field select:focus {
       border-color: var(--md-sys-color-primary);
       border-width: 2px;
-      padding: 0 15px; /* Adjust for 2px border */
+      padding: 0 15px;
     }
     .md-text-field input[type="file"] {
       padding: 10px;
@@ -302,15 +302,15 @@
       border: none;
       color: var(--md-sys-color-on-surface-variant);
       font-family: inherit;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
       cursor: pointer;
-      padding: 6px 12px;
+      padding: 4px 8px;
       border-radius: var(--md-shape-corner-full);
       transition: color 0.2s;
     }
     .md-nav-item .icon-wrapper {
-      width: 48px;
+      width: 44px;
       height: 28px;
       border-radius: 14px;
       display: flex;
@@ -325,6 +325,19 @@
     .md-nav-item.active .icon-wrapper {
       background-color: var(--md-sys-color-primary-container);
       color: var(--md-sys-color-on-primary-container);
+    }
+
+    .info-banner {
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      padding: 16px;
+      border-radius: var(--md-shape-corner-medium);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -507,7 +520,53 @@
       </div>
     </section>
 
-    <!-- VISTA 3: CONFIGURACIÓN -->
+    <!-- VISTA 3: MÓDULO DE IMPORTACIÓN MASIVA -->
+    <section id="viewImport" class="view-section">
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">upload_file</span>
+          <h2 class="md-card-title">Importación Masiva de Datos</h2>
+        </div>
+
+        <div class="info-banner">
+          <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
+          <div>
+            Descarga la plantilla oficial en formato CSV para ingresar tus registros. Asegúrate de incluir las columnas <b>CEDULA</b> y <b>NOMBRE Y APELLIDO</b> obligatoriamente.
+          </div>
+        </div>
+
+        <div class="md-button-group" style="margin-bottom: 24px;">
+          <button type="button" class="md-button md-button-outlined" onclick="downloadCsvTemplate()">
+            <span class="material-symbols-outlined">download</span>
+            Descargar Plantilla CSV Ejemplo
+          </button>
+        </div>
+
+        <div class="md-section-header">
+          <span class="material-symbols-outlined" style="font-size: 18px;">file_upload</span>
+          Seleccionar Archivo CSV
+        </div>
+
+        <div class="md-text-field">
+          <label>Cargar Archivo CSV de Trabajadores</label>
+          <input type="file" id="csvFileInput" accept=".csv">
+        </div>
+
+        <div id="importProgress" style="display: none; margin-top: 16px;">
+          <p id="importStatusText" style="font-size: 13px; font-weight: 500; color: var(--md-sys-color-primary); margin-bottom: 8px;">Procesando archivo...</p>
+        </div>
+
+        <div class="md-button-group">
+          <button type="button" class="md-button md-button-filled" onclick="handleImportClick()">
+            <span class="material-symbols-outlined">publish</span>
+            Procesar e Importar
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VISTA 4: CONFIGURACIÓN -->
     <section id="viewSettings" class="view-section">
       <div class="md-card">
         <div class="md-card-header">
@@ -531,7 +590,7 @@
 
   </main>
 
-  <!-- Bottom Navigation Bar (Android M3 Standard) -->
+  <!-- Bottom Navigation Bar (Android M3 Standard - 4 Tabs) -->
   <nav class="md-bottom-nav">
     <button class="md-nav-item active" onclick="switchTab('viewForm', this)">
       <div class="icon-wrapper"><span class="material-symbols-outlined">edit_note</span></div>
@@ -540,6 +599,10 @@
     <button class="md-nav-item" onclick="switchTab('viewList', this)">
       <div class="icon-wrapper"><span class="material-symbols-outlined">table_rows</span></div>
       <span>Registros</span>
+    </button>
+    <button class="md-nav-item" onclick="switchTab('viewImport', this)">
+      <div class="icon-wrapper"><span class="material-symbols-outlined">upload_file</span></div>
+      <span>Importar</span>
     </button>
     <button class="md-nav-item" onclick="switchTab('viewSettings', this)">
       <div class="icon-wrapper"><span class="material-symbols-outlined">settings</span></div>
@@ -694,12 +757,180 @@
     });
   }
 
+  // Descarga de Plantilla CSV Ejemplo
+  function downloadCsvTemplate() {
+    const headers = [
+      "ITEM", "N° PERSONAL", "CEDULA", "NOMBRE Y APELLIDO", "PUESTO FUNCIONAL",
+      "POSICION SAP", "DESCRIP DE LA POSIC", "NOMINA DEL TRABAJADOR", "INDICADOR DEL TRABAJADOR",
+      "ESTATUS DE CONDICION", "STATUS DE FL", "DIRECCION ADJUNTA / HABILITADORA",
+      "GERENCIA 1RA LINEA ORG", "GCIA 2DA LINEA ORG", "GCIA 3ERA LINEA ORG",
+      "INSTALACION / EDIFICIO", "LOCALIDAD TRABAJO", "EXTENSION DE OFICINA", "CELULAR",
+      "CÉDULA DEL SUPERVISOR", "NOMBRE DEL SUPERVISOR", "INDICADOR DEL SUPERVISOR", "TELÉFONO SUPERVISOR",
+      "FL/RRHH RESPONSABLE", "UBICACIÓN DE ASIGNACIÓN", "DIRECCIÓN HABITACIÓN", "MUNICIPIO VIVIENDA",
+      "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC LICENCIA", "VENC CÉDULA", "VENC CARTA MÉDICA"
+    ];
+
+    const exampleRow = [
+      "1", "104523", "V-15890123", "JUAN PEREZ", "ANALISTA DE MANTENIMIENTO",
+      "5001234", "ANALISTA OPERATIVO", "DIREC", "JP123",
+      "ACTIVO", "N/A", "DIRECCIÓN DE OPERACIONES",
+      "GERENCIA GENERAL", "GERENCIA DE PLANIFICACION", "DEPARTAMENTO TALLER",
+      "EDIFICIO MATRIZ", "LAGUNILLAS", "4102", "04141234567",
+      "V-12345678", "CARLOS MENDOZA", "CM987", "04129876543",
+      "PEDRO RRHH", "TALLER LAGUNILLAS", "AV 4 LAGO", "LAGUNILLAS",
+      "1988-05-12", "2015-08-20", "2026-12-31", "2028-04-15", "2026-11-30"
+    ];
+
+    const csvContent = "\uFEFF" + headers.join(",") + "\n" + exampleRow.map(v => `"${v}"`).join(",");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "plantilla_fuerza_laboral.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Procesamiento e Importación Masiva CSV
+  async function handleImportClick() {
+    const fileInput = document.getElementById('csvFileInput');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("Por favor selecciona un archivo CSV primero.");
+      return;
+    }
+
+    const progressDiv = document.getElementById('importProgress');
+    const statusText = document.getElementById('importStatusText');
+    progressDiv.style.display = 'block';
+    statusText.innerText = "Leyendo archivo CSV...";
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const text = e.target.result;
+        const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== "");
+
+        if (lines.length < 2) {
+          alert("El archivo CSV debe incluir los encabezados y al menos una fila de datos.");
+          progressDiv.style.display = 'none';
+          return;
+        }
+
+        // Helper para dividir columnas respetando comillas
+        function parseCsvLine(line) {
+          const values = [];
+          let current = '';
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"' || char === "'") {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(current.trim().replace(/^["']|["']$/g, ''));
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          values.push(current.trim().replace(/^["']|["']$/g, ''));
+          return values;
+        }
+
+        const headers = parseCsvLine(lines[0]).map(h => h.toUpperCase());
+
+        // Mapeo de índices de columnas
+        const getIdx = (keys) => headers.findIndex(h => keys.some(k => h.includes(k)));
+        const cedulaIdx = getIdx(["CEDULA", "CÉDULA"]);
+        const nombreIdx = getIdx(["NOMBRE", "TRABAJADOR"]);
+
+        if (cedulaIdx === -1 || nombreIdx === -1) {
+          alert("El archivo CSV debe contener las columnas de CÉDULA y NOMBRE.");
+          progressDiv.style.display = 'none';
+          return;
+        }
+
+        const workersToInsert = [];
+        let importedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseCsvLine(lines[i]);
+          const cedulaVal = cols[cedulaIdx];
+          const nombreVal = cols[nombreIdx];
+
+          if (!cedulaVal || !nombreVal) continue;
+
+          const workerObj = {
+            item: cols[getIdx(["ITEM"])] || "",
+            nPersonal: cols[getIdx(["PERSONAL"])] || "",
+            cedula: cedulaVal,
+            nombreApellido: nombreVal,
+            puestoFuncional: cols[getIdx(["PUESTO"])] || "",
+            posicionSap: cols[getIdx(["SAP"])] || "",
+            descripPosic: cols[getIdx(["DESCRIP"])] || "",
+            nomina: cols[getIdx(["NOMINA", "NÓMINA"])] || "",
+            indicador: cols[getIdx(["INDICADOR"])] || "",
+            estatusCondicion: cols[getIdx(["CONDICION", "CONDICIÓN"])] || "",
+            statusFl: cols[getIdx(["STATUS FL", "STATUS"])] || "",
+            dirAdjunta: cols[getIdx(["ADJUNTA", "HABILITADORA"])] || "",
+            gcia1raLinea: cols[getIdx(["1RA LINEA", "1RA LÍNEA"])] || "",
+            gcia2daLinea: cols[getIdx(["2DA LINEA", "2DA LÍNEA"])] || "",
+            gcia3eraLinea: cols[getIdx(["3ERA LINEA", "3ERA LÍNEA"])] || "",
+            instalacionEdif: cols[getIdx(["INSTALACION", "EDIFICIO"])] || "",
+            localidadTrabajo: cols[getIdx(["LOCALIDAD"])] || "",
+            extensionOfic: cols[getIdx(["EXTENSION", "EXTENSIÓN"])] || "",
+            celular: cols[getIdx(["CELULAR"])] || "",
+            cedulaSupervisor: cols[getIdx(["SUPERVISOR CÉDULA", "SUPERVISOR CEDULA"])] || "",
+            nombreSupervisor: cols[getIdx(["SUPERVISOR NOMBRE", "NOMBRE DEL SUPERVISOR"])] || "",
+            indicadorSupervisor: cols[getIdx(["SUPERVISOR INDICADOR"])] || "",
+            telefonoSupervisor: cols[getIdx(["SUPERVISOR TELÉFONO", "SUPERVISOR TELEFONO"])] || "",
+            flRrhhResponsable: cols[getIdx(["RRHH", "RESPONSABLE"])] || "",
+            ubicacionAsignacion: cols[getIdx(["ASIGNACIÓN", "ASIGNACION"])] || "",
+            direccionHabitacion: cols[getIdx(["HABITACIÓN", "HABITACION"])] || "",
+            municipioVivienda: cols[getIdx(["MUNICIPIO"])] || "",
+            fechaNacimiento: cols[getIdx(["FECHA NACIMIENTO", "NACIMIENTO"])] || "",
+            fechaAniversario: cols[getIdx(["FECHA ANIVERSARIO", "ANIVERSARIO"])] || "",
+            vencLicencia: cols[getIdx(["VENC LICENCIA", "LICENCIA"])] || "",
+            vencCedula: cols[getIdx(["VENC CÉDULA", "VENC CEDULA"])] || "",
+            vencCartaMedica: cols[getIdx(["VENC CARTA", "CARTA MÉDICA", "CARTA MEDICA"])] || "",
+            fileData: null,
+            fileName: null,
+            syncStatus: 'PENDIENTE'
+          };
+
+          workersToInsert.push(workerObj);
+          importedCount++;
+        }
+
+        if (workersToInsert.length > 0) {
+          await db.workers.bulkPut(workersToInsert);
+          statusText.innerText = `¡Éxito! Se importaron ${importedCount} trabajadores localmente.`;
+          alert(`¡Importación masiva completada! Se procesaron ${importedCount} registros.`);
+          fileInput.value = "";
+          renderTable();
+        } else {
+          alert("No se encontraron registros válidos para importar.");
+          progressDiv.style.display = 'none';
+        }
+
+      } catch (err) {
+        alert("Error al procesar el archivo CSV: " + err.message);
+        progressDiv.style.display = 'none';
+      }
+    };
+
+    reader.readAsText(file);
+  }
+
   // Sincronización Google Apps Script
   async function syncWithGoogleSheets() {
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxUktLYTWSqI5Ldp-kb1rS-Be79Yitp7KnKnmjqz7H8Dfx6azlTfWY-TdQgRGKO_Ceu/exec";
+    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url');
 
-    if(GAS_WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbxUktLYTWSqI5Ldp-kb1rS-Be79Yitp7KnKnmjqz7H8Dfx6azlTfWY-TdQgRGKO_Ceu/exec")) {
-      alert("Configura primero la URL de tu Google Apps Script en la función syncWithGoogleSheets().");
+    if(!GAS_WEB_APP_URL) {
+      alert("Configura e ingresa la URL de tu Google Apps Script en la pestaña 'Ajustes'.");
+      switchTab('viewSettings', document.querySelectorAll('.md-nav-item')[3]);
       return;
     }
 
