@@ -47,13 +47,6 @@ BEGIN
         TO anon, authenticated
         USING (bucket_id = ''siagop-archivos'')
         WITH CHECK (bucket_id = ''siagop-archivos'');
-
-      DROP POLICY IF EXISTS "Permitir acceso publico a ttocc-archivos" ON storage.objects;
-      CREATE POLICY "Permitir acceso publico a ttocc-archivos"
-        ON storage.objects FOR ALL
-        TO anon, authenticated
-        USING (bucket_id = ''ttocc-archivos'')
-        WITH CHECK (bucket_id = ''ttocc-archivos'');
     ';
   END IF;
 END $$;
