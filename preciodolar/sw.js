@@ -40,8 +40,13 @@ self.addEventListener('activate', (event) => {
 
 // Interceptar peticiones para servir desde el caché si está offline
 self.addEventListener('fetch', (event) => {
-  // Ignoramos la petición del proxy/bcv para que no interfiera aquí
-  if (event.request.url.includes('corsproxy.io') || event.request.url.includes('bcv.org.ve')) {
+  // Ignoramos la petición de APIs/proxies externos para que no interfiera el caché
+  if (
+    event.request.url.includes('dolarapi.com') ||
+    event.request.url.includes('codetabs.com') ||
+    event.request.url.includes('corsproxy.io') ||
+    event.request.url.includes('bcv.org.ve')
+  ) {
     return;
   }
 
