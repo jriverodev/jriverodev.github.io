@@ -6,9 +6,10 @@ const offlineMsg = document.getElementById('offline-message');
 const inputUsd = document.getElementById('input-usd');
 const inputBs = document.getElementById('input-bs');
 
-// URL oficial del BCV y el proxy CORS que entrega el HTML como texto plano
+// Endpoints para obtener la tasa oficial del BCV
+const DOLAR_API_URL = 'https://ve.dolarapi.com/v1/dolares/oficial';
 const BCV_URL = 'https://www.bcv.org.ve/';
-const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(BCV_URL);
+const PROXY_SCRAPE_URL = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(BCV_URL);
 
 // Variable global para guardar la tasa numérica limpia para la calculadora
 let tasaNumerica = 0;
@@ -24,35 +25,74 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Formateador de fecha amigable para la interfaz
+function formatearFecha(fechaStr) {
+  if (!fechaStr) return new Date().toLocaleDateString('es-VE');
+  const d = new Date(fechaStr);
+  if (isNaN(d.getTime())) return fechaStr;
+  return d.toLocaleDateString('es-VE', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
 // ==========================================
-// 2. LÓGICA DE SCRAPING Y RESPALDO LOCAL
+// 2. LÓGICA DE OBTENCIÓN DE TASA Y RESPALDO LOCAL
 // ==========================================
-async function scrapingBCV() {
+async function obtenerTasaBCV() {
   // Mostrar estado de carga en la interfaz
   priceEl.classList.add('hidden');
   loadingEl.style.display = 'block';
   
   try {
-    const response = await fetch(PROXY_URL);
-    if (!response.ok) throw new Error('Error al conectar con el servidor proxy');
-    
-    // Leemos la respuesta como TEXTO (HTML puro)
-    const htmlContenido = await response.text(); 
+    let precioRaw = null;
+    let fecha = null;
 
-    // Creamos un DOM virtual para analizar el HTML del BCV
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContenido, 'text/html');
+    // Intentar vía API de DolarAPI (Tasa oficial BCV)
+    try {
+      const res = await fetch(DOLAR_API_URL);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.promedio) {
+          // Formatear el promedio de DolarAPI con coma decimal (ej. 820,1018)
+          const numPromedio = Number(data.promedio);
+          precioRaw = numPromedio.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+          if (data.fechaActualizacion) {
+            fecha = formatearFecha(data.fechaActualizacion);
+          }
+        }
+      }
+    } catch (eApi) {
+      console.warn('Falló el primer intento con DolarAPI:', eApi);
+    }
 
-    // --- SCRAPING ---
-    const dolarContainer = doc.querySelector('#dolar');
-    if (!dolarContainer) throw new Error('No se encontró la estructura del dólar en el HTML');
+    // Si falló DolarAPI, intentar scraping de respaldo de www.bcv.org.ve
+    if (!precioRaw) {
+      const response = await fetch(PROXY_SCRAPE_URL);
+      if (!response.ok) throw new Error('Error al conectar con el servidor proxy de respaldo');
 
-    // Extraemos el texto del precio (etiqueta 'strong')
-    const precioRaw = dolarContainer.querySelector('strong').textContent.trim();
-    
-    // Extraemos la fecha valor
-    const fechaContainer = doc.querySelector('.date-display-single');
-    const fecha = fechaContainer ? fechaContainer.textContent.trim() : new Date().toLocaleDateString();
+      const htmlContenido = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContenido, 'text/html');
+
+      const dolarContainer = doc.querySelector('#dolar');
+      if (!dolarContainer) throw new Error('No se encontró la estructura del dólar en el HTML');
+
+      precioRaw = dolarContainer.querySelector('strong').textContent.trim();
+
+      const fechaContainer = doc.querySelector('.date-display-single');
+      fecha = fechaContainer ? fechaContainer.textContent.trim() : new Date().toLocaleDateString('es-VE');
+    }
+
+    if (!precioRaw) {
+      throw new Error('No se pudo obtener el precio de la tasa oficial');
+    }
+
+    if (!fecha) {
+      fecha = new Date().toLocaleDateString('es-VE');
+    }
 
     // Actualizamos la interfaz
     updateUI(precioRaw, fecha);
@@ -64,7 +104,7 @@ async function scrapingBCV() {
     offlineMsg.classList.add('hidden');
 
   } catch (error) {
-    console.error('Error haciendo scraping al BCV:', error);
+    console.error('Error obteniendo tasa del BCV:', error);
     // Si la red falla, recurre inmediatamente al respaldo local
     loadLocalData();
   } finally {
@@ -78,8 +118,8 @@ function updateUI(price, date) {
   priceEl.textContent = price;
   dateEl.textContent = date;
   
-  // Limpiamos la string del BCV (cambiamos coma por punto) y la convertimos a número
-  tasaNumerica = parseFloat(price.replace(',', '.'));
+  // Limpiamos la string del BCV (eliminamos separadores de miles y cambiamos coma por punto decimal)
+  tasaNumerica = parseFloat(price.replace(/\./g, '').replace(',', '.'));
   
   // Si el usuario ya tenía montos en la calculadora, se recalculan con la nueva tasa
   if (inputUsd.value) calcularDeUsdaBs();
@@ -128,7 +168,7 @@ function calcularDeBsaUsd() {
 // ==========================================
 // 4. CONTROLADORES DE EVENTOS (LISTENERS)
 // ==========================================
-refreshBtn.addEventListener('click', scrapingBCV);
+refreshBtn.addEventListener('click', obtenerTasaBCV);
 
 // Escuchas en tiempo real para los inputs de la calculadora
 inputUsd.addEventListener('input', calcularDeUsdaBs);
@@ -140,7 +180,7 @@ window.addEventListener('offline', () => offlineMsg.classList.remove('hidden'));
 
 // Ejecución inicial automática al abrir la aplicación
 if (navigator.onLine) {
-  scrapingBCV();
+  obtenerTasaBCV();
 } else {
   loadLocalData();
 }
