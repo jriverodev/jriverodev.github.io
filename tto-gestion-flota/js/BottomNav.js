@@ -6,7 +6,7 @@
 
 (function () {
     const RUTAS_TAB = [
-        { hash: '#/dashboard', label: 'Inicio', icon: 'fa-gauge-high', targetUrl: 'panel.html' },
+        { hash: '#/dashboard', label: 'Inicio', icon: 'fa-gauge-high', targetUrl: 'visor.html' },
         { hash: '#/activos', label: 'Activos', icon: 'fa-truck-front', targetUrl: 'form-flota.html' },
         { hash: '#/mantenimiento', label: 'Mantenimiento', icon: 'fa-wrench', targetUrl: 'form-talleres.html' },
         { hash: '#/roles', label: 'Roles', icon: 'fa-user-shield', targetUrl: 'admin.html#/roles' }
@@ -54,9 +54,6 @@
 
         container.innerHTML = tabsFiltrados.map(tab => {
             let targetUrl = tab.targetUrl;
-            if (tab.hash === '#/dashboard' && perm.esFlota && !perm.esAdmin) {
-                targetUrl = 'visor-flota.html';
-            }
 
             let esActivo = false;
             if (tab.hash === '#/dashboard' && (currentPath === 'panel.html' || currentPath === 'visor.html' || currentPath === 'patio.html')) esActivo = true;
