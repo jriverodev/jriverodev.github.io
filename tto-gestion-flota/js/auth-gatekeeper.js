@@ -46,12 +46,7 @@
 
         // SI HAY SESIÓN O TOKEN Y INTENTA ACCEDER A INDEX.HTML
         if ((session || localUserId || localToken) && (paginaActual === 'index.html' || paginaActual === '')) {
-            const perm = obtenerRolYModuloUsuario();
-            if (perm.esFlota && !perm.esAdmin) {
-                window.location.href = 'visor-flota.html';
-            } else {
-                window.location.href = 'panel.html';
-            }
+            window.location.href = 'visor.html';
             return;
         }
 

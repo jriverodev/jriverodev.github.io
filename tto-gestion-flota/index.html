@@ -152,11 +152,7 @@
                             localStorage.setItem('siagop_user_rol', userRol);
                             localStorage.setItem('siagop_user_modulo', userMod);
 
-                            if (userRol.toLowerCase() === 'operador_flota' || userMod.toUpperCase() === 'FLOTA') {
-                                window.location.href = 'visor-flota.html';
-                            } else {
-                                window.location.href = 'panel.html';
-                            }
+                            window.location.href = 'visor.html';
                             return;
                         } else if (res && res.mensaje) {
                             if (errDiv) {
