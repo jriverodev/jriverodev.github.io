@@ -171,15 +171,6 @@ function calcularDeBsaUsd() {
 // ==========================================
 refreshBtn.addEventListener('click', obtenerTasaBCV);
 
-if (swapBtn) {
-  swapBtn.addEventListener('click', () => {
-    const valUsd = inputUsd.value;
-    const valBs = inputBs.value;
-    inputUsd.value = valBs;
-    calcularDeUsdaBs();
-  });
-}
-
 // Escuchas en tiempo real para los inputs de la calculadora
 inputUsd.addEventListener('input', calcularDeUsdaBs);
 inputBs.addEventListener('input', calcularDeBsaUsd);
