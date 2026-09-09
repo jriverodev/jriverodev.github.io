@@ -27,7 +27,7 @@
         if (!navContainer) {
             navContainer = document.createElement('nav');
             navContainer.id = 'siagop-bottom-nav';
-            navContainer.className = 'fixed bottom-0 left-0 right-0 z-[40] bg-slate-900/95 border-t border-slate-800 h-16 flex items-center justify-around px-2 shadow-2xl backdrop-blur-md transition-all';
+            navContainer.className = 'touch-none overscroll-contain fixed bottom-0 left-0 right-0 z-[40] bg-slate-900/95 border-t border-slate-800 h-16 flex items-center justify-around px-2 shadow-2xl backdrop-blur-md transition-all';
             document.body.appendChild(navContainer);
         }
 
