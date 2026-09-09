@@ -1189,7 +1189,7 @@ async function procesarSincronizacionPendiente(key = SYNC_QUEUE_KEY) {
     const sincronizado = await syncData();
     if (sincronizado) {
         console.log('[Sync Complete] Todos los registros locales están sincronizados en Supabase.');
-        mostrarNotificacion('Sincronización con la nube completada.', 'exito');
+       /* mostrarNotificacion('Sincronización con la nube completada.', 'exito'); */
     }
 
     if (!APP_CONFIG || !APP_CONFIG.URL_API) return;
