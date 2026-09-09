@@ -41,7 +41,7 @@ BEGIN
   IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'storage' AND tablename = 'objects') THEN
     EXECUTE '
       DROP POLICY IF EXISTS "Permitir acceso publico a siagop-archivos" ON storage.objects;
-      CREATE POLICY "Permitir acceso publico a ttocc-archivos"
+      CREATE POLICY "Permitir acceso publico a siagop-archivos"
         ON storage.objects FOR ALL
         TO anon, authenticated
         USING (bucket_id = ''siagop-archivos'')
