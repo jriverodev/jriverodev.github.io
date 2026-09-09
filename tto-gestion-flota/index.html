@@ -138,15 +138,25 @@
                             localStorage.setItem('siagop_user_org_id', res.organizacion_id);
                             localStorage.setItem('organizacion_nombre', res.organizacion_nombre);
 
+                            const userRol = res.rol_id || 'admin';
+                            const userMod = res.modulo || 'TODOS';
+
                             sessionStorage.setItem('SIAGOP_SESSION_TOKEN', 'tok-inst-' + Date.now());
                             sessionStorage.setItem('SIAGOP_OPERADOR', res.usuario_nombre || usuarioReq);
-                            sessionStorage.setItem('SIAGOP_ROL', res.rol_id || 'admin');
-                            sessionStorage.setItem('SIAGOP_MODULO', res.modulo || 'TODOS');
+                            sessionStorage.setItem('SIAGOP_ROL', userRol);
+                            sessionStorage.setItem('SIAGOP_MODULO', userMod);
                             sessionStorage.setItem('SIAGOP_USER_ID', res.usuario_id);
                             sessionStorage.setItem('SIAGOP_USER_ORG_ID', res.organizacion_id);
                             sessionStorage.setItem('SIAGOP_ORG_NOMBRE', res.organizacion_nombre);
 
-                            window.location.href = 'panel.html';
+                            localStorage.setItem('siagop_user_rol', userRol);
+                            localStorage.setItem('siagop_user_modulo', userMod);
+
+                            if (userRol.toLowerCase() === 'operador_flota' || userMod.toUpperCase() === 'FLOTA') {
+                                window.location.href = 'visor-flota.html';
+                            } else {
+                                window.location.href = 'panel.html';
+                            }
                             return;
                         } else if (res && res.mensaje) {
                             if (errDiv) {

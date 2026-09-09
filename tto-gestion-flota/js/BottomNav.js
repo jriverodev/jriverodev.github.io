@@ -43,7 +43,21 @@
         const currentPath = window.location.pathname.split('/').pop() || 'panel.html';
         const currentHash = window.location.hash || '';
 
-        container.innerHTML = RUTAS_TAB.map(tab => {
+        const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : { esAdmin: true, esTalleres: true, esFlota: true };
+
+        const tabsFiltrados = RUTAS_TAB.filter(tab => {
+            if (tab.hash === '#/activos' && !perm.esFlota) return false;
+            if (tab.hash === '#/mantenimiento' && !perm.esTalleres) return false;
+            if (tab.hash === '#/roles' && !perm.esAdmin) return false;
+            return true;
+        });
+
+        container.innerHTML = tabsFiltrados.map(tab => {
+            let targetUrl = tab.targetUrl;
+            if (tab.hash === '#/dashboard' && perm.esFlota && !perm.esAdmin) {
+                targetUrl = 'visor-flota.html';
+            }
+
             let esActivo = false;
             if (tab.hash === '#/dashboard' && (currentPath === 'panel.html' || currentPath === 'visor.html' || currentPath === 'patio.html')) esActivo = true;
             else if (tab.hash === '#/activos' && (currentPath === 'form-flota.html' || currentPath === 'visor-flota.html')) esActivo = true;
@@ -53,7 +67,7 @@
             const claseColor = esActivo ? 'text-sky-400 font-bold border-t-2 border-sky-400 -mt-0.5' : 'text-slate-400 hover:text-slate-200';
 
             return `
-                <button type="button" onclick="window.SIAGOP_BOTTOM_NAV.navegarRuta('${tab.targetUrl}')"
+                <button type="button" onclick="window.SIAGOP_BOTTOM_NAV.navegarRuta('${targetUrl}')"
                    class="flex flex-col items-center justify-center w-full h-full text-center transition-all cursor-pointer ${claseColor}">
                     <i class="fa-solid ${tab.icon} text-lg mb-0.5"></i>
                     <span class="text-[10px] tracking-wider uppercase font-bold">${tab.label}</span>
