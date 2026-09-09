@@ -687,8 +687,11 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
     const clean = urlOrPath.trim();
     if (!clean) return '';
 
-    const path = extraerStoragePath(clean, bucketDefault);
+    let path = extraerStoragePath(clean, bucketDefault);
     if (!path) return clean; // Retain Base64 or Google Drive thumbnail links unchanged
+
+    // CORRECCIÓN CRÍTICA: Eliminar barras diagonales iniciales
+    path = path.replace(/^\/+/, '');
 
     const cacheKey = `${bucketDefault}:${path}`;
     const cached = SIAGOP_SIGNED_URL_CACHE.get(cacheKey);
@@ -706,6 +709,8 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
                     expiresAt: Date.now() + (expiresIn * 1000)
                 });
                 return data.signedUrl;
+            } else if (error) {
+                console.warn('[Supabase Storage] Error en createSignedUrl:', error.message || error);
             }
         } catch (e) {
             console.warn('[Supabase Storage] Error obteniendo signedUrl para path:', path, e);
