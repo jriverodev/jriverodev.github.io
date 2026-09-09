@@ -426,14 +426,21 @@ async function handleLocalApiGateway(payload) {
                 let payloadRemoto = { ...recordExistente, ...registro };
                 if (payloadRemoto.documento_eliminar) {
                     const docUrlEliminar = recordExistente.documento_url || payloadRemoto.documento_url;
-                    if (docUrlEliminar && client && client.storage) {
-                        const pathEliminar = extraerStoragePath(docUrlEliminar, 'siagop-archivos') || extraerStoragePath(docUrlEliminar, 'ttocc-archivos');
-                        if (pathEliminar) {
+                    if (client && client.storage) {
+                        const pathEliminar = docUrlEliminar ? (extraerStoragePath(docUrlEliminar, 'siagop-archivos') || extraerStoragePath(docUrlEliminar, 'ttocc-archivos')) : null;
+                        const posiblesRutas = [];
+                        if (pathEliminar) posiblesRutas.push(pathEliminar);
+                        ['pdf', 'png', 'jpg', 'jpeg', 'webp'].forEach(ext => {
+                            posiblesRutas.push(`activos/${idUnidad}/documento.${ext}`);
+                            posiblesRutas.push(`${idUnidad}/documento.${ext}`);
+                            posiblesRutas.push(`documento.${ext}`);
+                        });
+                        const rutasUnicas = Array.from(new Set(posiblesRutas));
+                        for (const bucketName of ['siagop-archivos', 'ttocc-archivos']) {
                             try {
-                                await client.storage.from('siagop-archivos').remove([pathEliminar]);
-                                await client.storage.from('ttocc-archivos').remove([pathEliminar]);
+                                await client.storage.from(bucketName).remove(rutasUnicas);
                             } catch (eStorageDel) {
-                                console.warn('[Supabase Storage] Error removiendo documento:', eStorageDel);
+                                console.warn(`[Supabase Storage] Error removiendo documento en ${bucketName}:`, eStorageDel);
                             }
                         }
                     }
@@ -503,6 +510,25 @@ async function handleLocalApiGateway(payload) {
         const client = ensureSupabaseClient();
         if (navigator.onLine && client && idUnidad) {
             try {
+                const { data: fetchOld } = await client.from('maestro_activos').select('documento_url').eq('id_unidad', String(idUnidad)).maybeSingle();
+                const docUrl = fetchOld ? fetchOld.documento_url : null;
+                const posiblesRutas = [];
+                if (docUrl) {
+                    const pathDoc = extraerStoragePath(docUrl, 'siagop-archivos') || extraerStoragePath(docUrl, 'ttocc-archivos');
+                    if (pathDoc) posiblesRutas.push(pathDoc);
+                }
+                ['pdf', 'png', 'jpg', 'jpeg', 'webp'].forEach(ext => {
+                    posiblesRutas.push(`activos/${idUnidad}/documento.${ext}`);
+                    posiblesRutas.push(`${idUnidad}/documento.${ext}`);
+                });
+                const rutasUnicas = Array.from(new Set(posiblesRutas));
+                if (client.storage) {
+                    for (const bucketName of ['siagop-archivos', 'ttocc-archivos']) {
+                        try {
+                            await client.storage.from(bucketName).remove(rutasUnicas);
+                        } catch (eDelStorage) {}
+                    }
+                }
                 await client.from('maestro_activos').delete().eq('id_unidad', String(idUnidad));
             } catch (e) {
                 console.warn('[Supabase] Error eliminando activo en Supabase:', e);
@@ -680,7 +706,7 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
     const bucketsToMatch = [bucketDefault, 'siagop-archivos', 'ttocc-archivos'];
     for (const b of bucketsToMatch) {
         if (clean.includes(`/storage/v1/object/public/${b}/`)) {
-            return clean.split(`/storage/v1/object/public/${b}/`)[1];
+            return clean.split(`/storage/v1/object/public/${b}/`)[1]?.split('?')[0];
         }
         if (clean.includes(`/storage/v1/object/sign/${b}/`)) {
             return clean.split(`/storage/v1/object/sign/${b}/`)[1]?.split('?')[0];
