@@ -336,7 +336,7 @@ async function handleLocalApiGateway(payload) {
 
                 const recordSanitizado = {};
                 for (const col of columnasPermitidas) {
-                    if (payloadRemoto[col] !== undefined && payloadRemoto[col] !== null) {
+                    if (payloadRemoto[col] !== undefined) {
                         recordSanitizado[col] = payloadRemoto[col];
                     }
                 }
@@ -425,8 +425,22 @@ async function handleLocalApiGateway(payload) {
 
                 let payloadRemoto = { ...recordExistente, ...registro };
                 if (payloadRemoto.documento_eliminar) {
+                    const docUrlEliminar = recordExistente.documento_url || payloadRemoto.documento_url;
+                    if (docUrlEliminar && client && client.storage) {
+                        const pathEliminar = extraerStoragePath(docUrlEliminar, 'siagop-archivos') || extraerStoragePath(docUrlEliminar, 'ttocc-archivos');
+                        if (pathEliminar) {
+                            try {
+                                await client.storage.from('siagop-archivos').remove([pathEliminar]);
+                                await client.storage.from('ttocc-archivos').remove([pathEliminar]);
+                            } catch (eStorageDel) {
+                                console.warn('[Supabase Storage] Error removiendo documento:', eStorageDel);
+                            }
+                        }
+                    }
                     payloadRemoto.documento_url = null;
                     payloadRemoto.documento_nombre = null;
+                    registro.documento_url = null;
+                    registro.documento_nombre = null;
                 }
                 if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(idUnidad));
@@ -455,7 +469,7 @@ async function handleLocalApiGateway(payload) {
 
                 const recordSanitizado = {};
                 for (const col of columnasPermitidasActivos) {
-                    if (payloadRemoto[col] !== undefined && payloadRemoto[col] !== null) {
+                    if (payloadRemoto[col] !== undefined) {
                         recordSanitizado[col] = payloadRemoto[col];
                     }
                 }
@@ -663,7 +677,7 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
         return null;
     }
 
-    const bucketsToMatch = [bucketDefault, 'siagop-archivos'];
+    const bucketsToMatch = [bucketDefault, 'siagop-archivos', 'ttocc-archivos'];
     for (const b of bucketsToMatch) {
         if (clean.includes(`/storage/v1/object/public/${b}/`)) {
             return clean.split(`/storage/v1/object/public/${b}/`)[1];

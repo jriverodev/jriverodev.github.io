@@ -36,6 +36,7 @@ CREATE POLICY "Permitir escritura publica historial_mantenimiento"
   WITH CHECK (true);
 
 -- 5. Políticas de Storage para el bucket ttocc-archivos (si existe)
+-- 5. Políticas de Storage para los buckets siagop-archivos y ttocc-archivos (si existen)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'storage' AND tablename = 'objects') THEN
