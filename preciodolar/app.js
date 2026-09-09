@@ -5,6 +5,7 @@ const refreshBtn = document.getElementById('refresh-btn');
 const offlineMsg = document.getElementById('offline-message');
 const inputUsd = document.getElementById('input-usd');
 const inputBs = document.getElementById('input-bs');
+const swapBtn = document.getElementById('swap-btn');
 
 // Endpoints para obtener la tasa oficial del BCV
 const DOLAR_API_URL = 'https://ve.dolarapi.com/v1/dolares/oficial';
