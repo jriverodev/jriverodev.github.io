@@ -707,7 +707,7 @@ async function guardarNuevoRegistro(event) {
     if (documento_url) {
         payload.documento_url = documento_url;
         payload.documento_nombre = docNombre;
-    } else {
+    } else if (docBase64) {
         payload.documento_base64 = docBase64;
         payload.documento_nombre = docNombre;
     }
@@ -882,7 +882,7 @@ async function guardarEdicionModal(event) {
     if (documento_url) {
         payload.documento_url = documento_url;
         payload.documento_nombre = docNombre;
-    } else {
+    } else if (docBase64) {
         payload.documento_base64 = docBase64;
         payload.documento_nombre = docNombre;
     }
@@ -893,6 +893,7 @@ async function guardarEdicionModal(event) {
         SIAGOP_UI.warning("Sin Conexión", "La edición se guardó localmente. Se sincronizará automáticamente.");
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
+        documentoEliminarFlag = false;
         return;
     }
 
@@ -917,6 +918,7 @@ async function guardarEdicionModal(event) {
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
+        documentoEliminarFlag = false;
     }
 }
 

@@ -301,7 +301,7 @@
 
             const cleanRecord = {};
             for (const col of columnasPermitidas) {
-                if (ready[col] !== undefined && ready[col] !== null) {
+                if (ready[col] !== undefined) {
                     cleanRecord[col] = ready[col];
                 }
             }
