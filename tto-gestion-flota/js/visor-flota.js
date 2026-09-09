@@ -10,6 +10,12 @@ let paginaActual = 1;
 const TAMANO_PAGINA = 20;
 
 document.addEventListener("DOMContentLoaded", () => {
+    const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : null;
+    if (perm && !perm.esAdmin && perm.esTalleres && !perm.esFlota) {
+        window.location.href = "visor-talleres.html";
+        return;
+    }
+
     cargarDatosAnaliticos();
 
     const searchInput = document.getElementById("visor-busqueda");

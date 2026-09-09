@@ -8,6 +8,12 @@ let instanciaChartEstatus = null;
 const TALLERES_INTERNOS = ["taller lagunillas", "taller la salina", "taller lago medio"];
 
 document.addEventListener("DOMContentLoaded", () => {
+    const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : null;
+    if (perm && !perm.esAdmin && perm.esFlota && !perm.esTalleres) {
+        window.location.href = "visor-flota.html";
+        return;
+    }
+
     cargarDatosAnaliticos();
 
     const searchInput = document.getElementById("visor-busqueda");

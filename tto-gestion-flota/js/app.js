@@ -866,9 +866,18 @@ function obtenerTokenSesion() {
 function guardarSesion(token, usuario, rol = '', modulo = '', userId = '') {
     sessionStorage.setItem(SESSION_TOKEN_KEY, token);
     sessionStorage.setItem(OPERADOR_KEY, usuario);
-    if (rol) sessionStorage.setItem('SIAGOP_ROL', rol);
-    if (modulo) sessionStorage.setItem('SIAGOP_MODULO', modulo);
-    if (userId) sessionStorage.setItem('SIAGOP_USER_ID', userId);
+    if (rol) {
+        sessionStorage.setItem('SIAGOP_ROL', rol);
+        localStorage.setItem('siagop_user_rol', rol);
+    }
+    if (modulo) {
+        sessionStorage.setItem('SIAGOP_MODULO', modulo);
+        localStorage.setItem('siagop_user_modulo', modulo);
+    }
+    if (userId) {
+        sessionStorage.setItem('SIAGOP_USER_ID', userId);
+        localStorage.setItem('siagop_user_id', userId);
+    }
 }
 
 async function poblarSelectOperadores(selectId, moduloRequerido) {

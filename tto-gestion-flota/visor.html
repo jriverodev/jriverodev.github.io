@@ -49,10 +49,10 @@
     <main class="max-w-5xl mx-auto w-full px-6 py-16 flex-grow flex flex-col justify-center">
         <h2 class="text-center text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400 mb-12">Seleccione el visor de métricas e indicadores</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <div id="contenedor-tarjetas-visor" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
 
             <!-- VISOR 1: Talleres y Operaciones Principales -->
-            <a href="visor-talleres.html" class="group relative flex flex-col items-center justify-center p-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:border-blue-600 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 text-center min-h-[300px]">
+            <a href="visor-talleres.html" id="card-visor-talleres" class="group relative flex flex-col items-center justify-center p-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:border-blue-600 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 text-center min-h-[300px]">
                 <div class="w-20 h-20 bg-blue-600/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white rounded-lg flex items-center justify-center text-3xl mb-6 transition-all duration-300 border border-blue-500/20 group-hover:border-transparent">
                     <i class="fa-solid fa-chart-line"></i>
                 </div>
@@ -62,7 +62,7 @@
             </a>
 
             <!-- VISOR 2: Administración de Activos / Flota -->
-            <a href="visor-flota.html" class="group relative flex flex-col items-center justify-center p-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:border-blue-600 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 text-center min-h-[300px]">
+            <a href="visor-flota.html" id="card-visor-flota" class="group relative flex flex-col items-center justify-center p-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:border-blue-600 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 text-center min-h-[300px]">
                 <div class="w-20 h-20 bg-blue-600/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white rounded-lg flex items-center justify-center text-3xl mb-6 transition-all duration-300 border border-blue-500/20 group-hover:border-transparent">
                     <i class="fa-solid fa-car-side"></i>
                 </div>
@@ -72,6 +72,28 @@
             </a>
 
         </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardTalleres = document.getElementById('card-visor-talleres');
+            const cardFlota = document.getElementById('card-visor-flota');
+            const gridContainer = document.getElementById('contenedor-tarjetas-visor');
+
+            const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : { esAdmin: true, esTalleres: true, esFlota: true };
+
+            if (!perm.esAdmin) {
+                if (perm.esFlota && !perm.esTalleres) {
+                    if (cardTalleres) cardTalleres.classList.add('hidden');
+                    if (cardFlota) cardFlota.classList.remove('hidden');
+                    if (gridContainer) gridContainer.className = "flex justify-center w-full max-w-md mx-auto";
+                } else if (perm.esTalleres && !perm.esFlota) {
+                    if (cardFlota) cardFlota.classList.add('hidden');
+                    if (cardTalleres) cardTalleres.classList.remove('hidden');
+                    if (gridContainer) gridContainer.className = "flex justify-center w-full max-w-md mx-auto";
+                }
+            }
+        });
+    </script>
     </main>
 
    <footer class="w-full text-center py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors">
