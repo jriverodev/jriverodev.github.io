@@ -16,23 +16,44 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white antialiased">
 
-    <header class="w-full bg-slate-900/80 border-b border-slate-800 px-6 py-4 flex justify-between items-center backdrop-blur-md sticky top-0 z-40">
-        <div class="flex items-center gap-3">
-            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-lg border border-slate-700 transition-all active:scale-95">
-                <i class="fa-solid fa-arrow-left text-sm"></i>
+    <header class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors sticky top-0 z-50">
+        <div class="flex items-center h-14 px-2">
+            <!-- Atrás -->
+            <a href="index.html" title="Volver al Inicio" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors active:scale-95">
+                <i class="fa-solid fa-arrow-left text-slate-700 dark:text-slate-300"></i>
             </a>
-            <div class="bg-blue-600/10 p-2.5 rounded-lg border border-blue-500/20 text-blue-400">
-                <i class="fa-solid fa-building-circle-check text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-sm font-black uppercase tracking-widest text-white">SIAGOP Multi-Tenant</h1>
-                <p class="text-[9px] text-slate-400 uppercase tracking-widest font-black">Registro Comercial de Organización</p>
+            <!-- Título -->
+            <h1 class="ml-2 text-base font-semibold text-slate-900 dark:text-slate-50 truncate">SIAGOP Multi-Tenant</h1>
+            <!-- Spacer -->
+            <div class="flex-1"></div>
+            <!-- LED estado -->
+            <span id="led-network-status" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)] mr-2 inline-block"></span>
+            <!-- Tema -->
+            <button onclick="toggleTema()" title="Cambiar Tema" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors active:scale-95">
+                <i class="fa-solid fa-sun text-slate-700 dark:text-slate-300 theme-toggle-icon"></i>
+            </button>
+            <!-- Perfil -->
+            <div class="relative">
+                <button onclick="window.SIAGOP_PROFILE.toggleDropdown()" title="Perfil de usuario" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors active:scale-95">
+                    <i class="fa-solid fa-user text-slate-700 dark:text-slate-300"></i>
+                </button>
+                <div id="siagop-profile-dropdown" class="hidden absolute right-0 top-12 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 p-3">
+                    <p id="header-organizacion-nombre" class="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 pb-2 border-b border-slate-200 dark:border-slate-700 mb-2">
+                        Gerencia de Transporte Terrestre Occidente
+                    </p>
+                    <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                        <i class="fa-solid fa-house text-blue-500 w-4"></i> Inicio
+                    </a>
+                    <button onclick="window.SIAGOP_PROFILE.cerrarSesionCompleta()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer text-left">
+                        <i class="fa-solid fa-right-from-bracket w-4"></i> Cerrar Sesión
+                    </button>
+                </div>
             </div>
         </div>
-
-        <button onclick="toggleTema()" title="Cambiar Tema" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-lg border border-slate-700 transition-all cursor-pointer active:scale-95">
-            <i class="fa-solid fa-sun theme-toggle-icon"></i>
-        </button>
+        <!-- Sub-barra de contexto -->
+        <div class="flex items-center h-8 px-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700/50">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Registro Comercial de Organización</p>
+        </div>
     </header>
 
     <main class="max-w-xl mx-auto w-full px-4 py-8 flex-grow flex flex-col justify-center">
