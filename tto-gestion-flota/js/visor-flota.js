@@ -10,9 +10,21 @@ let paginaActual = 1;
 const TAMANO_PAGINA = 20;
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Validar sesión obligatoria
+    const sessionToken = sessionStorage.getItem('SIAGOP_SESSION_TOKEN');
+    const userId = localStorage.getItem('siagop_user_id') || sessionStorage.getItem('SIAGOP_USER_ID');
+    if (!sessionToken && !userId) {
+        window.location.href = "index.html";
+        return;
+    }
+
     const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : null;
-    if (perm && !perm.esAdmin && perm.esTalleres && !perm.esFlota) {
-        window.location.href = "visor-talleres.html";
+    if (perm && !perm.esAdmin && !perm.esFlota) {
+        if (perm.esTalleres) {
+            window.location.href = "visor-talleres.html";
+        } else {
+            window.location.href = "index.html";
+        }
         return;
     }
 

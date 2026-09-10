@@ -8,9 +8,21 @@ let instanciaChartEstatus = null;
 const TALLERES_INTERNOS = ["taller lagunillas", "taller la salina", "taller lago medio"];
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Validar sesión obligatoria
+    const sessionToken = sessionStorage.getItem('SIAGOP_SESSION_TOKEN');
+    const userId = localStorage.getItem('siagop_user_id') || sessionStorage.getItem('SIAGOP_USER_ID');
+    if (!sessionToken && !userId) {
+        window.location.href = "index.html";
+        return;
+    }
+
     const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : null;
-    if (perm && !perm.esAdmin && perm.esFlota && !perm.esTalleres) {
-        window.location.href = "visor-flota.html";
+    if (perm && !perm.esAdmin && !perm.esTalleres) {
+        if (perm.esFlota) {
+            window.location.href = "visor-flota.html";
+        } else {
+            window.location.href = "index.html";
+        }
         return;
     }
 
