@@ -625,7 +625,6 @@
             1. Datos Básicos y de Identificación
           </div>
           <div class="md-grid">
-            <div class="md-text-field"><label>ITEM</label><input type="text" id="item"></div>
             <div class="md-text-field"><label>N° Personal</label><input type="text" id="nPersonal"></div>
             <div class="md-text-field"><label>Cédula (*)</label><input type="text" id="cedula" required></div>
             <div class="md-text-field"><label>Nombre y Apellido (*)</label><input type="text" id="nombreApellido" required></div>
@@ -811,7 +810,6 @@
     const worker = await db.workers.get(cedula);
     if (!worker) return;
 
-    document.getElementById('item').value = worker.item || "";
     document.getElementById('nPersonal').value = worker.nPersonal || "";
     document.getElementById('cedula').value = worker.cedula || "";
     document.getElementById('cedula').setAttribute('readonly', 'true');
@@ -859,8 +857,10 @@
       return;
     }
 
+    const existingWorker = isEditingCedula ? await db.workers.get(isEditingCedula) : null;
+
     const workerData = {
-      item: document.getElementById('item').value,
+      item: existingWorker?.item || "",
       nPersonal: document.getElementById('nPersonal').value,
       cedula: cedulaVal,
       nombreApellido: nombreVal,
