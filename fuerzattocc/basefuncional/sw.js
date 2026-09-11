@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
           if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
             return networkResponse;
           }
-
+          
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -72,7 +72,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         });
       }).catch(() => {
-        // Aquí podrías retornar un mensaje de error si fallara todo,
+        // Aquí podrías retornar un mensaje de error si fallara todo, 
         // pero como es una SPA localhouse, con lo anterior basta.
       })
   );

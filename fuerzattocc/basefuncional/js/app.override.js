@@ -25,5 +25,5 @@ document.addEventListener('DOMContentLoaded', function(){
         if(ensureRebind() || attempts>10) clearInterval(id);
       }, 200);
     }
-  }catch(err){console.warn('app.override.js failed to bind:', err);}
+  }catch(err){console.warn('app.override.js failed to bind:', err);} 
 });
