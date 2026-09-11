@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Control de Fuerza Laboral</title>
+  <title>Control de Fuerza Laboral y Vacaciones</title>
   <link rel="manifest" href="manifest.json">
   <!-- Material Design Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
 
+  <!-- Dexie.js, XLSX & SweetAlert2 -->
   <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
     :root {
       --md-sys-color-primary: #0b57d0;
@@ -49,7 +53,7 @@
       padding: 0;
       background-color: var(--md-sys-color-surface);
       color: var(--md-sys-color-on-surface);
-      padding-bottom: 80px; /* Space for Bottom Nav */
+      padding-bottom: 80px;
     }
 
     /* Top App Bar */
@@ -72,7 +76,7 @@
       gap: 12px;
     }
     .md-top-app-bar h1 {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 500;
       margin: 0;
     }
@@ -181,7 +185,7 @@
       justify-content: center;
       gap: 8px;
       height: 48px;
-      padding: 0 24px;
+      padding: 0 20px;
       font-family: inherit;
       font-size: 14px;
       font-weight: 500;
@@ -205,6 +209,10 @@
       background-color: transparent;
       border: 1px solid var(--md-sys-color-outline);
       color: var(--md-sys-color-primary);
+    }
+    .md-button-danger {
+      background-color: var(--md-sys-color-error);
+      color: #ffffff;
     }
     .md-button-group {
       display: flex;
@@ -347,9 +355,15 @@
   <header class="md-top-app-bar">
     <div class="title-container">
       <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">badge</span>
-      <h1>Fuerza Laboral PWA</h1>
+      <h1>Control Fuerza Laboral y Vacaciones</h1>
     </div>
-    <span class="material-symbols-outlined" id="onlineIndicator" style="color: var(--md-sys-color-success);" title="En línea">wifi</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="md-button md-button-outlined" style="height: 36px; padding: 0 12px; font-size: 12px;" onclick="startGuidedTour()">
+        <span class="material-symbols-outlined" style="font-size: 18px;">help_outline</span>
+        Guía
+      </button>
+      <span class="material-symbols-outlined" id="onlineIndicator" style="color: var(--md-sys-color-success);" title="En línea">wifi</span>
+    </div>
   </header>
 
   <main class="app-container">
@@ -389,14 +403,24 @@
             <div class="md-text-field"><label>Indicador del Trabajador</label><input type="text" id="indicador"></div>
           </div>
 
-          <!-- SECCIÓN 3: ESTATUS -->
+          <!-- SECCIÓN 3: ESTATUS OPERATIVO Y VACACIONES -->
           <div class="md-section-header">
             <span class="material-symbols-outlined" style="font-size: 18px;">rule</span>
-            3. Estatus Operativo
+            3. Estatus Operativo y Vacaciones
           </div>
           <div class="md-grid">
             <div class="md-text-field"><label>Estatus de Condición</label><input type="text" id="estatusCondicion"></div>
             <div class="md-text-field"><label>Status de FL</label><input type="text" id="statusFl"></div>
+            <div class="md-text-field"><label>Días Pendientes Vacaciones</label><input type="number" id="diasPendientesVacaciones" placeholder="0"></div>
+            <div class="md-text-field"><label>Período Vacacional</label><input type="text" id="periodoVacacional" placeholder="2025-2026"></div>
+            <div class="md-text-field"><label>Estatus Programación Vacaciones</label>
+              <select id="estatusVacaciones">
+                <option value="AL DIA">AL DÍA</option>
+                <option value="PENDIENTE">PENDIENTE</option>
+                <option value="EN DISFRUTE">EN DISFRUTE</option>
+                <option value="PROCESADO">PROCESADO</option>
+              </select>
+            </div>
           </div>
 
           <!-- SECCIÓN 4: ESTRUCTURA ORGANIZATIVA -->
@@ -490,14 +514,20 @@
     <!-- VISTA 2: LISTADO DE REGISTROS -->
     <section id="viewList" class="view-section">
       <div class="md-card">
-        <div class="md-card-header">
-          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">group</span>
-          <h2 class="md-card-title">Trabajadores Registrados</h2>
+        <div class="md-card-header" style="justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">group</span>
+            <h2 class="md-card-title">Trabajadores Registrados</h2>
+          </div>
+          <button class="md-button md-button-outlined" style="height: 36px; padding: 0 12px; font-size: 12px;" onclick="exportToExcel()">
+            <span class="material-symbols-outlined" style="font-size: 18px;">file_download</span>
+            Exportar Excel
+          </button>
         </div>
 
         <div class="md-search-bar">
           <span class="material-symbols-outlined" style="color: var(--md-sys-color-on-surface-variant);">search</span>
-          <input type="text" id="search" placeholder="Buscar por Nombre o Cédula..." onkeyup="renderTable()">
+          <input type="text" id="search" placeholder="Buscar por Nombre, Cédula o Puesto..." onkeyup="renderTable()">
         </div>
 
         <div class="table-responsive">
@@ -507,11 +537,13 @@
                 <th>Cédula</th>
                 <th>Nombre y Apellido</th>
                 <th>Puesto</th>
+                <th>Vacaciones</th>
                 <th>Licencia</th>
                 <th>Cédula Doc</th>
                 <th>Carta Médica</th>
                 <th>Anexo</th>
                 <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -520,18 +552,18 @@
       </div>
     </section>
 
-    <!-- VISTA 3: MÓDULO DE IMPORTACIÓN MASIVA -->
+    <!-- VISTA 3: MÓDULO DE IMPORTACIÓN MASIVA (CSV / EXCEL) -->
     <section id="viewImport" class="view-section">
       <div class="md-card">
         <div class="md-card-header">
           <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">upload_file</span>
-          <h2 class="md-card-title">Importación Masiva de Datos</h2>
+          <h2 class="md-card-title">Importación Masiva (Excel / CSV)</h2>
         </div>
 
         <div class="info-banner">
           <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
           <div>
-            Descarga la plantilla oficial en formato CSV para ingresar tus registros. Asegúrate de incluir las columnas <b>CEDULA</b> y <b>NOMBRE Y APELLIDO</b> obligatoriamente.
+            Puedes importar tus datos en formato <b>CSV</b> o <b>Excel (.xlsx)</b>. Descarga la plantilla oficial en CSV o usa tu archivo de consolidado de vacaciones.
           </div>
         </div>
 
@@ -544,12 +576,12 @@
 
         <div class="md-section-header">
           <span class="material-symbols-outlined" style="font-size: 18px;">file_upload</span>
-          Seleccionar Archivo CSV
+          Seleccionar Archivo CSV / XLSX
         </div>
 
         <div class="md-text-field">
-          <label>Cargar Archivo CSV de Trabajadores</label>
-          <input type="file" id="csvFileInput" accept=".csv">
+          <label>Cargar Archivo Excel (.xlsx) o CSV</label>
+          <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls">
         </div>
 
         <div id="importProgress" style="display: none; margin-top: 16px;">
@@ -566,7 +598,7 @@
       </div>
     </section>
 
-    <!-- VISTA 4: CONFIGURACIÓN -->
+    <!-- VISTA 4: CONFIGURACIÓN Y RESPALDOS -->
     <section id="viewSettings" class="view-section">
       <div class="md-card">
         <div class="md-card-header">
@@ -583,6 +615,32 @@
           <button type="button" class="md-button md-button-filled" onclick="saveGasUrl()">
             <span class="material-symbols-outlined">save</span>
             Guardar URL
+          </button>
+        </div>
+      </div>
+
+      <!-- MÓDULO DE RESPALDO Y RESTAURACIÓN DE BASE DE DATOS LOCAL -->
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">backup</span>
+          <h2 class="md-card-title">Respaldo y Mantenimiento Local</h2>
+        </div>
+
+        <div class="md-button-group">
+          <button type="button" class="md-button md-button-tonal" onclick="exportDatabaseBackup()">
+            <span class="material-symbols-outlined">download_for_offline</span>
+            Exportar Backup JSON
+          </button>
+
+          <label class="md-button md-button-outlined" style="cursor: pointer;">
+            <span class="material-symbols-outlined">restore</span>
+            Restaurar Backup JSON
+            <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="restoreDatabaseBackup(event)">
+          </label>
+
+          <button type="button" class="md-button md-button-danger" onclick="clearDatabasePrompt()">
+            <span class="material-symbols-outlined">delete_forever</span>
+            Vaciar Base Local
           </button>
         </div>
       </div>
@@ -613,8 +671,8 @@
 <script>
   // Inicialización Dexie.js
   const db = new Dexie("FuerzaLaboralDB");
-  db.version(1).stores({
-    workers: 'cedula, nombreApellido, syncStatus'
+  db.version(2).stores({
+    workers: 'cedula, nombreApellido, syncStatus, estatusVacaciones'
   });
 
   const workerForm = document.getElementById('workerForm');
@@ -642,10 +700,10 @@
     const url = document.getElementById('gasUrlInput').value.trim();
     if (url) {
       localStorage.setItem('fuerzattocc_gas_url', url);
-      alert("¡URL de Google Apps Script guardada!");
+      Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'URL de Google Apps Script guardada correctamente.', confirmColor: '#0b57d0' });
     } else {
       localStorage.removeItem('fuerzattocc_gas_url');
-      alert("Configuración de URL eliminada.");
+      Swal.fire({ icon: 'info', title: 'Eliminado', text: 'Configuración de URL eliminada.' });
     }
   }
 
@@ -678,6 +736,9 @@
       indicador: document.getElementById('indicador').value,
       estatusCondicion: document.getElementById('estatusCondicion').value,
       statusFl: document.getElementById('statusFl').value,
+      diasPendientesVacaciones: document.getElementById('diasPendientesVacaciones').value || 0,
+      periodoVacacional: document.getElementById('periodoVacacional').value || "",
+      estatusVacaciones: document.getElementById('estatusVacaciones').value || "AL DIA",
       dirAdjunta: document.getElementById('dirAdjunta').value,
       gcia1raLinea: document.getElementById('gcia1raLinea').value,
       gcia2daLinea: document.getElementById('gcia2daLinea').value,
@@ -705,7 +766,7 @@
     };
 
     await db.workers.put(workerData);
-    alert("¡Trabajador guardado localmente!");
+    Swal.fire({ icon: 'success', title: '¡Trabajador Guardado!', text: 'El registro se guardó exitosamente en la base local.', timer: 2000, showConfirmButton: false });
     workerForm.reset();
     currentBase64File = null;
     currentFileName = null;
@@ -738,23 +799,50 @@
 
     const filtered = workers.filter(w =>
       w.cedula.toLowerCase().includes(search) ||
-      w.nombreApellido.toLowerCase().includes(search)
+      w.nombreApellido.toLowerCase().includes(search) ||
+      (w.puestoFuncional && w.puestoFuncional.toLowerCase().includes(search))
     );
 
     filtered.forEach(w => {
       const tr = document.createElement('tr');
+      const vacChip = w.estatusVacaciones === 'EN DISFRUTE' ? 'md-chip-warning' : (w.estatusVacaciones === 'PENDIENTE' ? 'md-chip-error' : 'md-chip-success');
       tr.innerHTML = `
         <td><b>${w.cedula}</b></td>
         <td>${w.nombreApellido}</td>
         <td>${w.puestoFuncional || '-'}</td>
+        <td><span class="md-chip ${vacChip}">${w.estatusVacaciones || 'AL DIA'} (${w.diasPendientesVacaciones || 0}d)</span></td>
         <td>${getSemaforo(w.vencLicencia)}</td>
         <td>${getSemaforo(w.vencCedula)}</td>
         <td>${getSemaforo(w.vencCartaMedica)}</td>
         <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank" style="color:var(--md-sys-color-primary);">Doc</a>` : (w.fileName || '-')}</td>
         <td><span class="md-chip ${w.syncStatus === 'EN_NUBE' ? 'md-chip-success' : 'md-chip-warning'}">${w.syncStatus}</span></td>
+        <td>
+          <button style="background:none; border:none; color:var(--md-sys-color-error); cursor:pointer;" onclick="deleteWorker('${w.cedula}')" title="Eliminar">
+            <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+          </button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  // Eliminar trabajador
+  async function deleteWorker(cedula) {
+    const res = await Swal.fire({
+      title: '¿Eliminar Trabajador?',
+      text: `Se eliminará el registro con Cédula ${cedula} de la base local.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ba1a1a',
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sí, eliminar'
+    });
+
+    if (res.isConfirmed) {
+      await db.workers.delete(cedula);
+      Swal.fire({ icon: 'success', title: 'Eliminado', text: 'Registro eliminado localmente.', timer: 1500, showConfirmButton: false });
+      renderTable();
+    }
   }
 
   // Descarga de Plantilla CSV Ejemplo
@@ -762,8 +850,8 @@
     const headers = [
       "ITEM", "N° PERSONAL", "CEDULA", "NOMBRE Y APELLIDO", "PUESTO FUNCIONAL",
       "POSICION SAP", "DESCRIP DE LA POSIC", "NOMINA DEL TRABAJADOR", "INDICADOR DEL TRABAJADOR",
-      "ESTATUS DE CONDICION", "STATUS DE FL", "DIRECCION ADJUNTA / HABILITADORA",
-      "GERENCIA 1RA LINEA ORG", "GCIA 2DA LINEA ORG", "GCIA 3ERA LINEA ORG",
+      "ESTATUS DE CONDICION", "STATUS DE FL", "DIAS PENDIENTES VACACIONES", "PERIODO VACACIONAL", "ESTATUS VACACIONES",
+      "DIRECCION ADJUNTA / HABILITADORA", "GERENCIA 1RA LINEA ORG", "GCIA 2DA LINEA ORG", "GCIA 3ERA LINEA ORG",
       "INSTALACION / EDIFICIO", "LOCALIDAD TRABAJO", "EXTENSION DE OFICINA", "CELULAR",
       "CÉDULA DEL SUPERVISOR", "NOMBRE DEL SUPERVISOR", "INDICADOR DEL SUPERVISOR", "TELÉFONO SUPERVISOR",
       "FL/RRHH RESPONSABLE", "UBICACIÓN DE ASIGNACIÓN", "DIRECCIÓN HABITACIÓN", "MUNICIPIO VIVIENDA",
@@ -773,8 +861,8 @@
     const exampleRow = [
       "1", "104523", "V-15890123", "JUAN PEREZ", "ANALISTA DE MANTENIMIENTO",
       "5001234", "ANALISTA OPERATIVO", "DIREC", "JP123",
-      "ACTIVO", "N/A", "DIRECCIÓN DE OPERACIONES",
-      "GERENCIA GENERAL", "GERENCIA DE PLANIFICACION", "DEPARTAMENTO TALLER",
+      "ACTIVO", "N/A", "15", "2025-2026", "PENDIENTE",
+      "DIRECCIÓN DE OPERACIONES", "GERENCIA GENERAL", "GERENCIA DE PLANIFICACION", "DEPARTAMENTO TALLER",
       "EDIFICIO MATRIZ", "LAGUNILLAS", "4102", "04141234567",
       "V-12345678", "CARLOS MENDOZA", "CM987", "04129876543",
       "PEDRO RRHH", "TALLER LAGUNILLAS", "AV 4 LAGO", "LAGUNILLAS",
@@ -786,142 +874,309 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "plantilla_fuerza_laboral.csv");
+    link.setAttribute("download", "plantilla_fuerza_laboral_vacaciones.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
-  // Procesamiento e Importación Masiva CSV
+  // Importación Masiva CSV o XLSX
   async function handleImportClick() {
     const fileInput = document.getElementById('csvFileInput');
     const file = fileInput.files[0];
 
     if (!file) {
-      alert("Por favor selecciona un archivo CSV primero.");
+      Swal.fire({ icon: 'warning', title: 'Atención', text: 'Por favor selecciona un archivo CSV o XLSX primero.' });
       return;
     }
 
     const progressDiv = document.getElementById('importProgress');
     const statusText = document.getElementById('importStatusText');
     progressDiv.style.display = 'block';
-    statusText.innerText = "Leyendo archivo CSV...";
+    statusText.innerText = "Leyendo y analizando archivo...";
+
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+          if (jsonRows.length === 0) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'El archivo Excel no contiene datos.' });
+            progressDiv.style.display = 'none';
+            return;
+          }
+
+          const workersToInsert = jsonRows.map(row => {
+            const getKey = (keys) => {
+              const k = Object.keys(row).find(rk => keys.some(key => rk.toUpperCase().includes(key)));
+              return k ? row[k] : "";
+            };
+
+            return {
+              item: getKey(["ITEM"]),
+              nPersonal: getKey(["PERSONAL", "N° PERSONAL"]),
+              cedula: String(getKey(["CEDULA", "CÉDULA"])).trim(),
+              nombreApellido: getKey(["NOMBRE", "APELLIDOS", "TRABAJADOR"]),
+              puestoFuncional: getKey(["PUESTO"]),
+              posicionSap: getKey(["SAP"]),
+              descripPosic: getKey(["DESCRIP"]),
+              nomina: getKey(["NOMINA", "NÓMINA"]),
+              indicador: getKey(["INDICADOR"]),
+              estatusCondicion: getKey(["CONDICION", "CONDICIÓN"]),
+              statusFl: getKey(["STATUS FL", "STATUS"]),
+              diasPendientesVacaciones: getKey(["DIAS_PENDIENTES", "DIAS PENDIENTES", "VACACIONES"]) || 0,
+              periodoVacacional: getKey(["PERIODO", "PERÍODO"]) || "",
+              estatusVacaciones: getKey(["PROCESADA_STATUS", "ESTATUS VACACIONES"]) || "AL DIA",
+              dirAdjunta: getKey(["ADJUNTA", "HABILITADORA"]),
+              gcia1raLinea: getKey(["1RA LINEA", "1RA LÍNEA"]),
+              gcia2daLinea: getKey(["2DA LINEA", "2DA LÍNEA"]),
+              gcia3eraLinea: getKey(["3ERA LINEA", "3ERA LÍNEA"]),
+              instalacionEdif: getKey(["INSTALACION", "EDIFICIO"]),
+              localidadTrabajo: getKey(["LOCALIDAD"]),
+              extensionOfic: getKey(["EXTENSION", "EXTENSIÓN"]),
+              celular: getKey(["CELULAR"]),
+              cedulaSupervisor: getKey(["SUPERVISOR CÉDULA", "SUPERVISOR CEDULA"]),
+              nombreSupervisor: getKey(["SUPERVISOR NOMBRE", "NOMBRE DEL SUPERVISOR"]),
+              indicadorSupervisor: getKey(["SUPERVISOR INDICADOR"]),
+              telefonoSupervisor: getKey(["SUPERVISOR TELÉFONO", "SUPERVISOR TELEFONO"]),
+              flRrhhResponsable: getKey(["RRHH", "RESPONSABLE"]),
+              ubicacionAsignacion: getKey(["ASIGNACIÓN", "ASIGNACION"]),
+              direccionHabitacion: getKey(["HABITACIÓN", "HABITACION"]),
+              municipioVivienda: getKey(["MUNICIPIO"]),
+              fechaNacimiento: getKey(["FECHA NACIMIENTO", "NACIMIENTO"]),
+              fechaAniversario: getKey(["FECHA ANIVERSARIO", "ANIVERSARIO", "FECHA_ING"]),
+              vencLicencia: getKey(["VENC LICENCIA", "LICENCIA"]),
+              vencCedula: getKey(["VENC CÉDULA", "VENC CEDULA"]),
+              vencCartaMedica: getKey(["VENC CARTA", "CARTA MÉDICA", "CARTA MEDICA"]),
+              fileData: null,
+              fileName: null,
+              syncStatus: 'PENDIENTE'
+            };
+          }).filter(w => w.cedula && w.nombreApellido);
+
+          if (workersToInsert.length > 0) {
+            await db.workers.bulkPut(workersToInsert);
+            Swal.fire({ icon: 'success', title: '¡Importación Éxitosa!', text: `Se importaron ${workersToInsert.length} trabajadores desde Excel.` });
+            fileInput.value = "";
+            renderTable();
+          } else {
+            Swal.fire({ icon: 'error', title: 'Sin registros válidos', text: 'No se encontraron filas con Cédula y Nombre válidos.' });
+          }
+          progressDiv.style.display = 'none';
+
+        } catch (err) {
+          Swal.fire({ icon: 'error', title: 'Error al leer Excel', text: err.message });
+          progressDiv.style.display = 'none';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+
+    } else {
+      // Importación CSV
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== "");
+
+          if (lines.length < 2) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'El CSV debe incluir encabezados y al menos una fila.' });
+            progressDiv.style.display = 'none';
+            return;
+          }
+
+          function parseCsvLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              if (char === '"' || char === "'") inQuotes = !inQuotes;
+              else if (char === ',' && !inQuotes) {
+                values.push(current.trim().replace(/^["']|["']$/g, ''));
+                current = '';
+              } else current += char;
+            }
+            values.push(current.trim().replace(/^["']|["']$/g, ''));
+            return values;
+          }
+
+          const headers = parseCsvLine(lines[0]).map(h => h.toUpperCase());
+          const getIdx = (keys) => headers.findIndex(h => keys.some(k => h.includes(k)));
+          const cedulaIdx = getIdx(["CEDULA", "CÉDULA"]);
+          const nombreIdx = getIdx(["NOMBRE", "TRABAJADOR"]);
+
+          if (cedulaIdx === -1 || nombreIdx === -1) {
+            Swal.fire({ icon: 'error', title: 'Columnas no encontradas', text: 'El CSV debe contener columnas de CÉDULA y NOMBRE.' });
+            progressDiv.style.display = 'none';
+            return;
+          }
+
+          const workersToInsert = [];
+          for (let i = 1; i < lines.length; i++) {
+            const cols = parseCsvLine(lines[i]);
+            if (!cols[cedulaIdx] || !cols[nombreIdx]) continue;
+
+            workersToInsert.push({
+              item: cols[getIdx(["ITEM"])] || "",
+              nPersonal: cols[getIdx(["PERSONAL"])] || "",
+              cedula: cols[cedulaIdx],
+              nombreApellido: cols[nombreIdx],
+              puestoFuncional: cols[getIdx(["PUESTO"])] || "",
+              posicionSap: cols[getIdx(["SAP"])] || "",
+              descripPosic: cols[getIdx(["DESCRIP"])] || "",
+              nomina: cols[getIdx(["NOMINA", "NÓMINA"])] || "",
+              indicador: cols[getIdx(["INDICADOR"])] || "",
+              estatusCondicion: cols[getIdx(["CONDICION", "CONDICIÓN"])] || "",
+              statusFl: cols[getIdx(["STATUS FL", "STATUS"])] || "",
+              diasPendientesVacaciones: cols[getIdx(["PENDIENTES", "VACACIONES"])] || 0,
+              periodoVacacional: cols[getIdx(["PERIODO", "PERÍODO"])] || "",
+              estatusVacaciones: cols[getIdx(["ESTATUS VACACIONES"])] || "AL DIA",
+              dirAdjunta: cols[getIdx(["ADJUNTA", "HABILITADORA"])] || "",
+              gcia1raLinea: cols[getIdx(["1RA LINEA", "1RA LÍNEA"])] || "",
+              gcia2daLinea: cols[getIdx(["2DA LINEA", "2DA LÍNEA"])] || "",
+              gcia3eraLinea: cols[getIdx(["3ERA LINEA", "3ERA LÍNEA"])] || "",
+              instalacionEdif: cols[getIdx(["INSTALACION", "EDIFICIO"])] || "",
+              localidadTrabajo: cols[getIdx(["LOCALIDAD"])] || "",
+              extensionOfic: cols[getIdx(["EXTENSION", "EXTENSIÓN"])] || "",
+              celular: cols[getIdx(["CELULAR"])] || "",
+              cedulaSupervisor: cols[getIdx(["SUPERVISOR CÉDULA"])] || "",
+              nombreSupervisor: cols[getIdx(["SUPERVISOR NOMBRE"])] || "",
+              indicadorSupervisor: cols[getIdx(["SUPERVISOR INDICADOR"])] || "",
+              telefonoSupervisor: cols[getIdx(["SUPERVISOR TELÉFONO"])] || "",
+              flRrhhResponsable: cols[getIdx(["RRHH"])] || "",
+              ubicacionAsignacion: cols[getIdx(["ASIGNACIÓN", "ASIGNACION"])] || "",
+              direccionHabitacion: cols[getIdx(["HABITACIÓN"])] || "",
+              municipioVivienda: cols[getIdx(["MUNICIPIO"])] || "",
+              fechaNacimiento: cols[getIdx(["FECHA NACIMIENTO"])] || "",
+              fechaAniversario: cols[getIdx(["FECHA ANIVERSARIO"])] || "",
+              vencLicencia: cols[getIdx(["VENC LICENCIA"])] || "",
+              vencCedula: cols[getIdx(["VENC CÉDULA"])] || "",
+              vencCartaMedica: cols[getIdx(["VENC CARTA"])] || "",
+              fileData: null,
+              fileName: null,
+              syncStatus: 'PENDIENTE'
+            });
+          }
+
+          if (workersToInsert.length > 0) {
+            await db.workers.bulkPut(workersToInsert);
+            Swal.fire({ icon: 'success', title: '¡Éxito!', text: `Se importaron ${workersToInsert.length} registros desde el CSV.` });
+            fileInput.value = "";
+            renderTable();
+          } else {
+            Swal.fire({ icon: 'warning', title: 'Sin datos', text: 'No se encontraron registros válidos.' });
+          }
+          progressDiv.style.display = 'none';
+
+        } catch (err) {
+          Swal.fire({ icon: 'error', title: 'Error al procesar CSV', text: err.message });
+          progressDiv.style.display = 'none';
+        }
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  // Exportar a Excel (.xlsx)
+  async function exportToExcel() {
+    const workers = await db.workers.toArray();
+    if (workers.length === 0) {
+      Swal.fire({ icon: 'info', title: 'Sin datos', text: 'No hay registros en la base local para exportar.' });
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(workers);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Fuerza Laboral");
+    XLSX.writeFile(workbook, "Reporte_Fuerza_Laboral_Vacaciones.xlsx");
+    Swal.fire({ icon: 'success', title: '¡Exportado!', text: 'El reporte en Excel se ha descargado exitosamente.', timer: 2000, showConfirmButton: false });
+  }
+
+  // Exportar Backup de Base de Datos Local JSON
+  async function exportDatabaseBackup() {
+    const workers = await db.workers.toArray();
+    const backupData = {
+      timestamp: new Date().toISOString(),
+      version: "2.0",
+      recordsCount: workers.length,
+      workers: workers
+    };
+
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Backup_FuerzaLaboral_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    Swal.fire({ icon: 'success', title: '¡Backup Generado!', text: 'Archivo JSON descargado en tu dispositivo.', timer: 2000, showConfirmButton: false });
+  }
+
+  // Restaurar Backup de Base de Datos Local JSON
+  function restoreDatabaseBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async function(e) {
       try {
-        const text = e.target.result;
-        const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== "");
-
-        if (lines.length < 2) {
-          alert("El archivo CSV debe incluir los encabezados y al menos una fila de datos.");
-          progressDiv.style.display = 'none';
-          return;
-        }
-
-        // Helper para dividir columnas respetando comillas
-        function parseCsvLine(line) {
-          const values = [];
-          let current = '';
-          let inQuotes = false;
-          for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            if (char === '"' || char === "'") {
-              inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-              values.push(current.trim().replace(/^["']|["']$/g, ''));
-              current = '';
-            } else {
-              current += char;
-            }
-          }
-          values.push(current.trim().replace(/^["']|["']$/g, ''));
-          return values;
-        }
-
-        const headers = parseCsvLine(lines[0]).map(h => h.toUpperCase());
-
-        // Mapeo de índices de columnas
-        const getIdx = (keys) => headers.findIndex(h => keys.some(k => h.includes(k)));
-        const cedulaIdx = getIdx(["CEDULA", "CÉDULA"]);
-        const nombreIdx = getIdx(["NOMBRE", "TRABAJADOR"]);
-
-        if (cedulaIdx === -1 || nombreIdx === -1) {
-          alert("El archivo CSV debe contener las columnas de CÉDULA y NOMBRE.");
-          progressDiv.style.display = 'none';
-          return;
-        }
-
-        const workersToInsert = [];
-        let importedCount = 0;
-
-        for (let i = 1; i < lines.length; i++) {
-          const cols = parseCsvLine(lines[i]);
-          const cedulaVal = cols[cedulaIdx];
-          const nombreVal = cols[nombreIdx];
-
-          if (!cedulaVal || !nombreVal) continue;
-
-          const workerObj = {
-            item: cols[getIdx(["ITEM"])] || "",
-            nPersonal: cols[getIdx(["PERSONAL"])] || "",
-            cedula: cedulaVal,
-            nombreApellido: nombreVal,
-            puestoFuncional: cols[getIdx(["PUESTO"])] || "",
-            posicionSap: cols[getIdx(["SAP"])] || "",
-            descripPosic: cols[getIdx(["DESCRIP"])] || "",
-            nomina: cols[getIdx(["NOMINA", "NÓMINA"])] || "",
-            indicador: cols[getIdx(["INDICADOR"])] || "",
-            estatusCondicion: cols[getIdx(["CONDICION", "CONDICIÓN"])] || "",
-            statusFl: cols[getIdx(["STATUS FL", "STATUS"])] || "",
-            dirAdjunta: cols[getIdx(["ADJUNTA", "HABILITADORA"])] || "",
-            gcia1raLinea: cols[getIdx(["1RA LINEA", "1RA LÍNEA"])] || "",
-            gcia2daLinea: cols[getIdx(["2DA LINEA", "2DA LÍNEA"])] || "",
-            gcia3eraLinea: cols[getIdx(["3ERA LINEA", "3ERA LÍNEA"])] || "",
-            instalacionEdif: cols[getIdx(["INSTALACION", "EDIFICIO"])] || "",
-            localidadTrabajo: cols[getIdx(["LOCALIDAD"])] || "",
-            extensionOfic: cols[getIdx(["EXTENSION", "EXTENSIÓN"])] || "",
-            celular: cols[getIdx(["CELULAR"])] || "",
-            cedulaSupervisor: cols[getIdx(["SUPERVISOR CÉDULA", "SUPERVISOR CEDULA"])] || "",
-            nombreSupervisor: cols[getIdx(["SUPERVISOR NOMBRE", "NOMBRE DEL SUPERVISOR"])] || "",
-            indicadorSupervisor: cols[getIdx(["SUPERVISOR INDICADOR"])] || "",
-            telefonoSupervisor: cols[getIdx(["SUPERVISOR TELÉFONO", "SUPERVISOR TELEFONO"])] || "",
-            flRrhhResponsable: cols[getIdx(["RRHH", "RESPONSABLE"])] || "",
-            ubicacionAsignacion: cols[getIdx(["ASIGNACIÓN", "ASIGNACION"])] || "",
-            direccionHabitacion: cols[getIdx(["HABITACIÓN", "HABITACION"])] || "",
-            municipioVivienda: cols[getIdx(["MUNICIPIO"])] || "",
-            fechaNacimiento: cols[getIdx(["FECHA NACIMIENTO", "NACIMIENTO"])] || "",
-            fechaAniversario: cols[getIdx(["FECHA ANIVERSARIO", "ANIVERSARIO"])] || "",
-            vencLicencia: cols[getIdx(["VENC LICENCIA", "LICENCIA"])] || "",
-            vencCedula: cols[getIdx(["VENC CÉDULA", "VENC CEDULA"])] || "",
-            vencCartaMedica: cols[getIdx(["VENC CARTA", "CARTA MÉDICA", "CARTA MEDICA"])] || "",
-            fileData: null,
-            fileName: null,
-            syncStatus: 'PENDIENTE'
-          };
-
-          workersToInsert.push(workerObj);
-          importedCount++;
-        }
-
-        if (workersToInsert.length > 0) {
-          await db.workers.bulkPut(workersToInsert);
-          statusText.innerText = `¡Éxito! Se importaron ${importedCount} trabajadores localmente.`;
-          alert(`¡Importación masiva completada! Se procesaron ${importedCount} registros.`);
-          fileInput.value = "";
+        const backup = JSON.parse(e.target.result);
+        if (backup && backup.workers && Array.isArray(backup.workers)) {
+          await db.workers.bulkPut(backup.workers);
+          Swal.fire({ icon: 'success', title: '¡Restauración Completa!', text: `Se restauraron ${backup.workers.length} trabajadores exitosamente.` });
           renderTable();
         } else {
-          alert("No se encontraron registros válidos para importar.");
-          progressDiv.style.display = 'none';
+          Swal.fire({ icon: 'error', title: 'Formato inválido', text: 'El archivo JSON no corresponde a un respaldo válido.' });
         }
-
       } catch (err) {
-        alert("Error al procesar el archivo CSV: " + err.message);
-        progressDiv.style.display = 'none';
+        Swal.fire({ icon: 'error', title: 'Error de lectura', text: 'No se pudo leer el archivo JSON de respaldo.' });
       }
     };
-
     reader.readAsText(file);
+  }
+
+  // Vaciar Base Local
+  async function clearDatabasePrompt() {
+    const res = await Swal.fire({
+      title: '¿Vaciar Base Local?',
+      text: '¡Esta acción borrará permanentemente todos los registros almacenados en este dispositivo!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ba1a1a',
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sí, vaciar base de datos'
+    });
+
+    if (res.isConfirmed) {
+      await db.workers.clear();
+      Swal.fire({ icon: 'success', title: 'Base Vaciada', text: 'Todos los registros locales fueron eliminados.', timer: 2000, showConfirmButton: false });
+      renderTable();
+    }
+  }
+
+  // Guía / Tour Interactivo
+  function startGuidedTour() {
+    Swal.fire({
+      title: '👣 Guía Rápida del Sistema',
+      html: `
+        <div style="text-align: left; font-size: 13px; line-height: 1.6;">
+          <p><b>1. Registro:</b> Completa el formulario de 9 secciones para guardar trabajadores offline.</p>
+          <p><b>2. Registros:</b> Visualiza la tabla interactiva con alertas semáforo de vencimiento y vacaciones.</p>
+
+          <p><b>3. Importar:</b> Carga masivamente listas en archivos CSV o Excel (.xlsx).</p>
+          <p><b>4. Ajustes & Respaldos:</b> Configura la sincronización con Google Apps Script y gestiona backups JSON.</p>
+        </div>
+      `,
+      confirmButtonText: '¡Entendido!',
+      confirmButtonColor: '#0b57d0'
+    });
   }
 
   // Sincronización Google Apps Script
@@ -929,19 +1184,28 @@
     const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url');
 
     if(!GAS_WEB_APP_URL) {
-      alert("Configura e ingresa la URL de tu Google Apps Script en la pestaña 'Ajustes'.");
-      switchTab('viewSettings', document.querySelectorAll('.md-nav-item')[3]);
+      Swal.fire({
+        icon: 'info',
+        title: 'Configura la URL de Sincronización',
+        text: 'Por favor ingresa y guarda la URL de tu Google Apps Script en la pestaña de Ajustes.',
+        confirmButtonText: 'Ir a Ajustes',
+        confirmButtonColor: '#0b57d0'
+      }).then(() => {
+        switchTab('viewSettings', document.querySelectorAll('.md-nav-item')[3]);
+      });
       return;
     }
 
     const unsyncedWorkers = await db.workers.where('syncStatus').equals('PENDIENTE').toArray();
 
     if (unsyncedWorkers.length === 0) {
-      alert("No hay registros pendientes por sincronizar.");
+      Swal.fire({ icon: 'info', title: 'Al día', text: 'No hay registros pendientes por sincronizar.' });
       return;
     }
 
     try {
+      Swal.fire({ title: 'Sincronizando con Google Cloud...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
       const response = await fetch(GAS_WEB_APP_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -959,13 +1223,13 @@
           }
           await db.workers.put(w);
         }
-        alert("¡Sincronización Exitosa con Google Drive y Sheets!");
+        Swal.fire({ icon: 'success', title: '¡Sincronización Exitosa!', text: 'Todos los registros y documentos se subieron a Google Drive y Sheets.' });
         renderTable();
       } else {
-        alert("Error de Google Apps Script: " + (resData.message || "Desconocido"));
+        Swal.fire({ icon: 'error', title: 'Error de Google Apps Script', text: resData.message || 'Error en el servidor de Google.' });
       }
     } catch (e) {
-      alert("Error al conectar con Google Apps Script. Verifica la URL y la conexión a internet.");
+      Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con la API de Google Apps Script. Verifica la URL.' });
     }
   }
 
