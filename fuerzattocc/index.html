@@ -42,6 +42,7 @@
       --md-shape-corner-small: 8px;
       --md-shape-corner-medium: 12px;
       --md-shape-corner-large: 16px;
+      --md-shape-corner-extra-large: 28px;
       --md-shape-corner-full: 9999px;
     }
 
@@ -221,6 +222,88 @@
       margin-top: 24px;
     }
 
+    /* Floating Action Button (FAB M3) */
+    .md-fab {
+      position: fixed;
+      bottom: 88px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: var(--md-shape-corner-large);
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 90;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .md-fab:active {
+      transform: scale(0.95);
+    }
+
+    /* Material 3 Full-Screen / Centered Dialog Modal */
+    .md-dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .md-dialog-overlay.active {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .md-dialog {
+      background-color: #ffffff;
+      border-radius: var(--md-shape-corner-extra-large);
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .md-dialog-header {
+      height: 64px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      background-color: var(--md-sys-color-surface-container-low);
+    }
+    .md-dialog-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--md-sys-color-on-surface);
+    }
+    .md-dialog-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .md-dialog-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background-color: var(--md-sys-color-surface-container-low);
+    }
+
     /* Chips (Alert Badges) */
     .md-chip {
       display: inline-flex;
@@ -368,14 +451,172 @@
 
   <main class="app-container">
 
-    <!-- VISTA 1: REGISTRO / FORMULARIO -->
-    <section id="viewForm" class="view-section active">
+    <!-- VISTA 1: LISTADO DE REGISTROS (MAIN VIEW) -->
+    <section id="viewList" class="view-section active">
       <div class="md-card">
-        <div class="md-card-header">
-          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">person_add</span>
-          <h2 class="md-card-title">Gestión de Trabajador</h2>
+        <div class="md-card-header" style="justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">group</span>
+            <h2 class="md-card-title">Trabajadores Registrados</h2>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="md-button md-button-filled" style="height: 36px; padding: 0 12px; font-size: 12px;" onclick="openWorkerModal()">
+              <span class="material-symbols-outlined" style="font-size: 18px;">person_add</span>
+              Nuevo
+            </button>
+            <button class="md-button md-button-outlined" style="height: 36px; padding: 0 12px; font-size: 12px;" onclick="exportToExcel()">
+              <span class="material-symbols-outlined" style="font-size: 18px;">file_download</span>
+              Excel
+            </button>
+          </div>
         </div>
 
+        <div class="md-search-bar">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-on-surface-variant);">search</span>
+          <input type="text" id="search" placeholder="Buscar por Nombre, Cédula o Puesto..." onkeyup="renderTable()">
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Cédula</th>
+                <th>Nombre y Apellido</th>
+                <th>Puesto</th>
+                <th>Vacaciones</th>
+                <th>Licencia</th>
+                <th>Cédula Doc</th>
+                <th>Carta Médica</th>
+                <th>Anexo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: MÓDULO DE IMPORTACIÓN MASIVA (CSV / EXCEL) -->
+    <section id="viewImport" class="view-section">
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">upload_file</span>
+          <h2 class="md-card-title">Importación Masiva (Excel / CSV)</h2>
+        </div>
+
+        <div class="info-banner">
+          <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
+          <div>
+            Puedes importar tus datos en formato <b>CSV</b> o <b>Excel (.xlsx)</b>. Descarga la plantilla oficial en CSV o usa tu archivo de consolidado de vacaciones.
+          </div>
+        </div>
+
+        <div class="md-button-group" style="margin-bottom: 24px;">
+          <button type="button" class="md-button md-button-outlined" onclick="downloadCsvTemplate()">
+            <span class="material-symbols-outlined">download</span>
+            Descargar Plantilla CSV Ejemplo
+          </button>
+        </div>
+
+        <div class="md-section-header">
+          <span class="material-symbols-outlined" style="font-size: 18px;">file_upload</span>
+          Seleccionar Archivo CSV / XLSX
+        </div>
+
+        <div class="md-text-field">
+          <label>Cargar Archivo Excel (.xlsx) o CSV</label>
+          <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls">
+        </div>
+
+        <div id="importProgress" style="display: none; margin-top: 16px;">
+          <p id="importStatusText" style="font-size: 13px; font-weight: 500; color: var(--md-sys-color-primary); margin-bottom: 8px;">Procesando archivo...</p>
+        </div>
+
+        <div class="md-button-group">
+          <button type="button" class="md-button md-button-filled" onclick="handleImportClick()">
+            <span class="material-symbols-outlined">publish</span>
+            Procesar e Importar
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VISTA 3: CONFIGURACIÓN Y RESPALDOS -->
+    <section id="viewSettings" class="view-section">
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">settings</span>
+          <h2 class="md-card-title">Configuración de Sincronización</h2>
+        </div>
+
+        <div class="md-text-field" style="margin-bottom: 16px;">
+          <label>URL de Google Apps Script (Web App)</label>
+          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+        </div>
+
+        <div class="md-button-group">
+          <button type="button" class="md-button md-button-filled" onclick="saveGasUrl()">
+            <span class="material-symbols-outlined">save</span>
+            Guardar URL
+          </button>
+          <button type="button" class="md-button md-button-tonal" onclick="syncWithGoogleSheets()">
+            <span class="material-symbols-outlined">cloud_upload</span>
+            Sincronizar Todo
+          </button>
+        </div>
+      </div>
+
+      <!-- MÓDULO DE RESPALDO Y RESTAURACIÓN DE BASE DE DATOS LOCAL -->
+      <div class="md-card">
+        <div class="md-card-header">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">backup</span>
+          <h2 class="md-card-title">Respaldo y Mantenimiento Local</h2>
+        </div>
+
+        <div class="md-button-group">
+          <button type="button" class="md-button md-button-tonal" onclick="exportDatabaseBackup()">
+            <span class="material-symbols-outlined">download_for_offline</span>
+            Exportar Backup JSON
+          </button>
+
+          <label class="md-button md-button-outlined" style="cursor: pointer;">
+            <span class="material-symbols-outlined">restore</span>
+            Restaurar Backup JSON
+            <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="restoreDatabaseBackup(event)">
+          </label>
+
+          <button type="button" class="md-button md-button-danger" onclick="clearDatabasePrompt()">
+            <span class="material-symbols-outlined">delete_forever</span>
+            Vaciar Base Local
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Action Button (FAB) para crear trabajador -->
+  <button class="md-fab" onclick="openWorkerModal()" title="Registrar Trabajador">
+    <span class="material-symbols-outlined" style="font-size: 28px;">add</span>
+  </button>
+
+  <!-- MATERIAL DESIGN 3 DIALOG MODAL: FORMULARIO DE REGISTRO / EDICIÓN -->
+  <div class="md-dialog-overlay" id="workerModalOverlay">
+    <div class="md-dialog">
+      <div class="md-dialog-header">
+        <h2 class="md-dialog-title" id="modalWorkerTitle">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">person_add</span>
+          Registro de Trabajador
+        </h2>
+        <button style="background: none; border: none; cursor: pointer; color: var(--md-sys-color-on-surface-variant);" onclick="closeWorkerModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="md-dialog-body">
         <form id="workerForm">
 
           <!-- SECCIÓN 1: DATOS BÁSICOS -->
@@ -496,165 +737,24 @@
             </div>
           </div>
 
-          <div class="md-button-group">
-            <button type="submit" class="md-button md-button-filled">
-              <span class="material-symbols-outlined">save</span>
-              Guardar Localmente
-            </button>
-            <button type="button" class="md-button md-button-tonal" onclick="syncWithGoogleSheets()">
-              <span class="material-symbols-outlined">cloud_upload</span>
-              Sincronizar Nube
-            </button>
-          </div>
-
         </form>
       </div>
-    </section>
 
-    <!-- VISTA 2: LISTADO DE REGISTROS -->
-    <section id="viewList" class="view-section">
-      <div class="md-card">
-        <div class="md-card-header" style="justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">group</span>
-            <h2 class="md-card-title">Trabajadores Registrados</h2>
-          </div>
-          <button class="md-button md-button-outlined" style="height: 36px; padding: 0 12px; font-size: 12px;" onclick="exportToExcel()">
-            <span class="material-symbols-outlined" style="font-size: 18px;">file_download</span>
-            Exportar Excel
-          </button>
-        </div>
-
-        <div class="md-search-bar">
-          <span class="material-symbols-outlined" style="color: var(--md-sys-color-on-surface-variant);">search</span>
-          <input type="text" id="search" placeholder="Buscar por Nombre, Cédula o Puesto..." onkeyup="renderTable()">
-        </div>
-
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Cédula</th>
-                <th>Nombre y Apellido</th>
-                <th>Puesto</th>
-                <th>Vacaciones</th>
-                <th>Licencia</th>
-                <th>Cédula Doc</th>
-                <th>Carta Médica</th>
-                <th>Anexo</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
+      <div class="md-dialog-footer">
+        <button type="button" class="md-button md-button-outlined" onclick="closeWorkerModal()">
+          Cancelar
+        </button>
+        <button type="button" class="md-button md-button-filled" onclick="saveWorkerFromModal()">
+          <span class="material-symbols-outlined">save</span>
+          Guardar Trabajador
+        </button>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- VISTA 3: MÓDULO DE IMPORTACIÓN MASIVA (CSV / EXCEL) -->
-    <section id="viewImport" class="view-section">
-      <div class="md-card">
-        <div class="md-card-header">
-          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">upload_file</span>
-          <h2 class="md-card-title">Importación Masiva (Excel / CSV)</h2>
-        </div>
-
-        <div class="info-banner">
-          <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
-          <div>
-            Puedes importar tus datos en formato <b>CSV</b> o <b>Excel (.xlsx)</b>. Descarga la plantilla oficial en CSV o usa tu archivo de consolidado de vacaciones.
-          </div>
-        </div>
-
-        <div class="md-button-group" style="margin-bottom: 24px;">
-          <button type="button" class="md-button md-button-outlined" onclick="downloadCsvTemplate()">
-            <span class="material-symbols-outlined">download</span>
-            Descargar Plantilla CSV Ejemplo
-          </button>
-        </div>
-
-        <div class="md-section-header">
-          <span class="material-symbols-outlined" style="font-size: 18px;">file_upload</span>
-          Seleccionar Archivo CSV / XLSX
-        </div>
-
-        <div class="md-text-field">
-          <label>Cargar Archivo Excel (.xlsx) o CSV</label>
-          <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls">
-        </div>
-
-        <div id="importProgress" style="display: none; margin-top: 16px;">
-          <p id="importStatusText" style="font-size: 13px; font-weight: 500; color: var(--md-sys-color-primary); margin-bottom: 8px;">Procesando archivo...</p>
-        </div>
-
-        <div class="md-button-group">
-          <button type="button" class="md-button md-button-filled" onclick="handleImportClick()">
-            <span class="material-symbols-outlined">publish</span>
-            Procesar e Importar
-          </button>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- VISTA 4: CONFIGURACIÓN Y RESPALDOS -->
-    <section id="viewSettings" class="view-section">
-      <div class="md-card">
-        <div class="md-card-header">
-          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">settings</span>
-          <h2 class="md-card-title">Configuración de Sincronización</h2>
-        </div>
-
-        <div class="md-text-field" style="margin-bottom: 16px;">
-          <label>URL de Google Apps Script (Web App)</label>
-          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-        </div>
-
-        <div class="md-button-group">
-          <button type="button" class="md-button md-button-filled" onclick="saveGasUrl()">
-            <span class="material-symbols-outlined">save</span>
-            Guardar URL
-          </button>
-        </div>
-      </div>
-
-      <!-- MÓDULO DE RESPALDO Y RESTAURACIÓN DE BASE DE DATOS LOCAL -->
-      <div class="md-card">
-        <div class="md-card-header">
-          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">backup</span>
-          <h2 class="md-card-title">Respaldo y Mantenimiento Local</h2>
-        </div>
-
-        <div class="md-button-group">
-          <button type="button" class="md-button md-button-tonal" onclick="exportDatabaseBackup()">
-            <span class="material-symbols-outlined">download_for_offline</span>
-            Exportar Backup JSON
-          </button>
-
-          <label class="md-button md-button-outlined" style="cursor: pointer;">
-            <span class="material-symbols-outlined">restore</span>
-            Restaurar Backup JSON
-            <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="restoreDatabaseBackup(event)">
-          </label>
-
-          <button type="button" class="md-button md-button-danger" onclick="clearDatabasePrompt()">
-            <span class="material-symbols-outlined">delete_forever</span>
-            Vaciar Base Local
-          </button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Bottom Navigation Bar (Android M3 Standard - 4 Tabs) -->
+  <!-- Bottom Navigation Bar (Android M3 Standard - 3 Main Navigation Tabs) -->
   <nav class="md-bottom-nav">
-    <button class="md-nav-item active" onclick="switchTab('viewForm', this)">
-      <div class="icon-wrapper"><span class="material-symbols-outlined">edit_note</span></div>
-      <span>Registro</span>
-    </button>
-    <button class="md-nav-item" onclick="switchTab('viewList', this)">
+    <button class="md-nav-item active" onclick="switchTab('viewList', this)">
       <div class="icon-wrapper"><span class="material-symbols-outlined">table_rows</span></div>
       <span>Registros</span>
     </button>
@@ -678,6 +778,133 @@
   const workerForm = document.getElementById('workerForm');
   let currentBase64File = null;
   let currentFileName = null;
+  let isEditingCedula = null;
+
+  // Modal Dialog Controllers
+  function openWorkerModal(cedulaToEdit = null) {
+    const overlay = document.getElementById('workerModalOverlay');
+    const title = document.getElementById('modalWorkerTitle');
+
+    if (cedulaToEdit) {
+      isEditingCedula = cedulaToEdit;
+      title.innerHTML = `<span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">edit</span> Editar Trabajador`;
+      loadWorkerDataIntoForm(cedulaToEdit);
+    } else {
+      isEditingCedula = null;
+      title.innerHTML = `<span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">person_add</span> Nuevo Trabajador`;
+      workerForm.reset();
+      document.getElementById('cedula').removeAttribute('readonly');
+    }
+
+    overlay.classList.add('active');
+  }
+
+  function closeWorkerModal() {
+    document.getElementById('workerModalOverlay').classList.remove('active');
+    workerForm.reset();
+    isEditingCedula = null;
+    currentBase64File = null;
+    currentFileName = null;
+  }
+
+  async function loadWorkerDataIntoForm(cedula) {
+    const worker = await db.workers.get(cedula);
+    if (!worker) return;
+
+    document.getElementById('item').value = worker.item || "";
+    document.getElementById('nPersonal').value = worker.nPersonal || "";
+    document.getElementById('cedula').value = worker.cedula || "";
+    document.getElementById('cedula').setAttribute('readonly', 'true');
+    document.getElementById('nombreApellido').value = worker.nombreApellido || "";
+    document.getElementById('puestoFuncional').value = worker.puestoFuncional || "";
+    document.getElementById('posicionSap').value = worker.posicionSap || "";
+    document.getElementById('descripPosic').value = worker.descripPosic || "";
+    document.getElementById('nomina').value = worker.nomina || "";
+    document.getElementById('indicador').value = worker.indicador || "";
+    document.getElementById('estatusCondicion').value = worker.estatusCondicion || "";
+    document.getElementById('statusFl').value = worker.statusFl || "";
+    document.getElementById('diasPendientesVacaciones').value = worker.diasPendientesVacaciones || 0;
+    document.getElementById('periodoVacacional').value = worker.periodoVacacional || "";
+    document.getElementById('estatusVacaciones').value = worker.estatusVacaciones || "AL DIA";
+    document.getElementById('dirAdjunta').value = worker.dirAdjunta || "";
+    document.getElementById('gcia1raLinea').value = worker.gcia1raLinea || "";
+    document.getElementById('gcia2daLinea').value = worker.gcia2daLinea || "";
+    document.getElementById('gcia3eraLinea').value = worker.gcia3eraLinea || "";
+    document.getElementById('instalacionEdif').value = worker.instalacionEdif || "";
+    document.getElementById('localidadTrabajo').value = worker.localidadTrabajo || "";
+    document.getElementById('extensionOfic').value = worker.extensionOfic || "";
+    document.getElementById('celular').value = worker.celular || "";
+    document.getElementById('cedulaSupervisor').value = worker.cedulaSupervisor || "";
+    document.getElementById('nombreSupervisor').value = worker.nombreSupervisor || "";
+    document.getElementById('indicadorSupervisor').value = worker.indicadorSupervisor || "";
+    document.getElementById('telefonoSupervisor').value = worker.telefonoSupervisor || "";
+    document.getElementById('flRrhhResponsable').value = worker.flRrhhResponsable || "";
+    document.getElementById('ubicacionAsignacion').value = worker.ubicacionAsignacion || "";
+    document.getElementById('direccionHabitacion').value = worker.direccionHabitacion || "";
+    document.getElementById('municipioVivienda').value = worker.municipioVivienda || "";
+    document.getElementById('fechaNacimiento').value = worker.fechaNacimiento || "";
+    document.getElementById('fechaAniversario').value = worker.fechaAniversario || "";
+    document.getElementById('vencLicencia').value = worker.vencLicencia || "";
+    document.getElementById('vencCedula').value = worker.vencCedula || "";
+    document.getElementById('vencCartaMedica').value = worker.vencCartaMedica || "";
+  }
+
+  // Guardado desde el Modal
+  async function saveWorkerFromModal() {
+    const cedulaVal = document.getElementById('cedula').value.trim();
+    const nombreVal = document.getElementById('nombreApellido').value.trim();
+
+    if (!cedulaVal || !nombreVal) {
+      Swal.fire({ icon: 'warning', title: 'Campos Requeridos', text: 'Por favor ingresa la Cédula y Nombre y Apellido.' });
+      return;
+    }
+
+    const workerData = {
+      item: document.getElementById('item').value,
+      nPersonal: document.getElementById('nPersonal').value,
+      cedula: cedulaVal,
+      nombreApellido: nombreVal,
+      puestoFuncional: document.getElementById('puestoFuncional').value,
+      posicionSap: document.getElementById('posicionSap').value,
+      descripPosic: document.getElementById('descripPosic').value,
+      nomina: document.getElementById('nomina').value,
+      indicador: document.getElementById('indicador').value,
+      estatusCondicion: document.getElementById('estatusCondicion').value,
+      statusFl: document.getElementById('statusFl').value,
+      diasPendientesVacaciones: document.getElementById('diasPendientesVacaciones').value || 0,
+      periodoVacacional: document.getElementById('periodoVacacional').value || "",
+      estatusVacaciones: document.getElementById('estatusVacaciones').value || "AL DIA",
+      dirAdjunta: document.getElementById('dirAdjunta').value,
+      gcia1raLinea: document.getElementById('gcia1raLinea').value,
+      gcia2daLinea: document.getElementById('gcia2daLinea').value,
+      gcia3eraLinea: document.getElementById('gcia3eraLinea').value,
+      instalacionEdif: document.getElementById('instalacionEdif').value,
+      localidadTrabajo: document.getElementById('localidadTrabajo').value,
+      extensionOfic: document.getElementById('extensionOfic').value,
+      celular: document.getElementById('celular').value,
+      cedulaSupervisor: document.getElementById('cedulaSupervisor').value,
+      nombreSupervisor: document.getElementById('nombreSupervisor').value,
+      indicadorSupervisor: document.getElementById('indicadorSupervisor').value,
+      telefonoSupervisor: document.getElementById('telefonoSupervisor').value,
+      flRrhhResponsable: document.getElementById('flRrhhResponsable').value,
+      ubicacionAsignacion: document.getElementById('ubicacionAsignacion').value,
+      direccionHabitacion: document.getElementById('direccionHabitacion').value,
+      municipioVivienda: document.getElementById('municipioVivienda').value,
+      fechaNacimiento: document.getElementById('fechaNacimiento').value,
+      fechaAniversario: document.getElementById('fechaAniversario').value,
+      vencLicencia: document.getElementById('vencLicencia').value,
+      vencCedula: document.getElementById('vencCedula').value,
+      vencCartaMedica: document.getElementById('vencCartaMedica').value,
+      fileData: currentBase64File,
+      fileName: currentFileName,
+      syncStatus: 'PENDIENTE'
+    };
+
+    await db.workers.put(workerData);
+    Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Trabajador guardado localmente.', timer: 1500, showConfirmButton: false });
+    closeWorkerModal();
+    renderTable();
+  }
 
   // Cambiar pestañas (Android Navigation)
   function switchTab(viewId, navBtn) {
@@ -718,59 +945,6 @@
       };
       reader.readAsDataURL(file);
     }
-  });
-
-  // Guardado Local
-  workerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const workerData = {
-      item: document.getElementById('item').value,
-      nPersonal: document.getElementById('nPersonal').value,
-      cedula: document.getElementById('cedula').value,
-      nombreApellido: document.getElementById('nombreApellido').value,
-      puestoFuncional: document.getElementById('puestoFuncional').value,
-      posicionSap: document.getElementById('posicionSap').value,
-      descripPosic: document.getElementById('descripPosic').value,
-      nomina: document.getElementById('nomina').value,
-      indicador: document.getElementById('indicador').value,
-      estatusCondicion: document.getElementById('estatusCondicion').value,
-      statusFl: document.getElementById('statusFl').value,
-      diasPendientesVacaciones: document.getElementById('diasPendientesVacaciones').value || 0,
-      periodoVacacional: document.getElementById('periodoVacacional').value || "",
-      estatusVacaciones: document.getElementById('estatusVacaciones').value || "AL DIA",
-      dirAdjunta: document.getElementById('dirAdjunta').value,
-      gcia1raLinea: document.getElementById('gcia1raLinea').value,
-      gcia2daLinea: document.getElementById('gcia2daLinea').value,
-      gcia3eraLinea: document.getElementById('gcia3eraLinea').value,
-      instalacionEdif: document.getElementById('instalacionEdif').value,
-      localidadTrabajo: document.getElementById('localidadTrabajo').value,
-      extensionOfic: document.getElementById('extensionOfic').value,
-      celular: document.getElementById('celular').value,
-      cedulaSupervisor: document.getElementById('cedulaSupervisor').value,
-      nombreSupervisor: document.getElementById('nombreSupervisor').value,
-      indicadorSupervisor: document.getElementById('indicadorSupervisor').value,
-      telefonoSupervisor: document.getElementById('telefonoSupervisor').value,
-      flRrhhResponsable: document.getElementById('flRrhhResponsable').value,
-      ubicacionAsignacion: document.getElementById('ubicacionAsignacion').value,
-      direccionHabitacion: document.getElementById('direccionHabitacion').value,
-      municipioVivienda: document.getElementById('municipioVivienda').value,
-      fechaNacimiento: document.getElementById('fechaNacimiento').value,
-      fechaAniversario: document.getElementById('fechaAniversario').value,
-      vencLicencia: document.getElementById('vencLicencia').value,
-      vencCedula: document.getElementById('vencCedula').value,
-      vencCartaMedica: document.getElementById('vencCartaMedica').value,
-      fileData: currentBase64File,
-      fileName: currentFileName,
-      syncStatus: 'PENDIENTE'
-    };
-
-    await db.workers.put(workerData);
-    Swal.fire({ icon: 'success', title: '¡Trabajador Guardado!', text: 'El registro se guardó exitosamente en la base local.', timer: 2000, showConfirmButton: false });
-    workerForm.reset();
-    currentBase64File = null;
-    currentFileName = null;
-    renderTable();
   });
 
   // Material Badges / Semáforo
@@ -816,7 +990,10 @@
         <td>${getSemaforo(w.vencCartaMedica)}</td>
         <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank" style="color:var(--md-sys-color-primary);">Doc</a>` : (w.fileName || '-')}</td>
         <td><span class="md-chip ${w.syncStatus === 'EN_NUBE' ? 'md-chip-success' : 'md-chip-warning'}">${w.syncStatus}</span></td>
-        <td>
+        <td style="white-space: nowrap;">
+          <button style="background:none; border:none; color:var(--md-sys-color-primary); cursor:pointer; margin-right:4px;" onclick="openWorkerModal('${w.cedula}')" title="Editar">
+            <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+          </button>
           <button style="background:none; border:none; color:var(--md-sys-color-error); cursor:pointer;" onclick="deleteWorker('${w.cedula}')" title="Eliminar">
             <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
           </button>
@@ -1167,8 +1344,8 @@
       title: '👣 Guía Rápida del Sistema',
       html: `
         <div style="text-align: left; font-size: 13px; line-height: 1.6;">
-          <p><b>1. Registro:</b> Completa el formulario de 9 secciones para guardar trabajadores offline.</p>
-          <p><b>2. Registros:</b> Visualiza la tabla interactiva con alertas semáforo de vencimiento y vacaciones.</p>
+          <p><b>1. Registros & Modal:</b> Haz clic en el botón flotante (+) para abrir el Dialog Modal de registro de trabajador.</p>
+          <p><b>2. Editar / Eliminar:</b> Edita o elimina registros existentes desde la tabla de registros.</p>
 
           <p><b>3. Importar:</b> Carga masivamente listas en archivos CSV o Excel (.xlsx).</p>
           <p><b>4. Ajustes & Respaldos:</b> Configura la sincronización con Google Apps Script y gestiona backups JSON.</p>
@@ -1191,7 +1368,7 @@
         confirmButtonText: 'Ir a Ajustes',
         confirmButtonColor: '#0b57d0'
       }).then(() => {
-        switchTab('viewSettings', document.querySelectorAll('.md-nav-item')[3]);
+        switchTab('viewSettings', document.querySelectorAll('.md-nav-item')[2]);
       });
       return;
     }
