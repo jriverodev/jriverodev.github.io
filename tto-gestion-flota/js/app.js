@@ -336,7 +336,7 @@ async function handleLocalApiGateway(payload) {
 
                 const recordSanitizado = {};
                 for (const col of columnasPermitidas) {
-                    if (payloadRemoto[col] !== undefined && payloadRemoto[col] !== null) {
+                    if (payloadRemoto[col] !== undefined) {
                         recordSanitizado[col] = payloadRemoto[col];
                     }
                 }
@@ -425,8 +425,29 @@ async function handleLocalApiGateway(payload) {
 
                 let payloadRemoto = { ...recordExistente, ...registro };
                 if (payloadRemoto.documento_eliminar) {
+                    const docUrlEliminar = recordExistente.documento_url || payloadRemoto.documento_url;
+                    if (client && client.storage) {
+                        const pathEliminar = docUrlEliminar ? (extraerStoragePath(docUrlEliminar, 'siagop-archivos') || extraerStoragePath(docUrlEliminar, 'ttocc-archivos')) : null;
+                        const posiblesRutas = [];
+                        if (pathEliminar) posiblesRutas.push(pathEliminar);
+                        ['pdf', 'png', 'jpg', 'jpeg', 'webp'].forEach(ext => {
+                            posiblesRutas.push(`activos/${idUnidad}/documento.${ext}`);
+                            posiblesRutas.push(`${idUnidad}/documento.${ext}`);
+                            posiblesRutas.push(`documento.${ext}`);
+                        });
+                        const rutasUnicas = Array.from(new Set(posiblesRutas));
+                        for (const bucketName of ['siagop-archivos', 'ttocc-archivos']) {
+                            try {
+                                await client.storage.from(bucketName).remove(rutasUnicas);
+                            } catch (eStorageDel) {
+                                console.warn(`[Supabase Storage] Error removiendo documento en ${bucketName}:`, eStorageDel);
+                            }
+                        }
+                    }
                     payloadRemoto.documento_url = null;
                     payloadRemoto.documento_nombre = null;
+                    registro.documento_url = null;
+                    registro.documento_nombre = null;
                 }
                 if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
                     payloadRemoto = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'siagop-archivos', payloadRemoto, String(idUnidad));
@@ -455,7 +476,7 @@ async function handleLocalApiGateway(payload) {
 
                 const recordSanitizado = {};
                 for (const col of columnasPermitidasActivos) {
-                    if (payloadRemoto[col] !== undefined && payloadRemoto[col] !== null) {
+                    if (payloadRemoto[col] !== undefined) {
                         recordSanitizado[col] = payloadRemoto[col];
                     }
                 }
@@ -489,6 +510,25 @@ async function handleLocalApiGateway(payload) {
         const client = ensureSupabaseClient();
         if (navigator.onLine && client && idUnidad) {
             try {
+                const { data: fetchOld } = await client.from('maestro_activos').select('documento_url').eq('id_unidad', String(idUnidad)).maybeSingle();
+                const docUrl = fetchOld ? fetchOld.documento_url : null;
+                const posiblesRutas = [];
+                if (docUrl) {
+                    const pathDoc = extraerStoragePath(docUrl, 'siagop-archivos') || extraerStoragePath(docUrl, 'ttocc-archivos');
+                    if (pathDoc) posiblesRutas.push(pathDoc);
+                }
+                ['pdf', 'png', 'jpg', 'jpeg', 'webp'].forEach(ext => {
+                    posiblesRutas.push(`activos/${idUnidad}/documento.${ext}`);
+                    posiblesRutas.push(`${idUnidad}/documento.${ext}`);
+                });
+                const rutasUnicas = Array.from(new Set(posiblesRutas));
+                if (client.storage) {
+                    for (const bucketName of ['siagop-archivos', 'ttocc-archivos']) {
+                        try {
+                            await client.storage.from(bucketName).remove(rutasUnicas);
+                        } catch (eDelStorage) {}
+                    }
+                }
                 await client.from('maestro_activos').delete().eq('id_unidad', String(idUnidad));
             } catch (e) {
                 console.warn('[Supabase] Error eliminando activo en Supabase:', e);
@@ -663,10 +703,10 @@ function extraerStoragePath(urlOrPath, bucketDefault = 'siagop-archivos') {
         return null;
     }
 
-    const bucketsToMatch = [bucketDefault, 'siagop-archivos'];
+    const bucketsToMatch = [bucketDefault, 'siagop-archivos', 'ttocc-archivos'];
     for (const b of bucketsToMatch) {
         if (clean.includes(`/storage/v1/object/public/${b}/`)) {
-            return clean.split(`/storage/v1/object/public/${b}/`)[1];
+            return clean.split(`/storage/v1/object/public/${b}/`)[1]?.split('?')[0];
         }
         if (clean.includes(`/storage/v1/object/sign/${b}/`)) {
             return clean.split(`/storage/v1/object/sign/${b}/`)[1]?.split('?')[0];
@@ -687,8 +727,11 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
     const clean = urlOrPath.trim();
     if (!clean) return '';
 
-    const path = extraerStoragePath(clean, bucketDefault);
+    let path = extraerStoragePath(clean, bucketDefault);
     if (!path) return clean; // Retain Base64 or Google Drive thumbnail links unchanged
+
+    // CORRECCIÓN CRÍTICA: Eliminar barras diagonales iniciales
+    path = path.replace(/^\/+/, '');
 
     const cacheKey = `${bucketDefault}:${path}`;
     const cached = SIAGOP_SIGNED_URL_CACHE.get(cacheKey);
@@ -706,6 +749,8 @@ async function obtenerUrlFirmadaStorage(urlOrPath, expiresIn = 7200, bucketDefau
                     expiresAt: Date.now() + (expiresIn * 1000)
                 });
                 return data.signedUrl;
+            } else if (error) {
+                console.warn('[Supabase Storage] Error en createSignedUrl:', error.message || error);
             }
         } catch (e) {
             console.warn('[Supabase Storage] Error obteniendo signedUrl para path:', path, e);
@@ -821,9 +866,18 @@ function obtenerTokenSesion() {
 function guardarSesion(token, usuario, rol = '', modulo = '', userId = '') {
     sessionStorage.setItem(SESSION_TOKEN_KEY, token);
     sessionStorage.setItem(OPERADOR_KEY, usuario);
-    if (rol) sessionStorage.setItem('SIAGOP_ROL', rol);
-    if (modulo) sessionStorage.setItem('SIAGOP_MODULO', modulo);
-    if (userId) sessionStorage.setItem('SIAGOP_USER_ID', userId);
+    if (rol) {
+        sessionStorage.setItem('SIAGOP_ROL', rol);
+        localStorage.setItem('siagop_user_rol', rol);
+    }
+    if (modulo) {
+        sessionStorage.setItem('SIAGOP_MODULO', modulo);
+        localStorage.setItem('siagop_user_modulo', modulo);
+    }
+    if (userId) {
+        sessionStorage.setItem('SIAGOP_USER_ID', userId);
+        localStorage.setItem('siagop_user_id', userId);
+    }
 }
 
 async function poblarSelectOperadores(selectId, moduloRequerido) {
@@ -1135,7 +1189,7 @@ async function procesarSincronizacionPendiente(key = SYNC_QUEUE_KEY) {
     const sincronizado = await syncData();
     if (sincronizado) {
         console.log('[Sync Complete] Todos los registros locales están sincronizados en Supabase.');
-        mostrarNotificacion('Sincronización con la nube completada.', 'exito');
+       /* mostrarNotificacion('Sincronización con la nube completada.', 'exito'); */
     }
 
     if (!APP_CONFIG || !APP_CONFIG.URL_API) return;
@@ -1176,7 +1230,7 @@ async function procesarSincronizacionPendiente(key = SYNC_QUEUE_KEY) {
 
     if (pendienteSincronizar.length === 0) {
         console.log('[Sync Complete] Todos los registros locales están en la nube.');
-       /* mostrarNotificacion('Sincronización con la nube completada.', 'exito'); *\
+       /* mostrarNotificacion('Sincronización con la nube completada.', 'exito'); */
     }
 }
 

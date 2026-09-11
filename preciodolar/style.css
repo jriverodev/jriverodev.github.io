@@ -1,241 +1,400 @@
 /* ==========================================
-   1. VARIABLES DE DISEÑO (Soporte de Temas)
+   MATERIAL DESIGN 3 (2025) SPECIFICATION TOKENS
    ========================================== */
 :root {
-  --bg-color: #f4f6f9;
-  --card-bg: #ffffff;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --primary: #0056b3;
-  --primary-hover: #004187;
-  --accent: #10b981;
+  /* Dynamic Color Palette - Light Theme */
+  --md-sys-color-primary: #1059a1;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #d3e4ff;
+  --md-sys-color-on-primary-container: #001c38;
+
+  --md-sys-color-surface: #f8f9ff;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f3f3fa;
+  --md-sys-color-surface-container: #ededf4;
+  --md-sys-color-surface-container-high: #e7e8ee;
+
+  --md-sys-color-on-surface: #191c20;
+  --md-sys-color-on-surface-variant: #43474e;
+  --md-sys-color-outline: #73777f;
+  --md-sys-color-outline-variant: #c3c7d0;
+
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-success-container: #cce8d7;
+  --md-sys-color-on-success-container: #052114;
+
+  /* Shape Tokens */
+  --md-corner-none: 0px;
+  --md-corner-extra-small: 4px;
+  --md-corner-small: 8px;
+  --md-corner-medium: 12px;
+  --md-corner-large: 16px;
+  --md-corner-extra-large: 28px;
+  --md-corner-full: 9999px;
+
+  /* Elevation & Shadows */
+  --md-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.08), 0px 1px 2px 0px rgba(0, 0, 0, 0.12);
+  --md-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.08), 0px 1px 2px 0px rgba(0, 0, 0, 0.12);
+  --md-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.08), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
 }
 
-/* Modo Oscuro Automático */
+/* Dynamic Color Palette - Dark Theme */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: #0f172a;
-    --card-bg: #1e293b;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
+    --md-sys-color-primary: #a2c9ff;
+    --md-sys-color-on-primary: #00315f;
+    --md-sys-color-primary-container: #004786;
+    --md-sys-color-on-primary-container: #d3e4ff;
+
+    --md-sys-color-surface: #111318;
+    --md-sys-color-surface-container-lowest: #0c0e13;
+    --md-sys-color-surface-container-low: #191c20;
+    --md-sys-color-surface-container: #1d2024;
+    --md-sys-color-surface-container-high: #282a2f;
+
+    --md-sys-color-on-surface: #e2e2e9;
+    --md-sys-color-on-surface-variant: #c3c7d0;
+    --md-sys-color-outline: #8d9199;
+    --md-sys-color-outline-variant: #43474e;
+
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+
+    --md-sys-color-success-container: #1b3728;
+    --md-sys-color-on-success-container: #cce8d7;
   }
 }
 
 /* ==========================================
-   2. REGLAS GENERALES Y TIPOGRAFÍA
+   RESET & BASE STYLES
    ========================================== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-main);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-  transition: background 0.3s ease;
-}
-
-.app-container {
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-}
-
-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.subtitle {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  margin-bottom: 25px;
-}
-
-/* Tarjeta base (Aplica a Visualizador y Calculadora) */
-.card {
-  background-color: var(--card-bg);
-  border-radius: 20px;
-  padding: 30px 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
-  transition: background 0.3s ease;
+  align-items: flex-start;
+  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px) 16px;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* ==========================================
-   3. SECCIÓN: MONITOREO DE TASA (TARJETA 1)
+   LAYOUT CONTAINER
    ========================================== */
-.currency-info {
+.m3-app {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 auto;
+}
+
+/* Top App Bar */
+.m3-top-app-bar {
+  padding: 12px 4px 4px 4px;
+}
+
+.m3-app-bar-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.m3-app-logo {
+  font-size: 32px;
+  color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-primary-container);
+  padding: 8px;
+  border-radius: var(--md-corner-medium);
+}
+
+.m3-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.2;
+}
+
+.m3-subtitle {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 400;
+}
+
+/* Main Content */
+.m3-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Cards (M3 Surface Container) */
+.m3-card {
+  background-color: var(--md-sys-color-surface-container-lowest);
+  border-radius: var(--md-corner-extra-large);
+  padding: 24px;
+  box-shadow: var(--md-elevation-1);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hero Rate Card */
+.m3-hero-card {
+  text-align: center;
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.m3-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
+  padding: 6px 14px;
+  border-radius: var(--md-corner-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.m3-badge-icon {
+  font-size: 18px;
+}
+
+.m3-price-container {
+  margin-bottom: 16px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.m3-price-display {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.m3-price-unit {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* Loading State Spinner */
+.m3-loading-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--md-sys-color-outline-variant);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.m3-divider {
+  height: 1px;
+  background-color: var(--md-sys-color-outline-variant);
+  margin: 16px 0;
+  opacity: 0.6;
+}
+
+.m3-update-info {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 15px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.currency-symbol {
-  background-color: var(--accent);
-  color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-}
-
-.price-container {
-  margin-bottom: 20px;
-}
-
-.price {
-  font-size: 3.2rem;
-  font-weight: 800;
-  color: var(--text-main);
-  line-height: 1;
-}
-
-.currency-unit {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  display: block;
-  margin-top: 5px;
-}
-
-.loading {
-  font-size: 1.2rem;
-  color: var(--text-muted);
-  display: none;
-}
-
-.update-info {
   font-size: 0.85rem;
-  color: var(--text-muted);
-  border-top: 1px solid rgba(128, 128, 128, 0.15);
-  padding-top: 15px;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-/* ==========================================
-   4. SECCIÓN: CALCULADORA (TARJETA 2)
-   ========================================== */
-.calculator-card {
-  text-align: left;
-  padding: 20px;
+.m3-info-icon {
+  font-size: 18px;
+  color: var(--md-sys-color-primary);
 }
 
-.calculator-card h3 {
-  font-size: 1.1rem;
-  margin-bottom: 15px;
-  color: var(--text-main);
-  text-align: center;
+/* Calculator Card */
+.m3-calc-card {
+  background-color: var(--md-sys-color-surface-container-lowest);
 }
 
-.input-group {
-  margin-bottom: 12px;
-}
-
-.input-group label {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 5px;
-  font-weight: 600;
-}
-
-.input-wrapper {
+.m3-calc-header {
   display: flex;
   align-items: center;
-  background-color: var(--bg-color);
-  border: 1px solid rgba(128, 128, 128, 0.2);
-  border-radius: 12px;
-  padding: 0 14px;
-  transition: border-color 0.2s;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--md-sys-color-on-surface);
 }
 
-/* Efecto de foco sutil al tocar un input */
-.input-wrapper:focus-within {
-  border-color: var(--primary);
+.m3-calc-header h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
-.input-addon {
-  color: var(--text-muted);
-  font-weight: bold;
-  font-size: 0.95rem;
-  margin-right: 8px;
+.m3-calc-icon {
+  color: var(--md-sys-color-primary);
+  font-size: 24px;
 }
 
-.input-wrapper input {
+/* Text Fields (M3 Outlined Style) */
+.m3-textfield {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.m3-textfield-label {
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-textfield-input-wrap {
+  display: flex;
+  align-items: center;
+  background-color: var(--md-sys-color-surface-container);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-corner-medium);
+  padding: 0 16px;
+  min-height: 52px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.m3-textfield-input-wrap:focus-within {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+.m3-prefix {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  font-size: 1rem;
+  margin-right: 12px;
+}
+
+.m3-textfield-input-wrap input {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 12px 0;
-  font-size: 1.1rem;
-  color: var(--text-main);
+  font-size: 1.15rem;
   font-weight: 600;
+  color: var(--md-sys-color-on-surface);
   outline: none;
 }
 
-/* Remueve las flechitas nativas molestas de los inputs numéricos */
-.input-wrapper input::-webkit-outer-spin-button,
-.input-wrapper input::-webkit-inner-spin-button {
+/* Remove Number Input Arrows */
+.m3-textfield-input-wrap input::-webkit-outer-spin-button,
+.m3-textfield-input-wrap input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.input-wrapper input[type=number] {
+.m3-textfield-input-wrap input[type=number] {
   -moz-appearance: textfield;
 }
 
-.conversion-arrow {
-  text-align: center;
-  color: var(--primary);
-  font-size: 1.3rem;
-  margin: 5px 0;
-  font-weight: bold;
+/* Swap Icon Divider */
+.m3-swap-divider {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
 }
 
-/* ==========================================
-   5. BOTONES Y ALERTAS ESTADO OFFLINE
-   ========================================== */
-.refresh-btn {
-  background-color: var(--primary);
-  color: white;
+.m3-icon-button {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
   border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md-corner-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.m3-icon-button:active {
+  transform: scale(0.92);
+}
+
+/* Filled Action Button */
+.m3-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
-  padding: 14px;
-  border-radius: 12px;
+  min-height: 52px;
+  border: none;
+  border-radius: var(--md-corner-full);
   font-size: 1rem;
   font-weight: 600;
+  letter-spacing: 0.1px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  box-shadow: var(--md-elevation-1);
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.refresh-btn:active {
-  background-color: var(--primary-hover);
+.m3-filled-button {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.m3-filled-button:active {
   transform: scale(0.98);
+  box-shadow: var(--md-elevation-2);
 }
 
-.offline-message {
-  color: #ef4444;
+/* Offline Banner */
+.m3-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--md-corner-medium);
   font-size: 0.85rem;
-  margin-top: 15px;
   font-weight: 500;
 }
 
-/* Utilidad general para ocultar elementos */
+.m3-banner-offline {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
 .hidden {
   display: none !important;
 }

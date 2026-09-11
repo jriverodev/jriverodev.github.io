@@ -46,8 +46,7 @@
 
         // SI HAY SESIÓN O TOKEN Y INTENTA ACCEDER A INDEX.HTML
         if ((session || localUserId || localToken) && (paginaActual === 'index.html' || paginaActual === '')) {
-            // Permitir navegación fluida al panel principal
-            window.location.href = 'panel.html';
+            window.location.href = 'visor.html';
             return;
         }
 
@@ -227,6 +226,19 @@
         }
     }
 
+    function obtenerRolYModuloUsuario() {
+        const rol = String(sessionStorage.getItem('SIAGOP_ROL') || localStorage.getItem('siagop_user_rol') || '').toLowerCase().trim();
+        const modulo = String(sessionStorage.getItem('SIAGOP_MODULO') || localStorage.getItem('siagop_user_modulo') || '').toUpperCase().trim();
+
+        const esAdmin = rol === 'admin' || rol === 'administrador' || modulo === 'TODOS';
+        const esTalleres = esAdmin || rol === 'operador_talleres' || modulo === 'TALLERES';
+        const esFlota = esAdmin || rol === 'operador_flota' || modulo === 'FLOTA';
+
+        return { rol, modulo, esAdmin, esTalleres, esFlota };
+    }
+
+    window.obtenerRolYModuloUsuario = obtenerRolYModuloUsuario;
+
     // Exportar al objeto global SIAGOP_GATEKEEPER
     window.SIAGOP_GATEKEEPER = {
         verificarAccesoGlobal,
@@ -234,7 +246,8 @@
         bloquearUsuarioEInactivar,
         cerrarSesionDefinitiva,
         mostrarModalBloqueoGatekeeper,
-        actualizarHeaderOrganizacion
+        actualizarHeaderOrganizacion,
+        obtenerRolYModuloUsuario
     };
 
     // Auto-ejecución al cargar el DOM

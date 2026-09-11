@@ -2,74 +2,110 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Tasa Oficial BCV + Calculadora</title>
   
   <link rel="manifest" href="./manifest.json">
   
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Tasa BCV">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <link rel="shortcut icon" href="./icons/favicon.ico" type="image/x-icon">
   <link rel="icon" href="./icons/favicon.ico" type="image/x-icon">
   
+  <!-- Google Material Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <div class="app-container">
+  <div class="m3-app">
     
-    <header>
-      <h1>Tasa Oficial BCV</h1>
-      <p class="subtitle">Banco Central de Venezuela</p>
+    <!-- M3 Top App Bar -->
+    <header class="m3-top-app-bar">
+      <div class="m3-app-bar-content">
+        <span class="material-symbols-outlined m3-app-logo">account_balance</span>
+        <div>
+          <h1 class="m3-title">Tasa Oficial BCV</h1>
+          <p class="m3-subtitle">Banco Central de Venezuela</p>
+        </div>
+      </div>
     </header>
 
-    <main class="card">
-      <div class="currency-info">
-        <span class="currency-symbol">$</span>
-        <span class="currency-name">Dólar Estadounidense</span>
-      </div>
-      
-      <div class="price-container">
-        <span class="loading" id="loading">Cargando tasa...</span>
-        <h2 class="price" id="price-value">--,--</h2>
-        <span class="currency-unit">Bs. / USD</span>
-      </div>
+    <main class="m3-main-content">
+      <!-- M3 Hero Card: Rate Visualizer -->
+      <section class="m3-card m3-hero-card">
+        <div class="m3-badge">
+          <span class="material-symbols-outlined m3-badge-icon">attach_money</span>
+          <span class="m3-badge-label">Dólar Estadounidense</span>
+        </div>
 
-      <div class="update-info">
-        <p>Fecha Valor: <span id="update-date">--/--/----</span></p>
+        <div class="m3-price-container">
+          <div class="m3-loading-state" id="loading">
+            <span class="m3-spinner"></span>
+            <span>Cargando tasa oficial...</span>
+          </div>
+          <div class="m3-price-display" id="price-value">--,--</div>
+          <span class="m3-price-unit">Bolívares (Bs.) por USD</span>
+        </div>
+
+        <div class="m3-divider"></div>
+
+        <div class="m3-update-info">
+          <span class="material-symbols-outlined m3-info-icon">calendar_today</span>
+          <p>Fecha Valor: <strong id="update-date">--/--/----</strong></p>
+        </div>
+      </section>
+
+      <!-- M3 Card: Conversion Calculator -->
+      <section class="m3-card m3-calc-card">
+        <div class="m3-calc-header">
+          <span class="material-symbols-outlined m3-calc-icon">calculate</span>
+          <h2>Calculadora de Conversión</h2>
+        </div>
+
+        <div class="m3-textfield">
+          <label for="input-usd" class="m3-textfield-label">Monto en Dólares (USD)</label>
+          <div class="m3-textfield-input-wrap">
+            <span class="m3-prefix">$</span>
+            <input type="number" id="input-usd" placeholder="0.00" step="any" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="m3-swap-divider">
+          <button type="button" class="m3-icon-button" id="swap-btn" aria-label="Intercambiar campos">
+            <span class="material-symbols-outlined">swap_vert</span>
+          </button>
+        </div>
+
+        <div class="m3-textfield">
+          <label for="input-bs" class="m3-textfield-label">Monto en Bolívares (Bs.)</label>
+          <div class="m3-textfield-input-wrap">
+            <span class="m3-prefix">Bs</span>
+            <input type="number" id="input-bs" placeholder="0.00" step="any" inputmode="decimal">
+          </div>
+        </div>
+      </section>
+
+      <!-- M3 Action Button -->
+      <button id="refresh-btn" class="m3-button m3-filled-button">
+        <span class="material-symbols-outlined">refresh</span>
+        <span>Actualizar Precio</span>
+      </button>
+
+      <!-- Offline Banner -->
+      <div id="offline-message" class="m3-banner m3-banner-offline hidden">
+        <span class="material-symbols-outlined">wifi_off</span>
+        <span>Sin conexión. Mostrando datos guardados.</span>
       </div>
     </main>
 
-    <section class="card calculator-card">
-      <h3>Calculadora de Conversión</h3>
-      
-      <div class="input-group">
-        <label for="input-usd">Dólares (USD)</label>
-        <div class="input-wrapper">
-          <span class="input-addon">$</span>
-          <input type="number" id="input-usd" placeholder="0.00" step="any" inputmode="decimal">
-        </div>
-      </div>
-
-      <div class="conversion-arrow">⇅</div>
-
-      <div class="input-group">
-        <label for="input-bs">Bolívares (Bs.)</label>
-        <div class="input-wrapper">
-          <span class="input-addon">Bs</span>
-          <input type="number" id="input-bs" placeholder="0.00" step="any" inputmode="decimal">
-        </div>
-      </div>
-    </section>
-
-    <button id="refresh-btn" class="refresh-btn">
-      Actualizar Precio
-    </button>
-    
-    <p id="offline-message" class="offline-message hidden">Sin conexión. Mostrando datos guardados.</p>
   </div>
 
   <script src="./app.js"></script>

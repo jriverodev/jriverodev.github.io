@@ -1,0 +1,32 @@
+{
+  "id": "/sistema-control-personal",
+  "name": "Sistema Control de Personal - Logística",
+  "short_name": "Control Personal",
+  "description": "Consola local para la gestión de Fuerza Laboral Terrestre y Ciclos Vacacionales.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#1e3a8a",
+  "orientation": "landscape",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

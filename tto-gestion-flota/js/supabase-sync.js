@@ -139,6 +139,29 @@
         // (default: /api/sign-upload) and PUT the Blob there. For public buckets we keep the original client.storage upload.
         try {
             const out = Object.assign({}, record);
+            if (out.documento_eliminar) {
+                if (client && client.storage) {
+                    const docUrlEliminar = out.documento_url;
+                    const posiblesRutas = [];
+                    if (docUrlEliminar) {
+                        const pathEliminar = typeof extraerStoragePath === 'function' ? (extraerStoragePath(docUrlEliminar, bucketName) || extraerStoragePath(docUrlEliminar, 'siagop-archivos') || extraerStoragePath(docUrlEliminar, 'ttocc-archivos')) : null;
+                        if (pathEliminar) posiblesRutas.push(pathEliminar);
+                    }
+                    ['pdf', 'png', 'jpg', 'jpeg', 'webp'].forEach(ext => {
+                        posiblesRutas.push(`activos/${id}/documento.${ext}`);
+                        posiblesRutas.push(`${id}/documento.${ext}`);
+                        posiblesRutas.push(`documento.${ext}`);
+                    });
+                    const rutasUnicas = Array.from(new Set(posiblesRutas));
+                    for (const bName of [bucketName, 'siagop-archivos', 'ttocc-archivos']) {
+                        try {
+                            await client.storage.from(bName).remove(rutasUnicas);
+                        } catch (eStorageDel) {}
+                    }
+                }
+                out.documento_url = null;
+                out.documento_nombre = null;
+            }
             const keys = Object.keys(out);
 
             // Signing endpoint and auth helpers (configurable via globals)
@@ -301,7 +324,7 @@
 
             const cleanRecord = {};
             for (const col of columnasPermitidas) {
-                if (ready[col] !== undefined && ready[col] !== null) {
+                if (ready[col] !== undefined) {
                     cleanRecord[col] = ready[col];
                 }
             }
