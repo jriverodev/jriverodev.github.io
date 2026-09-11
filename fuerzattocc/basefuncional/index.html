@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Integrado de Personal y Vacaciones</title>
+    
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <link href="css/sweetalert2.min.css" rel="stylesheet">
+
+    <script src="js/bootstrap.bundle.min.js" defer></script>
+    <script src="js/dexie.js" defer></script>
+    <script src="js/xlsx.full.min.js" defer></script>
+    <script src="js/tabulator.min.js" defer></script>
+    <script src="js/sweetalert2.min.js" defer></script>
+    <script src="js/app.js" defer></script>
+    <script src="js/app.override.js" defer></script>
+
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .navbar-custom { background: linear-gradient(135deg, #1e3a8a, #0d9488); color: white; }
+        
+        /* Botones del Menú Principal */
+        .menu-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: none; border-left: 8px solid; }
+        .card-fuerza { border-left-color: #84cc16; } 
+        .card-vacaciones { border-left-color: #a855f7; } 
+        .menu-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .icon-box { font-size: 2.5rem; }
+        
+        /* Zonas de Arrastre de Excel */
+        .drop-zone { border: 2px dashed #0d9488; background-color: #f0fdf4; cursor: pointer; transition: 0.2s; text-align: center; }
+        .drop-zone:hover { background-color: #dcfce7; }
+        .btn-outline-violet { color: #a855f7; border-color: #a855f7; background-color: transparent; }
+        .btn-outline-violet:hover,
+        .btn-outline-violet:focus { color: #fff; background-color: #a855f7; border-color: #a855f7; }
+        .login-overlay { position: fixed; inset: 0; z-index: 1090; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.97); padding: 1.5rem; }
+        .login-card { width: min(520px, 100%); max-width: 520px; border-radius: 1rem; box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18); }
+        .login-card h4 { margin-bottom: 1rem; }
+        .hidden-panel { display: none; }
+        .tabulator { font-size: 12px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .modal-content { border-radius: 1rem; overflow: hidden; }
+        .modal-body { background: #f8fafc; padding: 1.25rem 1.5rem; }
+        .modal-footer { border-top: 1px solid rgba(15, 23, 42, 0.08); padding: 1rem 1.5rem; }
+        .personal-form-grid { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+        .personal-photo-panel { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 1rem; }
+        .personal-photo-panel .avatar-wrapper { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(15, 23, 42, 0.1); }
+        .personal-fields-panel { display: grid; gap: 0.8rem; }
+        .personal-grid { display: grid; gap: 0.7rem; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+        .personal-grid .field-group { display: flex; flex-direction: column; gap: 0.22rem; }
+        .personal-grid .field-group label { font-size: 0.75rem; font-weight: 700; line-height: 1.2; color: #334155; text-transform: uppercase; letter-spacing: 0.06em; }
+        .personal-grid .field-group input,
+        .personal-grid .field-group select { min-height: 36px; padding: 0.4rem 0.65rem; font-size: 0.84rem; border-radius: 0.55rem; }
+        .personal-grid .field-group input:focus,
+        .personal-grid .field-group select:focus { box-shadow: 0 0 0 0.1rem rgba(59, 130, 246, 0.15); border-color: #3b82f6; }
+        .personal-grid .field-span-6 { grid-column: span 6; }
+        .personal-grid .field-span-4 { grid-column: span 4; }
+        .personal-grid .field-span-3 { grid-column: span 3; }
+        .personal-grid .field-span-12 { grid-column: span 12; }
+        .certificate-expiration-grid { display: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
+        .certificate-expiration-grid.active { display: grid; }
+        .switch-field { display: flex; align-items: center; gap: 0.9rem; padding: 0.7rem 0.8rem; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 0.8rem; grid-column: span 12; }
+        .switch-field label { margin: 0; font-size: 0.92rem; font-weight: 700; color: #102a43; text-transform: none; }
+        .file-panel { display: grid; gap: 0.65rem; grid-column: span 12; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 1rem; padding: 1rem; }
+        .file-panel .form-label { font-size: 0.82rem; font-weight: 700; color: #334155; }
+        .file-panel .form-control { min-height: 42px; border-radius: 0.75rem; }
+        .vacation-form-grid { display: grid; gap: 1rem; }
+        .vacation-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+        .vacation-grid .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .vacation-grid .field-group label { font-size: 0.78rem; font-weight: 700; line-height: 1.2; color: #334155; text-transform: uppercase; letter-spacing: 0.04em; }
+        .vacation-grid .field-group input,
+        .vacation-grid .field-group select { min-height: 42px; padding: 0.5rem 0.75rem; font-size: 0.9rem; border-radius: 0.75rem; }
+        .vacation-grid .field-group input:focus,
+        .vacation-grid .field-group select:focus { box-shadow: 0 0 0 0.12rem rgba(168, 85, 247, 0.15); border-color: #a855f7; }
+        .vacation-grid .field-span-2 { grid-column: span 2; }
+        .vacation-grid .field-span-3 { grid-column: span 3; }
+        .vacation-grid .field-span-4 { grid-column: span 4; }
+        .vacation-grid .field-span-5 { grid-column: span 5; }
+        .vacation-grid .field-span-6 { grid-column: span 6; }
+        .vacation-grid .field-span-8 { grid-column: span 8; }
+        .vacation-grid .field-span-9 { grid-column: span 9; }
+        .vacation-grid .field-span-12 { grid-column: span 12; }
+        .tour-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 2000; pointer-events: auto; }
+        .tour-highlight { position: absolute; border: 3px solid #f59e0b; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55); pointer-events: none; transition: all 0.2s ease; z-index: 2002; }
+        .tour-tooltip { position: absolute; max-width: 360px; background: #ffffff; border-radius: 1rem; border: 1px solid rgba(15, 23, 42, 0.12); padding: 1rem 1.2rem; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16); z-index: 2003; font-size: 0.95rem; line-height: 1.5; }
+        .tour-tooltip .tour-title { font-weight: 700; margin-bottom: 0.65rem; }
+        .tour-tooltip .tour-actions { display: flex; justify-content: space-between; gap: 0.5rem; margin-top: 1rem; }
+        .tour-tooltip .tour-actions button { flex: 1; }
+        @media (max-width: 991px) {
+            .personal-form-grid { grid-template-columns: 1fr; }
+            .personal-grid { grid-template-columns: 1fr; }
+            .personal-grid .field-span-6,
+            .personal-grid .field-span-4,
+            .personal-grid .field-span-3,
+            .personal-grid .field-span-12 { grid-column: span 12; }
+            .certificate-expiration-grid { grid-template-columns: 1fr; }
+            .vacation-grid { grid-template-columns: 1fr; }
+            .vacation-grid .field-span-2,
+            .vacation-grid .field-span-3,
+            .vacation-grid .field-span-4,
+            .vacation-grid .field-span-5,
+            .vacation-grid .field-span-6,
+            .vacation-grid .field-span-8,
+            .vacation-grid .field-span-9,
+            .vacation-grid .field-span-12 { grid-column: span 12; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="panel-login" class="login-overlay">
+    <div class="login-card bg-white p-4">
+        <h4 class="text-center">Acceso Seguro al Sistema</h4>
+        <div class="mb-3">
+            <label for="login-user" class="form-label fw-semibold">Usuario</label>
+            <input id="login-user" type="text" class="form-control" placeholder="admin" autofocus>
+        </div>
+        <div class="mb-4">
+            <label for="login-pass" class="form-label fw-semibold">Contraseña</label>
+            <input id="login-pass" type="password" class="form-control" placeholder="••••••••">
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <button id="btnLogin" type="button" class="btn btn-primary px-4">Ingresar</button>
+        </div>
+        <!--p class="mt-3 text-muted small mb-0">Login offline con hash SHA-256 seguro. No se almacenan contraseñas en texto claro.</p-->
+    </div>
+</div>
+
+<nav class="navbar navbar-custom shadow-sm py-3 mb-4">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fs-6 d-block opacity-75">Gcia. de Transporte Terrestre</span>
+            <h4 class="mb-0 fw-bold">Consola de Control - Gestión de Personal</h4>
+        </div>
+        <span id="global-status" class="badge bg-light text-dark fs-6 shadow-sm">Cargando Base Localhouse...</span>
+        <button id="btnCerrarSesionNav" type="button" class="btn btn-sm btn-outline-light text-dark d-none">Cerrar sesión</button>
+    </div>
+</nav>
+<div class="d-flex gap-2 mb-3">
+    <button type="button" id="btnAdminOpen" class="btn btn-sm btn-outline-warning">
+        🔒 Administración segura
+    </button>
+    <button type="button" id="btnTour" class="btn btn-sm btn-outline-success">
+        👣 Tour guiado del sistema
+    </button>
+    <span id="backupStatus" class="align-self-center text-secondary small">Archivo de respaldo disponible localmente.</span>
+</div>
+
+<!-- Modal de acceso administrativo -->
+<div class="modal fade" id="modalAdminAccess" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Acceso administrativo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="adminPasswordArea">
+                    <p class="mb-3">Ingrese la contraseña administrativa para acceder a las funciones ocultas.</p>
+                    <div class="mb-3">
+                        <label for="admin-password" class="form-label">Contraseña</label>
+                        <input id="admin-password" type="password" class="form-control" placeholder="Contraseña segura">
+                    </div>
+                    <div id="adminPasswordMessage" class="text-danger small mb-3"></div>
+                    <button id="btnUnlockAdmin" type="button" class="btn btn-primary">Ingresar</button>
+                </div>
+
+                <div id="adminActionsArea" class="d-none">
+                    <div class="alert alert-warning mb-4">Modo administrador activado. Estas acciones son sensibles: utilice con cuidado.</div>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" id="btnPurgarPersonal" class="btn btn-outline-danger">🗑️ Vaciar Maestro Personal</button>
+                        <button type="button" id="btnPurgarVacaciones" class="btn btn-outline-danger">🗑️ Vaciar Programación Vacaciones</button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" id="btnBackupDB" class="btn btn-outline-primary">💾 Respaldar Base de Datos</button>
+                        <button type="button" id="btnRestaurarBackup" class="btn btn-outline-secondary">📤 Restaurar Respaldo</button>
+                    </div>
+                    <div id="dropZoneBackup" class="drop-zone p-3 rounded text-info">
+                        📥 Arrastre aquí el archivo de respaldo (.json o .db) para restaurar la base de datos.
+                    </div>
+                    <input type="file" id="fileBackupRestore" class="d-none" accept=".json,.db,application/json">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-4" style="max-width: 1900px;">
+
+    <div id="vista-menu" class="row g-4 justify-content-center py-5">
+        <div class="col-12 text-center mb-4">
+            <h3 class="text-secondary fw-semibold">Seleccione el Módulo de Trabajo</h3>
+        </div>
+        
+        <div class="col-md-5 col-lg-4">
+            <div class="card menu-card card-fuerza h-100 shadow-sm p-4" onclick="cambiarVista('personal')">
+                <div class="card-body text-center">
+                    <div class="icon-box mb-3">👥</div>
+                    <h3 class="card-title fw-bold text-dark">FUERZA LABORAL</h3>
+                    <p class="card-text text-muted">Altas, bajas, fotos de perfil, PDFs de soporte y exportación en formato.</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center text-success fw-bold">ABRIR MAESTRO &rarr;</div>
+            </div>
+        </div>
+
+        <div class="col-md-5 col-lg-4">
+            <div class="card menu-card card-vacaciones h-100 shadow-sm p-4" onclick="cambiarVista('vacaciones')">
+                <div class="card-body text-center">
+                    <div class="icon-box mb-3">🌴</div>
+                    <h3 class="card-title fw-bold text-dark">DATA VACACIONES</h3>
+                    <p class="card-text text-muted">Mapeo masivo con plantilla consolidada, control de días hábiles y continuos.</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center fw-bold" style="color: #a855f7;">ABRIR PROGRAMACIÓN &rarr;</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="panel-personal" class="hidden-panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button class="btn btn-outline-secondary fw-bold" onclick="cambiarVista('menu')">&larr; Volver al Menú</button>
+            <h3 class="fw-bold text-dark m-0">📋 Consolidado de Fuerza Laboral y Estatus de Persona</h3>
+        </div>
+        
+        <div class="card p-3 shadow-sm mb-4 bg-white">
+            <div class="row align-items-center g-3">
+                <div class="col-md-4">
+                    <div id="dropZonePersonal" class="drop-zone p-3 rounded text-success fw-semibold">
+                        📁 Arrastre aquí el Excel de Fuerza Laboral (Hoja DATOS)
+                    </div>
+                    <div class="small text-muted mt-2">Use el botón "📥 Descargar Plantilla" para obtener un archivo de ejemplo con las cabeceras esperadas. Mantenga las cabeceras sin modificar.</div>
+                    <input type="file" id="filePersonal" class="d-none" accept=".xlsx, .xlsm">
+                </div>
+                <div class="col-md-8 d-flex gap-2 justify-content-end">
+                    <input type="text" id="busquedaPersonal" class="form-control w-50 fs-5" placeholder="🔍 Filtrar por Cédula, Nombre, N° Personal...">
+                    <button class="btn btn-success fw-semibold px-3" onclick="abrirModalNuevoPersonal()">➕ Nuevo Trabajador</button>
+                    <button id="btnExportarPersonal" class="btn btn-outline-success fw-semibold">🟢 Exportar Excel</button>
+                    <button id="btnTemplatePersonal" class="btn btn-outline-primary fw-semibold">📥 Descargar Plantilla</button>
+                </div>
+            </div>
+        </div>
+        <div id="tabla-personal"></div>
+    </div>
+
+
+    <div id="panel-vacaciones" class="hidden-panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button class="btn btn-outline-secondary fw-bold" onclick="cambiarVista('menu')">&larr; Volver al Menú</button>
+            <h3 class="fw-bold text-dark m-0">🗓️ Consolidado de Vacaciones (Gerencia de TT)</h3>
+        </div>
+        
+        <div class="card p-3 shadow-sm mb-4 bg-white">
+            <div class="row align-items-center g-3">
+                <div class="col-md-5">
+                    <div id="dropZoneVacaciones" class="drop-zone p-3 rounded text-info fw-semibold" style="background-color: #f0f9ff; border-color: #0ea5e9;">
+                        🌴 Arrastre la Plantilla de Vacaciones (Salta automáticamente el membrete)
+                    </div>
+                    <div class="small text-muted mt-2">Descargue la plantilla de ejemplo para ver el formato y las cabeceras requeridas (CEDULA, SAP, MES).</div>
+                    <input type="file" id="fileVacaciones" class="d-none" accept=".xlsx, .xlsm, .xls, .csv">
+                </div>
+                <div class="col-md-7 d-flex gap-2 justify-content-end">
+                    <input type="text" id="busquedaVacaciones" class="form-control w-50 fs-5" placeholder="🔍 Buscar por Cédula, N° SAP, Apellido o Mes...">
+                    <button class="btn text-white fw-semibold px-3" style="background-color: #a855f7;" onclick="abrirModalNuevaVacacion()">➕ Registrar Vacación</button>
+                    <button id="btnExportarVacaciones" class="btn btn-outline-violet fw-semibold">🟣 Exportar Plantilla Real</button>
+                    <button id="btnTemplateVacaciones" class="btn btn-outline-primary fw-semibold">📥 Descargar Plantilla</button>
+                </div>
+            </div>
+        </div>
+        <div id="tabla-vacaciones"></div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="modalPersonal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="p-modal-title">Datos de Fuerza Laboral</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPersonal" class="personal-form-grid">
+                    <input type="hidden" id="p-id">
+
+                    <div class="personal-photo-panel">
+                        <label class="form-label fw-bold text-secondary text-center">Foto del Trabajador</label>
+                        <div class="avatar-wrapper position-relative">
+                            <img id="p-avatar-preview" src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop" class="w-100 h-100 object-fit-cover" alt="Previsualización">
+                            <button type="button" id="btnRemoveFoto" class="btn btn-danger btn-sm position-absolute bottom-0 end-0 rounded-circle shadow" style="display: none;" title="Quitar imagen">✕</button>
+                        </div>
+                        <div id="dropZoneFoto" class="p-2 border rounded bg-light text-muted small text-center" style="border-style: dashed !important; cursor: pointer;">
+                            📸 Arrastre o haga clic para subir Foto (JPG/PNG)
+                        </div>
+                        <input type="file" id="p-foto-input" class="d-none" accept="image/jpeg, image/png">
+                        <div id="p-foto-info" class="text-success fw-semibold small"></div>
+                    </div>
+
+                    <div class="personal-fields-panel">
+                        <div class="personal-grid">
+                            <div class="field-group field-span-4"><label for="p-np">N_PERSONAL</label><input id="p-np" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" class="form-control" required></div>
+                        <div class="field-group field-span-4"><label for="p-cedula">CÉDULA</label><input id="p-cedula" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" class="form-control border-danger" required></div>
+                        <div class="field-group field-span-4"><label for="p-celular">CELULAR</label><input id="p-celular" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" class="form-control"></div>
+
+                        <div class="field-group field-span-6"><label for="p-fecha-nacimiento">Fecha de Nacimiento</label><input id="p-fecha-nacimiento" type="date" class="form-control"></div>
+                        <div class="field-group field-span-6"><label for="p-fecha-ingreso">Fecha de Ingreso</label><input id="p-fecha-ingreso" type="date" class="form-control"></div>
+
+                        <div class="field-group field-span-6"><label for="p-nombre">NOMBRES</label><input id="p-nombre" type="text" class="form-control border-primary" required></div>
+                        <div class="field-group field-span-6"><label for="p-apellido">APELLIDOS</label><input id="p-apellido" type="text" class="form-control border-primary" required></div>
+
+                        <div class="field-group field-span-4"><label for="p-puesto">PUESTO_FUNCIONAL</label><input id="p-puesto" type="text" class="form-control"></div>
+                        <div class="field-group field-span-4"><label for="p-desc-sap">DESCRIPCIÓN POSICIÓN SAP</label><input id="p-desc-sap" type="text" class="form-control"></div>
+
+                        <div class="switch-field">
+                            <input class="form-check-input" type="checkbox" id="p-certs-activos">
+                            <label class="form-check-label" for="p-certs-activos">¿Posee certificados de manejo?</label>
+                        </div>
+                        </div>
+
+                        <div id="p-certificates-group" class="certificate-expiration-grid">
+                            <div class="field-group"><label for="p-vencimiento-flota-pesada">Vencimiento Flota Pesada</label><input id="p-vencimiento-flota-pesada" type="date" class="form-control"></div>
+                            <div class="field-group"><label for="p-vencimiento-flota-liviana">Vencimiento Flota Liviana</label><input id="p-vencimiento-flota-liviana" type="date" class="form-control"></div>
+                            <div class="field-group"><label for="p-vencimiento-medico-vial">Vencimiento Médico Vial</label><input id="p-vencimiento-medico-vial" type="date" class="form-control"></div>
+                        </div>
+
+                        <div class="personal-grid">
+                            <div class="field-group field-span-3"><label for="p-condicion">CONDICION</label><select id="p-condicion" class="form-select border-success"><option value="NNC">NNC</option><option value="NCM">NCM</option><option value="NCD">NCD</option></select></div>
+                            <div class="field-group field-span-3"><label for="p-statusFl">STATUS_FL</label><select id="p-statusFl" class="form-select border-success"><option value="PRESENCIAL">PRESENCIAL</option><option value="TELETRABAJO">TELETRABAJO</option><option value="MIXTO">MIXTO</option><option value="REPOSO">REPOSO</option><option value="VACACIONES">VACACIONES</option></select></div>
+                            <div class="field-group field-span-3"><label for="p-edificio">EDIFICIO</label><input id="p-edificio" type="text" class="form-control"></div>
+                            <div class="field-group field-span-3"><label for="p-localidad">LOCALIDAD</label><input id="p-localidad" type="text" class="form-control"></div>
+
+                            <div class="field-group field-span-4"><label for="p-g1">GERENCIA_1</label><input id="p-g1" type="text" class="form-control"></div>
+                            <div class="field-group field-span-4"><label for="p-g2">GERENCIA_2</label><input id="p-g2" type="text" class="form-control"></div>
+                            <div class="field-group field-span-4"><label for="p-g3">GERENCIA_3</label><input id="p-g3" type="text" class="form-control"></div>
+
+                            <div class="field-group field-span-6"><label for="p-municipio">MUNICIPIO</label><input id="p-municipio" type="text" class="form-control"></div>
+                            <div class="field-group field-span-6 file-panel">
+                                <label for="p-pdf-input">Documento Soporte (PDF)</label>
+                                <input id="p-pdf-input" type="file" class="form-control" accept="application/pdf">
+                                <div id="p-pdf-info" class="text-muted small mt-1"></div>
+                                <button type="button" id="btnVerPdf" class="btn btn-sm btn-outline-primary" style="display: none;">👁️ Ver PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" id="btnEliminarPersonal" class="btn btn-danger px-3">🗑️ Eliminar</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnGuardarPersonal" class="btn btn-success px-4">💾 Guardar Registro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalVacaciones" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header text-white" style="background-color: #a855f7;">
+                <h5 class="modal-title" id="v-modal-title">Registro de Ciclo Vacacional Completo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formVacacion" class="vacation-form-grid">
+                    <input type="hidden" id="v-id">
+                    <div class="vacation-grid">
+                        <div class="field-group field-span-3"><label for="v-mes">MES</label><select class="form-select" id="v-mes"><option value="">Seleccione un mes</option><option value="ENERO">Enero</option><option value="FEBRERO">Febrero</option><option value="MARZO">Marzo</option><option value="ABRIL">Abril</option><option value="MAYO">Mayo</option><option value="JUNIO">Junio</option><option value="JULIO">Julio</option><option value="AGOSTO">Agosto</option><option value="SEPTIEMBRE">Septiembre</option><option value="OCTUBRE">Octubre</option><option value="NOVIEMBRE">Noviembre</option><option value="DICIEMBRE">Diciembre</option></select></div>
+                        <div class="field-group field-span-3"><label for="v-nomina">NOMINA</label><select class="form-select" id="v-nomina"><option value="NNC">NNC</option><option value="NCM">NCM</option><option value="NCD">NCD</option></select></div>
+                        <div class="field-group field-span-6"><label for="v-gerencia">GERENCIA</label><input type="text" class="form-control" id="v-gerencia"></div>
+
+                        <div class="field-group field-span-3"><label for="v-fecha">FECHA REGISTRO</label><input type="date" class="form-control" id="v-fecha"></div>
+                        <div class="field-group field-span-3"><label for="v-cedula">CEDULA</label><input type="text" class="form-control" id="v-cedula" required></div>
+                        <div class="field-group field-span-3"><label for="v-sap">No/ SAP</label><input type="text" class="form-control" id="v-sap" required></div>
+                        <div class="field-group field-span-3"><label for="v-fechaing">FECHA DE INGRESO</label><input type="date" class="form-control" id="v-fechaing"></div>
+
+                        <div class="field-group field-span-6"><label for="v-apellidos">APELLIDOS</label><input type="text" class="form-control" id="v-apellidos" required></div>
+                        <div class="field-group field-span-6"><label for="v-nombres">NOMBRES</label><input type="text" class="form-control" id="v-nombres" required></div>
+
+                        <div class="field-group field-span-3"><label for="v-dpendientes">DIAS PENDIENTES</label><input type="number" class="form-control border-success" id="v-dpendientes"></div>
+                        <div class="field-group field-span-5"><label for="v-periodo">PERIODO VACACIONAL</label><input type="text" class="form-control border-purple" id="v-periodo"></div>
+                        <div class="field-group field-span-4"><label for="v-dlott">DIAS LOTT</label><input type="number" class="form-control" id="v-dlott"></div>
+
+                        <div class="field-group field-span-3"><label for="v-desde">VACACIONES DESDE</label><input type="date" class="form-control border-primary" id="v-desde"></div>
+                        <div class="field-group field-span-3"><label for="v-hasta">VACACIONES HASTA</label><input type="date" class="form-control border-primary" id="v-hasta"></div>
+                        <div class="field-group field-span-3"><label for="v-dhabiles">DIAS HABILES DISFRUTE</label><input type="number" class="form-control" id="v-dhabiles"></div>
+                        <div class="field-group field-span-3"><label for="v-dcontinuos">DIAS CONTINUOS (Auto)</label><input type="number" class="form-control bg-light fw-bold text-success" id="v-dcontinuos" readonly></div>
+
+                        <div class="field-group field-span-3"><label for="v-totald">TOTAL DIAS</label><input type="number" class="form-control" id="v-totald"></div>
+                        <div class="field-group field-span-3"><label for="v-drestantes">DIAS RESTANTE</label><input type="number" class="form-control" id="v-drestantes"></div>
+                        <div class="field-group field-span-6"><label for="v-periodorestante">PERIODO RESTANTE</label><input type="text" class="form-control" id="v-periodorestante"></div>
+
+                        <div class="field-group field-span-6"><label for="v-observacion">OBSERVACION</label><input type="text" class="form-control" id="v-observacion"></div>
+                        <div class="field-group field-span-6"><label for="v-responsable">RESPONSABLE ADMINISTRACION</label><input type="text" class="form-control" id="v-responsable"></div>
+
+                        <div class="field-group field-span-5"><label for="v-cait">OBSERVACIONES CAIT</label><input type="text" class="form-control" id="v-cait"></div>
+                        <div class="field-group field-span-4"><label for="v-procesadastatus">PROCESADA / NO PROCESADA</label><input type="text" class="form-control" id="v-procesadastatus"></div>
+                        <div class="field-group field-span-3"><label for="v-codarea">COD_AREA</label><input type="text" class="form-control" id="v-codarea"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" id="btnEliminarVacacion" class="btn btn-danger px-3">🗑️ Eliminar</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btnGuardarVacacion" class="btn text-white px-4" style="background-color: #a855f7;">💾 Guardar Datos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
