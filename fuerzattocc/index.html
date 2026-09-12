@@ -1434,12 +1434,16 @@
     const unsyncedWorkers = await db.workers.where('syncStatus').equals('PENDIENTE').toArray();
 
     if (unsyncedWorkers.length === 0) {
-      Swal.fire({ icon: 'info', title: 'Al día', text: 'No hay registros pendientes por sincronizar.' });
+      if (!isSilent) {
+        Swal.fire({ icon: 'info', title: 'Al día', text: 'No hay registros pendientes por sincronizar.' });
+      }
       return;
     }
 
     try {
-      Swal.fire({ title: 'Sincronizando con Google Cloud...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      if (!isSilent) {
+        Swal.fire({ title: 'Sincronizando con Google Cloud...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      }
 
       const response = await fetch(GAS_WEB_APP_URL, {
         method: "POST",
@@ -1460,16 +1464,22 @@
         }
         if (!isSilent) {
           Swal.fire({ icon: 'success', title: '¡Sincronización Exitosa!', text: 'Todos los registros y documentos se subieron a Google Drive y Sheets.' });
+        } else {
+          Swal.close();
         }
         renderTable();
       } else {
         if (!isSilent) {
           Swal.fire({ icon: 'error', title: 'Error de Google Apps Script', text: resData.message || 'Error en el servidor de Google.' });
+        } else {
+          Swal.close();
         }
       }
     } catch (e) {
       if (!isSilent) {
         Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con la API de Google Apps Script. Verifica la URL.' });
+      } else {
+        Swal.close();
       }
     }
   }
@@ -1482,6 +1492,7 @@
   window.onload = function() {
     initGasUrl();
     renderTable();
+    autoSyncOnStartup();
   };
 </script>
 </body>
