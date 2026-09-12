@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Integrado de Personal y Vacaciones</title>
-    
+
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/tabulator_bootstrap5.min.css" rel="stylesheet">
     <link href="css/sweetalert2.min.css" rel="stylesheet">
@@ -20,14 +20,14 @@
     <style>
         body { background-color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
         .navbar-custom { background: linear-gradient(135deg, #1e3a8a, #0d9488); color: white; }
-        
+
         /* Botones del Menú Principal */
         .menu-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: none; border-left: 8px solid; }
-        .card-fuerza { border-left-color: #84cc16; } 
-        .card-vacaciones { border-left-color: #a855f7; } 
+        .card-fuerza { border-left-color: #84cc16; }
+        .card-vacaciones { border-left-color: #a855f7; }
         .menu-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .icon-box { font-size: 2.5rem; }
-        
+
         /* Zonas de Arrastre de Excel */
         .drop-zone { border: 2px dashed #0d9488; background-color: #f0fdf4; cursor: pointer; transition: 0.2s; text-align: center; }
         .drop-zone:hover { background-color: #dcfce7; }
@@ -194,7 +194,7 @@
         <div class="col-12 text-center mb-4">
             <h3 class="text-secondary fw-semibold">Seleccione el Módulo de Trabajo</h3>
         </div>
-        
+
         <div class="col-md-5 col-lg-4">
             <div class="card menu-card card-fuerza h-100 shadow-sm p-4" onclick="cambiarVista('personal')">
                 <div class="card-body text-center">
@@ -224,7 +224,7 @@
             <button class="btn btn-outline-secondary fw-bold" onclick="cambiarVista('menu')">&larr; Volver al Menú</button>
             <h3 class="fw-bold text-dark m-0">📋 Consolidado de Fuerza Laboral y Estatus de Persona</h3>
         </div>
-        
+
         <div class="card p-3 shadow-sm mb-4 bg-white">
             <div class="row align-items-center g-3">
                 <div class="col-md-4">
@@ -251,7 +251,7 @@
             <button class="btn btn-outline-secondary fw-bold" onclick="cambiarVista('menu')">&larr; Volver al Menú</button>
             <h3 class="fw-bold text-dark m-0">🗓️ Consolidado de Vacaciones (Gerencia de TT)</h3>
         </div>
-        
+
         <div class="card p-3 shadow-sm mb-4 bg-white">
             <div class="row align-items-center g-3">
                 <div class="col-md-5">
