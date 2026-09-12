@@ -1,14 +1,26 @@
 const FOLDER_ID = "1F7qlcKjf3PEir_Svj0ctRXyBqoeG3pXg";
 
 /**
- * Endpoint GET para verificar el estado de la API desde el navegador o pruebas HTTP.
+ * Endpoint GET para obtener registros o verificar estado de la API.
  */
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "online",
-    service: "Control de Fuerza Laboral API",
-    timestamp: new Date().toISOString()
-  })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    ensureHeaders(sheet);
+    const records = fetchAllRecords(sheet);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      service: "Control de Fuerza Laboral API",
+      timestamp: new Date().toISOString(),
+      records: records
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 /**
@@ -22,6 +34,14 @@ function doPost(e) {
 
     // Asegurar encabezados si la hoja está vacía
     ensureHeaders(sheet);
+
+    if (data.action === "PULL" || data.action === "READ" || data.accion === "leer") {
+      const records = fetchAllRecords(sheet);
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        records: records
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
 
     if (data.action === "SYNC") {
       data.records.forEach(r => {
@@ -152,6 +172,69 @@ function uploadFileToDrive(base64Data, fileName, cedula) {
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return file.getUrl();
+}
+
+/**
+ * Obtiene todos los registros guardados en la hoja de cálculo de Google.
+ */
+function fetchAllRecords(sheet) {
+  const targetSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (!targetSheet) return [];
+
+  const lastRow = targetSheet.getLastRow();
+  if (lastRow < 2) return [];
+
+  const data = targetSheet.getDataRange().getValues();
+  const headers = data[0];
+  const list = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const cedula = String(row[2] || "").trim();
+    if (!cedula) continue;
+
+    list.push({
+      item: String(row[0] || ""),
+      nPersonal: String(row[1] || ""),
+      cedula: cedula,
+      nombreApellido: String(row[3] || ""),
+      puestoFuncional: String(row[4] || ""),
+      posicionSap: String(row[5] || ""),
+      descripPosic: String(row[6] || ""),
+      nomina: String(row[7] || ""),
+      indicador: String(row[8] || ""),
+      estatusCondicion: String(row[9] || ""),
+      statusFl: String(row[10] || ""),
+      diasPendientesVacaciones: row[11] || 0,
+      periodoVacacional: String(row[12] || ""),
+      estatusVacaciones: String(row[13] || "AL DIA"),
+      dirAdjunta: String(row[14] || ""),
+      gcia1raLinea: String(row[15] || ""),
+      gcia2daLinea: String(row[16] || ""),
+      gcia3eraLinea: String(row[17] || ""),
+      instalacionEdif: String(row[18] || ""),
+      localidadTrabajo: String(row[19] || ""),
+      extensionOfic: String(row[20] || ""),
+      celular: String(row[21] || ""),
+      cedulaSupervisor: String(row[22] || ""),
+      nombreSupervisor: String(row[23] || ""),
+      indicadorSupervisor: String(row[24] || ""),
+      telefonoSupervisor: String(row[25] || ""),
+      flRrhhResponsable: String(row[26] || ""),
+      ubicacionAsignacion: String(row[27] || ""),
+      direccionHabitacion: String(row[28] || ""),
+      municipioVivienda: String(row[29] || ""),
+      fechaNacimiento: row[30] ? String(row[30]) : "",
+      fechaAniversario: row[31] ? String(row[31]) : "",
+      vencLicencia: row[32] ? String(row[32]) : "",
+      vencCedula: row[33] ? String(row[33]) : "",
+      vencCartaMedica: row[34] ? String(row[34]) : "",
+      docUrl: String(row[35] || ""),
+      syncStatus: 'EN_NUBE'
+    });
+  }
+
+  return list;
 }
 
 /**
