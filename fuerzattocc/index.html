@@ -904,6 +904,11 @@
     Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Trabajador guardado localmente.', timer: 1500, showConfirmButton: false });
     closeWorkerModal();
     renderTable();
+
+    // Sincronizar automáticamente justo después de guardar el cambio
+    if (navigator.onLine) {
+      syncWithGoogleSheets(true);
+    }
   }
 
   // Cambiar pestañas (Android Navigation)
@@ -1021,6 +1026,11 @@
       await db.workers.delete(cedula);
       Swal.fire({ icon: 'success', title: 'Eliminado', text: 'Registro eliminado localmente.', timer: 1500, showConfirmButton: false });
       renderTable();
+
+      // Sincronizar automáticamente tras la eliminación si hay conexión
+      if (navigator.onLine) {
+        syncWithGoogleSheets(true);
+      }
     }
   }
 
@@ -1145,6 +1155,7 @@
             Swal.fire({ icon: 'success', title: '¡Importación Éxitosa!', text: `Se importaron ${workersToInsert.length} trabajadores desde Excel.` });
             fileInput.value = "";
             renderTable();
+            if (navigator.onLine) syncWithGoogleSheets(true);
           } else {
             Swal.fire({ icon: 'error', title: 'Sin registros válidos', text: 'No se encontraron filas con Cédula y Nombre válidos.' });
           }
@@ -1250,6 +1261,7 @@
             Swal.fire({ icon: 'success', title: '¡Éxito!', text: `Se importaron ${workersToInsert.length} registros desde el CSV.` });
             fileInput.value = "";
             renderTable();
+            if (navigator.onLine) syncWithGoogleSheets(true);
           } else {
             Swal.fire({ icon: 'warning', title: 'Sin datos', text: 'No se encontraron registros válidos.' });
           }
@@ -1470,7 +1482,6 @@
   window.onload = function() {
     initGasUrl();
     renderTable();
-    autoSyncOnStartup();
   };
 </script>
 </body>
