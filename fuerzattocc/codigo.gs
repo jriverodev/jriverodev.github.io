@@ -107,7 +107,10 @@ function doPost(e) {
  * Crea la fila de encabezados si la hoja está totalmente vacía.
  */
 function ensureHeaders(sheet) {
-  if (sheet.getLastRow() === 0) {
+  const targetSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (!targetSheet) return;
+
+  if (targetSheet.getLastRow() === 0) {
     const headers = [
       "ITEM", "N° PERSONAL", "CEDULA", "NOMBRE Y APELLIDO", "PUESTO FUNCIONAL",
       "POSICION SAP", "DESCRIP DE LA POSIC", "NOMINA DEL TRABAJADOR", "INDICADOR DEL TRABAJADOR",
@@ -119,8 +122,8 @@ function ensureHeaders(sheet) {
       "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC. LICENCIA", "VENC. CÉDULA", "VENC. CARTA MÉDICA",
       "URL DOCUMENTO (DRIVE)", "FECHA ACTUALIZACIÓN"
     ];
-    sheet.appendRow(headers);
-    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#003366").setFontColor("#FFFFFF");
+    targetSheet.appendRow(headers);
+    targetSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#003366").setFontColor("#FFFFFF");
   }
 }
 
@@ -128,13 +131,24 @@ function ensureHeaders(sheet) {
  * Sube archivos codificados en Base64 a Google Drive.
  */
 function uploadFileToDrive(base64Data, fileName, cedula) {
+  if (!base64Data || typeof base64Data !== 'string') {
+    return "";
+  }
   if (!FOLDER_ID || FOLDER_ID.includes("COLOCA_AQUI")) {
     throw new Error("ID de carpeta de Google Drive no configurado en FOLDER_ID.");
   }
+
   const folder = DriveApp.getFolderById(FOLDER_ID);
-  const contentType = base64Data.split(';')[0].split(':')[1];
-  const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
-  const blob = Utilities.newBlob(bytes, contentType, `${cedula}_${fileName}`);
+  let contentType = "application/octet-stream";
+  let base64Body = base64Data;
+
+  if (base64Data.indexOf(";") > -1 && base64Data.indexOf(",") > -1) {
+    contentType = base64Data.split(';')[0].replace("data:", "") || contentType;
+    base64Body = base64Data.split(',')[1];
+  }
+
+  const bytes = Utilities.base64Decode(base64Body);
+  const blob = Utilities.newBlob(bytes, contentType, `${cedula || "DOC"}_${fileName || "anexo"}`);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return file.getUrl();
@@ -144,7 +158,13 @@ function uploadFileToDrive(base64Data, fileName, cedula) {
  * Busca el número de fila existente utilizando la columna 3 (CÉDULA).
  */
 function findRowByCedula(sheet, cedula) {
-  const data = sheet.getDataRange().getValues();
+  const targetSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (!targetSheet || !cedula) return -1;
+
+  const lastRow = targetSheet.getLastRow();
+  if (lastRow < 2) return -1;
+
+  const data = targetSheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][2]).trim() === String(cedula).trim()) return i + 1;
   }
