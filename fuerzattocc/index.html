@@ -1358,8 +1358,52 @@
     });
   }
 
-  // Sincronización Google Apps Script
-  async function syncWithGoogleSheets() {
+  // Auto-sincronización al iniciar la app (Pull de la nube a IndexedDB + Push de pendientes local a la nube)
+  async function autoSyncOnStartup() {
+    if (!navigator.onLine) {
+      console.log("App en modo offline: utilizando base de datos IndexedDB local.");
+      return;
+    }
+
+    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url') || DEFAULT_GAS_URL;
+    if (!GAS_WEB_APP_URL) return;
+
+    try {
+      // 1. Descarar (PULL) datos existentes desde la nube
+      const response = await fetch(`${GAS_WEB_APP_URL}?action=PULL`);
+      if (response.ok) {
+        const resData = await response.json();
+        const remoteRecords = resData.records || resData.datos || [];
+        if (Array.isArray(remoteRecords) && remoteRecords.length > 0) {
+          for (let r of remoteRecords) {
+            if (!r.cedula) continue;
+            const existing = await db.workers.get(r.cedula);
+            // Si el registro no existe o ya estaba sincronizado, actualizarlo desde la nube
+            if (!existing || existing.syncStatus !== 'PENDIENTE') {
+              r.syncStatus = 'EN_NUBE';
+              await db.workers.put(r);
+            }
+          }
+          renderTable();
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo descargar datos al iniciar (PULL):", e);
+    }
+
+    // 2. Enviar (PUSH) cambios locales pendientes si los hay
+    try {
+      const unsyncedWorkers = await db.workers.where('syncStatus').equals('PENDIENTE').toArray();
+      if (unsyncedWorkers.length > 0) {
+        await syncWithGoogleSheets(true);
+      }
+    } catch (e) {
+      console.warn("No se pudieron subir cambios al iniciar (PUSH):", e);
+    }
+  }
+
+  // Sincronización Google Apps Script (Manual o Automática)
+  async function syncWithGoogleSheets(isSilent = false) {
     const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url') || DEFAULT_GAS_URL;
 
     if(!GAS_WEB_APP_URL) {
@@ -1402,13 +1446,19 @@
           }
           await db.workers.put(w);
         }
-        Swal.fire({ icon: 'success', title: '¡Sincronización Exitosa!', text: 'Todos los registros y documentos se subieron a Google Drive y Sheets.' });
+        if (!isSilent) {
+          Swal.fire({ icon: 'success', title: '¡Sincronización Exitosa!', text: 'Todos los registros y documentos se subieron a Google Drive y Sheets.' });
+        }
         renderTable();
       } else {
-        Swal.fire({ icon: 'error', title: 'Error de Google Apps Script', text: resData.message || 'Error en el servidor de Google.' });
+        if (!isSilent) {
+          Swal.fire({ icon: 'error', title: 'Error de Google Apps Script', text: resData.message || 'Error en el servidor de Google.' });
+        }
       }
     } catch (e) {
-      Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con la API de Google Apps Script. Verifica la URL.' });
+      if (!isSilent) {
+        Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con la API de Google Apps Script. Verifica la URL.' });
+      }
     }
   }
 
@@ -1420,6 +1470,7 @@
   window.onload = function() {
     initGasUrl();
     renderTable();
+    autoSyncOnStartup();
   };
 </script>
 </body>
