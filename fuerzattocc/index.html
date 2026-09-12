@@ -348,7 +348,9 @@
       font-family: inherit;
     }
 
-    .table-responsive {
+    /* Table vs Card Responsive Layout */
+    .desktop-table-container {
+      display: block;
       overflow-x: auto;
       border-radius: var(--md-shape-corner-medium);
       border: 1px solid var(--md-sys-color-outline-variant);
@@ -368,6 +370,87 @@
     td {
       padding: 12px 16px;
       border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .mobile-cards-container {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Android M3 Worker Card */
+    .m3-worker-card {
+      background-color: var(--md-sys-color-surface-container-low);
+      border-radius: var(--md-shape-corner-large);
+      padding: 16px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .m3-worker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .m3-worker-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--md-shape-corner-full);
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .m3-worker-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .m3-worker-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      margin: 0 0 2px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .m3-worker-sub {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+      margin: 0;
+    }
+    .m3-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .m3-card-divider {
+      height: 1px;
+      background-color: var(--md-sys-color-outline-variant);
+      margin: 2px 0;
+    }
+    .m3-card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .desktop-table-container {
+        display: none;
+      }
+      .mobile-cards-container {
+        display: flex;
+      }
     }
 
     /* Bottom Navigation Bar (Android UI standard) */
@@ -476,7 +559,8 @@
           <input type="text" id="search" placeholder="Buscar por Nombre, Cédula o Puesto..." onkeyup="renderTable()">
         </div>
 
-        <div class="table-responsive">
+        <!-- Tabla para Escritorio -->
+        <div class="desktop-table-container">
           <table>
             <thead>
               <tr>
@@ -495,6 +579,9 @@
             <tbody id="tableBody"></tbody>
           </table>
         </div>
+
+        <!-- Tarjetas M3 para Pantallas Móviles (Android Standard) -->
+        <div class="mobile-cards-container" id="mobileCardsContainer"></div>
       </div>
     </section>
 
@@ -971,12 +1058,14 @@
     }
   }
 
-  // Render Tabla
+  // Render Tabla (Escritorio) y Tarjetas M3 (Móvil)
   async function renderTable() {
     const search = document.getElementById('search').value.toLowerCase();
     const workers = await db.workers.toArray();
     const tbody = document.getElementById('tableBody');
+    const cardsContainer = document.getElementById('mobileCardsContainer');
     tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
 
     const filtered = workers.filter(w =>
       w.cedula.toLowerCase().includes(search) ||
@@ -984,9 +1073,19 @@
       (w.puestoFuncional && w.puestoFuncional.toLowerCase().includes(search))
     );
 
+    if (filtered.length === 0) {
+      const emptyMsg = `<div style="text-align:center; padding: 24px; color: var(--md-sys-color-on-surface-variant);">No se encontraron registros.</div>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No se encontraron registros.</td></tr>`;
+      cardsContainer.innerHTML = emptyMsg;
+      return;
+    }
+
     filtered.forEach(w => {
-      const tr = document.createElement('tr');
       const vacChip = w.estatusVacaciones === 'EN DISFRUTE' ? 'md-chip-warning' : (w.estatusVacaciones === 'PENDIENTE' ? 'md-chip-error' : 'md-chip-success');
+      const inicial = w.nombreApellido ? w.nombreApellido.charAt(0).toUpperCase() : '?';
+
+      // 1. Fila de Tabla (Escritorio)
+      const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><b>${w.cedula}</b></td>
         <td>${w.nombreApellido}</td>
@@ -995,7 +1094,7 @@
         <td>${getSemaforo(w.vencLicencia)}</td>
         <td>${getSemaforo(w.vencCedula)}</td>
         <td>${getSemaforo(w.vencCartaMedica)}</td>
-        <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank" style="color:var(--md-sys-color-primary);">Doc</a>` : (w.fileName || '-')}</td>
+        <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank" style="color:var(--md-sys-color-primary); font-weight:500;">Doc</a>` : (w.fileName || '-')}</td>
         <td><span class="md-chip ${w.syncStatus === 'EN_NUBE' ? 'md-chip-success' : 'md-chip-warning'}">${w.syncStatus}</span></td>
         <td style="white-space: nowrap;">
           <button style="background:none; border:none; color:var(--md-sys-color-primary); cursor:pointer; margin-right:4px;" onclick="openWorkerModal('${w.cedula}')" title="Editar">
@@ -1007,6 +1106,48 @@
         </td>
       `;
       tbody.appendChild(tr);
+
+      // 2. Tarjeta Material 3 (Móvil Android)
+      const card = document.createElement('div');
+      card.className = 'm3-worker-card';
+      card.innerHTML = `
+        <div class="m3-worker-header">
+          <div class="m3-worker-avatar">${inicial}</div>
+          <div class="m3-worker-main">
+            <h3 class="m3-worker-name">${w.nombreApellido}</h3>
+            <p class="m3-worker-sub">C.I: <b>${w.cedula}</b> ${w.puestoFuncional ? `• ${w.puestoFuncional}` : ''}</p>
+          </div>
+          <span class="md-chip ${w.syncStatus === 'EN_NUBE' ? 'md-chip-success' : 'md-chip-warning'}">${w.syncStatus}</span>
+        </div>
+
+        <div class="m3-chips-row">
+          <span class="md-chip ${vacChip}">Vacaciones: ${w.estatusVacaciones || 'AL DIA'} (${w.diasPendientesVacaciones || 0}d)</span>
+        </div>
+
+        <div class="m3-chips-row">
+          <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500;">Vencimientos:</span>
+          ${getSemaforo(w.vencLicencia)} (Lic)
+          ${getSemaforo(w.vencCedula)} (Céd)
+          ${getSemaforo(w.vencCartaMedica)} (Med)
+        </div>
+
+        <div class="m3-card-divider"></div>
+
+        <div class="m3-card-actions">
+          <div>
+            ${w.docUrl ? `<a href="${w.docUrl}" target="_blank" class="md-button md-button-outlined" style="height:32px; padding:0 10px; font-size:12px;"><span class="material-symbols-outlined" style="font-size:16px;">attachment</span> Ver Doc</a>` : (w.fileName ? `<span style="font-size:12px; color:var(--md-sys-color-on-surface-variant);"><span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle;">attach_file</span> ${w.fileName}</span>` : '')}
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="md-button md-button-tonal" style="height:36px; padding:0 14px; font-size:13px;" onclick="openWorkerModal('${w.cedula}')">
+              <span class="material-symbols-outlined" style="font-size:18px;">edit</span> Editar
+            </button>
+            <button class="md-button md-button-outlined" style="height:36px; padding:0 12px; color:var(--md-sys-color-error); border-color:var(--md-sys-color-error);" onclick="deleteWorker('${w.cedula}')">
+              <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+            </button>
+          </div>
+        </div>
+      `;
+      cardsContainer.appendChild(card);
     });
   }
 
