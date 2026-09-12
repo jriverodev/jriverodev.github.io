@@ -917,9 +917,11 @@
     if (viewId === 'viewList') renderTable();
   }
 
+  const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbweViSMj1CUhAPkX3v-8jEAKzpDWeDDU-DlIUir31UWqvFZN1u7VevRotis7gNho0WR/exec";
+
   // Cargar URL Google Apps Script
   function initGasUrl() {
-    const savedUrl = localStorage.getItem('fuerzattocc_gas_url') || "";
+    const savedUrl = localStorage.getItem('fuerzattocc_gas_url') || DEFAULT_GAS_URL;
     document.getElementById('gasUrlInput').value = savedUrl;
   }
 
@@ -1358,7 +1360,7 @@
 
   // Sincronización Google Apps Script
   async function syncWithGoogleSheets() {
-    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url');
+    const GAS_WEB_APP_URL = localStorage.getItem('fuerzattocc_gas_url') || DEFAULT_GAS_URL;
 
     if(!GAS_WEB_APP_URL) {
       Swal.fire({

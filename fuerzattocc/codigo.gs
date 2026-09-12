@@ -33,7 +33,7 @@ function doPost(e) {
           driveUrls[r.cedula] = docUrl;
         }
 
-        // Estructura ordenada de las 34 Columnas (33 campos + Fecha actualización)
+        // Estructura ordenada de las 37 Columnas (Campos completos + Vacaciones + Fecha actualización)
         const rowData = [
           r.item || "",
           r.nPersonal || "",
@@ -46,6 +46,9 @@ function doPost(e) {
           r.indicador || "",
           r.estatusCondicion || "",
           r.statusFl || "",
+          r.diasPendientesVacaciones || 0,
+          r.periodoVacacional || "",
+          r.estatusVacaciones || "",
           r.dirAdjunta || "",
           r.gcia1raLinea || "",
           r.gcia2daLinea || "",
@@ -108,8 +111,8 @@ function ensureHeaders(sheet) {
     const headers = [
       "ITEM", "N° PERSONAL", "CEDULA", "NOMBRE Y APELLIDO", "PUESTO FUNCIONAL",
       "POSICION SAP", "DESCRIP DE LA POSIC", "NOMINA DEL TRABAJADOR", "INDICADOR DEL TRABAJADOR",
-      "ESTATUS DE CONDICION", "STATUS DE FL", "DIRECCION ADJUNTA / HABILITADORA",
-      "GERENCIA 1RA LINEA ORG", "GCIA 2DA LINEA ORG", "GCIA 3ERA LINEA ORG",
+      "ESTATUS DE CONDICION", "STATUS DE FL", "DÍAS PENDIENTES VACACIONES", "PERÍODO VACACIONAL", "ESTATUS VACACIONES",
+      "DIRECCION ADJUNTA / HABILITADORA", "GERENCIA 1RA LINEA ORG", "GCIA 2DA LINEA ORG", "GCIA 3ERA LINEA ORG",
       "INSTALACION / EDIFICIO", "LOCALIDAD TRABAJO", "EXTENSION DE OFICINA", "CELULAR",
       "CÉDULA DEL SUPERVISOR", "NOMBRE DEL SUPERVISOR", "INDICADOR DEL SUPERVISOR", "TELÉFONO SUPERVISOR",
       "FL/RRHH RESPONSABLE", "UBICACIÓN DE ASIGNACIÓN", "DIRECCIÓN HABITACIÓN", "MUNICIPIO VIVIENDA",

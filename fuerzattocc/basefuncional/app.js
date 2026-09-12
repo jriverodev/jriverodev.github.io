@@ -311,7 +311,7 @@ function cambiarVista(modulo) {
     document.getElementById('vista-menu').classList.add('hidden-panel');
     document.getElementById('panel-personal').classList.add('hidden-panel');
     document.getElementById('panel-vacaciones').classList.add('hidden-panel');
-    
+
     if (modulo === 'menu') {
         document.getElementById('vista-menu').classList.remove('hidden-panel');
     } else if (modulo === 'personal') {
@@ -897,7 +897,7 @@ function procesarExcelVacaciones(file) {
         const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
+
         let filaInicio = 7;
         let tieneItemColumn = false;
         for (let i = 0; i < Math.min(filas.length, 15); i++) {
@@ -919,11 +919,11 @@ function procesarExcelVacaciones(file) {
             return;
         }
         const headerMap = buildHeaderIndexMap(headerRow);
-        
+
         const temp = [];
         const cedulasNoEncontradas = new Set();
         await db.vacaciones.clear();
-        
+
         for (let i = filaInicio; i < filas.length; i++) {
             const r = filas[i];
             if (!r || r.length === 0) continue;
@@ -965,7 +965,7 @@ function procesarExcelVacaciones(file) {
         await db.vacaciones.bulkAdd(temp);
         document.getElementById('fileVacaciones').value = ''; // Corrección de re-upload
         cargarDatosLocales();
-        
+
         if (cedulasNoEncontradas.size > 0) {
             swalWarning(`Carga masiva con inconsistencias. Se detectaron ${cedulasNoEncontradas.size} filas de vacaciones cuyas cédulas NO están registradas en el Maestro.\n\nCédulas huérfanas: ${Array.from(cedulasNoEncontradas).join(', ')}`);
         }
@@ -977,7 +977,7 @@ function procesarExcelVacaciones(file) {
 document.getElementById('btnExportarVacaciones').addEventListener('click', async () => {
     const registros = await db.vacaciones.toArray();
     if (registros.length === 0) return;
-    
+
     const matriz = [
         ["GERENCIA DE ADMINISTRACION DE PERSONAL"],
         ["PROGRAMACION DE VACACIONES DEL PERSONAL"],
@@ -1166,9 +1166,9 @@ function endGuidedTour() {
 document.getElementById('btnExportarPersonal').addEventListener('click', async () => {
     const registros = await db.trabajadores.toArray();
     if (registros.length === 0) return;
-    
+
     const matriz = [["N_PERSONAL", "CEDULA", "NOMBRES", "APELLIDOS", "PUESTO_FUNCIONAL", "POSICION_SAP", "DESCRIPCION_POSICION_SAP", "DESCRIPCION", "FECHA_NACIMIENTO", "FECHA_INGRESO_EMPRESA", "POSEE_CERTIFICADOS", "VENCIMIENTO_FLOTA_PESADA", "VENCIMIENTO_FLOTA_LIVIANA", "VENCIMIENTO_MEDICO_VIAL", "CONDICION", "STATUS_FL", "GERENCIA_1", "GERENCIA_2", "GERENCIA_3", "EDIFICIO", "LOCALIDAD", "CELULAR", "MUNICIPIO"]];
-    
+
     registros.forEach(t => {
         matriz.push([t.N_PERSONAL, t.CEDULA, t.NOMBRES, t.APELLIDOS, t.PUESTO_FUNCIONAL, t.POSICION_SAP, t.DESCRIPCION_POSICION_SAP || '', t.DESCRIPCION, t.FECHA_NACIMIENTO || '', t.FECHA_INGRESO_EMPRESA || '', t.POSEE_CERTIFICADOS ? 'SI' : 'NO', t.VENCIMIENTO_FLOTA_PESADA || '', t.VENCIMIENTO_FLOTA_LIVIANA || '', t.VENCIMIENTO_MEDICO_VIAL || '', t.CONDICION, t.STATUS_FL, t.GERENCIA_1, t.GERENCIA_2, t.GERENCIA_3, t.EDIFICIO, t.LOCALIDAD, t.CELULAR, t.MUNICIPIO]);
     });
