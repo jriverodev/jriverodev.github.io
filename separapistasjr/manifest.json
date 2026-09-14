@@ -1,6 +1,6 @@
 {
-  "short_name": "GuitarSep",
-  "name": "Guitar Audio Separator PWA",
+  "short_name": "SeparaPistas",
+  "name": "SeparaPistas IA - Separador de Pistas PWA",
   "icons": [
     {
       "src": "icon-192.png",
@@ -16,11 +16,11 @@
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#121212",
-  "theme_color": "#00adb5",
+  "background_color": "#0b0f19",
+  "theme_color": "#0f172a",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "description": "Separa pistas de guitarra eléctrica de tus archivos de audio WAV directamente en tu navegador usando Inteligencia Artificial local con WebGPU.",
+  "description": "Separa instrumentos de tus canciones (Voces, Batería, Bajo, Otros) directamente en tu dispositivo usando Inteligencia Artificial con Demucs v4.",
   "lang": "es",
   "categories": ["music", "utilities"]
 }

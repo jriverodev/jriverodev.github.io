@@ -1,13 +1,16 @@
-// sw.js
-const CACHE_NAME = 'guitar-separator-v1';
+const CACHE_NAME = 'separapistas-v2';
 const ASSETS = [
   './',
   './index.html',
   './app.js',
-  './db.js'
+  './audioPlayer.js',
+  './db.js',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// Instalar Service Worker y guardar la interfaz en caché
+// Instalar Service Worker y precachear los recursos de la interfaz
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -17,7 +20,7 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activar y limpiar cachés viejos
+// Limpieza de cachés antiguas en la activación
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -33,16 +36,29 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Estrategia Cache-First para los assets estáticos de la App
+// Estrategia Stale-While-Revalidate para recursos locales
 self.addEventListener('fetch', (e) => {
-  // Evitar interceptar llamadas externas a Hugging Face para que el pipeline de Transformers.js maneje su propia caché interna
-  if (e.request.url.includes('huggingface.co') || e.request.url.includes('unpkg.com')) {
+  // Evitar interceptar peticiones a la API de Hugging Face o CDNs externos
+  if (
+    e.request.url.includes('huggingface.co') ||
+    e.request.url.includes('hf.space') ||
+    e.request.url.includes('cdn.jsdelivr.net') ||
+    e.request.url.includes('unpkg.com')
+  ) {
     return;
   }
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
+      const fetchPromise = fetch(e.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseToCache));
+        }
+        return networkResponse;
+      }).catch(() => cachedResponse);
+
+      return cachedResponse || fetchPromise;
     })
   );
 });
