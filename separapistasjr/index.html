@@ -1,73 +1,347 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Audio Guitar Separator</title>
-    <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#00adb5">
-    
-    <style>
-        body { font-family: sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 8px; }
-        .status-box { background: #2d2d2d; padding: 10px; border-left: 4px solid #00adb5; margin-bottom: 20px; }
-        .control-group { margin-bottom: 15px; }
-        button { background: #00adb5; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        .mixer-channel { margin: 15px 0; background: #2a2a2a; padding: 10px; border-radius: 4px; }
-        audio { width: 100%; margin-top: 5px; }
-        ul { list-style: none; padding: 0; }
-        li { background: #2d2d2d; padding: 10px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Separador de Pistas IA (Demucs v4)</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              850: '#131e32',
+              950: '#0b0f19'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Slider Styles for touch friendly mobile controls */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 8px;
+      cursor: pointer;
+      background: #334155;
+      border-radius: 9999px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 22px;
+      width: 22px;
+      border-radius: 50%;
+      background: #06b6d4;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -7px;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+    }
+    input[type=range]::-moz-range-track {
+      width: 100%;
+      height: 8px;
+      cursor: pointer;
+      background: #334155;
+      border-radius: 9999px;
+    }
+    input[type=range]::-moz-range-thumb {
+      height: 22px;
+      width: 22px;
+      border-radius: 50%;
+      background: #06b6d4;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-cyan-500 selection:text-slate-950">
 
-<div class="container">
-    <h2>Separador de Guitarra Eléctrica con IA</h2>
-    
-    <div class="status-box" id="status">Inicializando entorno...</div>
+  <!-- Header Top App Bar -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-cyan-500/20">
+          🎸
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-slate-50 tracking-tight leading-none">SeparaPistas <span class="text-xs font-semibold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">Demucs v4</span></h1>
+          <p class="text-xs text-slate-400 mt-0.5">Separador de Instrumentos con IA</p>
+        </div>
+      </div>
 
-    <div class="control-group">
-        <label for="file-input">Selecciona un audio (.wav):</label><br><br>
-        <input type="file" id="file-input" accept="audio/wav, audio/mpeg" disabled>
+      <!-- Network / Offline Badge & Install -->
+      <div class="flex items-center space-x-2">
+        <div id="net-status-indicator" class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Online
+        </div>
+        <button id="btn-install-pwa" class="hidden text-xs font-semibold px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+          Instalar App
+        </button>
+      </div>
     </div>
+  </header>
 
-    <div class="control-group">
-        <button id="btn-procesar" disabled>Separar Guitarra Eléctrica</button>
-    </div>
+  <!-- Main Container -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 space-y-6">
 
-    <div id="mixer" style="display: none;">
-        <h3>Consola de Audio (Mixer)</h3>
+    <!-- Section 1: Audio Upload & Processing Card -->
+    <section class="bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+            <span>📁</span> Seleccionar Archivo de Audio
+          </h2>
+          <p class="text-sm text-slate-400">Sube una canción en formato MP3 o WAV para extraer sus stems.</p>
+        </div>
+
+        <!-- Space Selector -->
+        <div class="flex items-center space-x-2 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+          <span class="text-slate-400">Modelo HF:</span>
+          <select id="space-select" class="bg-transparent text-cyan-400 font-medium focus:outline-none cursor-pointer">
+            <option value="akhaliq/demucs" class="bg-slate-900 text-slate-100">Demucs HT v4 (akhaliq)</option>
+            <option value="abidlabs/music-separation" class="bg-slate-900 text-slate-100">Demucs v4 (abidlabs)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Drop Zone & File Input -->
+      <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500/50 rounded-2xl p-6 text-center transition-all cursor-pointer bg-slate-950/40 relative">
+        <input type="file" id="file-input" accept="audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
         
-        <div class="mixer-channel">
-            <label>🎸 Solo Guitarra Eléctrica:</label>
-            <audio id="audio-guitarra" controls></audio>
+        <div class="space-y-3 pointer-events-none">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-3xl">
+            🎶
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-200">Arrastra tu audio aquí o <span class="text-cyan-400 underline">examina tus archivos</span></p>
+            <p class="text-xs text-slate-500 mt-1">Soporta MP3, WAV, FLAC u OGG (Recomendado &lt; 10 MB)</p>
+          </div>
+          <div id="file-name" class="inline-block text-xs font-semibold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20 empty:hidden"></div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="flex justify-end">
+        <button id="btn-procesar" disabled class="w-full md:w-auto px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold rounded-2xl transition duration-200 shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2">
+          <span>⚡</span>
+          <span>Separar Pistas con IA</span>
+        </button>
+      </div>
+
+      <!-- Status Notification Box -->
+      <div id="status-box" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center space-x-3">
+          <div id="status-icon" class="flex-shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p id="status-message" class="text-sm font-medium text-slate-200 leading-snug"></p>
+            <p id="status-subtext" class="text-xs text-slate-400 mt-0.5"></p>
+          </div>
         </div>
 
-        <div class="mixer-channel">
-            <label>🥁 Resto de la Banda (Acompañamiento):</label>
-            <audio id="audio-resto" controls></audio>
+        <!-- Progress Bar -->
+        <div id="progress-bar-container" class="hidden w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+          <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-300 w-0"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Section 2: Multitrack Mixer Section -->
+    <section id="mixer-section" class="hidden bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Mezclador Multipista</span>
+          <h3 id="current-project-title" class="text-xl font-bold text-slate-100 mt-0.5">Título de Canción</h3>
         </div>
 
-        <div class="mixer-channel">
-            <label>📻 Audio Original Completo:</label>
-            <audio id="audio-original" controls></audio>
+        <!-- Master Transport Controls -->
+        <div class="flex items-center space-x-3 self-center">
+          <button id="btn-play-pause" class="flex items-center space-x-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded-xl transition duration-200 shadow-lg shadow-cyan-500/20">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span>Reproducir</span>
+          </button>
+
+          <button id="btn-stop" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition border border-slate-700">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+          </button>
         </div>
-    </div>
+      </div>
 
-    <hr style="border-color: #444; margin: 25px 0;">
+      <!-- Timeline / Seek Bar -->
+      <div class="space-y-1.5">
+        <div class="flex justify-between text-xs font-medium text-slate-400">
+          <span>Posición</span>
+          <span id="time-display" class="font-mono text-cyan-400">0:00 / 0:00</span>
+        </div>
+        <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1" class="w-full">
+      </div>
 
-    <h3>Tus Proyectos Locales (Guardados en dispositivo)</h3>
-    <ul id="lista-proyectos"></ul>
-</div>
+      <!-- Master Volume Slider -->
+      <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3.5 flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-xs font-semibold text-slate-300 min-w-[120px]">
+          <span>🔊</span>
+          <span>Volumen General</span>
+        </div>
+        <input type="range" id="master-volume" min="0" max="100" value="100" class="flex-1">
+      </div>
 
-<script type="module" src="./app.js"></script>
- <script>  if ('serviceworker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceworker.register('./sw.js')
-      .then(reg => console.log('Service Worker registrado con éxito', reg))
-      .catch(err => console.error('Error al registrar el Service Worker', err));
-  });
-} </script>
+      <!-- 4 Stem Fader Channels -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Track 1: Voces -->
+        <div class="bg-slate-950 border border-slate-800/90 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">🎤</span>
+              <span class="font-bold text-slate-200 text-sm">Voces</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <button id="mute-vocals" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">M</button>
+              <button id="solo-vocals" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">S</button>
+              <a id="dl-vocals" class="hidden p-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs" title="Descargar Stem">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              </a>
+            </div>
+          </div>
+          <input type="range" id="vol-vocals" min="0" max="100" value="100" class="w-full">
+        </div>
+
+        <!-- Track 2: Batería -->
+        <div class="bg-slate-950 border border-slate-800/90 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">🥁</span>
+              <span class="font-bold text-slate-200 text-sm">Batería</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <button id="mute-drums" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">M</button>
+              <button id="solo-drums" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">S</button>
+              <a id="dl-drums" class="hidden p-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs" title="Descargar Stem">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              </a>
+            </div>
+          </div>
+          <input type="range" id="vol-drums" min="0" max="100" value="100" class="w-full">
+        </div>
+
+        <!-- Track 3: Bajo -->
+        <div class="bg-slate-950 border border-slate-800/90 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">🎸</span>
+              <span class="font-bold text-slate-200 text-sm">Bajo</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <button id="mute-bass" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">M</button>
+              <button id="solo-bass" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">S</button>
+              <a id="dl-bass" class="hidden p-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs" title="Descargar Stem">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              </a>
+            </div>
+          </div>
+          <input type="range" id="vol-bass" min="0" max="100" value="100" class="w-full">
+        </div>
+
+        <!-- Track 4: Otros -->
+        <div class="bg-slate-950 border border-slate-800/90 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">🎹</span>
+              <span class="font-bold text-slate-200 text-sm">Otros</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <button id="mute-other" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">M</button>
+              <button id="solo-other" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-lg transition">S</button>
+              <a id="dl-other" class="hidden p-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs" title="Descargar Stem">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              </a>
+            </div>
+          </div>
+          <input type="range" id="vol-other" min="0" max="100" value="100" class="w-full">
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Section 3: Saved Offline Projects (Dexie IndexedDB) -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <span>💾</span> Tus Canciones Guardadas (Offline)
+        </h3>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-projects" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400 space-y-2">
+        <div class="text-3xl">📂</div>
+        <p class="text-sm font-medium">No tienes proyectos guardados localmente aún.</p>
+        <p class="text-xs text-slate-500">Sube un archivo arriba para procesar y guardar tus stems.</p>
+      </div>
+
+      <!-- Projects List Container -->
+      <div id="lista-proyectos" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 mt-auto">
+    <p>SeparaPistas PWA • Desarrollado con Demucs v4 & Web Audio API • 100% Estático para GitHub Pages</p>
+  </footer>
+
+  <!-- App Script Entrypoint -->
+  <script type="module" src="./app.js"></script>
+
+  <!-- Service Worker Registration & PWA Install Prompt -->
+  <script>
+    let deferredPrompt;
+    const installBtn = document.getElementById('btn-install-pwa');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.classList.remove('hidden');
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installBtn.classList.add('hidden');
+        }
+        deferredPrompt = null;
+      });
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registrado correctamente.', reg.scope))
+          .catch(err => console.error('Error al registrar Service Worker:', err));
+      });
+    }
+  </script>
 </body>
 </html>

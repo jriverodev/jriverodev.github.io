@@ -1,81 +1,168 @@
-// db.js
+/**
+ * db.js
+ * Capa de almacenamiento local Offline-First utilizando Dexie.js (IndexedDB).
+ * Permite guardar proyectos de audio, sus archivos originales y los 4 stems separados.
+ */
+
 import Dexie from 'https://unpkg.com/dexie@latest/dist/dexie.js';
 
-// Inicializar la base de datos
 export const db = new Dexie('AudioSeparatorDB');
 
-// Definir el esquema (solo se indexan los campos de búsqueda rápidos)
-db.version(1).stores({
-  proyectos: '++id, nombre, fechaCreacion, duracion',
-  pistasAudio: 'proyectoId' 
+// Definir versión y esquema de IndexedDB
+db.version(2).stores({
+  proyectos: '++id, nombre, fechaCreacion, duracion, estado',
+  pistasAudio: 'proyectoId'
 });
 
 /**
- * Guarda un archivo de audio original subido por el usuario.
+ * Registra un nuevo proyecto con su audio original.
+ * @param {string} nombreArchivo - Nombre original del archivo subido.
+ * @param {Blob} archivoBlob - Blob del audio original.
+ * @param {number} duracionSegundos - Duración estimada en segundos.
+ * @returns {Promise<number>} ID del proyecto creado.
  */
-export async function guardarNuevoProyecto(nombreArchivo, archivoBlob, duracionSegundos) {
+export async function guardarNuevoProyecto(nombreArchivo, archivoBlob, duracionSegundos = 0) {
   try {
+    const nombreLimpio = nombreArchivo.replace(/\.[^/.]+$/, "");
+
     const proyectoId = await db.proyectos.add({
-      nombre: nombreArchivo.replace(/\.[^/.]+$/, ""), // Remueve extensión .wav
+      nombre: nombreLimpio,
       fechaCreacion: Date.now(),
-      duracion: duracionSegundos
+      duracion: duracionSegundos,
+      estado: 'pendiente'
     });
 
-    await db.pistasAudio.add({
+    await db.pistasAudio.put({
       proyectoId: proyectoId,
       originalBlob: archivoBlob,
-      guitarraBlob: null,
-      bateriaBlob: null,
-      bajoBlob: null,
-      otrosBlob: null
+      vocalsBlob: null,
+      drumsBlob: null,
+      bassBlob: null,
+      otherBlob: null
     });
 
     return proyectoId;
   } catch (error) {
-    console.error("Error al guardar el archivo original:", error);
+    console.error("Error al guardar el nuevo proyecto en IndexedDB:", error);
     throw error;
   }
 }
 
 /**
- * Actualiza el proyecto con los resultados devueltos por la IA.
+ * Guarda o actualiza los 4 stems separados devueltos por Demucs v4.
+ * @param {number} proyectoId
+ * @param {Object} tracks - Objeto con { vocalsBlob, drumsBlob, bassBlob, otherBlob }
  */
 export async function guardarPistasSeparadas(proyectoId, tracks) {
   try {
-    await db.pistasAudio.update(proyectoId, {
-      guitarraBlob: tracks.guitar,
-      bateriaBlob: tracks.drums,
-      bajoBlob: tracks.bass,
-      otrosBlob: tracks.other
+    const id = parseInt(proyectoId);
+
+    // Obtener registro existente
+    const registroPrevio = await db.pistasAudio.get({ proyectoId: id });
+
+    await db.pistasAudio.put({
+      proyectoId: id,
+      originalBlob: registroPrevio ? registroPrevio.originalBlob : null,
+      vocalsBlob: tracks.vocalsBlob || tracks.vocals || null,
+      drumsBlob: tracks.drumsBlob || tracks.drums || null,
+      bassBlob: tracks.bassBlob || tracks.bass || null,
+      otherBlob: tracks.otherBlob || tracks.other || null
     });
-    console.log("Pistas guardadas en IndexedDB exitosamente.");
+
+    // Actualizar estado del proyecto
+    await db.proyectos.update(id, {
+      estado: 'procesado'
+    });
+
+    console.log(`Pistas guardadas con éxito para el proyecto #${id}`);
   } catch (error) {
-    console.error("Error al actualizar las pistas:", error);
+    console.error("Error al guardar las pistas en IndexedDB:", error);
     throw error;
   }
 }
 
 /**
- * Obtiene los metadatos y crea URLs locales reproducibles de los Blobs.
+ * Obtiene la lista ordenada de todos los proyectos guardados.
+ * @returns {Promise<Array>}
+ */
+export async function obtenerTodosLosProyectos() {
+  try {
+    return await db.proyectos.orderBy('fechaCreacion').reverse().toArray();
+  } catch (error) {
+    console.error("Error al listar proyectos de IndexedDB:", error);
+    return [];
+  }
+}
+
+/**
+ * Recupera un proyecto y sus Blobs de audio.
+ * @param {number} proyectoId
+ * @returns {Promise<Object|null>}
+ */
+export async function obtenerProyectoCompleto(proyectoId) {
+  try {
+    const id = parseInt(proyectoId);
+    const proyecto = await db.proyectos.get(id);
+    if (!proyecto) return null;
+
+    const pistas = await db.pistasAudio.get({ proyectoId: id });
+
+    return {
+      ...proyecto,
+      pistas: pistas || {}
+    };
+  } catch (error) {
+    console.error(`Error al obtener proyecto #${proyectoId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Genera URLs de objeto temporales (URL.createObjectURL) para reproducir los Blobs.
+ * @param {number} proyectoId
  */
 export async function cargarPistasDelProyecto(proyectoId) {
-  const pistas = await db.pistasAudio.get({ proyectoId: parseInt(proyectoId) });
-  if (!pistas) return null;
+  const proyecto = await obtenerProyectoCompleto(proyectoId);
+  if (!proyecto || !proyecto.pistas) return null;
+
+  const { originalBlob, vocalsBlob, drumsBlob, bassBlob, otherBlob } = proyecto.pistas;
 
   return {
-    originalUrl: pistas.originalBlob ? URL.createObjectURL(pistas.originalBlob) : null,
-    guitarraUrl: pistas.guitarraBlob ? URL.createObjectURL(pistas.guitarraBlob) : null,
-    bateriaUrl: pistas.bateriaBlob ? URL.createObjectURL(pistas.bateriaBlob) : null,
-    bajoUrl: pistas.bajoBlob ? URL.createObjectURL(pistas.bajoBlob) : null,
-    otrosUrl: pistas.otrosBlob ? URL.createObjectURL(pistas.otrosBlob) : null
+    proyectoInfo: {
+      id: proyecto.id,
+      nombre: proyecto.nombre,
+      duracion: proyecto.duracion,
+      estado: proyecto.estado
+    },
+    blobs: {
+      original: originalBlob,
+      vocals: vocalsBlob,
+      drums: drumsBlob,
+      bass: bassBlob,
+      other: otherBlob
+    },
+    urls: {
+      originalUrl: originalBlob ? URL.createObjectURL(originalBlob) : null,
+      vocalsUrl: vocalsBlob ? URL.createObjectURL(vocalsBlob) : null,
+      drumsUrl: drumsBlob ? URL.createObjectURL(drumsBlob) : null,
+      bassUrl: bassBlob ? URL.createObjectURL(bassBlob) : null,
+      otherUrl: otherBlob ? URL.createObjectURL(otherBlob) : null
+    }
   };
 }
 
 /**
- * Elimina por completo un proyecto y sus audios para liberar espacio.
+ * Elimina un proyecto y sus datos de audio almacenados.
+ * @param {number} proyectoId
  */
 export async function eliminarProyecto(proyectoId) {
-  const id = parseInt(proyectoId);
-  await db.proyectos.delete(id);
-  await db.pistasAudio.delete(id);
+  try {
+    const id = parseInt(proyectoId);
+    await db.pistasAudio.where({ proyectoId: id }).delete();
+    await db.proyectos.delete(id);
+    console.log(`Proyecto #${id} eliminado correctamente.`);
+  } catch (error) {
+    console.error(`Error al eliminar proyecto #${proyectoId}:`, error);
+    throw error;
+  }
 }
