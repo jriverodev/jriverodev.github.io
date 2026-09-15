@@ -280,15 +280,32 @@
       justify-content: space-between;
       border-bottom: 1px solid var(--md-sys-color-outline-variant);
       background-color: var(--md-sys-color-surface-container-low);
+      flex-shrink: 0;
     }
     .md-dialog-title {
       font-size: 18px;
-      font-weight: 500;
+      font-weight: 700;
       margin: 0;
       display: flex;
       align-items: center;
       gap: 10px;
       color: var(--md-sys-color-on-surface);
+    }
+    .md-dialog-close-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--md-shape-corner-full);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--md-sys-color-on-surface-variant);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+    .md-dialog-close-btn:hover {
+      background-color: var(--md-sys-color-surface-container);
     }
     .md-dialog-body {
       padding: 20px;
@@ -300,8 +317,32 @@
       border-top: 1px solid var(--md-sys-color-outline-variant);
       display: flex;
       justify-content: flex-end;
+      align-items: center;
       gap: 12px;
       background-color: var(--md-sys-color-surface-container-low);
+      flex-shrink: 0;
+    }
+
+    /* Paginación Standard M3 */
+    .m3-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: var(--md-sys-color-surface-container-low);
+      border-radius: var(--md-shape-corner-medium);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      margin-top: 16px;
+    }
+    .m3-pagination-info {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    .m3-pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     /* Chips (Alert Badges) */
@@ -582,6 +623,19 @@
 
         <!-- Tarjetas M3 para Pantallas Móviles (Android Standard) -->
         <div class="mobile-cards-container" id="mobileCardsContainer"></div>
+
+        <!-- Paginación (Se muestra si hay más de 15 registros) -->
+        <div class="m3-pagination" id="paginationContainer" style="display: none;">
+          <div class="m3-pagination-info" id="paginationInfo">Mostrando 1 - 15 de 0</div>
+          <div class="m3-pagination-controls">
+            <button class="md-button md-button-outlined" id="btnPrevPage" style="height:36px; padding:0 12px;" onclick="changePage(-1)">
+              <span class="material-symbols-outlined" style="font-size:18px;">navigate_before</span> Anterior
+            </button>
+            <button class="md-button md-button-outlined" id="btnNextPage" style="height:36px; padding:0 12px;" onclick="changePage(1)">
+              Siguiente <span class="material-symbols-outlined" style="font-size:18px;">navigate_next</span>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -698,7 +752,7 @@
           <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">person_add</span>
           Registro de Trabajador
         </h2>
-        <button style="background: none; border: none; cursor: pointer; color: var(--md-sys-color-on-surface-variant);" onclick="closeWorkerModal()">
+        <button class="md-dialog-close-btn" onclick="closeWorkerModal()" title="Cerrar">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
@@ -1058,29 +1112,75 @@
     }
   }
 
+  // Paginación y Renderizado
+  let currentPage = 1;
+  const pageSize = 15;
+  let currentFilteredWorkers = [];
+
+  function changePage(direction) {
+    const totalPages = Math.ceil(currentFilteredWorkers.length / pageSize) || 1;
+    currentPage += direction;
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    renderCurrentPage();
+  }
+
   // Render Tabla (Escritorio) y Tarjetas M3 (Móvil)
   async function renderTable() {
     const search = document.getElementById('search').value.toLowerCase();
     const workers = await db.workers.toArray();
-    const tbody = document.getElementById('tableBody');
-    const cardsContainer = document.getElementById('mobileCardsContainer');
-    tbody.innerHTML = '';
-    cardsContainer.innerHTML = '';
 
-    const filtered = workers.filter(w =>
+    currentFilteredWorkers = workers.filter(w =>
       w.cedula.toLowerCase().includes(search) ||
       w.nombreApellido.toLowerCase().includes(search) ||
       (w.puestoFuncional && w.puestoFuncional.toLowerCase().includes(search))
     );
 
-    if (filtered.length === 0) {
+    currentPage = 1;
+    renderCurrentPage();
+  }
+
+  function renderCurrentPage() {
+    const tbody = document.getElementById('tableBody');
+    const cardsContainer = document.getElementById('mobileCardsContainer');
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const btnPrev = document.getElementById('btnPrevPage');
+    const btnNext = document.getElementById('btnNextPage');
+
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
+
+    const totalRecords = currentFilteredWorkers.length;
+
+    if (totalRecords === 0) {
       const emptyMsg = `<div style="text-align:center; padding: 24px; color: var(--md-sys-color-on-surface-variant);">No se encontraron registros.</div>`;
       tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No se encontraron registros.</td></tr>`;
       cardsContainer.innerHTML = emptyMsg;
+      paginationContainer.style.display = 'none';
       return;
     }
 
-    filtered.forEach(w => {
+    // Paginación solo si totalRecords > 15
+    const totalPages = Math.ceil(totalRecords / pageSize);
+    if (totalRecords > pageSize) {
+      paginationContainer.style.display = 'flex';
+      const startItem = (currentPage - 1) * pageSize + 1;
+      const endItem = Math.min(currentPage * pageSize, totalRecords);
+      paginationInfo.innerText = `Mostrando ${startItem} - ${endItem} de ${totalRecords}`;
+
+      btnPrev.disabled = currentPage === 1;
+      btnNext.disabled = currentPage === totalPages;
+      btnPrev.style.opacity = currentPage === 1 ? '0.5' : '1';
+      btnNext.style.opacity = currentPage === totalPages ? '0.5' : '1';
+    } else {
+      paginationContainer.style.display = 'none';
+    }
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const pageRecords = currentFilteredWorkers.slice(startIdx, startIdx + pageSize);
+
+    pageRecords.forEach(w => {
       const vacChip = w.estatusVacaciones === 'EN DISFRUTE' ? 'md-chip-warning' : (w.estatusVacaciones === 'PENDIENTE' ? 'md-chip-error' : 'md-chip-success');
       const inicial = w.nombreApellido ? w.nombreApellido.charAt(0).toUpperCase() : '?';
 
