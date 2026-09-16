@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIAGOP - Autenticación Institucional Multi-Tenant</title>
-    <script src="dist/libs/browser@4.js"></script>
+    <script type="module"  src="dist/libs/browser@4.js"></script>
     <style type="text/tailwindcss">
         @theme {
             --color-scheme: light dark;
@@ -13,21 +13,21 @@
     </style>
     <link rel="stylesheet" href="css/fontawesome/all.min.css">
     <link rel="manifest" href="manifest.json">
-    <script src="dist/app.js" defer></script>
-    <script src="dist/dexie.min.js" defer></script>
-    <script src="dist/db.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="dist/supabase-client.js" defer></script>
-    <script src="dist/supabase-sync.js" defer></script>
-    <script src="dist/sync-manager.js" defer></script>
-    <script src="dist/ui.js" defer></script>
-    <script>window.SIAGOP_DEBUG_UI = true;</script>
-    <script src="dist/tema.js" defer></script>
-    <script src="dist/auth-gatekeeper.js" defer></script>
-    <script src="dist/header-led.js" defer></script>
-    <script src="dist/BottomNav.js" defer></script>
-    <script src="dist/roles.js" defer></script>
-    <script src="dist/profile-header.js" defer></script>
+    <script type="module"  src="dist/app.js" defer></script>
+    <script type="module"  src="dist/dexie.min.js" defer></script>
+    <script type="module"  src="dist/db.js" defer></script>
+    <script type="module"  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module"  src="dist/supabase-client.js" defer></script>
+    <script type="module"  src="dist/supabase-sync.js" defer></script>
+    <script type="module"  src="dist/sync-manager.js" defer></script>
+    <script type="module"  src="dist/ui.js" defer></script>
+    <script type="module" >window.SIAGOP_DEBUG_UI = true;</script>
+    <script type="module"  src="dist/tema.js" defer></script>
+    <script type="module"  src="dist/auth-gatekeeper.js" defer></script>
+    <script type="module"  src="dist/header-led.js" defer></script>
+    <script type="module"  src="dist/BottomNav.js" defer></script>
+    <script type="module"  src="dist/roles.js" defer></script>
+    <script type="module"  src="dist/profile-header.js" defer></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white antialiased">
 
@@ -127,7 +127,7 @@
         </p>
     </footer>
 
-    <script>
+    <script type="module" >
         async function iniciarSesionInstitucional(event) {
             event.preventDefault();
             const errDiv = document.getElementById('error-login-institucional');
