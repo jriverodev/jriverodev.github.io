@@ -1,1 +1,1 @@
-./content/icons/AppImages.zip
+./tto-gestion-flota/dist.zip
