@@ -575,7 +575,7 @@ if (originalFetch) {
 }
 
 async function syncData() {
-    if (!dbSIAGOP || !navigator.onLine) {
+    if (typeof dbSIAGOP === 'undefined' || !dbSIAGOP || !navigator.onLine) {
         return false;
     }
 
