@@ -1,7 +1,7 @@
 // Shared UI utilities: image preview and cleanup
 // Expose as window.SIAGOP_UI_UTILS so existing code can call via globals
 (function () {
-    function previsualizarImagenImpl(input, idContenedor) {
+    function previsualizarImagenImpl(input: any, idContenedor: string) {
         const container = document.getElementById(idContenedor);
         if (!container) return;
         let img = container.querySelector("img");
@@ -13,7 +13,7 @@
         }
 
         if (typeof input === 'string') {
-            const url = typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(input) : input;
+            const url = typeof (window as any).normalizarUrlStorage === 'function' ? (window as any).normalizarUrlStorage(input) : input;
             if (url && url.trim() && url !== 'undefined' && url !== 'null') {
                 img.setAttribute("src", url);
                 container.classList.remove("hidden");
@@ -25,10 +25,10 @@
         }
 
         if (input && input.files && input.files[0]) {
-            const valRes = typeof validarArchivoAdjunto === 'function' ? validarArchivoAdjunto(input.files[0]) : { valido: true };
+            const valRes = typeof (window as any).validarArchivoAdjunto === 'function' ? (window as any).validarArchivoAdjunto(input.files[0]) : { valido: true };
             if (!valRes.valido) {
-                if (window.SIAGOP_UI && typeof SIAGOP_UI.error === 'function') {
-                    SIAGOP_UI.error("Archivo no válido", valRes.mensaje);
+                if (window.SIAGOP_UI && typeof window.SIAGOP_UI.error === 'function') {
+                    window.SIAGOP_UI.error("Archivo no válido", valRes.mensaje);
                 }
                 input.value = "";
                 img.removeAttribute("src");
@@ -38,7 +38,7 @@
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                if (e && e.target && e.target.result) {
+                if (e && e.target && e.target.result && typeof e.target.result === 'string') {
                     img.setAttribute("src", e.target.result);
                     container.classList.remove("hidden");
                 }
@@ -50,8 +50,8 @@
         }
     }
 
-    function limpiarPreviaImpl(idInput, idContenedor) {
-        const input = document.getElementById(idInput);
+    function limpiarPreviaImpl(idInput: string, idContenedor: string) {
+        const input = document.getElementById(idInput) as HTMLInputElement | null;
         if (input) input.value = "";
         const container = document.getElementById(idContenedor);
         if (container) {
@@ -96,13 +96,13 @@
 
     // Backwards-compatible globals (some code calls these functions directly)
     if (typeof window.previsualizarImagen !== 'function') {
-        window.previsualizarImagen = function(input, idContenedor) {
+        window.previsualizarImagen = function(input: any, idContenedor: string) {
             return window.SIAGOP_UI_UTILS.previsualizarImagen(input, idContenedor);
         };
     }
 
     if (typeof window.limpiarPrevia !== 'function') {
-        window.limpiarPrevia = function(idInput, idContenedor) {
+        window.limpiarPrevia = function(idInput: string, idContenedor: string) {
             return window.SIAGOP_UI_UTILS.limpiarPrevia(idInput, idContenedor);
         };
     }

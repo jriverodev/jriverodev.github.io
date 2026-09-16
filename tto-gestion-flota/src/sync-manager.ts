@@ -1,10 +1,14 @@
-// js/sync-manager.js
+// src/sync-manager.ts
 // SyncManager: watches online events, pushes pending records to Supabase and pulls initial data
 // Assumes window.SIAGOP_SG.ensureSupabaseClient and functions from js/db.js are available
 
 (function () {
   class SyncManager {
-    constructor(options = {}) {
+    supabaseTableMap: any;
+    client: any;
+    syncing: boolean;
+
+    constructor(options: any = {}) {
       this.supabaseTableMap = options.tableMap || {
         mantenimientos: 'historial_mantenimiento',
         activos: 'maestro_activos',
@@ -33,6 +37,8 @@
       if (this.client) return this.client;
       if (window.SIAGOP_SG && typeof window.SIAGOP_SG.ensureSupabaseClient === 'function') {
         this.client = window.SIAGOP_SG.ensureSupabaseClient();
+      } else if (typeof ensureSupabaseClient === 'function') {
+        this.client = ensureSupabaseClient();
       }
       return this.client;
     }
@@ -50,14 +56,14 @@
       }
     }
 
-    async pullAll(localTable) {
+    async pullAll(localTable: string) {
       const client = this.ensureClient();
       if (!client) return;
       const remoteTable = this.supabaseTableMap[localTable] || localTable;
 
       let data = [];
       if (typeof fetchAllSupabaseRows === 'function') {
-        data = await fetchAllSupabaseRows(client, remoteTable);
+        data = await fetchAllSupabaseRows(remoteTable, client);
       } else {
         const { data: raw, error } = await client.from(remoteTable).select('*');
         if (!error && raw) data = raw;
@@ -69,7 +75,7 @@
             await guardarActivosLocalSeguro(data);
           } else if (window.SIAGOP_DB && typeof window.SIAGOP_DB.reemplazarRegistrosDesdePull === 'function') {
             await window.SIAGOP_DB.reemplazarRegistrosDesdePull(localTable, data);
-          } else if (dbSIAGOP && dbSIAGOP[localTable]) {
+          } else if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && dbSIAGOP[localTable]) {
             for (const r of data) {
               await dbSIAGOP[localTable].put({ ...r, sync_status: 'synced', updated_at: r.updated_at || new Date().toISOString() });
             }
@@ -81,7 +87,7 @@
       }
     }
 
-    async syncPendingForTable(localTable) {
+    async syncPendingForTable(localTable: string) {
       if (this.syncing) return;
       this.syncing = true;
       try {
@@ -97,7 +103,7 @@
             // read all then filter by sync_status
             const all = await window.SIAGOP_DB.leerRegistrosLocales(localTable);
             pending = (all || []).filter(r => r.sync_status === 'pending');
-          } else if (dbSIAGOP && dbSIAGOP[localTable]) {
+          } else if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && dbSIAGOP[localTable]) {
             pending = await dbSIAGOP[localTable].where('sync_status').equals('pending').toArray();
           }
         } catch (e) {
@@ -117,7 +123,7 @@
             // If there are any base64 assets, upload them first and replace with public URLs
             if (window.SIAGOP_SUPABASE_SYNC && typeof window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets === 'function') {
               try {
-                const idForPath = String(payload.id || payload.ID_Registro || payload.id_registro || payload.id_unidad || payload.id_unidad || (crypto && crypto.randomUUID ? crypto.randomUUID() : `c-${Date.now()}`));
+                const idForPath = String(payload.id || payload.ID_Registro || payload.id_registro || payload.id_unidad || (crypto && crypto.randomUUID ? crypto.randomUUID() : `c-${Date.now()}`));
                 payload = await window.SIAGOP_SUPABASE_SYNC.prepareRecordAssets(client, 'ttocc-archivos', payload, idForPath);
               } catch (e) {
                 console.warn('[SyncManager] prepareRecordAssets failed for row', row, e);
@@ -134,7 +140,7 @@
             const idKey = (localTable === 'activos') ? (row.idUnidad || row.id_unidad || row.id) : (row.id || row.ID_Registro || row.id_registro);
             if (window.SIAGOP_DB && typeof window.SIAGOP_DB.marcarRegistroSincronizado === 'function') {
               await window.SIAGOP_DB.marcarRegistroSincronizado(localTable, idKey);
-            } else if (dbSIAGOP && dbSIAGOP[localTable]) {
+            } else if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && dbSIAGOP[localTable]) {
               await dbSIAGOP[localTable].put({ ...row, sync_status: 'synced', updated_at: new Date().toISOString() });
             }
           } catch (e) {
