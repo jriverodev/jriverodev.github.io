@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Visor de Disponibilidad y Estado de Flota - SIAGOP</title>
     <script src="./js/libs/browser@4.js"></script>
-    <style>
-        :root {
-            color-scheme: light dark;
+    <style type="text/tailwindcss">
+        @theme {
+            --color-scheme: light dark;
         }
+        @variant dark (&:where(.dark, .dark *));
     </style>
     <link rel="stylesheet" href="css/fontawesome/all.min.css">
     <link rel="stylesheet" href="css/modals-layering.css">
