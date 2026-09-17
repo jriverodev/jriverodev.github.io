@@ -451,12 +451,18 @@ function renderizarVisor(datos, mantenerPagina = false) {
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Ubicaciones / Trans80</span>
-                    <div>
-                        <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase block" title="Último Taller">Taller: ${escapeHTML(reg.Ubicacion_Taller)}</span>
-                        ${reg.Ubicacion_Actual ? `<span class="text-slate-600 dark:text-slate-300 text-[9px] font-semibold uppercase block" title="Ubicación Actual"><i class="fa-solid fa-location-dot text-emerald-500 mr-1"></i>Actual: ${escapeHTML(reg.Ubicacion_Actual)}</span>` : ''}
-                        <div class="mt-1">${obtenerEstatusTrans80Html(reg.Fecha_Trans80)}</div>
-                    </div>
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Ubicación Actual</span>
+                    <span class="text-slate-800 dark:text-slate-200 text-[10px] font-bold uppercase block">${escapeHTML(reg.Ubicacion_Actual || 'Sin Ubicación')}</span>
+                 </td>
+
+                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Último Taller</span>
+                    <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase block">${escapeHTML(reg.Ubicacion_Taller)}</span>
+                 </td>
+
+                 <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Fecha Trans80</span>
+                    <div>${obtenerEstatusTrans80Html(reg.Fecha_Trans80)}</div>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
