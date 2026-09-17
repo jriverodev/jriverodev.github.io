@@ -463,6 +463,7 @@ async function handleLocalApiGateway(payload) {
 
                 // Date formatting to ISO (convert empty string to null)
                 payloadRemoto.ubicacion_taller_fecha = parseCustomDateToISO(payloadRemoto.ubicacion_taller_fecha);
+                payloadRemoto.fecha_trans80 = parseCustomDateToISO(payloadRemoto.fecha_trans80);
 
                 const activeOrgIdActivo = payloadRemoto.organizacion_id || localStorage.getItem('siagop_user_org_id') || sessionStorage.getItem('SIAGOP_USER_ORG_ID') || '11111111-1111-1111-1111-111111111111';
 
@@ -471,7 +472,8 @@ async function handleLocalApiGateway(payload) {
                     'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
                     'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
                     'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
-                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
+                    'ubicacion_taller_fecha', 'ubicacion_actual', 'fecha_trans80',
+                    'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
                 ];
 
                 const recordSanitizado = {};

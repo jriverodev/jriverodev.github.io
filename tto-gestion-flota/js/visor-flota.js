@@ -1,6 +1,69 @@
 // js/visor-flota.js - Consola de Solo Lectura y Métricas de Catálogo de Flota
 "use strict";
 
+function obtenerEstatusTrans80Html(fechaInput) {
+    if (!fechaInput) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
+    }
+
+    let str = String(fechaInput).trim();
+    if (!str || str === 'S/F' || str === 'N/A' || str === 'null' || str === 'undefined') {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
+    }
+
+    let fecha;
+    if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+        fecha = new Date(str);
+    } else {
+        const partes = str.split("-");
+        if (partes.length === 3) {
+            if (partes[0].length === 4) {
+                fecha = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10));
+            } else {
+                fecha = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+            }
+        } else {
+            fecha = new Date(str);
+        }
+    }
+
+    if (isNaN(fecha.getTime())) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">${typeof escapeHTML === 'function' ? escapeHTML(str) : str} <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const target = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const diffMs = target - hoy;
+    const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    const fechaFormateada = fecha.toISOString().slice(0, 10);
+
+    let badge = '';
+    if (diffDias > 30) {
+        badge = `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Vigente</span>`;
+    } else if (diffDias >= 0) {
+        const texto = diffDias === 0 ? 'Vence hoy' : (diffDias === 1 ? 'Queda 1 día' : `Quedan ${diffDias} días`);
+        badge = `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">${texto}</span>`;
+    } else {
+        const diasVencidos = Math.abs(diffDias);
+        let vencioTexto = '';
+        if (diasVencidos < 30) {
+            vencioTexto = `Venció hace ${diasVencidos} ${diasVencidos === 1 ? 'día' : 'días'}`;
+        } else if (diasVencidos < 365) {
+            const meses = Math.floor(diasVencidos / 30);
+            vencioTexto = `Venció hace ${meses} ${meses === 1 ? 'mes' : 'meses'}`;
+        } else {
+            const anios = Math.floor(diasVencidos / 365);
+            vencioTexto = `Venció hace ${anios} ${anios === 1 ? 'año' : 'años'}`;
+        }
+        badge = `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400">${vencioTexto}</span>`;
+    }
+
+    return `<div class="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200"><i class="fa-solid fa-calendar-check text-[10px] mr-1 text-slate-400"></i>${fechaFormateada}</div><div class="mt-0.5">${badge}</div>`;
+}
+
 let datosActivosGlobal = [];
 let datosFiltradosGlobal = [];
 let mapaUltimoTaller = {};
@@ -144,6 +207,7 @@ async function cargarDatosAnaliticos() {
                 VIN: getV(["VIN"]) || u["VIN"] || u["vin"] || "S/I",
                 Marca: normalized["MARCA"] || u["Marca"] || u["marca"] || "",
                 Modelo: normalized["MODELO"] || u["Modelo"] || u["modelo"] || "",
+                Anio: getV(["ANIO", "ANO"]) || u["Anio"] || u["anio"] || "",
                 Color: normalized["COLOR"] || u["Color"] || u["color"] || "",
                 Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || u["tipo_vehiculo"] || "",
                 Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || u["tipo_flota"] || u["flota"] || "Liviana",
@@ -153,6 +217,8 @@ async function cargarDatosAnaliticos() {
                 Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || u["responsable_usuario"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || u["cargo_usuario"] || "",
                 Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || u["ubicacion_taller"] || "Sin Historial Taller",
+                Ubicacion_Actual: getV(["UBICACIONACTUAL", "UBICACION_ACTUAL"]) || u["Ubicacion_Actual"] || u["ubicacion_actual"] || "",
+                Fecha_Trans80: getV(["FECHATRANS80", "FECHA_TRANS80", "TRANS80"]) || u["Fecha_Trans80"] || u["fecha_trans80"] || "",
                 Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw, idUnidad) : docRaw,
                 Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || (u["documento_nombre"] && String(u["documento_nombre"]).trim()) || (u["Documento_Nombre"] && String(u["Documento_Nombre"]).trim()) || ""
             };
@@ -363,7 +429,7 @@ function renderizarVisor(datos, mantenerPagina = false) {
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Marca / Modelo</span>
                     <div>
-                        <span class="text-slate-800 dark:text-slate-200 font-bold text-xs uppercase block">${escapeHTML(reg.Marca)} ${escapeHTML(reg.Modelo)}</span>
+                        <span class="text-slate-800 dark:text-slate-200 font-bold text-xs uppercase block">${escapeHTML(reg.Marca)} ${escapeHTML(reg.Modelo)} (${escapeHTML(reg.Anio || 'S/A')})</span>
                         <span class="text-slate-500 dark:text-slate-400 text-[9px] uppercase block">${escapeHTML(reg.Tipo_Vehiculo)} - ${escapeHTML(reg.Color)}</span>
                     </div>
                  </td>
@@ -385,8 +451,12 @@ function renderizarVisor(datos, mantenerPagina = false) {
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
-                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Último Taller</span>
-                    <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase block">${escapeHTML(reg.Ubicacion_Taller)}</span>
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Ubicaciones / Trans80</span>
+                    <div>
+                        <span class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase block" title="Último Taller">Taller: ${escapeHTML(reg.Ubicacion_Taller)}</span>
+                        ${reg.Ubicacion_Actual ? `<span class="text-slate-600 dark:text-slate-300 text-[9px] font-semibold uppercase block" title="Ubicación Actual"><i class="fa-solid fa-location-dot text-emerald-500 mr-1"></i>Actual: ${escapeHTML(reg.Ubicacion_Actual)}</span>` : ''}
+                        <div class="mt-1">${obtenerEstatusTrans80Html(reg.Fecha_Trans80)}</div>
+                    </div>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
@@ -474,6 +544,7 @@ async function exportarAExcel() {
         "VIN Chasis": reg.VIN,
         "Marca": reg.Marca,
         "Modelo": reg.Modelo,
+        "Año": reg.Anio,
         "Color": reg.Color,
         "Tipo de Vehículo": reg.Tipo_Vehiculo,
         "Tipo de Flota": reg.Tipo_Flota,
@@ -483,6 +554,8 @@ async function exportarAExcel() {
         "Responsable Usuario": reg.Responsable_Usuario,
         "Cargo de Usuario": reg.Cargo_Usuario,
         "Última Ubicación Taller": reg.Ubicacion_Taller,
+        "Ubicación Actual": reg.Ubicacion_Actual,
+        "Fecha Trans80": reg.Fecha_Trans80,
         "Link Documento": reg.Documento_Url
     }));
 
