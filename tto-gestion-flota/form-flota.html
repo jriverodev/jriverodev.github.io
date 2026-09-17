@@ -110,7 +110,7 @@
                             <th class="p-4">Marca / Modelo / Color / Tipo</th>
                             <th class="p-4">Flota / Estatus / Situación</th>
                             <th class="p-4">Gerencia / Usuario / Cargo</th>
-                            <th class="p-4">Última Ubicación Taller</th>
+                            <th class="p-4">Ubicaciones / Trans80</th>
                             <th class="p-4">Documentación</th>
                             <th class="p-4 text-center w-28">Acciones</th>
                         </tr>
@@ -192,13 +192,19 @@
                     </div>
                 </div>
 
-                <!-- Modelo, Color, Tipo -->
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <!-- Modelo, Color, Tipo, Año -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div>
                         <label for="add-modelo" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                             Modelo
                         </label>
                         <input type="text" id="add-modelo" placeholder="Ej: Cargo 1722 / F-350" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs uppercase text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
+                    </div>
+                    <div>
+                        <label for="add-anio" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Año
+                        </label>
+                        <input type="number" id="add-anio" min="1950" max="2035" placeholder="Ej: 2018" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 font-mono text-xs uppercase text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
                     </div>
                     <div>
                         <label for="add-color" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -211,6 +217,22 @@
                             Tipo Vehículo
                         </label>
                         <input type="text" id="add-tipo-vehiculo" placeholder="Ej: Camión / Pick-Up" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs uppercase text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
+                    </div>
+                </div>
+
+                <!-- Ubicación Actual & Fecha Trans80 -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="add-ubicacion-actual" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Ubicación Actual
+                        </label>
+                        <input type="text" id="add-ubicacion-actual" placeholder="Ej: Base Lagunillas / Patio Central" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs uppercase text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
+                    </div>
+                    <div>
+                        <label for="add-fecha-trans80" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Fecha Trans80
+                        </label>
+                        <input type="date" id="add-fecha-trans80" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
                     </div>
                 </div>
 
@@ -345,13 +367,19 @@
                     </div>
                 </div>
 
-                <!-- Modelo, Color, Tipo -->
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <!-- Modelo, Color, Tipo, Año -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div>
                         <label for="edit-modelo" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                             Modelo
                         </label>
                         <input type="text" id="edit-modelo" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs uppercase text-slate-900 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
+                    </div>
+                    <div>
+                        <label for="edit-anio" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Año
+                        </label>
+                        <input type="number" id="edit-anio" min="1950" max="2035" placeholder="Ej: 2018" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 font-mono text-xs uppercase text-slate-900 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
                     </div>
                     <div>
                         <label for="edit-color" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -364,6 +392,22 @@
                             Tipo de Vehículo
                         </label>
                         <input type="text" id="edit-tipo-vehiculo" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs uppercase text-slate-900 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
+                    </div>
+                </div>
+
+                <!-- Ubicación Actual & Fecha Trans80 -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="edit-ubicacion-actual" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Ubicación Actual
+                        </label>
+                        <input type="text" id="edit-ubicacion-actual" placeholder="Ej: Base Lagunillas / Patio Central" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs uppercase text-slate-900 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
+                    </div>
+                    <div>
+                        <label for="edit-fecha-trans80" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Fecha Trans80
+                        </label>
+                        <input type="date" id="edit-fecha-trans80" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:bg-slate-900 dark:focus:ring-blue-500/20">
                     </div>
                 </div>
 

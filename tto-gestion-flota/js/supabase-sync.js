@@ -304,6 +304,7 @@
             if (ready.fecha_ingreso) ready.fecha_ingreso = parseCustomDateToISO(ready.fecha_ingreso);
             if (ready.fecha_salida) ready.fecha_salida = parseCustomDateToISO(ready.fecha_salida);
             if (ready.ubicacion_taller_fecha) ready.ubicacion_taller_fecha = parseCustomDateToISO(ready.ubicacion_taller_fecha);
+            if (ready.fecha_trans80) ready.fecha_trans80 = parseCustomDateToISO(ready.fecha_trans80);
 
             // Whitelist depending on table
             let columnasPermitidas = [
@@ -318,7 +319,8 @@
                     'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
                     'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
                     'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
-                    'ubicacion_taller_fecha', 'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
+                    'ubicacion_taller_fecha', 'ubicacion_actual', 'fecha_trans80',
+                    'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
                 ];
             }
 
