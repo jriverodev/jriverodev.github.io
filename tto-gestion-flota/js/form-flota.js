@@ -14,7 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-function obtenerEstatusTrans80Html(fechaInput) {
+function obtenerEstatusTrans80Html(fechaInput, avisosInput) {
+    const avisosStr = String(avisosInput || '').trim().toUpperCase();
+    const fechaStr = String(fechaInput || '').trim().toUpperCase();
+
+    if (avisosStr === 'NO APLICA' || fechaStr === 'NO APLICA') {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-400">No Aplica</span></div>`;
+    }
+    if (avisosStr.includes('SIN SOLICITUD') || fechaStr.includes('SIN SOLICITUD')) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-400">Sin Solicitud</span></div>`;
+    }
+
     if (!fechaInput) {
         return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
     }
@@ -82,10 +92,47 @@ var listaActivosGlobal = [];
 var datosFiltradosFlota = [];
 var mapaUltimoTaller = {};
 var OPERADOR_ACTUAL = "";
+function evaluarEstadoTrans80(reg) {
+    const avisosStr = String(reg.Avisos_Trans80 || '').trim().toUpperCase();
+    const fechaStr = String(reg.Fecha_Trans80 || '').trim().toUpperCase();
+
+    if (avisosStr === 'NO APLICA' || fechaStr === 'NO APLICA') return 'no_aplica';
+    if (avisosStr.includes('SIN SOLICITUD') || fechaStr.includes('SIN SOLICITUD')) return 'sin_solicitud';
+    if (!fechaStr || fechaStr === 'S/F' || fechaStr === 'N/A' || fechaStr === 'NULL') return 'sin_fecha';
+
+    let fecha;
+    if (fechaStr.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(fechaStr)) {
+        fecha = new Date(fechaStr);
+    } else {
+        const partes = fechaStr.split("-");
+        if (partes.length === 3) {
+            if (partes[0].length === 4) {
+                fecha = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10));
+            } else {
+                fecha = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+            }
+        } else {
+            fecha = new Date(fechaStr);
+        }
+    }
+
+    if (isNaN(fecha.getTime())) return 'sin_fecha';
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const target = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const diffMs = target - hoy;
+    const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDias >= 0) return 'vigente';
+    return 'vencida';
+}
+
 var FILTROS_ACTIVOS = {
     busqueda: "",
     flota: "",
-    taller: ""
+    taller: "",
+    trans80: ""
 };
 var documentoEliminarFlag = false;
 var paginaActualFlota = 1;
@@ -275,7 +322,7 @@ function toggleFiltroBadge(btn, tipo, valor) {
 }
 
 function limpiarFiltros() {
-    FILTROS_ACTIVOS = { busqueda: "", flota: "", taller: "" };
+    FILTROS_ACTIVOS = { busqueda: "", flota: "", taller: "", trans80: "" };
     document.getElementById("input-busqueda").value = "";
     document.querySelectorAll(".filter-badge").forEach(b => {
         b.classList.remove("bg-emerald-600", "text-white", "border-emerald-600");
@@ -288,6 +335,7 @@ function filtrarActivos() {
     const query = document.getElementById("input-busqueda").value.toLowerCase().trim();
     const flota = FILTROS_ACTIVOS.flota;
     const tallerFiltro = FILTROS_ACTIVOS.taller;
+    const trans80Filtro = FILTROS_ACTIVOS.trans80;
 
     const filtrados = listaActivosGlobal.filter(reg => {
         const matchesBusqueda = !query ||
@@ -306,7 +354,9 @@ function filtrarActivos() {
             (tallerFiltro === "con_taller" && tieneEntradaTaller) ||
             (tallerFiltro === "sin_taller" && !tieneEntradaTaller);
 
-        return matchesBusqueda && matchesFlota && matchesTaller;
+        const matchesTrans80 = !trans80Filtro || evaluarEstadoTrans80(reg) === trans80Filtro;
+
+        return matchesBusqueda && matchesFlota && matchesTaller && matchesTrans80;
     });
 
     paginaActualFlota = 1;
@@ -429,9 +479,10 @@ async function cargarTablaActivos() {
                 Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
                 Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
-                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || "Sin Historial Taller",
+                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION_TALLER"]) || u["Ubicacion_Taller"] || u["ubicacion_taller"] || "Sin Historial Taller",
                 Ubicacion_Actual: getV(["UBICACIONACTUAL", "UBICACION_ACTUAL"]) || u["Ubicacion_Actual"] || u["ubicacion_actual"] || "",
                 Fecha_Trans80: getV(["FECHATRANS80", "FECHA_TRANS80", "TRANS80"]) || u["Fecha_Trans80"] || u["fecha_trans80"] || "",
+                Avisos_Trans80: getV(["AVISOSTRANS80", "AVISOS_TRANS80", "AVISO_TRANS80"]) || u["Avisos_Trans80"] || u["avisos_trans80"] || "",
                 Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw, idUnidad) : docRaw,
                 Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || u["documento_nombre"] || u["Documento_Nombre"] || ""
             };
@@ -602,7 +653,7 @@ function renderizarActivos(datos, mantenerPagina = false) {
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Fecha Trans80:</span>
-                    <div>${obtenerEstatusTrans80Html(reg.Fecha_Trans80)}</div>
+                    <div>${obtenerEstatusTrans80Html(reg.Fecha_Trans80, reg.Avisos_Trans80)}</div>
                 </td>
 
                 <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b border-slate-100 dark:border-slate-800/30 md:border-none transition-colors">

@@ -330,6 +330,7 @@ function MapearFilasAModelo(rawJson, tablaTarget) {
                 ubicacion_taller_fecha: parseFechaISO(row["Ubicacion_Taller_Fecha"] || row["ubicacion_taller_fecha"]),
                 ubicacion_actual: String(row["Ubicacion_Actual"] || row["ubicacion_actual"] || "").trim(),
                 fecha_trans80: parseFechaISO(row["Fecha_Trans80"] || row["fecha_trans80"] || row["Fecha_Trans_80"] || row["fecha_trans_80"]),
+                avisos_trans80: String(row["Avisos_Trans80"] || row["avisos_trans80"] || "").trim(),
                 documento_url: String(row["Documento_Url"] || row["documento_url"] || "").trim(),
                 documento_nombre: String(row["Documento_Nombre"] || row["documento_nombre"] || "").trim(),
                 updated_at: new Date().toISOString()

@@ -319,7 +319,7 @@
                     'id_unidad', 'placa', 'vin', 'marca', 'modelo', 'anio', 'color',
                     'tipo_vehiculo', 'tipo_flota', 'estatus_final', 'situacion_actual',
                     'gerencia', 'responsable_usuario', 'cargo_usuario', 'ubicacion_taller',
-                    'ubicacion_taller_fecha', 'ubicacion_actual', 'fecha_trans80',
+                    'ubicacion_taller_fecha', 'ubicacion_actual', 'fecha_trans80', 'avisos_trans80',
                     'documento_url', 'documento_nombre', 'metadata', 'organizacion_id', 'updated_at'
                 ];
             }
