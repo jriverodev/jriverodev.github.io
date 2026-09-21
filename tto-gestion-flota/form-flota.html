@@ -75,23 +75,7 @@
                 </div>
             </div>
 
-            <div class="mb-6">
-                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Estatus Trans80</label>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="toggleFiltroBadge(this, 'trans80', 'vigente')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
-                        Vigentes
-                    </button>
-                    <button onclick="toggleFiltroBadge(this, 'trans80', 'vencida')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
-                        Vencidas
-                    </button>
-                    <button onclick="toggleFiltroBadge(this, 'trans80', 'no_aplica')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
-                        No Aplica
-                    </button>
-                    <button onclick="toggleFiltroBadge(this, 'trans80', 'sin_solicitud')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
-                        Sin Solicitud
-                    </button>
-                </div>
-            </div>
+
         </div>
         <!-- Sub-barra de contexto -->
         <div class="flex items-center h-8 px-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700/50">
@@ -640,6 +624,24 @@
                     </button>
                 </div>
             </div>
+
+                        <div class="mb-6">
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Estatus Trans80</label>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFiltroBadge(this, 'trans80', 'vigente')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        Vigentes
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'trans80', 'vencida')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        Vencidas
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'trans80', 'no_aplica')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        No Aplica
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'trans80', 'sin_solicitud')" type="button" class="filter-badge filter-badge-trans80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        Sin Solicitud
+                    </button>
+                </div>
+                        </div>
 
             <button onclick="cerrarFiltros()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-black uppercase tracking-widest text-[11px] mt-8 transition-all active:scale-95 cursor-pointer">
                 Aplicar y Cerrar
