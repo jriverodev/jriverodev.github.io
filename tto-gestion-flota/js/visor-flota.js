@@ -1,7 +1,53 @@
 // js/visor-flota.js - Consola de Solo Lectura y Métricas de Catálogo de Flota
 "use strict";
 
-function obtenerEstatusTrans80Html(fechaInput) {
+function evaluarEstadoTrans80(reg) {
+    const avisosStr = String(reg.Avisos_Trans80 || '').trim().toUpperCase();
+    const fechaStr = String(reg.Fecha_Trans80 || '').trim().toUpperCase();
+
+    if (avisosStr === 'NO APLICA' || fechaStr === 'NO APLICA') return 'no_aplica';
+    if (avisosStr.includes('SIN SOLICITUD') || fechaStr.includes('SIN SOLICITUD')) return 'sin_solicitud';
+    if (!fechaStr || fechaStr === 'S/F' || fechaStr === 'N/A' || fechaStr === 'NULL') return 'sin_fecha';
+
+    let fecha;
+    if (fechaStr.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(fechaStr)) {
+        fecha = new Date(fechaStr);
+    } else {
+        const partes = fechaStr.split("-");
+        if (partes.length === 3) {
+            if (partes[0].length === 4) {
+                fecha = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10));
+            } else {
+                fecha = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+            }
+        } else {
+            fecha = new Date(fechaStr);
+        }
+    }
+
+    if (isNaN(fecha.getTime())) return 'sin_fecha';
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const target = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const diffMs = target - hoy;
+    const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDias >= 0) return 'vigente';
+    return 'vencida';
+}
+
+function obtenerEstatusTrans80Html(fechaInput, avisosInput) {
+    const avisosStr = String(avisosInput || '').trim().toUpperCase();
+    const fechaStr = String(fechaInput || '').trim().toUpperCase();
+
+    if (avisosStr === 'NO APLICA' || fechaStr === 'NO APLICA') {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-400">No Aplica</span></div>`;
+    }
+    if (avisosStr.includes('SIN SOLICITUD') || fechaStr.includes('SIN SOLICITUD')) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-400">Sin Solicitud</span></div>`;
+    }
+
     if (!fechaInput) {
         return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
     }
@@ -216,9 +262,10 @@ async function cargarDatosAnaliticos() {
                 Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || u["gerencia"] || "",
                 Responsable_Usuario: getV(["RESPONSABLEUSUARIO", "RESPONSABLE", "USUARIO"]) || u["Responsable_Usuario"] || u["responsable_usuario"] || "",
                 Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || u["cargo_usuario"] || "",
-                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION"]) || u["Ubicacion_Taller"] || u["ubicacion_taller"] || "Sin Historial Taller",
+                Ubicacion_Taller: mapaUltimoTaller[idKey] || getV(["UBICACIONTALLER", "UBICACION_TALLER"]) || u["Ubicacion_Taller"] || u["ubicacion_taller"] || "Sin Historial Taller",
                 Ubicacion_Actual: getV(["UBICACIONACTUAL", "UBICACION_ACTUAL"]) || u["Ubicacion_Actual"] || u["ubicacion_actual"] || "",
                 Fecha_Trans80: getV(["FECHATRANS80", "FECHA_TRANS80", "TRANS80"]) || u["Fecha_Trans80"] || u["fecha_trans80"] || "",
+                Avisos_Trans80: getV(["AVISOSTRANS80", "AVISOS_TRANS80", "AVISO_TRANS80"]) || u["Avisos_Trans80"] || u["avisos_trans80"] || "",
                 Documento_Url: typeof normalizarUrlStorage === 'function' ? normalizarUrlStorage(docRaw, idUnidad) : docRaw,
                 Documento_Nombre: getV(["DOCUMENTONOMBRE", "DOCUMENTO_NOMBRE"]) || (u["documento_nombre"] && String(u["documento_nombre"]).trim()) || (u["Documento_Nombre"] && String(u["Documento_Nombre"]).trim()) || ""
             };
@@ -279,6 +326,7 @@ function filtrarVisor() {
     const tipoVehiculo = document.getElementById("visor-filtro-tipo-vehiculo") ? document.getElementById("visor-filtro-tipo-vehiculo").value : "";
     const estatus = document.getElementById("visor-filtro-estatus") ? document.getElementById("visor-filtro-estatus").value : "";
     const entradasTaller = document.getElementById("visor-filtro-entradas-taller") ? document.getElementById("visor-filtro-entradas-taller").value : "";
+    const trans80 = document.getElementById("visor-filtro-trans80") ? document.getElementById("visor-filtro-trans80").value : "";
 
     const filtrados = datosActivosGlobal.filter(reg => {
         const matchesBusqueda = !query ||
@@ -299,7 +347,9 @@ function filtrarVisor() {
             (entradasTaller === "con_taller" && tieneEntradaTaller) ||
             (entradasTaller === "sin_taller" && !tieneEntradaTaller);
 
-        return matchesBusqueda && matchesFlota && matchesTipoVehiculo && matchesEstatus && matchesTaller;
+        const matchesTrans80 = !trans80 || evaluarEstadoTrans80(reg) === trans80;
+
+        return matchesBusqueda && matchesFlota && matchesTipoVehiculo && matchesEstatus && matchesTaller && matchesTrans80;
     });
 
     const kpiFiltradoEl = document.getElementById("kpiFiltrado");
@@ -320,6 +370,8 @@ function limpiarFiltrosVisor() {
     if (selectEstatus) selectEstatus.value = "";
     const selectTaller = document.getElementById("visor-filtro-entradas-taller");
     if (selectTaller) selectTaller.value = "";
+    const selectTrans80 = document.getElementById("visor-filtro-trans80");
+    if (selectTrans80) selectTrans80.value = "";
 
     const kpiFiltradoEl = document.getElementById("kpiFiltrado");
     if (kpiFiltradoEl) {
@@ -462,7 +514,7 @@ function renderizarVisor(datos, mantenerPagina = false) {
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
                     <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">Fecha Trans80</span>
-                    <div>${obtenerEstatusTrans80Html(reg.Fecha_Trans80)}</div>
+                    <div>${obtenerEstatusTrans80Html(reg.Fecha_Trans80, reg.Avisos_Trans80)}</div>
                  </td>
 
                  <td class="flex justify-between items-center md:table-cell p-4 border-b md:border-b-0 border-slate-200 dark:border-slate-800/20 transition-colors">
