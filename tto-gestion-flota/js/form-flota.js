@@ -289,6 +289,8 @@ async function confirmarIdentidad(event) {
 /**
  * Lógica de Búsqueda y Filtros
  */
+
+/*
 function abrirFiltros() {
     const sheet = document.getElementById("bottomSheetFiltros");
     const content = document.getElementById("sheetContent");
@@ -306,6 +308,107 @@ function cerrarFiltros(event) {
     }, 300);
 }
 
+*/
+
+
+// --- FUNCIONES DE CONTROL DE FILTROS ---
+function abrirFiltros() {
+    const backdrop = document.getElementById("bottomSheetFiltros");
+    const content = document.getElementById("sheetContent");
+
+    if (!backdrop || !content) return;
+
+    // 1. Limpiar transformaciones previas
+    content.style.transform = '';
+    content.style.transition = '';
+
+    // 2. Mostrar contenedor backdrop
+    backdrop.classList.remove("hidden");
+
+    // 3. Forzar el estado inferior e iniciar la animación de subida
+    content.classList.add("translate-y-full");
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            content.classList.remove("translate-y-full");
+        });
+    });
+}
+
+function cerrarFiltros(event) {
+    const backdrop = document.getElementById("bottomSheetFiltros");
+    const content = document.getElementById("sheetContent");
+
+    if (!backdrop || !content) return;
+
+    if (event && event.target !== backdrop && event.type === 'click') return;
+
+    // Iniciar animación de bajada
+    content.classList.add("translate-y-full");
+
+    setTimeout(() => {
+        backdrop.classList.add("hidden");
+
+        // Reseteo para próxima apertura
+        content.style.transform = '';
+        content.style.transition = '';
+    }, 300);
+}
+
+// --- GESTOR DE ARRASTRE TÁCTIL ---
+document.addEventListener("DOMContentLoaded", () => {
+    const content = document.getElementById("sheetContent");
+    const dragHeader = document.getElementById("dragHeader");
+
+    if (!dragHeader || !content) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    function onStart(e) {
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        currentY = startY;
+        content.style.transition = 'none';
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = currentY - startY;
+
+        if (deltaY > 0) {
+            content.style.transform = `translateY(${deltaY}px)`;
+        }
+    }
+
+    function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const deltaY = currentY - startY;
+        content.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
+
+        if (deltaY > 100) {
+            cerrarFiltros();
+        } else {
+            content.style.transform = 'translateY(0)';
+        }
+    }
+
+    // Eventos Táctiles y Ratón
+    dragHeader.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
+
+    dragHeader.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+});
+
+
+    
 function toggleFiltroBadge(btn, tipo, valor) {
     if (FILTROS_ACTIVOS[tipo] === valor) {
         FILTROS_ACTIVOS[tipo] = "";
