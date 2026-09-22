@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TTOCC EPP - Material Inventory</title>
+    <title>TTOCC EPP - Control & Entregas de EPP</title>
     
+    <!-- PWA Web App Manifest & Mobile Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b91c1c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
     <!-- Google Fonts & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,13 +152,20 @@
                     <span class="material-symbols-outlined">shield</span>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black tracking-tight text-slate-900 leading-none">NEXUS <span class="text-rose-600">EPP</span></h1>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control de Inventario & Lotes</p>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg font-black tracking-tight text-slate-900 leading-none">NEXUS <span class="text-rose-600">EPP</span></h1>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black"
+                              :class="isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'">
+                            <span class="w-1.5 h-1.5 rounded-full mr-1" :class="isOnline ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                            {{ isOnline ? 'ONLINE' : 'OFFLINE' }}
+                        </span>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control & Entregas de EPP</p>
                 </div>
             </div>
-            <button @click="modalLote = true" class="md-btn-filled text-xs !py-2.5 !px-3.5">
-                <span class="material-symbols-outlined text-base">add</span>
-                <span>Nuevo Lote</span>
+            <button @click="modalTrabajador = true" class="md-btn-filled text-xs !py-2.5 !px-3.5">
+                <span class="material-symbols-outlined text-base">person_add</span>
+                <span>Trabajador</span>
             </button>
         </header>
 
@@ -159,13 +174,13 @@
 
             <!-- TABS MATERIAL -->
             <div class="bg-slate-200/60 p-1.5 rounded-2xl flex text-xs font-bold text-slate-600">
-                <button @click="activeTab = 'stock'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'stock'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">inventory_2</span>
-                    <span>Stock</span>
+                <button @click="activeTab = 'entrega'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'entrega'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">assignment_turned_in</span>
+                    <span>Entrega</span>
                 </button>
-                <button @click="activeTab = 'descuento'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'descuento'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">remove_shopping_cart</span>
-                    <span>Descontar</span>
+                <button @click="activeTab = 'trabajadores'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'trabajadores'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">badge</span>
+                    <span>Personal</span>
                 </button>
                 <button @click="activeTab = 'historial'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'historial'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
                     <span class="material-symbols-outlined text-sm">history</span>
@@ -173,126 +188,49 @@
                 </button>
             </div>
 
-            <!-- TAB 1: STOCK Y DISPONIBILIDAD -->
-            <section v-if="activeTab === 'stock'" class="space-y-4">
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
-                    <input v-model="searchQuery" type="text" placeholder="Buscar por equipo o talla..." 
-                           class="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm outline-none focus:ring-2 focus:ring-rose-500">
-                </div>
-
-                <div class="space-y-3">
-                    <div v-for="item in stockFiltrado" :key="item.equipo" class="md-card p-5 space-y-3">
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
-                                    <span class="material-symbols-outlined text-xl">{{ getEquipmentIcon(item.equipo) }}</span>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-slate-900 text-sm leading-tight" v-text="item.equipo"></h3>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ Object.keys(item.tallas).length }} Talla(s) registrada(s)</p>
-                                </div>
-                            </div>
-                            <span class="px-3 py-1 bg-rose-50 text-rose-700 font-black rounded-full text-xs">
-                                {{ item.total }} unids.
-                            </span>
-                        </div>
-
-                        <div class="flex flex-wrap gap-1.5 pt-1">
-                            <div v-for="(cant, talla) in item.tallas" :key="talla" 
-                                 class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-2 border border-slate-200/50">
-                                <span class="text-slate-500 font-normal">Talla <b class="text-slate-900">{{ talla }}</b>:</span>
-                                <span class="font-black" :class="cant < 5 ? 'text-amber-600' : 'text-slate-900'">{{ cant }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="stockFiltrado.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
-                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory</span>
-                        <p class="text-slate-500 text-sm font-medium">No hay existencias registradas.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 2: FORMULARIO DE DESCUENTO -->
-            <section v-if="activeTab === 'descuento'" class="md-card p-6 space-y-4">
+            <!-- TAB 1: FORMULARIO DE ENTREGA DE EPP -->
+            <section v-if="activeTab === 'entrega'" class="md-card p-6 space-y-4">
                 <div class="border-b border-slate-100 pb-3 mb-2">
                     <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-rose-600">output</span>
-                        <span>Descontar EPP</span>
+                        <span class="material-symbols-outlined text-rose-600">assignment_turned_in</span>
+                        <span>Registrar Entrega de EPP</span>
                     </h2>
                 </div>
 
                 <div>
-                    <label class="md-label">Equipo de Protección</label>
-                    <select v-model="salida.equipo" @change="actualizarTallasDisponibles" class="md-select">
-                        <option value="">Seleccione el equipo...</option>
-                        <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
-                    </select>
+                    <label class="md-label">Buscar / Seleccionar Trabajador</label>
+                    <input v-model="cedulaBusqueda" @input="buscarTrabajador" type="text" placeholder="Ingrese Cédula para buscar..." class="md-input mb-2">
+                    <div v-if="trabajadorSeleccionado" class="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs space-y-1">
+                        <p class="font-black text-slate-900">{{ trabajadorSeleccionado.nombre }} ({{ trabajadorSeleccionado.cedula }})</p>
+                        <p class="text-slate-600"><b>Cargo:</b> {{ trabajadorSeleccionado.cargo || trabajadorSeleccionado.puesto || 'N/A' }} | <b>Área:</b> {{ trabajadorSeleccionado.area || trabajadorSeleccionado.unidad || 'N/A' }}</p>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="md-label">Talla Disponible</label>
-                        <select v-model="salida.talla" class="md-select" :disabled="!salida.equipo">
-                            <option value="">Talla...</option>
-                            <option v-for="t in tallasDisponibles" :key="t" :value="t">{{ t }}</option>
-                        </select>
+                        <label class="md-label">Cédula</label>
+                        <input v-model="entrega.cedula" type="text" placeholder="V-12345678" class="md-input">
                     </div>
-
                     <div>
-                        <label class="md-label">Cantidad a Retirar</label>
-                        <input v-model.number="salida.cantidad" type="number" min="1" class="md-input" placeholder="1">
+                        <label class="md-label">Nombre Completo</label>
+                        <input v-model="entrega.nombre" type="text" placeholder="Nombre y Apellido" class="md-input">
                     </div>
                 </div>
 
-                <div>
-                    <label class="md-label">Motivo / Destino / Área</label>
-                    <input v-model="salida.motivo" type="text" placeholder="Ej: Entrega a Mantenimiento" class="md-input">
-                </div>
-
-                <button @click="procesarDescuento" :disabled="isSyncing || !salida.equipo || !salida.talla || salida.cantidad < 1" 
-                        class="md-btn-filled w-full py-4 text-sm mt-2">
-                    <span class="material-symbols-outlined" v-if="!isSyncing">check_circle</span>
-                    <span>{{ isSyncing ? 'PROCESANDO...' : 'CONFIRMAR Y DESCONTAR' }}</span>
-                </button>
-            </section>
-
-            <!-- TAB 3: HISTORIAL DE MOVIMIENTOS -->
-            <section v-if="activeTab === 'historial'" class="space-y-3">
-                <div v-for="m in historialMovimientos" :key="m.id" class="md-card p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black" 
-                             :class="m.tipo === 'ENTRADA_LOTE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
-                            <span class="material-symbols-outlined text-lg">
-                                {{ m.tipo === 'ENTRADA_LOTE' ? 'south_west' : 'north_east' }}
-                            </span>
-                        </div>
-                        <div>
-                            <p class="text-xs font-black text-slate-900 leading-tight">{{ m.equipo }} (Talla: {{ m.talla }})</p>
-                            <p class="text-[10px] text-slate-500 mt-0.5">{{ m.motivo || 'Sin detalle' }}</p>
-                            <p class="text-[9px] text-slate-400 font-mono mt-0.5">{{ formatearFecha(m.fecha) }}</p>
-                        </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="md-label">Cargo / Puesto</label>
+                        <input v-model="entrega.puesto" type="text" placeholder="Ej: Operador" class="md-input">
                     </div>
-                    <div class="text-right">
-                        <span class="text-sm font-black" :class="m.tipo === 'ENTRADA_LOTE' ? 'text-emerald-600' : 'text-rose-600'">
-                            {{ m.tipo === 'ENTRADA_LOTE' ? '+' : '-' }}{{ m.cantidad }}
-                        </span>
+                    <div>
+                        <label class="md-label">Unidad / Área</label>
+                        <input v-model="entrega.unidad" type="text" placeholder="Ej: Mantenimiento" class="md-input">
                     </div>
                 </div>
-            </section>
-
-        </main>
-
-        <!-- MODAL: NUEVO LOTE -->
-        <div v-if="modalLote" class="fixed inset-0 z-50 flex items-end justify-center md-modal-backdrop">
-            <div class="md-bottom-sheet w-full max-w-md p-6 space-y-4">
-                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
-                <h3 class="text-lg font-black text-slate-900">Ingreso de Nuevo Lote</h3>
 
                 <div>
                     <label class="md-label">Equipo de Protección</label>
-                    <select v-model="nuevoLote.equipo" class="md-select">
+                    <select v-model="entrega.equipo" class="md-select">
                         <option value="">Seleccione equipo...</option>
                         <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
                     </select>
@@ -301,37 +239,125 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="md-label">Talla / Medida</label>
-                        <input v-model="nuevoLote.talla" type="text" placeholder="Ej: 42, L" class="md-input">
+                        <input v-model="entrega.talla" type="text" placeholder="Ej: 42, L, M" class="md-input">
                     </div>
                     <div>
-                        <label class="md-label">Cantidad Recibida</label>
-                        <input v-model.number="nuevoLote.cantidad" type="number" min="1" placeholder="Ej: 50" class="md-input">
+                        <label class="md-label">Fecha de Entrega</label>
+                        <input v-model="entrega.fecha" type="date" class="md-input">
                     </div>
+                </div>
+
+                <button @click="procesarEntrega" :disabled="isSyncing || !entrega.cedula || !entrega.nombre || !entrega.equipo"
+                        class="md-btn-filled w-full py-4 text-sm mt-2">
+                    <span class="material-symbols-outlined" v-if="!isSyncing">check_circle</span>
+                    <span>{{ isSyncing ? 'PROCESANDO...' : 'REGISTRAR ENTREGA' }}</span>
+                </button>
+            </section>
+
+            <!-- TAB 2: PERSONAL / TRABAJADORES -->
+            <section v-if="activeTab === 'trabajadores'" class="space-y-4">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
+                    <input v-model="searchTrabajador" type="text" placeholder="Buscar por cédula o nombre..."
+                           class="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+
+                <div class="space-y-3">
+                    <div v-for="t in trabajadoresFiltrados" :key="t.cedula" class="md-card p-4 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-black">
+                                <span class="material-symbols-outlined text-lg">badge</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-xs leading-tight" v-text="t.nombre"></h3>
+                                <p class="text-[10px] font-mono text-slate-500 mt-0.5">C.I: {{ t.cedula }}</p>
+                                <p class="text-[9px] text-slate-400 mt-0.5">{{ t.cargo || t.puesto || 'S/C' }} - {{ t.area || t.unidad || 'S/A' }}</p>
+                            </div>
+                        </div>
+                        <button @click="seleccionarTrabajador(t)" class="px-3 py-1.5 bg-rose-50 text-rose-700 font-bold rounded-xl text-xs">
+                            Entregar
+                        </button>
+                    </div>
+
+                    <div v-if="trabajadoresFiltrados.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">group</span>
+                        <p class="text-slate-500 text-sm font-medium">No hay trabajadores registrados.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: HISTORIAL DE ENTREGAS -->
+            <section v-if="activeTab === 'historial'" class="space-y-3">
+                <div v-for="h in historialEntregas" :key="h.id" class="md-card p-4 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
+                            <span class="material-symbols-outlined text-lg">shield</span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black text-slate-900 leading-tight">{{ h.equipo }} (Talla: {{ h.talla || 'S/T' }})</p>
+                            <p class="text-[10px] text-slate-600 font-bold mt-0.5">{{ h.nombre }} (CI: {{ h.cedula }})</p>
+                            <p class="text-[9px] text-slate-400 mt-0.5">{{ h.puesto || h.cargo || 'S/C' }} | {{ h.unidad || h.area || 'S/A' }}</p>
+                            <p class="text-[9px] text-slate-400 font-mono mt-0.5">{{ formatearFecha(h.fecha) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="historialEntregas.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">history</span>
+                    <p class="text-slate-500 text-sm font-medium">No hay historial de entregas registrado.</p>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- MODAL: AÑADIR TRABAJADOR -->
+        <div v-if="modalTrabajador" class="fixed inset-0 z-50 flex items-end justify-center md-modal-backdrop">
+            <div class="md-bottom-sheet w-full max-w-md p-6 space-y-4">
+                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
+                <h3 class="text-lg font-black text-slate-900">Añadir Trabajador / Pasante</h3>
+
+                <div>
+                    <label class="md-label">Cédula</label>
+                    <input v-model="nuevoTrabajador.cedula" type="text" placeholder="Ej: V-12345678" class="md-input">
                 </div>
 
                 <div>
-                    <label class="md-label">Código / N° de Lote</label>
-                    <input v-model="nuevoLote.lote" type="text" placeholder="Ej: LOTE-2026-A" class="md-input">
+                    <label class="md-label">Nombre Completo</label>
+                    <input v-model="nuevoTrabajador.nombre" type="text" placeholder="Ej: Juan Pérez" class="md-input">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="md-label">Cargo / Puesto</label>
+                        <input v-model="nuevoTrabajador.cargo" type="text" placeholder="Ej: Mecánico" class="md-input">
+                    </div>
+                    <div>
+                        <label class="md-label">Área / Unidad</label>
+                        <input v-model="nuevoTrabajador.area" type="text" placeholder="Ej: Taller" class="md-input">
+                    </div>
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button @click="guardarNuevoLote" class="md-btn-filled flex-1 py-3.5">
+                    <button @click="guardarNuevoTrabajador" class="md-btn-filled flex-1 py-3.5">
                         <span class="material-symbols-outlined text-base">save</span>
-                        <span>Guardar Lote</span>
+                        <span>Guardar</span>
                     </button>
-                    <button @click="modalLote = false" class="bg-slate-100 text-slate-600 font-bold px-5 py-3.5 rounded-2xl text-xs">
+                    <button @click="modalTrabajador = false" class="bg-slate-100 text-slate-600 font-bold px-5 py-3.5 rounded-2xl text-xs">
                         Cancelar
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT -->
+        <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT & SYNC -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 z-20">
-            <div class="max-w-md mx-auto">
-                <button @click="menuConfig = true" class="w-full bg-slate-900 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md">
-                    <span class="material-symbols-outlined text-base text-rose-400">cloud_sync</span>
-                    <span>Configurar Conexión Google Apps Script</span>
+            <div class="max-w-md mx-auto flex gap-2">
+                <button @click="sincronizarDesdeGoogle" :disabled="isSyncing" class="flex-1 bg-rose-600 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
+                    <span class="material-symbols-outlined text-base" :class="{'animate-spin': isSyncing}">sync</span>
+                    <span>{{ isSyncing ? 'Sincronizando...' : 'Sincronizar Cloud' }}</span>
+                </button>
+                <button @click="menuConfig = true" class="bg-slate-900 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                    <span class="material-symbols-outlined text-base text-rose-400">settings</span>
                 </button>
             </div>
         </nav>
@@ -349,12 +375,24 @@
 
     </div>
 
+    <!-- PWA Service Worker Registration Script -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA Service Worker registrado exitosamente:', reg.scope))
+                    .catch(err => console.error('Error registrando Service Worker:', err));
+            });
+        }
+    </script>
+
+    <!-- Vue App & Dexie Logic -->
     <script>
         // DEXIE DATABASE SETUP
-        const db = new Dexie("NEXUS_EPP_DB");
+        const db = new Dexie("NEXUS_EPP_ENTREGAS_DB");
         db.version(1).stores({
-            inventario: '++id, equipo, talla, cantidad, lote, fechaIngreso',
-            movimientos: '++id, equipo, talla, cantidad, tipo, motivo, fecha'
+            trabajadores: 'cedula, nombre, cargo, area',
+            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla'
         });
 
         const { createApp } = Vue;
@@ -362,163 +400,168 @@
         createApp({
             data() {
                 return {
-                    activeTab: 'stock',
-                    searchQuery: '',
+                    activeTab: 'entrega',
+                    searchTrabajador: '',
+                    cedulaBusqueda: '',
                     googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || '',
                     menuConfig: false,
-                    modalLote: false,
+                    modalTrabajador: false,
                     isSyncing: false,
-                    inventarioLocal: [],
-                    historialMovimientos: [],
-                    tallasDisponibles: [],
+                    isOnline: navigator.onLine,
+                    trabajadoresLocal: [],
+                    historialEntregas: [],
+                    trabajadorSeleccionado: null,
                     listaEquipos: [
                         'Botas de Seguridad', 'Casco de Seguridad', 'Guantes de Carnaza',
                         'Lentes de Protección', 'Protector Auditivo', 'Mascarilla N95',
                         'Overol / Braga', 'Faja Sacrolumbar', 'Impermeable'
                     ],
-                    nuevoLote: { equipo: '', talla: '', cantidad: null, lote: '' },
-                    salida: { equipo: '', talla: '', cantidad: 1, motivo: '' }
+                    nuevoTrabajador: { cedula: '', nombre: '', cargo: '', area: '' },
+                    entrega: {
+                        fecha: new Date().toISOString().split('T')[0],
+                        cedula: '',
+                        nombre: '',
+                        puesto: '',
+                        unidad: '',
+                        equipo: '',
+                        talla: ''
+                    }
                 }
             },
             computed: {
-                resumenStock() {
-                    const resumen = {};
-                    this.inventarioLocal.forEach(item => {
-                        if (!resumen[item.equipo]) {
-                            resumen[item.equipo] = { equipo: item.equipo, total: 0, tallas: {} };
-                        }
-                        resumen[item.equipo].total += item.cantidad;
-                        resumen[item.equipo].tallas[item.talla] = (resumen[item.equipo].tallas[item.talla] || 0) + item.cantidad;
-                    });
-                    return Object.values(resumen);
-                },
-                stockFiltrado() {
-                    const q = this.searchQuery.toLowerCase();
-                    if (!q) return this.resumenStock;
-                    return this.resumenStock.filter(s => 
-                        s.equipo.toLowerCase().includes(q) || 
-                        Object.keys(s.tallas).some(t => t.toLowerCase().includes(q))
+                trabajadoresFiltrados() {
+                    const q = this.searchTrabajador.toLowerCase();
+                    if (!q) return this.trabajadoresLocal;
+                    return this.trabajadoresLocal.filter(t =>
+                        String(t.cedula).toLowerCase().includes(q) ||
+                        String(t.nombre).toLowerCase().includes(q)
                     );
                 }
             },
             mounted() {
+                window.addEventListener('online', () => this.isOnline = true);
+                window.addEventListener('offline', () => this.isOnline = false);
                 this.cargarDatosDexie();
+
+                if (this.googleSheetUrl && this.isOnline) {
+                    this.sincronizarDesdeGoogle();
+                }
             },
             methods: {
                 async cargarDatosDexie() {
-                    this.inventarioLocal = await db.inventario.toArray();
-                    this.historialMovimientos = (await db.movimientos.toArray()).reverse().slice(0, 30);
+                    this.trabajadoresLocal = await db.trabajadores.toArray();
+                    this.historialEntregas = (await db.entregas.toArray()).reverse().slice(0, 50);
                 },
-                getEquipmentIcon(equipo) {
-                    const icons = {
-                        'Botas de Seguridad': 'steps', 'Casco de Seguridad': 'hard_hat',
-                        'Guantes de Carnaza': 'front_hand', 'Lentes de Protección': 'visibility',
-                        'Protector Auditivo': 'hearing', 'Mascarilla N95': 'masks',
-                        'Overol / Braga': 'checkroom', 'Faja Sacrolumbar': 'fitness_center',
-                        'Impermeable': 'umbrella'
-                    };
-                    return icons[equipo] || 'shield';
+                buscarTrabajador() {
+                    const c = this.cedulaBusqueda.trim().toLowerCase();
+                    if (!c) {
+                        this.trabajadorSeleccionado = null;
+                        return;
+                    }
+                    const encontrado = this.trabajadoresLocal.find(t => String(t.cedula).toLowerCase().includes(c));
+                    if (encontrado) {
+                        this.seleccionarTrabajador(encontrado);
+                    }
                 },
-                actualizarTallasDisponibles() {
-                    const registros = this.inventarioLocal.filter(i => i.equipo === this.salida.equipo && i.cantidad > 0);
-                    this.tallasDisponibles = [...new Set(registros.map(r => r.talla))];
-                    this.salida.talla = '';
+                seleccionarTrabajador(t) {
+                    this.trabajadorSeleccionado = t;
+                    this.entrega.cedula = t.cedula;
+                    this.entrega.nombre = t.nombre;
+                    this.entrega.puesto = t.cargo || t.puesto || '';
+                    this.entrega.unidad = t.area || t.unidad || '';
+                    this.activeTab = 'entrega';
                 },
-                async guardarNuevoLote() {
-                    if (!this.nuevoLote.equipo || !this.nuevoLote.talla || !this.nuevoLote.cantidad) {
+                async guardarNuevoTrabajador() {
+                    if (!this.nuevoTrabajador.cedula || !this.nuevoTrabajador.nombre) {
                         return Swal.fire({
                             title: 'Campos incompletos',
-                            text: 'Por favor complete el equipo, talla y cantidad.',
+                            text: 'Cédula y Nombre son requeridos.',
                             icon: 'warning',
-                            confirmButtonText: 'Entendido'
+                            confirmButtonText: 'Aceptar'
                         });
                     }
 
-                    const registro = {
-                        equipo: this.nuevoLote.equipo,
-                        talla: this.nuevoLote.talla.toUpperCase().trim(),
-                        cantidad: Number(this.nuevoLote.cantidad),
-                        lote: this.nuevoLote.lote || 'S/L',
-                        fechaIngreso: new Date().toISOString()
+                    const reg = {
+                        cedula: this.nuevoTrabajador.cedula.trim(),
+                        nombre: this.nuevoTrabajador.nombre.trim(),
+                        cargo: this.nuevoTrabajador.cargo.trim(),
+                        area: this.nuevoTrabajador.area.trim()
                     };
 
-                    await db.inventario.add(registro);
-                    await db.movimientos.add({ ...registro, fecha: registro.fechaIngreso, tipo: 'ENTRADA_LOTE', motivo: `Lote: ${registro.lote}` });
+                    await db.trabajadores.put(reg);
 
-                    this.sincronizarConGoogle({ type: 'nuevo_lote', data: registro });
+                    this.sincronizarConGoogle({ type: 'add_worker', data: reg });
 
                     await this.cargarDatosDexie();
-                    this.modalLote = false;
-                    this.nuevoLote = { equipo: '', talla: '', cantidad: null, lote: '' };
+                    this.modalTrabajador = false;
+                    this.nuevoTrabajador = { cedula: '', nombre: '', cargo: '', area: '' };
 
                     Swal.fire({
-                        title: '¡Lote Registrado!',
-                        text: 'Unidades agregadas correctamente al inventario.',
+                        title: 'Trabajador Agregado',
+                        text: 'Se ha registrado el trabajador en la base de datos.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
                 },
-                async procesarDescuento() {
-                    const cantidadADescontar = Number(this.salida.cantidad);
-                    
-                    const lotesDisponibles = await db.inventario
-                        .where({ equipo: this.salida.equipo, talla: this.salida.talla })
-                        .filter(i => i.cantidad > 0)
-                        .toArray();
-
-                    const totalDisponible = lotesDisponibles.reduce((acc, curr) => acc + curr.cantidad, 0);
-
-                    if (totalDisponible < cantidadADescontar) {
+                async procesarEntrega() {
+                    if (!this.entrega.cedula || !this.entrega.nombre || !this.entrega.equipo) {
                         return Swal.fire({
-                            title: 'Stock Insuficiente',
-                            text: `Solo existen ${totalDisponible} unidades disponibles de ${this.salida.equipo} Talla ${this.salida.talla}.`,
-                            icon: 'error',
-                            confirmButtonText: 'Aceptar'
+                            title: 'Campos Incompletos',
+                            text: 'Cédula, Nombre y Equipo son obligatorios.',
+                            icon: 'warning',
+                            confirmButtonText: 'Entendido'
                         });
                     }
 
                     this.isSyncing = true;
-                    let restante = cantidadADescontar;
 
-                    for (let item of lotesDisponibles) {
-                        if (restante <= 0) break;
-                        if (item.cantidad <= restante) {
-                            restante -= item.cantidad;
-                            await db.inventario.update(item.id, { cantidad: 0 });
-                        } else {
-                            await db.inventario.update(item.id, { cantidad: item.cantidad - restante });
-                            restante = 0;
-                        }
-                    }
-
-                    const registroSalida = {
-                        equipo: this.salida.equipo,
-                        talla: this.salida.talla,
-                        cantidad: cantidadADescontar,
-                        motivo: this.salida.motivo || 'Retiro manual de inventario',
-                        fecha: new Date().toISOString()
+                    const registro = {
+                        fecha: this.entrega.fecha || new Date().toISOString().split('T')[0],
+                        cedula: this.entrega.cedula.trim(),
+                        nombre: this.entrega.nombre.trim(),
+                        puesto: this.entrega.puesto.trim(),
+                        unidad: this.entrega.unidad.trim(),
+                        equipo: this.entrega.equipo,
+                        talla: this.entrega.talla ? this.entrega.talla.toUpperCase().trim() : 'S/T'
                     };
 
-                    await db.movimientos.add({ ...registroSalida, tipo: 'SALIDA_EPP' });
+                    await db.entregas.add(registro);
 
-                    await this.sincronizarConGoogle({ type: 'descuento_epp', data: registroSalida });
+                    // Auto-actualizar trabajador local si no existía
+                    await db.trabajadores.put({
+                        cedula: registro.cedula,
+                        nombre: registro.nombre,
+                        cargo: registro.puesto,
+                        area: registro.unidad
+                    });
+
+                    await this.sincronizarConGoogle({ type: 'entrega', data: registro });
 
                     await this.cargarDatosDexie();
-                    this.actualizarTallasDisponibles();
                     this.isSyncing = false;
-                    this.salida = { equipo: '', talla: '', cantidad: 1, motivo: '' };
+                    this.entrega = {
+                        fecha: new Date().toISOString().split('T')[0],
+                        cedula: '',
+                        nombre: '',
+                        puesto: '',
+                        unidad: '',
+                        equipo: '',
+                        talla: ''
+                    };
+                    this.trabajadorSeleccionado = null;
+                    this.cedulaBusqueda = '';
 
                     Swal.fire({
-                        title: 'Descuento Exitoso',
-                        text: 'Se ha descontado la cantidad solicitada.',
+                        title: 'Entrega Registrada',
+                        text: 'La entrega de EPP ha sido registrada correctamente.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
                 },
                 async sincronizarConGoogle(payload) {
-                    if (!this.googleSheetUrl) return;
+                    if (!this.googleSheetUrl || !navigator.onLine) return;
                     try {
                         await fetch(this.googleSheetUrl, {
                             method: 'POST',
@@ -526,12 +569,54 @@
                             body: JSON.stringify(payload)
                         });
                     } catch (e) {
-                        console.error('Error enviando datos:', e);
+                        console.error('Error enviando datos a Google Script:', e);
+                    }
+                },
+                async sincronizarDesdeGoogle() {
+                    if (!this.googleSheetUrl || !navigator.onLine) return;
+                    this.isSyncing = true;
+                    try {
+                        const resp = await fetch(`${this.googleSheetUrl}?action=all`);
+                        const data = await resp.json();
+
+                        if (data.trabajadores && Array.isArray(data.trabajadores)) {
+                            await db.trabajadores.clear();
+                            const recs = data.trabajadores.map(t => ({
+                                cedula: String(t.cédula || t.cedula || ''),
+                                nombre: t.nombre || '',
+                                cargo: t.cargo || t.puesto || '',
+                                area: t.área || t.area || t.unidad || ''
+                            })).filter(t => t.cedula);
+                            await db.trabajadores.bulkPut(recs);
+                        }
+
+                        if (data.entregas && Array.isArray(data.entregas)) {
+                            await db.entregas.clear();
+                            const ent = data.entregas.map(e => ({
+                                fecha: e.fecha_entrega || e.fecha || new Date().toISOString().split('T')[0],
+                                cedula: String(e.cédula || e.cedula || ''),
+                                nombre: e.nombre || '',
+                                puesto: e.cargo || e.puesto || '',
+                                unidad: e.unidad_área || e.unidad || e.area || '',
+                                equipo: e.equipo || '',
+                                talla: e.talla || 'S/T'
+                            }));
+                            await db.entregas.bulkAdd(ent);
+                        }
+
+                        await this.cargarDatosDexie();
+                    } catch (e) {
+                        console.warn('No se pudo completar la sincronización remota:', e);
+                    } finally {
+                        this.isSyncing = false;
                     }
                 },
                 guardarConfig() {
                     localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
                     this.menuConfig = false;
+                    if (this.googleSheetUrl && navigator.onLine) {
+                        this.sincronizarDesdeGoogle();
+                    }
                     Swal.fire({
                         title: 'Configuración Guardada',
                         text: 'URL actualizada correctamente.',
@@ -543,7 +628,8 @@
                 formatearFecha(isoStr) {
                     if (!isoStr) return '';
                     const d = new Date(isoStr);
-                    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    if (isNaN(d.getTime())) return isoStr;
+                    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 }
             }
         }).mount('#app');
