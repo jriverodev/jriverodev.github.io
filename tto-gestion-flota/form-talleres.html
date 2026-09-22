@@ -640,7 +640,7 @@
         </div>
     </div>
 
-    <div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
+    <!--div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
         <div id="sheetContent" class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-t-lg shadow-xl p-6 transition-transform translate-y-full duration-400 border-t border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
 
             <div class="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded mx-auto mb-6 opacity-50"></div>
@@ -700,7 +700,180 @@
                 Aplicar y Cerrar
             </button>
         </div>
+    </div-->
+
+
+<!-- Backdrop/Modal Principal -->
+<div id="bottomSheetFiltros" class="fixed inset-0 bg-slate-950/60 z-[60] hidden flex items-end justify-center" onclick="cerrarFiltros(event)">
+    
+    <!-- Ventana del Sheet -->
+    <div id="sheetContent" class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-t-2xl shadow-xl p-6 transition-transform translate-y-full duration-300 border-t border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
+
+        <!-- Cabecera / Tirador interactivo táctil (dragHeader) -->
+        <div id="dragHeader" class="touch-none cursor-grab py-2 select-none">
+            <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4 opacity-70"></div>
+
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs uppercase font-black tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-600 dark:text-blue-400"></i> Control de Búsqueda y Filtros
+                </h3>
+                <button onclick="limpiarFiltros()" type="button" class="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider hover:text-blue-700 transition-colors cursor-pointer">
+                    Limpiar todo
+                </button>
+            </div>
+        </div>
+
+        <!-- Búsqueda -->
+        <div class="mb-6">
+            <label for="input-busqueda" class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Tipee un criterio de búsqueda</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-xs"></i>
+                </div>
+                <input type="text"
+                       id="input-busqueda"
+                       oninput="filtrarMatriz()"
+                       class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 text-xs rounded-lg pl-9 pr-4 py-3 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-600 transition-all font-medium"
+                       placeholder="Buscar por Unidad, ID, Taller, Marca o Novedad...">
+            </div>
+        </div>
+
+        <!-- Filtros Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Filtrar por Estatus</label>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFiltroBadge(this, 'estatus', 'Por Atender')" type="button" class="filter-badge px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        ⚠️ Por Atender
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'estatus', 'En Proceso')" type="button" class="filter-badge px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        ⚙️ En Proceso
+                    </button>
+                    <button onclick="toggleFiltroBadge(this, 'estatus', 'Listo')" type="button" class="filter-badge px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase transition-all hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer">
+                        ✅ Ya Operativa
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider">Filtrar por Ubicación</label>
+                <select id="filtro-ubicacion" onchange="filtrarMatriz()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-blue-600 transition-all cursor-pointer">
+                    <option value="">Todas las ubicaciones</option>
+                    <option value="Taller Lagunillas">Taller Lagunillas</option>
+                    <option value="Taller La Salina">Taller La Salina</option>
+                    <option value="Taller Lago Medio">Taller Lago Medio</option>
+                    <option value="TALLER EXTERNO (Terceros)">Taller Externo (Terceros)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botón Aplicar -->
+        <button onclick="cerrarFiltros()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-black uppercase tracking-widest text-[11px] mt-8 transition-all active:scale-95 cursor-pointer">
+            Aplicar y Cerrar
+        </button>
     </div>
+</div>
+
+<script>
+// Elementos DOM
+const backdrop = document.getElementById('bottomSheetFiltros');
+const sheetContent = document.getElementById('sheetContent');
+const dragHeader = document.getElementById('dragHeader');
+
+// Variables de estado
+let startY = 0;
+let currentY = 0;
+let isDragging = false;
+
+// --- FUNCIONES DE APERTURA Y CIERRE ---
+function abrirFiltros() {
+    backdrop.classList.remove('hidden');
+    backdrop.style.opacity = '1';
+    
+    // Pequeño timeout para permitir que se aplique la animación CSS de subida
+    setTimeout(() => {
+        sheetContent.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+function cerrarFiltros(e) {
+    // Si la llamada viene del evento click en el backdrop, verificar que no fue en el contenido
+    if (e && e.target !== backdrop) return;
+
+    sheetContent.style.transform = 'translateY(100%)';
+    backdrop.style.opacity = '0';
+
+    setTimeout(() => {
+        backdrop.classList.add('hidden');
+        
+        // Limpiar estilos en línea
+        sheetContent.style.transform = '';
+        sheetContent.style.transition = '';
+        backdrop.style.opacity = '';
+        backdrop.style.transition = '';
+    }, 300);
+}
+
+// --- LÓGICA DE ARRASTRE TÁCTIL Y DE RATÓN ---
+function onStart(e) {
+    isDragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Quitar transiciones para movimiento en tiempo real
+    sheetContent.style.transition = 'none';
+    backdrop.style.transition = 'none';
+}
+
+function onMove(e) {
+    if (!isDragging) return;
+
+    currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = currentY - startY;
+
+    // Solo permitir arrastrar hacia abajo
+    if (deltaY > 0) {
+        sheetContent.style.transform = `translateY(${deltaY}px)`;
+
+        // Calcular opacidad del fondo (se vuelve transparente a los 250px de arrastre)
+        const maxDistance = 250;
+        const opacity = Math.max(0, 1 - (deltaY / maxDistance));
+        backdrop.style.opacity = opacity;
+    }
+}
+
+function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+
+    const deltaY = currentY - startY;
+
+    // Restaurar transiciones suaves
+    sheetContent.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
+    backdrop.style.transition = 'opacity 0.3s ease-out';
+
+    // Si se arrastró más de 100px, cerrar el modal
+    if (deltaY > 100) {
+        cerrarFiltros();
+    } else {
+        // Volver a la posición original
+        sheetContent.style.transform = 'translateY(0)';
+        backdrop.style.opacity = '1';
+    }
+}
+
+// Event Listeners para Pantallas Táctiles (Móviles)
+dragHeader.addEventListener('touchstart', onStart, { passive: true });
+window.addEventListener('touchmove', onMove, { passive: true });
+window.addEventListener('touchend', onEnd);
+
+// Event Listeners para Ratón (Escritorio)
+dragHeader.addEventListener('mousedown', onStart);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onEnd);
+</script>
+
+
+    
 
     <footer class="w-full text-center py-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 hidden sm:block transition-colors">
         <p class="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black transition-colors">
