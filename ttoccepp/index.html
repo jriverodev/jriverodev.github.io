@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TTOCC EPP - Material Inventory</title>
+    
+    <!-- Google Fonts & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <!-- Tailwind CSS & CDN Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --md-sys-color-primary: #b91c1c;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #ffdad6;
+            --md-sys-color-on-primary-container: #410002;
+            --md-sys-color-surface-container-low: #f8f2f1;
+            --md-sys-color-on-surface: #231918;
+            --md-sys-color-outline: #857371;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8fafc;
+            color: var(--md-sys-color-on-surface);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        [v-cloak] { display: none !important; }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        /* Material Design 3 Cards */
+        .md-card {
+            background-color: #ffffff;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        /* Material Inputs */
+        .md-input, .md-select {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            background-color: var(--md-sys-color-surface-container-low);
+            border: 2px solid transparent;
+            color: var(--md-sys-color-on-surface);
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .md-input:focus, .md-select:focus {
+            border-color: var(--md-sys-color-primary);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.1);
+        }
+
+        .md-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--md-sys-color-outline);
+            margin-left: 8px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Buttons */
+        .md-btn-filled {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border-radius: 16px;
+            font-weight: 700;
+            padding: 14px 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2);
+        }
+
+        .md-btn-filled:active { transform: scale(0.96); }
+        .md-btn-filled:disabled { background-color: #e2e8f0; color: #94a3b8; box-shadow: none; }
+
+        /* Bottom Sheet Modal */
+        .md-modal-backdrop {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .md-bottom-sheet {
+            background: #ffffff;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+            animation: slideUp 0.25s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* SweetAlert2 Material Design Adjustments */
+        .swal2-popup {
+            border-radius: 28px !important;
+            font-family: 'Roboto', sans-serif !important;
+            padding: 1.5rem !important;
+        }
+        .swal2-styled.swal2-confirm {
+            border-radius: 14px !important;
+            background-color: #b91c1c !important;
+            font-weight: 700 !important;
+            padding: 12px 24px !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-36">
+
+    <div id="app" v-cloak class="max-w-md mx-auto">
+        
+        <!-- TOP APP BAR -->
+        <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
+                    <span class="material-symbols-outlined">shield</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-tight text-slate-900 leading-none">NEXUS <span class="text-rose-600">EPP</span></h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control de Inventario & Lotes</p>
+                </div>
+            </div>
+            <button @click="modalLote = true" class="md-btn-filled text-xs !py-2.5 !px-3.5">
+                <span class="material-symbols-outlined text-base">add</span>
+                <span>Nuevo Lote</span>
+            </button>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="p-5 space-y-6">
+
+            <!-- TABS MATERIAL -->
+            <div class="bg-slate-200/60 p-1.5 rounded-2xl flex text-xs font-bold text-slate-600">
+                <button @click="activeTab = 'stock'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'stock'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">inventory_2</span>
+                    <span>Stock</span>
+                </button>
+                <button @click="activeTab = 'descuento'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'descuento'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">remove_shopping_cart</span>
+                    <span>Descontar</span>
+                </button>
+                <button @click="activeTab = 'historial'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'historial'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">history</span>
+                    <span>Historial</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: STOCK Y DISPONIBILIDAD -->
+            <section v-if="activeTab === 'stock'" class="space-y-4">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
+                    <input v-model="searchQuery" type="text" placeholder="Buscar por equipo o talla..." 
+                           class="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+
+                <div class="space-y-3">
+                    <div v-for="item in stockFiltrado" :key="item.equipo" class="md-card p-5 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+                                    <span class="material-symbols-outlined text-xl">{{ getEquipmentIcon(item.equipo) }}</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-sm leading-tight" v-text="item.equipo"></h3>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ Object.keys(item.tallas).length }} Talla(s) registrada(s)</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-rose-50 text-rose-700 font-black rounded-full text-xs">
+                                {{ item.total }} unids.
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            <div v-for="(cant, talla) in item.tallas" :key="talla" 
+                                 class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-2 border border-slate-200/50">
+                                <span class="text-slate-500 font-normal">Talla <b class="text-slate-900">{{ talla }}</b>:</span>
+                                <span class="font-black" :class="cant < 5 ? 'text-amber-600' : 'text-slate-900'">{{ cant }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="stockFiltrado.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory</span>
+                        <p class="text-slate-500 text-sm font-medium">No hay existencias registradas.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: FORMULARIO DE DESCUENTO -->
+            <section v-if="activeTab === 'descuento'" class="md-card p-6 space-y-4">
+                <div class="border-b border-slate-100 pb-3 mb-2">
+                    <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-rose-600">output</span>
+                        <span>Descontar EPP</span>
+                    </h2>
+                </div>
+
+                <div>
+                    <label class="md-label">Equipo de Protección</label>
+                    <select v-model="salida.equipo" @change="actualizarTallasDisponibles" class="md-select">
+                        <option value="">Seleccione el equipo...</option>
+                        <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="md-label">Talla Disponible</label>
+                        <select v-model="salida.talla" class="md-select" :disabled="!salida.equipo">
+                            <option value="">Talla...</option>
+                            <option v-for="t in tallasDisponibles" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="md-label">Cantidad a Retirar</label>
+                        <input v-model.number="salida.cantidad" type="number" min="1" class="md-input" placeholder="1">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="md-label">Motivo / Destino / Área</label>
+                    <input v-model="salida.motivo" type="text" placeholder="Ej: Entrega a Mantenimiento" class="md-input">
+                </div>
+
+                <button @click="procesarDescuento" :disabled="isSyncing || !salida.equipo || !salida.talla || salida.cantidad < 1" 
+                        class="md-btn-filled w-full py-4 text-sm mt-2">
+                    <span class="material-symbols-outlined" v-if="!isSyncing">check_circle</span>
+                    <span>{{ isSyncing ? 'PROCESANDO...' : 'CONFIRMAR Y DESCONTAR' }}</span>
+                </button>
+            </section>
+
+            <!-- TAB 3: HISTORIAL DE MOVIMIENTOS -->
+            <section v-if="activeTab === 'historial'" class="space-y-3">
+                <div v-for="m in historialMovimientos" :key="m.id" class="md-card p-4 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black" 
+                             :class="m.tipo === 'ENTRADA_LOTE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+                            <span class="material-symbols-outlined text-lg">
+                                {{ m.tipo === 'ENTRADA_LOTE' ? 'south_west' : 'north_east' }}
+                            </span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black text-slate-900 leading-tight">{{ m.equipo }} (Talla: {{ m.talla }})</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">{{ m.motivo || 'Sin detalle' }}</p>
+                            <p class="text-[9px] text-slate-400 font-mono mt-0.5">{{ formatearFecha(m.fecha) }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-black" :class="m.tipo === 'ENTRADA_LOTE' ? 'text-emerald-600' : 'text-rose-600'">
+                            {{ m.tipo === 'ENTRADA_LOTE' ? '+' : '-' }}{{ m.cantidad }}
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- MODAL: NUEVO LOTE -->
+        <div v-if="modalLote" class="fixed inset-0 z-50 flex items-end justify-center md-modal-backdrop">
+            <div class="md-bottom-sheet w-full max-w-md p-6 space-y-4">
+                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
+                <h3 class="text-lg font-black text-slate-900">Ingreso de Nuevo Lote</h3>
+
+                <div>
+                    <label class="md-label">Equipo de Protección</label>
+                    <select v-model="nuevoLote.equipo" class="md-select">
+                        <option value="">Seleccione equipo...</option>
+                        <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="md-label">Talla / Medida</label>
+                        <input v-model="nuevoLote.talla" type="text" placeholder="Ej: 42, L" class="md-input">
+                    </div>
+                    <div>
+                        <label class="md-label">Cantidad Recibida</label>
+                        <input v-model.number="nuevoLote.cantidad" type="number" min="1" placeholder="Ej: 50" class="md-input">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="md-label">Código / N° de Lote</label>
+                    <input v-model="nuevoLote.lote" type="text" placeholder="Ej: LOTE-2026-A" class="md-input">
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button @click="guardarNuevoLote" class="md-btn-filled flex-1 py-3.5">
+                        <span class="material-symbols-outlined text-base">save</span>
+                        <span>Guardar Lote</span>
+                    </button>
+                    <button @click="modalLote = false" class="bg-slate-100 text-slate-600 font-bold px-5 py-3.5 rounded-2xl text-xs">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 z-20">
+            <div class="max-w-md mx-auto">
+                <button @click="menuConfig = true" class="w-full bg-slate-900 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                    <span class="material-symbols-outlined text-base text-rose-400">cloud_sync</span>
+                    <span>Configurar Conexión Google Apps Script</span>
+                </button>
+            </div>
+        </nav>
+
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 md-modal-backdrop">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+                <h3 class="text-base font-black text-slate-900">Enlace con Google Sheets</h3>
+                <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
+                <div class="flex gap-2">
+                    <button @click="guardarConfig" class="md-btn-filled flex-1 text-xs">Guardar URL</button>
+                    <button @click="menuConfig = false" class="bg-slate-100 text-slate-600 font-bold px-4 py-3 rounded-2xl text-xs">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DEXIE DATABASE SETUP
+        const db = new Dexie("NEXUS_EPP_DB");
+        db.version(1).stores({
+            inventario: '++id, equipo, talla, cantidad, lote, fechaIngreso',
+            movimientos: '++id, equipo, talla, cantidad, tipo, motivo, fecha'
+        });
+
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    activeTab: 'stock',
+                    searchQuery: '',
+                    googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || '',
+                    menuConfig: false,
+                    modalLote: false,
+                    isSyncing: false,
+                    inventarioLocal: [],
+                    historialMovimientos: [],
+                    tallasDisponibles: [],
+                    listaEquipos: [
+                        'Botas de Seguridad', 'Casco de Seguridad', 'Guantes de Carnaza',
+                        'Lentes de Protección', 'Protector Auditivo', 'Mascarilla N95',
+                        'Overol / Braga', 'Faja Sacrolumbar', 'Impermeable'
+                    ],
+                    nuevoLote: { equipo: '', talla: '', cantidad: null, lote: '' },
+                    salida: { equipo: '', talla: '', cantidad: 1, motivo: '' }
+                }
+            },
+            computed: {
+                resumenStock() {
+                    const resumen = {};
+                    this.inventarioLocal.forEach(item => {
+                        if (!resumen[item.equipo]) {
+                            resumen[item.equipo] = { equipo: item.equipo, total: 0, tallas: {} };
+                        }
+                        resumen[item.equipo].total += item.cantidad;
+                        resumen[item.equipo].tallas[item.talla] = (resumen[item.equipo].tallas[item.talla] || 0) + item.cantidad;
+                    });
+                    return Object.values(resumen);
+                },
+                stockFiltrado() {
+                    const q = this.searchQuery.toLowerCase();
+                    if (!q) return this.resumenStock;
+                    return this.resumenStock.filter(s => 
+                        s.equipo.toLowerCase().includes(q) || 
+                        Object.keys(s.tallas).some(t => t.toLowerCase().includes(q))
+                    );
+                }
+            },
+            mounted() {
+                this.cargarDatosDexie();
+            },
+            methods: {
+                async cargarDatosDexie() {
+                    this.inventarioLocal = await db.inventario.toArray();
+                    this.historialMovimientos = (await db.movimientos.toArray()).reverse().slice(0, 30);
+                },
+                getEquipmentIcon(equipo) {
+                    const icons = {
+                        'Botas de Seguridad': 'steps', 'Casco de Seguridad': 'hard_hat',
+                        'Guantes de Carnaza': 'front_hand', 'Lentes de Protección': 'visibility',
+                        'Protector Auditivo': 'hearing', 'Mascarilla N95': 'masks',
+                        'Overol / Braga': 'checkroom', 'Faja Sacrolumbar': 'fitness_center',
+                        'Impermeable': 'umbrella'
+                    };
+                    return icons[equipo] || 'shield';
+                },
+                actualizarTallasDisponibles() {
+                    const registros = this.inventarioLocal.filter(i => i.equipo === this.salida.equipo && i.cantidad > 0);
+                    this.tallasDisponibles = [...new Set(registros.map(r => r.talla))];
+                    this.salida.talla = '';
+                },
+                async guardarNuevoLote() {
+                    if (!this.nuevoLote.equipo || !this.nuevoLote.talla || !this.nuevoLote.cantidad) {
+                        return Swal.fire({
+                            title: 'Campos incompletos',
+                            text: 'Por favor complete el equipo, talla y cantidad.',
+                            icon: 'warning',
+                            confirmButtonText: 'Entendido'
+                        });
+                    }
+
+                    const registro = {
+                        equipo: this.nuevoLote.equipo,
+                        talla: this.nuevoLote.talla.toUpperCase().trim(),
+                        cantidad: Number(this.nuevoLote.cantidad),
+                        lote: this.nuevoLote.lote || 'S/L',
+                        fechaIngreso: new Date().toISOString()
+                    };
+
+                    await db.inventario.add(registro);
+                    await db.movimientos.add({ ...registro, fecha: registro.fechaIngreso, tipo: 'ENTRADA_LOTE', motivo: `Lote: ${registro.lote}` });
+
+                    this.sincronizarConGoogle({ type: 'nuevo_lote', data: registro });
+
+                    await this.cargarDatosDexie();
+                    this.modalLote = false;
+                    this.nuevoLote = { equipo: '', talla: '', cantidad: null, lote: '' };
+
+                    Swal.fire({
+                        title: '¡Lote Registrado!',
+                        text: 'Unidades agregadas correctamente al inventario.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                },
+                async procesarDescuento() {
+                    const cantidadADescontar = Number(this.salida.cantidad);
+                    
+                    const lotesDisponibles = await db.inventario
+                        .where({ equipo: this.salida.equipo, talla: this.salida.talla })
+                        .filter(i => i.cantidad > 0)
+                        .toArray();
+
+                    const totalDisponible = lotesDisponibles.reduce((acc, curr) => acc + curr.cantidad, 0);
+
+                    if (totalDisponible < cantidadADescontar) {
+                        return Swal.fire({
+                            title: 'Stock Insuficiente',
+                            text: `Solo existen ${totalDisponible} unidades disponibles de ${this.salida.equipo} Talla ${this.salida.talla}.`,
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar'
+                        });
+                    }
+
+                    this.isSyncing = true;
+                    let restante = cantidadADescontar;
+
+                    for (let item of lotesDisponibles) {
+                        if (restante <= 0) break;
+                        if (item.cantidad <= restante) {
+                            restante -= item.cantidad;
+                            await db.inventario.update(item.id, { cantidad: 0 });
+                        } else {
+                            await db.inventario.update(item.id, { cantidad: item.cantidad - restante });
+                            restante = 0;
+                        }
+                    }
+
+                    const registroSalida = {
+                        equipo: this.salida.equipo,
+                        talla: this.salida.talla,
+                        cantidad: cantidadADescontar,
+                        motivo: this.salida.motivo || 'Retiro manual de inventario',
+                        fecha: new Date().toISOString()
+                    };
+
+                    await db.movimientos.add({ ...registroSalida, tipo: 'SALIDA_EPP' });
+
+                    await this.sincronizarConGoogle({ type: 'descuento_epp', data: registroSalida });
+
+                    await this.cargarDatosDexie();
+                    this.actualizarTallasDisponibles();
+                    this.isSyncing = false;
+                    this.salida = { equipo: '', talla: '', cantidad: 1, motivo: '' };
+
+                    Swal.fire({
+                        title: 'Descuento Exitoso',
+                        text: 'Se ha descontado la cantidad solicitada.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                },
+                async sincronizarConGoogle(payload) {
+                    if (!this.googleSheetUrl) return;
+                    try {
+                        await fetch(this.googleSheetUrl, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            body: JSON.stringify(payload)
+                        });
+                    } catch (e) {
+                        console.error('Error enviando datos:', e);
+                    }
+                },
+                guardarConfig() {
+                    localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
+                    this.menuConfig = false;
+                    Swal.fire({
+                        title: 'Configuración Guardada',
+                        text: 'URL actualizada correctamente.',
+                        icon: 'success',
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                },
+                formatearFecha(isoStr) {
+                    if (!isoStr) return '';
+                    const d = new Date(isoStr);
+                    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
