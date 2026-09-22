@@ -362,7 +362,7 @@ async function confirmarIdentidad(event) {
         }
     }
 }
-
+/*
 function abrirFiltros() {
     const sheet = document.getElementById("bottomSheetFiltros");
     const content = document.getElementById("sheetContent");
@@ -379,6 +379,111 @@ function cerrarFiltros(event) {
         document.getElementById("bottomSheetFiltros").classList.add("hidden");
     }, 300);
 }
+*/
+
+
+// --- FUNCIONES CORREGIDAS PARA EL MODAL DE FILTROS ---
+
+function abrirFiltros() {
+    const backdrop = document.getElementById("bottomSheetFiltros");
+    const content = document.getElementById("sheetContent");
+
+    if (!backdrop || !content) return;
+
+    // 1. Limpiar estilos en línea previos dejados por el arrastre táctil
+    content.style.transform = '';
+    content.style.transition = '';
+
+    // 2. Mostrar contenedor backdrop
+    backdrop.classList.remove("hidden");
+
+    // 3. Forzar el estado inferior e iniciar la transición de subida
+    content.classList.add("translate-y-full");
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            content.classList.remove("translate-y-full");
+        });
+    });
+}
+
+function cerrarFiltros(event) {
+    const backdrop = document.getElementById("bottomSheetFiltros");
+    const content = document.getElementById("sheetContent");
+
+    if (!backdrop || !content) return;
+
+    // Evitar que cierres si haces clic dentro del contenido del modal
+    if (event && event.target !== backdrop && event.type === 'click') return;
+
+    // Iniciar animación de ocultado
+    content.classList.add("translate-y-full");
+
+    setTimeout(() => {
+        backdrop.classList.add("hidden");
+
+        // Reseteo completo para la próxima apertura
+        content.style.transform = '';
+        content.style.transition = '';
+    }, 300);
+}
+
+// --- EVENTOS DE ARRASTRE TÁCTIL (GESTOR SWIPE DOWN) ---
+document.addEventListener("DOMContentLoaded", () => {
+    const content = document.getElementById("sheetContent");
+    const dragHeader = document.getElementById("dragHeader") || document.querySelector("#sheetContent > div:first-child");
+
+    if (!dragHeader || !content) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    function onStart(e) {
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        currentY = startY;
+        content.style.transition = 'none'; // Respuesta inmediata
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = currentY - startY;
+
+        // Arrastrar solo hacia abajo
+        if (deltaY > 0) {
+            content.style.transform = `translateY(${deltaY}px)`;
+        }
+    }
+
+    function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const deltaY = currentY - startY;
+        content.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
+
+        // Umbral de 100px para determinar el cierre
+        if (deltaY > 100) {
+            cerrarFiltros();
+        } else {
+            content.style.transform = 'translateY(0)';
+        }
+    }
+
+    // Registro de eventos para pantallas táctiles y escritorio
+    dragHeader.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
+
+    dragHeader.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+});
+
+
+
 
 function toggleFiltroBadge(btn, tipo, valor) {
     const index = FILTROS_ACTIVOS[tipo].indexOf(valor);
