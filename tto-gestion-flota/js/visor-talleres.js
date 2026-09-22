@@ -761,3 +761,123 @@ function filtrarPorKpi(estatus) {
         }
     }
 }
+
+
+// --- FUNCIONES DE CONTROL DE FILTROS VISOR (BOTTOM SHEET) ---
+
+function abrirFiltrosVisor() {
+    const backdrop = document.getElementById("visor-filtros-contenedor");
+    const content = document.getElementById("sheetContentVisor");
+
+    if (!backdrop || !content) return;
+
+    // 1. Limpiar transformaciones previas
+    content.style.transform = '';
+    content.style.transition = '';
+
+    // 2. Mostrar contenedor
+    backdrop.classList.remove("hidden");
+
+    // 3. Forzar animación fluida de subida
+    content.classList.add("translate-y-full");
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            content.classList.remove("translate-y-full");
+        });
+    });
+}
+
+function cerrarFiltrosVisor(event) {
+    const backdrop = document.getElementById("visor-filtros-contenedor");
+    const content = document.getElementById("sheetContentVisor");
+
+    if (!backdrop || !content) return;
+
+    if (event && event.target !== backdrop && event.type === 'click') return;
+
+    // Animación de bajada
+    content.classList.add("translate-y-full");
+
+    setTimeout(() => {
+        backdrop.classList.add("hidden");
+
+        // Reseteo para próxima apertura
+        content.style.transform = '';
+        content.style.transition = '';
+    }, 300);
+}
+
+// Sobrescribir limpiarFiltrosVisor para mantener actualizado el comportamiento
+const originalLimpiarFiltrosVisor = window.limpiarFiltrosVisor;
+window.limpiarFiltrosVisor = function() {
+    document.getElementById("visor-busqueda").value = "";
+    document.getElementById("visor-filtro-estatus").value = "";
+    document.getElementById("visor-filtro-ubicacion").value = "";
+    const selectTipoTaller = document.getElementById("visor-filtro-tipo-taller");
+    if (selectTipoTaller) selectTipoTaller.value = "";
+    const selectTipoVeh = document.getElementById("visor-filtro-tipo-vehiculo");
+    if (selectTipoVeh) selectTipoVeh.value = "";
+    document.getElementById("visor-fecha-desde").value = "";
+    document.getElementById("visor-fecha-hasta").value = "";
+
+    const kpiFiltradoEl = document.getElementById("kpiFiltrado");
+    if (kpiFiltradoEl) {
+        kpiFiltradoEl.textContent = datosUnidadesGlobal.length;
+    }
+
+    renderizarVisor(datosUnidadesGlobal);
+};
+
+// --- GESTOR DE ARRASTRE TÁCTIL (GESTURE DRAG TO CLOSE) ---
+document.addEventListener("DOMContentLoaded", () => {
+    const content = document.getElementById("sheetContentVisor");
+    const dragHeader = document.getElementById("dragHeaderVisor");
+
+    if (!dragHeader || !content) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    function onStart(e) {
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        currentY = startY;
+        content.style.transition = 'none';
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = currentY - startY;
+
+        if (deltaY > 0) {
+            content.style.transform = `translateY(${deltaY}px)`;
+        }
+    }
+
+    function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const deltaY = currentY - startY;
+        content.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
+
+        if (deltaY > 100) {
+            cerrarFiltrosVisor();
+        } else {
+            content.style.transform = 'translateY(0)';
+        }
+    }
+
+    // Eventos Táctiles y Mouse
+    dragHeader.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
+
+    dragHeader.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+});
+            
