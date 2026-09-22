@@ -3,636 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TTOCC EPP - Control & Entregas de EPP</title>
-    
-    <!-- PWA Web App Manifest & Mobile Meta -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#b91c1c">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-
-    <!-- Google Fonts & Material Symbols -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-
-    <!-- Tailwind CSS & CDN Dependencies -->
+    <title>STOCK EPP - PDVSA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --md-sys-color-primary: #b91c1c;
-            --md-sys-color-on-primary: #ffffff;
-            --md-sys-color-primary-container: #ffdad6;
-            --md-sys-color-on-primary-container: #410002;
-            --md-sys-color-surface-container-low: #f8f2f1;
-            --md-sys-color-on-surface: #231918;
-            --md-sys-color-outline: #857371;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f8fafc;
-            color: var(--md-sys-color-on-surface);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        [v-cloak] { display: none !important; }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
-
-        /* Material Design 3 Cards */
-        .md-card {
-            background-color: #ffffff;
-            border-radius: 24px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
-        }
-
-        /* Material Inputs */
-        .md-input, .md-select {
-            width: 100%;
-            padding: 16px;
-            border-radius: 16px;
-            background-color: var(--md-sys-color-surface-container-low);
-            border: 2px solid transparent;
-            color: var(--md-sys-color-on-surface);
-            font-size: 14px;
-            font-weight: 500;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .md-input:focus, .md-select:focus {
-            border-color: var(--md-sys-color-primary);
-            background-color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.1);
-        }
-
-        .md-label {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: var(--md-sys-color-outline);
-            margin-left: 8px;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        /* Buttons */
-        .md-btn-filled {
-            background-color: var(--md-sys-color-primary);
-            color: var(--md-sys-color-on-primary);
-            border-radius: 16px;
-            font-weight: 700;
-            padding: 14px 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2);
-        }
-
-        .md-btn-filled:active { transform: scale(0.96); }
-        .md-btn-filled:disabled { background-color: #e2e8f0; color: #94a3b8; box-shadow: none; }
-
-        /* Bottom Sheet Modal */
-        .md-modal-backdrop {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-        }
-
-        .md-bottom-sheet {
-            background: #ffffff;
-            border-top-left-radius: 32px;
-            border-top-right-radius: 32px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-            animation: slideUp 0.25s cubic-bezier(0, 0, 0.2, 1);
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        /* SweetAlert2 Material Design Adjustments */
-        .swal2-popup {
-            border-radius: 28px !important;
-            font-family: 'Roboto', sans-serif !important;
-            padding: 1.5rem !important;
-        }
-        .swal2-styled.swal2-confirm {
-            border-radius: 14px !important;
-            background-color: #b91c1c !important;
-            font-weight: 700 !important;
-            padding: 12px 24px !important;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        [v-cloak] { display: none; }
     </style>
 </head>
-<body class="min-h-screen pb-36">
-
-    <div id="app" v-cloak class="max-w-md mx-auto">
+<body class="bg-[#f8fafc] text-slate-900">
+    <div id="app" v-cloak class="max-w-xl mx-auto min-h-screen pb-32">
         
-        <!-- TOP APP BAR -->
-        <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-slate-100">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
-                    <span class="material-symbols-outlined">shield</span>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-lg font-black tracking-tight text-slate-900 leading-none">NEXUS <span class="text-rose-600">EPP</span></h1>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black"
-                              :class="isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'">
-                            <span class="w-1.5 h-1.5 rounded-full mr-1" :class="isOnline ? 'bg-emerald-500' : 'bg-rose-500'"></span>
-                            {{ isOnline ? 'ONLINE' : 'OFFLINE' }}
-                        </span>
-                    </div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control & Entregas de EPP</p>
-                </div>
+        <header class="p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black text-rose-600 tracking-tighter">NEXUS <span class="text-slate-400">EPP</span></h1>
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Control de Dotación Industrial</p>
             </div>
-            <button @click="modalTrabajador = true" class="md-btn-filled text-xs !py-2.5 !px-3.5">
-                <span class="material-symbols-outlined text-base">person_add</span>
-                <span>Trabajador</span>
+            <button @click="modalNuevoTrabajador = true" class="bg-rose-100 text-rose-600 px-4 py-2 rounded-xl font-bold text-xs active:scale-95 transition-all">
+                + Nuevo Personal
             </button>
         </header>
 
-        <!-- MAIN CONTENT -->
-        <main class="p-5 space-y-6">
-
-            <!-- TABS MATERIAL -->
-            <div class="bg-slate-200/60 p-1.5 rounded-2xl flex text-xs font-bold text-slate-600">
-                <button @click="activeTab = 'entrega'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'entrega'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">assignment_turned_in</span>
-                    <span>Entrega</span>
-                </button>
-                <button @click="activeTab = 'trabajadores'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'trabajadores'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">badge</span>
-                    <span>Personal</span>
-                </button>
-                <button @click="activeTab = 'historial'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'historial'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">history</span>
-                    <span>Historial</span>
-                </button>
-            </div>
-
-            <!-- TAB 1: FORMULARIO DE ENTREGA DE EPP -->
-            <section v-if="activeTab === 'entrega'" class="md-card p-6 space-y-4">
-                <div class="border-b border-slate-100 pb-3 mb-2">
-                    <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-rose-600">assignment_turned_in</span>
-                        <span>Registrar Entrega de EPP</span>
-                    </h2>
+        <main class="px-6">
+            <section v-if="!trabajadorSeleccionado">
+                <div class="relative mb-6">
+                    <input v-model="searchQuery" type="text" placeholder="Buscar por Nombre o Cédula..." 
+                           class="w-full p-4 pl-12 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-rose-500 glass text-sm">
+                    <span class="absolute left-4 top-4 opacity-30">🔍</span>
                 </div>
 
-                <div>
-                    <label class="md-label">Buscar / Seleccionar Trabajador</label>
-                    <input v-model="cedulaBusqueda" @input="buscarTrabajador" type="text" placeholder="Ingrese Cédula para buscar..." class="md-input mb-2">
-                    <div v-if="trabajadorSeleccionado" class="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs space-y-1">
-                        <p class="font-black text-slate-900">{{ trabajadorSeleccionado.nombre }} ({{ trabajadorSeleccionado.cedula }})</p>
-                        <p class="text-slate-600"><b>Cargo:</b> {{ trabajadorSeleccionado.cargo || trabajadorSeleccionado.puesto || 'N/A' }} | <b>Área:</b> {{ trabajadorSeleccionado.area || trabajadorSeleccionado.unidad || 'N/A' }}</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="md-label">Cédula</label>
-                        <input v-model="entrega.cedula" type="text" placeholder="V-12345678" class="md-input">
-                    </div>
-                    <div>
-                        <label class="md-label">Nombre Completo</label>
-                        <input v-model="entrega.nombre" type="text" placeholder="Nombre y Apellido" class="md-input">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="md-label">Cargo / Puesto</label>
-                        <input v-model="entrega.puesto" type="text" placeholder="Ej: Operador" class="md-input">
-                    </div>
-                    <div>
-                        <label class="md-label">Unidad / Área</label>
-                        <input v-model="entrega.unidad" type="text" placeholder="Ej: Mantenimiento" class="md-input">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="md-label">Equipo de Protección</label>
-                    <select v-model="entrega.equipo" class="md-select">
-                        <option value="">Seleccione equipo...</option>
-                        <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="md-label">Talla / Medida</label>
-                        <input v-model="entrega.talla" type="text" placeholder="Ej: 42, L, M" class="md-input">
-                    </div>
-                    <div>
-                        <label class="md-label">Fecha de Entrega</label>
-                        <input v-model="entrega.fecha" type="date" class="md-input">
-                    </div>
-                </div>
-
-                <button @click="procesarEntrega" :disabled="isSyncing || !entrega.cedula || !entrega.nombre || !entrega.equipo"
-                        class="md-btn-filled w-full py-4 text-sm mt-2">
-                    <span class="material-symbols-outlined" v-if="!isSyncing">check_circle</span>
-                    <span>{{ isSyncing ? 'PROCESANDO...' : 'REGISTRAR ENTREGA' }}</span>
-                </button>
-            </section>
-
-            <!-- TAB 2: PERSONAL / TRABAJADORES -->
-            <section v-if="activeTab === 'trabajadores'" class="space-y-4">
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
-                    <input v-model="searchTrabajador" type="text" placeholder="Buscar por cédula o nombre..."
-                           class="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm outline-none focus:ring-2 focus:ring-rose-500">
-                </div>
-
-                <div class="space-y-3">
-                    <div v-for="t in trabajadoresFiltrados" :key="t.cedula" class="md-card p-4 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-black">
-                                <span class="material-symbols-outlined text-lg">badge</span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-slate-900 text-xs leading-tight" v-text="t.nombre"></h3>
-                                <p class="text-[10px] font-mono text-slate-500 mt-0.5">C.I: {{ t.cedula }}</p>
-                                <p class="text-[9px] text-slate-400 mt-0.5">{{ t.cargo || t.puesto || 'S/C' }} - {{ t.area || t.unidad || 'S/A' }}</p>
+                <div class="grid gap-3">
+                    <div v-for="t in filtrados" :key="t.cedula" 
+                         @click="seleccionarTrabajador(t)"
+                         class="flex items-center p-5 rounded-[2rem] bg-white border border-slate-100 transition-all active:scale-95 card-shadow cursor-pointer">
+                        <div class="flex-1">
+                            <p class="font-bold text-slate-800 text-base" v-text="t.nombre"></p>
+                            <div class="flex gap-2 mt-1">
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[8px] font-black uppercase tracking-tighter" v-text="t.area"></span>
+                                <span class="text-[9px] font-mono text-slate-400">C.I. {{t.cedula}}</span>
                             </div>
                         </div>
-                        <button @click="seleccionarTrabajador(t)" class="px-3 py-1.5 bg-rose-50 text-rose-700 font-bold rounded-xl text-xs">
-                            Entregar
-                        </button>
+                        <div class="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 font-bold text-xl">+</div>
                     </div>
+                </div>
 
-                    <div v-if="trabajadoresFiltrados.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
-                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">group</span>
-                        <p class="text-slate-500 text-sm font-medium">No hay trabajadores registrados.</p>
-                    </div>
+                <div v-if="trabajadores.length === 0" class="text-center py-20">
+                    <p class="text-slate-400 text-sm">No hay trabajadores. Importa un Excel o agrega uno nuevo.</p>
                 </div>
             </section>
 
-            <!-- TAB 3: HISTORIAL DE ENTREGAS -->
-            <section v-if="activeTab === 'historial'" class="space-y-3">
-                <div v-for="h in historialEntregas" :key="h.id" class="md-card p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
-                            <span class="material-symbols-outlined text-lg">shield</span>
-                        </div>
-                        <div>
-                            <p class="text-xs font-black text-slate-900 leading-tight">{{ h.equipo }} (Talla: {{ h.talla || 'S/T' }})</p>
-                            <p class="text-[10px] text-slate-600 font-bold mt-0.5">{{ h.nombre }} (CI: {{ h.cedula }})</p>
-                            <p class="text-[9px] text-slate-400 mt-0.5">{{ h.puesto || h.cargo || 'S/C' }} | {{ h.unidad || h.area || 'S/A' }}</p>
-                            <p class="text-[9px] text-slate-400 font-mono mt-0.5">{{ formatearFecha(h.fecha) }}</p>
-                        </div>
-                    </div>
+            <section v-if="trabajadorSeleccionado" class="bg-white rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+                <button @click="trabajadorSeleccionado = null" class="mb-6 text-slate-400 font-bold text-sm flex items-center">
+                    <span class="mr-2">←</span> Volver a la lista
+                </button>
+                <div class="mb-8">
+                    <h2 class="text-2xl font-black text-slate-800 leading-tight">{{ trabajadorSeleccionado.nombre }}</h2>
+                    <p class="text-xs text-rose-500 font-bold uppercase tracking-widest mt-1">{{ trabajadorSeleccionado.cargo }}</p>
                 </div>
 
-                <div v-if="historialEntregas.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
-                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">history</span>
-                    <p class="text-slate-500 text-sm font-medium">No hay historial de entregas registrado.</p>
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-2 block">Fecha de Entrega</label>
+                        <input v-model="formEPP.fecha" type="date" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm focus:ring-2 focus:ring-rose-500">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-2 block">Equipo de Seguridad</label>
+                        <select v-model="formEPP.equipo" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm focus:ring-2 focus:ring-rose-500">
+                            <option value="">Seleccione el equipo...</option>
+                            <option v-for="e in listaEPP" :key="e" :value="e">{{e}}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-2 block">Talla / Observación</label>
+                        <input v-model="formEPP.talla" type="text" placeholder="Ej: 42, L, Única" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm focus:ring-2 focus:ring-rose-500">
+                    </div>
+                    <button @click="registrarEntrega" :disabled="isSyncing || !formEPP.equipo" 
+                            class="w-full bg-rose-600 text-white py-5 rounded-[1.8rem] font-black shadow-lg active:scale-95 transition-all disabled:bg-slate-200">
+                        {{ isSyncing ? 'REGISTRANDO...' : 'CONFIRMAR ENTREGA' }}
+                    </button>
                 </div>
             </section>
-
         </main>
 
-        <!-- MODAL: AÑADIR TRABAJADOR -->
-        <div v-if="modalTrabajador" class="fixed inset-0 z-50 flex items-end justify-center md-modal-backdrop">
-            <div class="md-bottom-sheet w-full max-w-md p-6 space-y-4">
-                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
-                <h3 class="text-lg font-black text-slate-900">Añadir Trabajador / Pasante</h3>
-
-                <div>
-                    <label class="md-label">Cédula</label>
-                    <input v-model="nuevoTrabajador.cedula" type="text" placeholder="Ej: V-12345678" class="md-input">
+        <div v-if="modalNuevoTrabajador" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm card-shadow">
+                <h3 class="text-xl font-black mb-4">Añadir Personal</h3>
+                <div class="space-y-3">
+                    <input v-model="nuevoT.nombre" type="text" placeholder="Nombre y Apellido" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-none">
+                    <input v-model="nuevoT.cedula" type="number" placeholder="Número de Cédula" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-none">
+                    <input v-model="nuevoT.cargo" type="text" placeholder="Cargo (ej: Pasante)" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-none">
+                    <input v-model="nuevoT.area" type="text" placeholder="Gerencia / Área" class="w-full p-3 bg-slate-100 rounded-xl text-sm border-none">
                 </div>
-
-                <div>
-                    <label class="md-label">Nombre Completo</label>
-                    <input v-model="nuevoTrabajador.nombre" type="text" placeholder="Ej: Juan Pérez" class="md-input">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="md-label">Cargo / Puesto</label>
-                        <input v-model="nuevoTrabajador.cargo" type="text" placeholder="Ej: Mecánico" class="md-input">
-                    </div>
-                    <div>
-                        <label class="md-label">Área / Unidad</label>
-                        <input v-model="nuevoTrabajador.area" type="text" placeholder="Ej: Taller" class="md-input">
-                    </div>
-                </div>
-
-                <div class="flex gap-3 pt-2">
-                    <button @click="guardarNuevoTrabajador" class="md-btn-filled flex-1 py-3.5">
-                        <span class="material-symbols-outlined text-base">save</span>
-                        <span>Guardar</span>
-                    </button>
-                    <button @click="modalTrabajador = false" class="bg-slate-100 text-slate-600 font-bold px-5 py-3.5 rounded-2xl text-xs">
-                        Cancelar
-                    </button>
+                <div class="flex gap-2 mt-6">
+                    <button @click="guardarNuevoTrabajador" class="flex-1 bg-rose-600 text-white py-3 rounded-xl font-bold text-sm active:scale-95">Guardar</button>
+                    <button @click="modalNuevoTrabajador = false" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-sm">Cerrar</button>
                 </div>
             </div>
         </div>
 
-        <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT & SYNC -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 z-20">
-            <div class="max-w-md mx-auto flex gap-2">
-                <button @click="sincronizarDesdeGoogle" :disabled="isSyncing" class="flex-1 bg-rose-600 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
-                    <span class="material-symbols-outlined text-base" :class="{'animate-spin': isSyncing}">sync</span>
-                    <span>{{ isSyncing ? 'Sincronizando...' : 'Sincronizar Cloud' }}</span>
-                </button>
-                <button @click="menuConfig = true" class="bg-slate-900 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md">
-                    <span class="material-symbols-outlined text-base text-rose-400">settings</span>
-                </button>
-            </div>
+        <nav v-if="!trabajadorSeleccionado" class="fixed bottom-6 left-6 right-6 flex gap-2">
+            <button @click="menuConfig = true" class="bg-white text-slate-400 p-5 rounded-3xl shadow-xl flex-1 text-xl">⚙️</button>
+            <label class="bg-slate-900 text-white p-5 rounded-3xl shadow-xl flex-[3] font-bold text-[10px] text-center cursor-pointer uppercase tracking-widest flex items-center justify-center">
+                📥 Importar Personal (Excel)
+                <input type="file" @change="importarExcel" class="hidden" accept=".xlsx, .xls">
+            </label>
         </nav>
 
-        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 md-modal-backdrop">
-            <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
-                <h3 class="text-base font-black text-slate-900">Enlace con Google Sheets</h3>
-                <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
-                <div class="flex gap-2">
-                    <button @click="guardarConfig" class="md-btn-filled flex-1 text-xs">Guardar URL</button>
-                    <button @click="menuConfig = false" class="bg-slate-100 text-slate-600 font-bold px-4 py-3 rounded-2xl text-xs">Cerrar</button>
-                </div>
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full rounded-[2.5rem] p-8 max-w-sm">
+                <h3 class="text-xl font-black mb-6 tracking-tight">Enlace con Google</h3>
+                <label class="text-[10px] font-bold text-slate-400 ml-1 mb-1 block uppercase">App Script URL</label>
+                <input v-model="config.googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="w-full p-4 bg-slate-100 rounded-xl mb-6 text-xs font-mono border-none">
+                <button @click="guardarConfig" class="w-full bg-rose-600 text-white py-4 rounded-xl font-bold text-sm shadow-lg active:scale-95">Guardar Cambios</button>
+                <button @click="menuConfig = false" class="w-full text-slate-400 font-bold py-2 text-xs mt-2">Cerrar</button>
             </div>
         </div>
-
     </div>
 
-    <!-- PWA Service Worker Registration Script -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA Service Worker registrado exitosamente:', reg.scope))
-                    .catch(err => console.error('Error registrando Service Worker:', err));
-            });
-        }
-    </script>
-
-    <!-- Vue App & Dexie Logic -->
-    <script>
-        // DEXIE DATABASE SETUP
-        const db = new Dexie("NEXUS_EPP_ENTREGAS_DB");
-        db.version(1).stores({
-            trabajadores: 'cedula, nombre, cargo, area',
-            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla'
-        });
-
         const { createApp } = Vue;
-
         createApp({
             data() {
                 return {
-                    activeTab: 'entrega',
-                    searchTrabajador: '',
-                    cedulaBusqueda: '',
-                    googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || '',
-                    menuConfig: false,
-                    modalTrabajador: false,
-                    isSyncing: false,
-                    isOnline: navigator.onLine,
-                    trabajadoresLocal: [],
-                    historialEntregas: [],
+                    trabajadores: JSON.parse(localStorage.getItem('epp_workers') || '[]'),
+                    config: JSON.parse(localStorage.getItem('epp_cfg') || '{ "googleSheetUrl": "" }'),
+                    searchQuery: '',
                     trabajadorSeleccionado: null,
-                    listaEquipos: [
-                        'Botas de Seguridad', 'Casco de Seguridad', 'Guantes de Carnaza',
-                        'Lentes de Protección', 'Protector Auditivo', 'Mascarilla N95',
-                        'Overol / Braga', 'Faja Sacrolumbar', 'Impermeable'
-                    ],
-                    nuevoTrabajador: { cedula: '', nombre: '', cargo: '', area: '' },
-                    entrega: {
-                        fecha: new Date().toISOString().split('T')[0],
-                        cedula: '',
-                        nombre: '',
-                        puesto: '',
-                        unidad: '',
-                        equipo: '',
-                        talla: ''
-                    }
+                    modalNuevoTrabajador: false,
+                    menuConfig: false,
+                    isSyncing: false,
+                    nuevoT: { nombre: '', cedula: '', cargo: '', area: '' },
+                    formEPP: { equipo: '', talla: '', fecha: new Date().toISOString().split('T')[0] },
+                    // LISTA ACTUALIZADA CON IMPERMEABLE
+                    listaEPP: [
+                        'Botas de Seguridad', 
+                        'Casco de Seguridad', 
+                        'Guantes de Carnaza', 
+                        'Lentes de Protección', 
+                        'Protector Auditivo', 
+                        'Mascarilla N95', 
+                        'Overol / Braga', 
+                        'Faja Sacrolumbar',
+                        'Impermeable'
+                    ]
                 }
             },
             computed: {
-                trabajadoresFiltrados() {
-                    const q = this.searchTrabajador.toLowerCase();
-                    if (!q) return this.trabajadoresLocal;
-                    return this.trabajadoresLocal.filter(t =>
-                        String(t.cedula).toLowerCase().includes(q) ||
-                        String(t.nombre).toLowerCase().includes(q)
+                filtrados() {
+                    const s = this.searchQuery.toLowerCase();
+                    return this.trabajadores.filter(t => 
+                        t.nombre.toLowerCase().includes(s) || 
+                        t.cedula.toString().includes(s)
                     );
                 }
             },
-            mounted() {
-                window.addEventListener('online', () => this.isOnline = true);
-                window.addEventListener('offline', () => this.isOnline = false);
-                this.cargarDatosDexie();
-
-                if (this.googleSheetUrl && this.isOnline) {
-                    this.sincronizarDesdeGoogle();
-                }
-            },
+         /*   computed: {
+    filtrados() {
+        const s = this.searchQuery.toLowerCase();
+        return this.trabajadores.filter(t => {
+            // Validamos que 'nombre' exista antes de usar toLowerCase()
+            const coincideNombre = t.nombre ? t.nombre.toLowerCase().includes(s) : false;
+            
+            // Validamos que 'cedula' exista (no sea null ni undefined) antes de usar toString()
+            const coincideCedula = (t.cedula !== undefined && t.cedula !== null) ? t.cedula.toString().includes(s) : false;
+            
+            return coincideNombre || coincideCedula;
+        });
+    }
+},*/
+            
             methods: {
-                async cargarDatosDexie() {
-                    this.trabajadoresLocal = await db.trabajadores.toArray();
-                    this.historialEntregas = (await db.entregas.toArray()).reverse().slice(0, 50);
-                },
-                buscarTrabajador() {
-                    const c = this.cedulaBusqueda.trim().toLowerCase();
-                    if (!c) {
-                        this.trabajadorSeleccionado = null;
-                        return;
-                    }
-                    const encontrado = this.trabajadoresLocal.find(t => String(t.cedula).toLowerCase().includes(c));
-                    if (encontrado) {
-                        this.seleccionarTrabajador(encontrado);
-                    }
-                },
                 seleccionarTrabajador(t) {
                     this.trabajadorSeleccionado = t;
-                    this.entrega.cedula = t.cedula;
-                    this.entrega.nombre = t.nombre;
-                    this.entrega.puesto = t.cargo || t.puesto || '';
-                    this.entrega.unidad = t.area || t.unidad || '';
-                    this.activeTab = 'entrega';
+                    this.formEPP.equipo = '';
+                    this.formEPP.talla = '';
                 },
                 async guardarNuevoTrabajador() {
-                    if (!this.nuevoTrabajador.cedula || !this.nuevoTrabajador.nombre) {
-                        return Swal.fire({
-                            title: 'Campos incompletos',
-                            text: 'Cédula y Nombre son requeridos.',
-                            icon: 'warning',
-                            confirmButtonText: 'Aceptar'
-                        });
+                    if(!this.nuevoT.nombre || !this.nuevoT.cedula) {
+                        return Swal.fire('Error', 'Nombre y Cédula son requeridos', 'error');
                     }
-
-                    const reg = {
-                        cedula: this.nuevoTrabajador.cedula.trim(),
-                        nombre: this.nuevoTrabajador.nombre.trim(),
-                        cargo: this.nuevoTrabajador.cargo.trim(),
-                        area: this.nuevoTrabajador.area.trim()
-                    };
-
-                    await db.trabajadores.put(reg);
-
-                    this.sincronizarConGoogle({ type: 'add_worker', data: reg });
-
-                    await this.cargarDatosDexie();
-                    this.modalTrabajador = false;
-                    this.nuevoTrabajador = { cedula: '', nombre: '', cargo: '', area: '' };
-
-                    Swal.fire({
-                        title: 'Trabajador Agregado',
-                        text: 'Se ha registrado el trabajador en la base de datos.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                },
-                async procesarEntrega() {
-                    if (!this.entrega.cedula || !this.entrega.nombre || !this.entrega.equipo) {
-                        return Swal.fire({
-                            title: 'Campos Incompletos',
-                            text: 'Cédula, Nombre y Equipo son obligatorios.',
-                            icon: 'warning',
-                            confirmButtonText: 'Entendido'
-                        });
-                    }
-
+                    
                     this.isSyncing = true;
+                    // Guardar en el celular
+                    this.trabajadores.unshift({...this.nuevoT});
+                    localStorage.setItem('epp_workers', JSON.stringify(this.trabajadores));
 
-                    const registro = {
-                        fecha: this.entrega.fecha || new Date().toISOString().split('T')[0],
-                        cedula: this.entrega.cedula.trim(),
-                        nombre: this.entrega.nombre.trim(),
-                        puesto: this.entrega.puesto.trim(),
-                        unidad: this.entrega.unidad.trim(),
-                        equipo: this.entrega.equipo,
-                        talla: this.entrega.talla ? this.entrega.talla.toUpperCase().trim() : 'S/T'
-                    };
-
-                    await db.entregas.add(registro);
-
-                    // Auto-actualizar trabajador local si no existía
-                    await db.trabajadores.put({
-                        cedula: registro.cedula,
-                        nombre: registro.nombre,
-                        cargo: registro.puesto,
-                        area: registro.unidad
-                    });
-
-                    await this.sincronizarConGoogle({ type: 'entrega', data: registro });
-
-                    await this.cargarDatosDexie();
+                    // Enviar a la nube si hay URL
+                    if(this.config.googleSheetUrl) {
+                        try {
+                            await fetch(this.config.googleSheetUrl, {
+                                method: 'POST', mode: 'no-cors',
+                                body: JSON.stringify({ type: 'add_worker', data: this.nuevoT })
+                            });
+                        } catch(e) {}
+                    }
+                    
                     this.isSyncing = false;
-                    this.entrega = {
-                        fecha: new Date().toISOString().split('T')[0],
-                        cedula: '',
-                        nombre: '',
-                        puesto: '',
-                        unidad: '',
-                        equipo: '',
-                        talla: ''
-                    };
-                    this.trabajadorSeleccionado = null;
-                    this.cedulaBusqueda = '';
-
-                    Swal.fire({
-                        title: 'Entrega Registrada',
-                        text: 'La entrega de EPP ha sido registrada correctamente.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                    this.modalNuevoTrabajador = false;
+                    Swal.fire({ title: 'Añadido', text: 'El trabajador se agregó a la lista', icon: 'success', confirmButtonColor: '#e11d48' });
                 },
-                async sincronizarConGoogle(payload) {
-                    if (!this.googleSheetUrl || !navigator.onLine) return;
+                async registrarEntrega() {
+                    if(!this.config.googleSheetUrl) {
+                        return Swal.fire('Configuración', 'Por favor, pega la URL de Google Script en ajustes ⚙️', 'warning');
+                    }
+                    
+                    this.isSyncing = true;
+                    const payload = {
+                        type: 'entrega',
+                        data: { 
+                            ...this.formEPP, 
+                            nombre: this.trabajadorSeleccionado.nombre, 
+                            cedula: this.trabajadorSeleccionado.cedula, 
+                            puesto: this.trabajadorSeleccionado.cargo, 
+                            unidad: this.trabajadorSeleccionado.area 
+                        }
+                    };
+
                     try {
-                        await fetch(this.googleSheetUrl, {
-                            method: 'POST',
-                            mode: 'no-cors',
+                        await fetch(this.config.googleSheetUrl, {
+                            method: 'POST', mode: 'no-cors',
                             body: JSON.stringify(payload)
                         });
-                    } catch (e) {
-                        console.error('Error enviando datos a Google Script:', e);
-                    }
-                },
-                async sincronizarDesdeGoogle() {
-                    if (!this.googleSheetUrl || !navigator.onLine) return;
-                    this.isSyncing = true;
-                    try {
-                        const resp = await fetch(`${this.googleSheetUrl}?action=all`);
-                        const data = await resp.json();
-
-                        if (data.trabajadores && Array.isArray(data.trabajadores)) {
-                            await db.trabajadores.clear();
-                            const recs = data.trabajadores.map(t => ({
-                                cedula: String(t.cédula || t.cedula || ''),
-                                nombre: t.nombre || '',
-                                cargo: t.cargo || t.puesto || '',
-                                area: t.área || t.area || t.unidad || ''
-                            })).filter(t => t.cedula);
-                            await db.trabajadores.bulkPut(recs);
-                        }
-
-                        if (data.entregas && Array.isArray(data.entregas)) {
-                            await db.entregas.clear();
-                            const ent = data.entregas.map(e => ({
-                                fecha: e.fecha_entrega || e.fecha || new Date().toISOString().split('T')[0],
-                                cedula: String(e.cédula || e.cedula || ''),
-                                nombre: e.nombre || '',
-                                puesto: e.cargo || e.puesto || '',
-                                unidad: e.unidad_área || e.unidad || e.area || '',
-                                equipo: e.equipo || '',
-                                talla: e.talla || 'S/T'
-                            }));
-                            await db.entregas.bulkAdd(ent);
-                        }
-
-                        await this.cargarDatosDexie();
-                    } catch (e) {
-                        console.warn('No se pudo completar la sincronización remota:', e);
+                        
+                        Swal.fire({
+                            title: '¡Registrado!',
+                            text: `${this.formEPP.equipo} entregado con éxito`,
+                            icon: 'success',
+                            confirmButtonColor: '#e11d48'
+                        });
+                        
+                        this.trabajadorSeleccionado = null;
+                    } catch(e) {
+                        Swal.fire('Error', 'Fallo al conectar con el servidor', 'error');
                     } finally {
                         this.isSyncing = false;
                     }
                 },
-                guardarConfig() {
-                    localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
-                    this.menuConfig = false;
-                    if (this.googleSheetUrl && navigator.onLine) {
-                        this.sincronizarDesdeGoogle();
-                    }
-                    Swal.fire({
-                        title: 'Configuración Guardada',
-                        text: 'URL actualizada correctamente.',
-                        icon: 'success',
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
+                importarExcel(e) {
+                    const reader = new FileReader();
+                    reader.onload = (f) => {
+                         const wb = XLSX.read(f.target.result, { type: 'array' });
+                        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                        this.trabajadores = json.map(r => ({
+                            nombre: r.Nombre || r.nombre,
+                            cedula: r.Cedula || r.cedula,
+                            cargo: r.Cargo || r.cargo,
+                            area: r.Area || r.area
+                        }));
+                        localStorage.setItem('epp_workers', JSON.stringify(this.trabajadores));
+                        Swal.fire('Carga Lista', `Se importaron ${this.trabajadores.length} trabajadores.`, 'success');
+                    };
+                    reader.readAsArrayBuffer(e.target.files[0]);
                 },
-                formatearFecha(isoStr) {
-                    if (!isoStr) return '';
-                    const d = new Date(isoStr);
-                    if (isNaN(d.getTime())) return isoStr;
-                    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                guardarConfig() {
+                    localStorage.setItem('epp_cfg', JSON.stringify(this.config));
+                    this.menuConfig = false;
+                    Swal.fire('Guardado', 'La URL ha sido actualizada', 'success');
                 }
             }
-        }).mount('#app');
+        }).mount('#app')
     </script>
 </body>
 </html>
