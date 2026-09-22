@@ -678,3 +678,117 @@ function filtrarPorKpi(flota) {
         filtrarVisor();
     }
 }
+
+// --- CONTROL DE APERTURA Y CIERRE (BOTTOM SHEET) ---
+
+function abrirFiltrosVisor() {
+    const backdrop = document.getElementById("visor-filtros-contenedor");
+    const content = document.getElementById("sheetContentVisor");
+
+    if (!backdrop || !content) return;
+
+    content.style.transform = '';
+    content.style.transition = '';
+
+    backdrop.classList.remove("hidden");
+    content.classList.add("translate-y-full");
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            content.classList.remove("translate-y-full");
+        });
+    });
+}
+
+function cerrarFiltrosVisor(event) {
+    const backdrop = document.getElementById("visor-filtros-contenedor");
+    const content = document.getElementById("sheetContentVisor");
+
+    if (!backdrop || !content) return;
+
+    if (event && event.target !== backdrop && event.type === 'click') return;
+
+    content.classList.add("translate-y-full");
+
+    setTimeout(() => {
+        backdrop.classList.add("hidden");
+        content.style.transform = '';
+        content.style.transition = '';
+    }, 300);
+}
+
+// --- LIMPIEZA DE FILTROS ACTUALIZADA ---
+
+function limpiarFiltrosVisor() {
+    const elementos = [
+        "visor-busqueda",
+        "visor-filtro-flota",
+        "visor-filtro-estatus",
+        "visor-filtro-tipo-vehiculo",
+        "visor-filtro-entradas-taller",
+        "visor-filtro-trans80"
+    ];
+
+    elementos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+
+    // Ejecutar filtro principal si está definido
+    if (typeof filtrarVisor === "function") {
+        filtrarVisor();
+    }
+}
+
+// --- ARRASTRE TÁCTIL (SWIPE TO CLOSE) ---
+
+document.addEventListener("DOMContentLoaded", () => {
+    const content = document.getElementById("sheetContentVisor");
+    const dragHeader = document.getElementById("dragHeaderVisor");
+
+    if (!dragHeader || !content) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    function onStart(e) {
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        currentY = startY;
+        content.style.transition = 'none';
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = currentY - startY;
+
+        if (deltaY > 0) {
+            content.style.transform = `translateY(${deltaY}px)`;
+        }
+    }
+
+    function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const deltaY = currentY - startY;
+        content.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
+
+        if (deltaY > 100) {
+            cerrarFiltrosVisor();
+        } else {
+            content.style.transform = 'translateY(0)';
+        }
+    }
+
+    dragHeader.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
+
+    dragHeader.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+});
+
