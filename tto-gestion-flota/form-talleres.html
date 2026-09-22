@@ -775,105 +775,11 @@
     </div>
 </div>
 
-<script>
-// Elementos DOM
-const backdrop = document.getElementById('bottomSheetFiltros');
-const sheetContent = document.getElementById('sheetContent');
-const dragHeader = document.getElementById('dragHeader');
 
-// Variables de estado
-let startY = 0;
-let currentY = 0;
-let isDragging = false;
 
-// --- FUNCIONES DE APERTURA Y CIERRE ---
-function abrirFiltros() {
-    // 1. Limpiar cualquier transformación directa que haya quedado en línea
-    sheetContent.style.transform = '';
-    sheetContent.style.transition = '';
 
-    // 2. Hacer visible el contenedor base
-    backdrop.classList.remove('hidden');
+
     
-    // 3. Forzar el estado fuera de pantalla (translateY(100%)) antes de subir
-    sheetContent.classList.add('translate-y-full');
-
-    // 4. Iniciar animación de subida de Tailwind en el siguiente frame
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            sheetContent.classList.remove('translate-y-full');
-        });
-    });
-}
-
-function cerrarFiltros(e) {
-    if (e && e.target !== backdrop) return;
-
-    // Ejecutar animación de bajada mediante la clase de Tailwind
-    sheetContent.classList.add('translate-y-full');
-
-    // Ocultar una vez completada la transición (300ms)
-    setTimeout(() => {
-        backdrop.classList.add('hidden');
-        
-        // Limpiar estilos en línea
-        sheetContent.style.transform = '';
-        sheetContent.style.transition = '';
-    }, 300);
-}
-
-// --- LÓGICA DE ARRASTRE TÁCTIL Y DE RATÓN ---
-function onStart(e) {
-    isDragging = true;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-    currentY = startY;
-    
-    // Quitar transiciones para movimiento instantáneo
-    sheetContent.style.transition = 'none';
-}
-
-function onMove(e) {
-    if (!isDragging) return;
-
-    currentY = e.touches ? e.touches[0].clientY : e.clientY;
-    const deltaY = currentY - startY;
-
-    // Permitir desplazar únicamente hacia abajo
-    if (deltaY > 0) {
-        sheetContent.style.transform = `translateY(${deltaY}px)`;
-    }
-}
-
-function onEnd() {
-    if (!isDragging) return;
-    isDragging = false;
-
-    const deltaY = currentY - startY;
-
-    // Restaurar transición fluida para soltar
-    sheetContent.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
-
-    // Umbral de cierre: si se bajó más de 100px
-    if (deltaY > 100) {
-        cerrarFiltros();
-    } else {
-        // Regresar arriba a su posición original completamente abierto
-        sheetContent.style.transform = 'translateY(0)';
-    }
-}
-
-// Event Listeners
-dragHeader.addEventListener('touchstart', onStart, { passive: true });
-window.addEventListener('touchmove', onMove, { passive: true });
-window.addEventListener('touchend', onEnd);
-
-dragHeader.addEventListener('mousedown', onStart);
-window.addEventListener('mousemove', onMove);
-window.addEventListener('mouseup', onEnd);
-</script>
-
-        
-
 
 
     
