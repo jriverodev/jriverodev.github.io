@@ -119,7 +119,7 @@
         </div>
 
         <!-- FILTROS AVANZADOS -->
-        <div id="visor-filtros-contenedor" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hidden flex-wrap gap-4 items-end shadow-sm transition-all">
+        <!--div id="visor-filtros-contenedor" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hidden flex-wrap gap-4 items-end shadow-sm transition-all">
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-widest">Búsqueda Predictiva</label>
                 <div class="relative">
@@ -174,8 +174,101 @@
             <button onclick="limpiarFiltrosVisor()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2.5 rounded-lg transition-all border border-slate-200 dark:border-slate-700 cursor-pointer" title="Limpiar Filtros">
                 <i class="fa-solid fa-filter-circle-xmark"></i>
             </button>
+        </div-->
+
+        <!-- MODAL BOTTOM SHEET DE FILTROS AVANZADOS -->
+<div id="visor-filtros-contenedor" class="fixed inset-0 bg-slate-950/60 z-[60] hidden flex items-end justify-center" onclick="cerrarFiltrosVisor(event)">
+    <div id="sheetContentVisor" class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-t-xl shadow-xl p-6 transition-transform translate-y-full duration-300 border-t border-slate-200 dark:border-slate-700 max-h-[85vh] overflow-y-auto" onclick="event.stopPropagation()">
+
+        <!-- Cabecera táctil para arrastre y cierre -->
+        <div id="dragHeaderVisor" class="touch-none cursor-grab py-2 select-none sticky top-0 bg-white dark:bg-slate-800 z-10 -mt-2 pt-2">
+            <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4 opacity-70"></div>
+
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs uppercase font-black tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-600 dark:text-blue-400"></i> Filtros de Búsqueda y Control
+                </h3>
+                <button onclick="limpiarFiltrosVisor()" type="button" class="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider hover:text-blue-700 transition-colors cursor-pointer flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-left text-[10px]"></i> Limpiar todo
+                </button>
+            </div>
         </div>
 
+        <!-- Cuerpo de Filtros en Grid Responsivo -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+            
+            <!-- Búsqueda Predictiva -->
+            <div class="sm:col-span-2">
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Búsqueda Predictiva</label>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-xs"></i>
+                    <input type="text" id="visor-busqueda" placeholder="Unidad, Marca, VIN, Modelo, Gerencia..."
+                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-4 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-all font-medium">
+                </div>
+            </div>
+
+            <!-- Estatus -->
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Estatus</label>
+                <select id="visor-filtro-estatus" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors font-medium">
+                    <option value="">TODOS LOS ESTATUS</option>
+                    <option value="Por Atender">⚠️ POR ATENDER</option>
+                    <option value="En Proceso">⚙️ EN PROCESO</option>
+                    <option value="Listo">✅ YA OPERATIVA</option>
+                </select>
+            </div>
+
+            <!-- Ubicación Taller -->
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Ubicación Taller</label>
+                <select id="visor-filtro-ubicacion" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors font-medium">
+                    <option value="">TODAS LAS UBICACIONES</option>
+                    <option value="Taller Lagunillas">TALLER LAGUNILLAS</option>
+                    <option value="Taller La Salina">TALLER LA SALINA</option>
+                    <option value="Taller Lago Medio">TALLER LAGO MEDIO</option>
+                    <option value="TALLER EXTERNO (Terceros)">TALLER EXTERNO</option>
+                </select>
+            </div>
+
+            <!-- Tipo de Taller -->
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Tipo de Taller</label>
+                <select id="visor-filtro-tipo-taller" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors font-medium">
+                    <option value="">TODOS LOS TALLERES</option>
+                    <option value="Interno">TALLERES INTERNOS</option>
+                    <option value="Externo">TALLERES EXTERNOS</option>
+                </select>
+            </div>
+
+            <!-- Tipo de Vehículo -->
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Tipo de Vehículo / Equipo</label>
+                <select id="visor-filtro-tipo-vehiculo" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors font-medium">
+                    <option value="">TODOS LOS TIPOS</option>
+                </select>
+            </div>
+
+            <!-- Rango de Fechas -->
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Desde</label>
+                <input type="date" id="visor-fecha-desde" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors">
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1.5 tracking-wider">Hasta</label>
+                <input type="date" id="visor-fecha-hasta" onchange="filtrarVisor()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:border-blue-600 transition-colors">
+            </div>
+        </div>
+
+        <!-- Botón de Cierre y Aplicación -->
+        <button onclick="cerrarFiltrosVisor()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-black uppercase tracking-widest text-[11px] mt-6 transition-all active:scale-95 cursor-pointer">
+            Aplicar y Cerrar
+        </button>
+    </div>
+</div>
+
+
+        
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 p-0.5">
             <div onclick="filtrarPorKpi('')"
                  class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 p-4 md:p-5 rounded-lg flex flex-col justify-between cursor-pointer transition-all duration-200 shadow-sm">
