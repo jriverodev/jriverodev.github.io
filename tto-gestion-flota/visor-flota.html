@@ -88,9 +88,13 @@
     <main class="max-w-7xl mx-auto w-full p-3 md:p-6 space-y-4 md:space-y-6 flex-grow">
 
         <div class="flex flex-wrap gap-2 mb-2">
-            <button onclick="toggleSeccion('visor-filtros-contenedor')" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95">
+            <!--button onclick="toggleSeccion('visor-filtros-contenedor')" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95">
                 <i class="fa-solid fa-filter text-blue-600 dark:text-blue-400"></i> Filtros y Búsqueda
+            </button-->
+            <button onclick="abrirFiltrosVisor()" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95">
+    <i class="fa-solid fa-filter text-blue-600 dark:text-blue-400"></i> Filtros y Búsqueda
             </button>
+            
             <button onclick="toggleSeccion('visor-graficos-contenedor')" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95">
                 <i class="fa-solid fa-chart-line text-blue-600 dark:text-blue-400"></i> Estadísticas Visuales
             </button>
