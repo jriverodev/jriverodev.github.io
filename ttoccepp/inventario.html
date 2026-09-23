@@ -339,7 +339,7 @@
             </div>
         </div>
 
-        <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT -->
+        <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT & SYNC -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 z-20">
             <div class="max-w-md mx-auto flex gap-2">
                 <button @click="sincronizarDesdeGoogle" :disabled="isSyncing" class="flex-1 bg-rose-600 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
@@ -355,9 +355,16 @@
         <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 md-modal-backdrop">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
                 <h3 class="text-base font-black text-slate-900">Enlace con Google Sheets</h3>
-                <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
-                <div class="flex gap-2">
-                    <button @click="guardarConfig" class="md-btn-filled flex-1 text-xs">Guardar URL</button>
+                <div>
+                    <label class="md-label">URL del Google Apps Script</label>
+                    <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
+                </div>
+                <div>
+                    <label class="md-label">Clave / Token de Seguridad (Opcional)</label>
+                    <input v-model="apiToken" type="password" placeholder="Ingresa tu clave secreta si la configuraste" class="md-input font-mono text-xs">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button @click="guardarConfig" class="md-btn-filled flex-1 text-xs">Guardar Ajustes</button>
                     <button @click="menuConfig = false" class="bg-slate-100 text-slate-600 font-bold px-4 py-3 rounded-2xl text-xs">Cerrar</button>
                 </div>
             </div>
@@ -392,6 +399,7 @@
                     activeTab: 'stock',
                     searchQuery: '',
                     googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || '',
+                    apiToken: localStorage.getItem('nexus_epp_api_token') || '',
                     menuConfig: false,
                     modalLote: false,
                     isSyncing: false,
@@ -475,7 +483,7 @@
                     await db.inventario.add(registro);
                     await db.movimientos.add({ ...registro, fecha: registro.fechaIngreso, tipo: 'ENTRADA_LOTE', motivo: `Lote: ${registro.lote}` });
 
-                    this.sincronizarConGoogle({ type: 'nuevo_lote', data: registro });
+                    this.sincronizarConGoogle({ type: 'nuevo_lote', data: registro, token: this.apiToken });
 
                     await this.cargarDatosDexie();
                     this.modalLote = false;
@@ -532,7 +540,7 @@
 
                     await db.movimientos.add({ ...registroSalida, tipo: 'SALIDA_EPP' });
 
-                    await this.sincronizarConGoogle({ type: 'descuento_epp', data: registroSalida });
+                    await this.sincronizarConGoogle({ type: 'descuento_epp', data: registroSalida, token: this.apiToken });
 
                     await this.cargarDatosDexie();
                     this.actualizarTallasDisponibles();
@@ -553,7 +561,7 @@
                         await fetch(this.googleSheetUrl, {
                             method: 'POST',
                             mode: 'no-cors',
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify({ ...payload, token: this.apiToken })
                         });
                     } catch (e) {
                         console.error('Error enviando datos:', e);
@@ -563,7 +571,8 @@
                     if (!this.googleSheetUrl || !navigator.onLine) return;
                     this.isSyncing = true;
                     try {
-                        const resp = await fetch(`${this.googleSheetUrl}?action=all`);
+                        const urlConToken = `${this.googleSheetUrl}?action=all&token=${encodeURIComponent(this.apiToken)}`;
+                        const resp = await fetch(urlConToken);
                         const data = await resp.json();
 
                         if (data.inventario && Array.isArray(data.inventario)) {
@@ -600,13 +609,14 @@
                 },
                 guardarConfig() {
                     localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
+                    localStorage.setItem('nexus_epp_api_token', this.apiToken);
                     this.menuConfig = false;
                     if (this.googleSheetUrl && navigator.onLine) {
                         this.sincronizarDesdeGoogle();
                     }
                     Swal.fire({
                         title: 'Configuración Guardada',
-                        text: 'URL actualizada correctamente.',
+                        text: 'URL y Token actualizados correctamente.',
                         icon: 'success',
                         timer: 1800,
                         showConfirmButton: false
