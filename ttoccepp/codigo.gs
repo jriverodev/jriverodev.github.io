@@ -1,6 +1,10 @@
 // Backend para TTOCC NEXUS EPP - Sincronización Google Sheets
 // ==========================================================
 
+// CLAVE / TOKEN DE SEGURIDAD (Opcional pero Recomendado)
+// Si defines una clave aquí (ej. "MiClaveSegura123"), sólo las peticiones con este token serán aceptadas.
+const API_TOKEN = ""; // Dejar en "" si no deseas exigir token, o coloca tu clave aquí.
+
 const SHEETS = {
   INVENTARIO: 'Inventario',
   MOVIMIENTOS: 'Movimientos',
@@ -8,14 +12,24 @@ const SHEETS = {
   TRABAJADORES: 'Trabajadores'
 };
 
+function validarToken(tokenProporcionado) {
+  if (!API_TOKEN || API_TOKEN.trim() === "") return true; // Si no hay token configurado en Apps Script, se permite el acceso libre
+  return String(tokenProporcionado || '').trim() === API_TOKEN.trim();
+}
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const payload = JSON.parse(e.postData.contents);
-    const { type, data } = payload;
+    const payload = JSON.parse(e.postData.contents || '{}');
+    const { type, data, token } = payload;
     const timestamp = new Date();
+
+    // Verificación de seguridad
+    if (!validarToken(token)) {
+      return response({ result: 'error', error: 'Acceso Denegado: Token / Clave de seguridad inválida.' });
+    }
 
     // 1. INVENTARIO: INGRESO DE NUEVO LOTE
     if (type === 'nuevo_lote') {
@@ -133,6 +147,11 @@ function doPost(e) {
 
 function doGet(e) {
   try {
+    const token = e && e.parameter ? e.parameter.token : '';
+    if (!validarToken(token)) {
+      return response({ result: 'error', error: 'Acceso Denegado: Token / Clave de seguridad inválida.' });
+    }
+
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const invSheet = ss.getSheetByName(SHEETS.INVENTARIO);
     const movSheet = ss.getSheetByName(SHEETS.MOVIMIENTOS);

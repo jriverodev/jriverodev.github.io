@@ -362,8 +362,15 @@
         <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 md-modal-backdrop">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
                 <h3 class="text-base font-black text-slate-900">Enlace con Google Sheets</h3>
-                <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
-                <div class="flex gap-2">
+                <div>
+                    <label class="md-label">URL del Google Apps Script</label>
+                    <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
+                </div>
+                <div>
+                    <label class="md-label">Clave / Token de Seguridad (Opcional)</label>
+                    <input v-model="apiToken" type="password" placeholder="Ingresa tu clave secreta si la configuraste" class="md-input font-mono text-xs">
+                </div>
+                <div class="flex gap-2 pt-2">
                     <button @click="guardarConfig" class="md-btn-filled flex-1 text-xs">Guardar & Importar</button>
                     <button @click="menuConfig = false" class="bg-slate-100 text-slate-600 font-bold px-4 py-3 rounded-2xl text-xs">Cerrar</button>
                 </div>
@@ -400,6 +407,7 @@
                     searchTrabajador: '',
                     cedulaBusqueda: '',
                     googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || '',
+                    apiToken: localStorage.getItem('nexus_epp_api_token') || '',
                     menuConfig: false,
                     modalTrabajador: false,
                     isSyncing: false,
@@ -482,7 +490,7 @@
 
                     await db.trabajadores.put(reg);
 
-                    this.sincronizarConGoogle({ type: 'add_worker', data: reg });
+                    this.sincronizarConGoogle({ type: 'add_worker', data: reg, token: this.apiToken });
 
                     await this.cargarDatosDexie();
                     this.modalTrabajador = false;
@@ -527,7 +535,7 @@
                         area: registro.unidad
                     });
 
-                    await this.sincronizarConGoogle({ type: 'entrega', data: registro });
+                    await this.sincronizarConGoogle({ type: 'entrega', data: registro, token: this.apiToken });
 
                     await this.cargarDatosDexie();
                     this.isSyncing = false;
@@ -557,7 +565,7 @@
                         await fetch(this.googleSheetUrl, {
                             method: 'POST',
                             mode: 'no-cors',
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify({ ...payload, token: this.apiToken })
                         });
                     } catch (e) {
                         console.error('Error enviando datos:', e);
@@ -567,7 +575,8 @@
                     if (!this.googleSheetUrl || !navigator.onLine) return;
                     this.isSyncing = true;
                     try {
-                        const resp = await fetch(`${this.googleSheetUrl}?action=all`);
+                        const urlConToken = `${this.googleSheetUrl}?action=all&token=${encodeURIComponent(this.apiToken)}`;
+                        const resp = await fetch(urlConToken);
                         const data = await resp.json();
 
                         let totalTrabajadores = 0;
@@ -622,7 +631,7 @@
                         if (mostrarAlerta) {
                             Swal.fire({
                                 title: 'Error de Conexión',
-                                text: 'Verifique la URL del Script o su conexión a Internet.',
+                                text: 'Verifique la URL del Script, el Token de seguridad o su conexión a Internet.',
                                 icon: 'error',
                                 confirmButtonText: 'Aceptar'
                             });
@@ -633,13 +642,14 @@
                 },
                 guardarConfig() {
                     localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
+                    localStorage.setItem('nexus_epp_api_token', this.apiToken);
                     this.menuConfig = false;
                     if (this.googleSheetUrl && navigator.onLine) {
                         this.sincronizarDesdeGoogle(true);
                     } else {
                         Swal.fire({
                             title: 'Configuración Guardada',
-                            text: 'URL actualizada correctamente.',
+                            text: 'URL y Token actualizados correctamente.',
                             icon: 'success',
                             timer: 1800,
                             showConfirmButton: false
