@@ -3,7 +3,7 @@
 
 // CLAVE / TOKEN DE SEGURIDAD (Opcional pero Recomendado)
 // Si defines una clave aquí (ej. "MiClaveSegura123"), sólo las peticiones con este token serán aceptadas.
-const API_TOKEN = ""; // Dejar en "" si no deseas exigir token, o coloca tu clave aquí.
+const API_TOKEN = ""; // Dejar en "Raida17" si no deseas exigir token, o coloca tu clave aquí.
 
 const SHEETS = {
   INVENTARIO: 'Inventario',
