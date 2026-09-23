@@ -1,7 +1,9 @@
-const CACHE_NAME = 'ttocc-epp-v2';
+const CACHE_NAME = 'ttocc-epp-hub-v3';
 const ASSETS = [
   './',
   './index.html',
+  './inventario.html',
+  './entregas.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/vue@3/dist/vue.global.js',

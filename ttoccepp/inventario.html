@@ -3,60 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TTOCC EPP - Material Inventory</title>
-    
+    <title>TTOCC EPP - Inventario & Disponibilidad</title>
+
+    <!-- PWA Web App Manifest & Mobile Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b91c1c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
     <!-- Google Fonts & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS & CDN Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
             --md-sys-color-primary: #b91c1c;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #ffdad6;
+            --md-sys-color-on-primary-container: #410002;
+            --md-sys-color-surface-container-low: #f8f2f1;
+            --md-sys-color-on-surface: #231918;
+            --md-sys-color-outline: #857371;
         }
 
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f8fafc;
-            color: #1e293b;
+            color: var(--md-sys-color-on-surface);
             -webkit-tap-highlight-color: transparent;
         }
+
+        [v-cloak] { display: none !important; }
 
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
 
+        /* Material Design 3 Cards */
         .md-card {
             background-color: #ffffff;
-            border-radius: 28px;
+            border-radius: 24px;
             border: 1px solid rgba(0, 0, 0, 0.05);
             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s cubic-bezier(0, 0, 0.2, 1);
+            transition: all 0.2s ease;
         }
 
-        .md-card:active {
-            transform: scale(0.98);
+        /* Material Inputs */
+        .md-input, .md-select {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            background-color: var(--md-sys-color-surface-container-low);
+            border: 2px solid transparent;
+            color: var(--md-sys-color-on-surface);
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .md-input:focus, .md-select:focus {
+            border-color: var(--md-sys-color-primary);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.1);
+        }
+
+        .md-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--md-sys-color-outline);
+            margin-left: 8px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Buttons */
+        .md-btn-filled {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border-radius: 16px;
+            font-weight: 700;
+            padding: 14px 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2);
+        }
+
+        .md-btn-filled:active { transform: scale(0.96); }
+        .md-btn-filled:disabled { background-color: #e2e8f0; color: #94a3b8; box-shadow: none; }
+
+        /* Bottom Sheet Modal */
+        .md-modal-backdrop {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .md-bottom-sheet {
+            background: #ffffff;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+            animation: slideUp 0.25s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* SweetAlert2 Material Design Adjustments */
+        .swal2-popup {
+            border-radius: 28px !important;
+            font-family: 'Roboto', sans-serif !important;
+            padding: 1.5rem !important;
+        }
+        .swal2-styled.swal2-confirm {
+            border-radius: 14px !important;
+            background-color: #b91c1c !important;
+            font-weight: 700 !important;
+            padding: 12px 24px !important;
         }
     </style>
 </head>
 <body class="min-h-screen pb-36">
 
     <div id="app" v-cloak class="max-w-md mx-auto">
-        
+
         <!-- TOP APP BAR -->
         <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
-                    <span class="material-symbols-outlined">shield</span>
-                </div>
+                <a href="index.html" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-lg">arrow_back</span>
+                </a>
                 <div>
-                    <h1 class="text-lg font-black tracking-tight text-slate-900 leading-none">NEXUS <span class="text-rose-600">EPP</span></h1>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control de Inventario & Lotes</p>
+                    <h1 class="text-base font-black tracking-tight text-slate-900 leading-none">NEXUS <span class="text-rose-600">INVENTARIO</span></h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control de Existencias & Lotes</p>
                 </div>
             </div>
             <button @click="modalLote = true" class="md-btn-filled text-xs !py-2.5 !px-3.5">
@@ -88,7 +185,7 @@
             <section v-if="activeTab === 'stock'" class="space-y-4">
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
-                    <input v-model="searchQuery" type="text" placeholder="Buscar por equipo o talla..." 
+                    <input v-model="searchQuery" type="text" placeholder="Buscar por equipo o talla..."
                            class="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm outline-none focus:ring-2 focus:ring-rose-500">
                 </div>
 
@@ -110,7 +207,7 @@
                         </div>
 
                         <div class="flex flex-wrap gap-1.5 pt-1">
-                            <div v-for="(cant, talla) in item.tallas" :key="talla" 
+                            <div v-for="(cant, talla) in item.tallas" :key="talla"
                                  class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-2 border border-slate-200/50">
                                 <span class="text-slate-500 font-normal">Talla <b class="text-slate-900">{{ talla }}</b>:</span>
                                 <span class="font-black" :class="cant < 5 ? 'text-amber-600' : 'text-slate-900'">{{ cant }}</span>
@@ -162,7 +259,7 @@
                     <input v-model="salida.motivo" type="text" placeholder="Ej: Entrega a Mantenimiento" class="md-input">
                 </div>
 
-                <button @click="procesarDescuento" :disabled="isSyncing || !salida.equipo || !salida.talla || salida.cantidad < 1" 
+                <button @click="procesarDescuento" :disabled="isSyncing || !salida.equipo || !salida.talla || salida.cantidad < 1"
                         class="md-btn-filled w-full py-4 text-sm mt-2">
                     <span class="material-symbols-outlined" v-if="!isSyncing">check_circle</span>
                     <span>{{ isSyncing ? 'PROCESANDO...' : 'CONFIRMAR Y DESCONTAR' }}</span>
@@ -173,7 +270,7 @@
             <section v-if="activeTab === 'historial'" class="space-y-3">
                 <div v-for="m in historialMovimientos" :key="m.id" class="md-card p-4 flex justify-between items-center">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black" 
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black"
                              :class="m.tipo === 'ENTRADA_LOTE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
                             <span class="material-symbols-outlined text-lg">
                                 {{ m.tipo === 'ENTRADA_LOTE' ? 'south_west' : 'north_east' }}
@@ -191,16 +288,14 @@
                         </span>
                     </div>
                 </div>
+
+                <div v-if="historialMovimientos.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">history</span>
+                    <p class="text-slate-500 text-sm font-medium">No hay movimientos registrados.</p>
+                </div>
             </section>
 
-    <!-- HEADER -->
-    <header class="text-center py-6 space-y-2">
-        <div class="w-16 h-16 rounded-3xl bg-rose-100 text-rose-700 mx-auto flex items-center justify-center font-black shadow-inner">
-            <span class="material-symbols-outlined text-3xl">shield</span>
-        </div>
-        <h1 class="text-2xl font-black text-slate-900 tracking-tight">NEXUS <span class="text-rose-600">EPP</span></h1>
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sistema de Gestión e Inventario</p>
-    </header>
+        </main>
 
         <!-- MODAL: NUEVO LOTE -->
         <div v-if="modalLote" class="fixed inset-0 z-50 flex items-end justify-center md-modal-backdrop">
@@ -215,9 +310,6 @@
                         <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
                     </select>
                 </div>
-                <span class="material-symbols-outlined text-slate-300">chevron_right</span>
-            </div>
-        </a>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -244,27 +336,45 @@
                         Cancelar
                     </button>
                 </div>
-                <span class="material-symbols-outlined text-slate-300">chevron_right</span>
             </div>
         </div>
 
         <!-- BOTTOM NAV: CONFIGURACIÓN GOOGLE SCRIPT -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 z-20">
-            <div class="max-w-md mx-auto">
-                <button @click="menuConfig = true" class="w-full bg-slate-900 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md">
-                    <span class="material-symbols-outlined text-base text-rose-400">cloud_sync</span>
-                    <span>Configurar Conexión Google Apps Script</span>
+            <div class="max-w-md mx-auto flex gap-2">
+                <button @click="sincronizarDesdeGoogle" :disabled="isSyncing" class="flex-1 bg-rose-600 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
+                    <span class="material-symbols-outlined text-base" :class="{'animate-spin': isSyncing}">sync</span>
+                    <span>{{ isSyncing ? 'Sincronizando...' : 'Sincronizar Cloud' }}</span>
+                </button>
+                <button @click="menuConfig = true" class="bg-slate-900 text-white rounded-2xl py-3 px-4 font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                    <span class="material-symbols-outlined text-base text-rose-400">settings</span>
                 </button>
             </div>
         </nav>
 
-    </main>
+        <div v-if="menuConfig" class="fixed inset-0 z-50 flex items-center justify-center p-6 md-modal-backdrop">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+                <h3 class="text-base font-black text-slate-900">Enlace con Google Sheets</h3>
+                <input v-model="googleSheetUrl" type="text" placeholder="https://script.google.com/..." class="md-input font-mono text-xs">
+                <div class="flex gap-2">
+                    <button @click="guardarConfig" class="md-btn-filled flex-1 text-xs">Guardar URL</button>
+                    <button @click="menuConfig = false" class="bg-slate-100 text-slate-600 font-bold px-4 py-3 rounded-2xl text-xs">Cerrar</button>
+                </div>
+            </div>
+        </div>
 
-    <!-- FOOTER INFO -->
-    <footer class="text-center py-6 border-t border-slate-100">
-        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">TTOCC EPP Mobile PWA v2.0</p>
-        <p class="text-[10px] text-slate-400 mt-0.5">Sincronización Offline & Google Sheets</p>
-    </footer>
+    </div>
+
+    <!-- PWA Service Worker Registration Script -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.error('SW error', err));
+            });
+        }
+    </script>
 
     <script>
         // DEXIE DATABASE SETUP
@@ -312,19 +422,22 @@
                 stockFiltrado() {
                     const q = this.searchQuery.toLowerCase();
                     if (!q) return this.resumenStock;
-                    return this.resumenStock.filter(s => 
-                        s.equipo.toLowerCase().includes(q) || 
+                    return this.resumenStock.filter(s =>
+                        s.equipo.toLowerCase().includes(q) ||
                         Object.keys(s.tallas).some(t => t.toLowerCase().includes(q))
                     );
                 }
             },
             mounted() {
                 this.cargarDatosDexie();
+                if (this.googleSheetUrl && navigator.onLine) {
+                    this.sincronizarDesdeGoogle();
+                }
             },
             methods: {
                 async cargarDatosDexie() {
                     this.inventarioLocal = await db.inventario.toArray();
-                    this.historialMovimientos = (await db.movimientos.toArray()).reverse().slice(0, 30);
+                    this.historialMovimientos = (await db.movimientos.toArray()).reverse().slice(0, 50);
                 },
                 getEquipmentIcon(equipo) {
                     const icons = {
@@ -378,7 +491,7 @@
                 },
                 async procesarDescuento() {
                     const cantidadADescontar = Number(this.salida.cantidad);
-                    
+
                     const lotesDisponibles = await db.inventario
                         .where({ equipo: this.salida.equipo, talla: this.salida.talla })
                         .filter(i => i.cantidad > 0)
@@ -435,7 +548,7 @@
                     });
                 },
                 async sincronizarConGoogle(payload) {
-                    if (!this.googleSheetUrl) return;
+                    if (!this.googleSheetUrl || !navigator.onLine) return;
                     try {
                         await fetch(this.googleSheetUrl, {
                             method: 'POST',
@@ -446,9 +559,51 @@
                         console.error('Error enviando datos:', e);
                     }
                 },
+                async sincronizarDesdeGoogle() {
+                    if (!this.googleSheetUrl || !navigator.onLine) return;
+                    this.isSyncing = true;
+                    try {
+                        const resp = await fetch(`${this.googleSheetUrl}?action=all`);
+                        const data = await resp.json();
+
+                        if (data.inventario && Array.isArray(data.inventario)) {
+                            await db.inventario.clear();
+                            const recs = data.inventario.map(i => ({
+                                equipo: i.equipo,
+                                talla: String(i.talla || '').toUpperCase(),
+                                cantidad: Number(i.cantidad || 0),
+                                lote: i.lote || 'S/L',
+                                fechaIngreso: i.fecha_ingreso || new Date().toISOString()
+                            }));
+                            await db.inventario.bulkAdd(recs);
+                        }
+
+                        if (data.movimientos && Array.isArray(data.movimientos)) {
+                            await db.movimientos.clear();
+                            const movs = data.movimientos.map(m => ({
+                                equipo: m.equipo,
+                                talla: String(m.talla || '').toUpperCase(),
+                                cantidad: Number(m.cantidad || 0),
+                                tipo: m.tipo || (m.motivo_detalle?.includes('Lote') ? 'ENTRADA_LOTE' : 'SALIDA_EPP'),
+                                motivo: m.motivo_detalle || m.motivo || '',
+                                fecha: m.fecha || m.timestamp || new Date().toISOString()
+                            }));
+                            await db.movimientos.bulkAdd(movs);
+                        }
+
+                        await this.cargarDatosDexie();
+                    } catch (e) {
+                        console.warn('Sincronización de inventario fallida:', e);
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
                 guardarConfig() {
                     localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
                     this.menuConfig = false;
+                    if (this.googleSheetUrl && navigator.onLine) {
+                        this.sincronizarDesdeGoogle();
+                    }
                     Swal.fire({
                         title: 'Configuración Guardada',
                         text: 'URL actualizada correctamente.',
@@ -460,6 +615,7 @@
                 formatearFecha(isoStr) {
                     if (!isoStr) return '';
                     const d = new Date(isoStr);
+                    if (isNaN(d.getTime())) return isoStr;
                     return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 }
             }
