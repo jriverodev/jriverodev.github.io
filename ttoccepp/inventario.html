@@ -390,6 +390,12 @@
             inventario: '++id, equipo, talla, cantidad, lote, fechaIngreso',
             movimientos: '++id, equipo, talla, cantidad, tipo, motivo, fecha'
         });
+        db.version(2).stores({
+            inventario: '++id, equipo, talla, cantidad, lote, fechaIngreso',
+            movimientos: '++id, equipo, talla, cantidad, tipo, motivo, fecha',
+            trabajadores: 'cedula, nombre, cargo, area',
+            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla, cantidad'
+        });
 
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzbivG_jWmGIEcC8RUYxFe8LmRH_4smbrPFdtr6CsOKvRQBW-hsv-mspiKnAgnW9mEg/exec";
 
@@ -401,7 +407,7 @@
                     activeTab: 'stock',
                     searchQuery: '',
                     googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || DEFAULT_GAS_URL,
-                    apiToken: localStorage.getItem('nexus_epp_api_token') || '',
+                    apiToken: localStorage.getItem('nexus_epp_api_token') || 'Raida17',
                     menuConfig: false,
                     modalLote: false,
                     isSyncing: false,
