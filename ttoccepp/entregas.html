@@ -412,6 +412,8 @@
             entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla, cantidad'
         });
 
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzbivG_jWmGIEcC8RUYxFe8LmRH_4smbrPFdtr6CsOKvRQBW-hsv-mspiKnAgnW9mEg/exec";
+
         const { createApp } = Vue;
 
         createApp({
@@ -420,7 +422,7 @@
                     activeTab: 'entrega',
                     searchTrabajador: '',
                     cedulaBusqueda: '',
-                    googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || '',
+                    googleSheetUrl: localStorage.getItem('nexus_epp_script_url') || DEFAULT_GAS_URL,
                     apiToken: localStorage.getItem('nexus_epp_api_token') || '',
                     menuConfig: false,
                     modalTrabajador: false,
@@ -645,24 +647,58 @@
                     });
                 },
                 async sincronizarConGoogle(payload) {
-                    if (!this.googleSheetUrl || !navigator.onLine) return;
+                    const baseUrl = (this.googleSheetUrl || '').trim();
+                    if (!baseUrl || !navigator.onLine) return;
                     try {
-                        await fetch(this.googleSheetUrl, {
+                        await fetch(baseUrl, {
                             method: 'POST',
                             mode: 'no-cors',
-                            body: JSON.stringify({ ...payload, token: this.apiToken })
+                            body: JSON.stringify({ ...payload, token: (this.apiToken || '').trim() })
                         });
                     } catch (e) {
                         console.error('Error enviando datos:', e);
                     }
                 },
                 async sincronizarDesdeGoogle(mostrarAlerta = true) {
-                    if (!this.googleSheetUrl || !navigator.onLine) return;
+                    const baseUrl = (this.googleSheetUrl || '').trim();
+                    if (!baseUrl) {
+                        if (mostrarAlerta) {
+                            Swal.fire({
+                                title: 'URL no Configurada',
+                                text: 'Por favor ingrese la URL del Google Apps Script en la opción de configuración.',
+                                icon: 'warning',
+                                confirmButtonText: 'Configurar'
+                            }).then(() => {
+                                this.menuConfig = true;
+                            });
+                        }
+                        return;
+                    }
+                    if (!navigator.onLine) {
+                        if (mostrarAlerta) {
+                            Swal.fire({
+                                title: 'Sin Conexión',
+                                text: 'Verifique su conexión a Internet.',
+                                icon: 'warning',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        }
+                        return;
+                    }
+
                     this.isSyncing = true;
                     try {
-                        const urlConToken = `${this.googleSheetUrl}?action=all&token=${encodeURIComponent(this.apiToken)}`;
+                        const separator = baseUrl.includes('?') ? '&' : '?';
+                        const urlConToken = `${baseUrl}${separator}action=all&token=${encodeURIComponent((this.apiToken || '').trim())}`;
                         const resp = await fetch(urlConToken);
+                        if (!resp.ok) {
+                            throw new Error(`Error HTTP: ${resp.status}`);
+                        }
                         const data = await resp.json();
+
+                        if (data.result === 'error') {
+                            throw new Error(data.error || 'Error devuelto por el servidor');
+                        }
 
                         let totalTrabajadores = 0;
                         let totalEntregas = 0;
@@ -729,7 +765,7 @@
                         if (mostrarAlerta) {
                             Swal.fire({
                                 title: 'Error de Conexión',
-                                text: 'Verifique la URL del Script, el Token de seguridad o su conexión a Internet.',
+                                text: e.message || 'Verifique la URL del Script, el Token de seguridad o su conexión a Internet.',
                                 icon: 'error',
                                 confirmButtonText: 'Aceptar'
                             });
@@ -739,6 +775,8 @@
                     }
                 },
                 guardarConfig() {
+                    this.googleSheetUrl = (this.googleSheetUrl || '').trim();
+                    this.apiToken = (this.apiToken || '').trim();
                     localStorage.setItem('nexus_epp_script_url', this.googleSheetUrl);
                     localStorage.setItem('nexus_epp_api_token', this.apiToken);
                     this.menuConfig = false;
