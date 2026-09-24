@@ -181,7 +181,7 @@
                 </button>
             </div>
 
-            <!-- TAB 1: FORMULARIO DE ENTREGA -->
+            <!-- TAB 1: FORMULARIO DE ENTREGA CON STOCK VINCULADO -->
             <section v-if="activeTab === 'entrega'" class="md-card p-6 space-y-4">
                 <div class="border-b border-slate-100 pb-3 mb-2 flex justify-between items-center">
                     <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
@@ -226,28 +226,40 @@
                 </div>
 
                 <div>
-                    <label class="md-label">Equipo de Protección</label>
-                    <select v-model="entrega.equipo" class="md-select">
-                        <option value="">Seleccione equipo...</option>
-                        <option v-for="e in listaEquipos" :key="e" :value="e">{{ e }}</option>
+                    <label class="md-label">Equipo de Protección (Inventario Disponible)</label>
+                    <select v-model="entrega.equipo" @change="actualizarTallasDisponibles" class="md-select">
+                        <option value="">Seleccione equipo con stock...</option>
+                        <option v-for="e in listaEquiposConStock" :key="e" :value="e">{{ e }}</option>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="md-label">Talla / Medida</label>
-                        <input v-model="entrega.talla" type="text" placeholder="Ej: 42, L, M" class="md-input">
+                        <label class="md-label">Talla Disponible en Stock</label>
+                        <select v-model="entrega.talla" @change="actualizarStockMaximo" class="md-select" :disabled="!entrega.equipo">
+                            <option value="">Talla...</option>
+                            <option v-for="t in tallasDisponibles" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                        <p v-if="stockDisponibleTalla !== null" class="text-[10px] font-bold text-emerald-600 mt-1 ml-2">
+                            Stock disponible: {{ stockDisponibleTalla }} unids.
+                        </p>
                     </div>
+
                     <div>
-                        <label class="md-label">Fecha de Entrega</label>
-                        <input v-model="entrega.fecha" type="date" class="md-input">
+                        <label class="md-label">Cantidad a Entregar</label>
+                        <input v-model.number="entrega.cantidad" type="number" min="1" :max="stockDisponibleTalla || 999" class="md-input" placeholder="1">
                     </div>
                 </div>
 
-                <button @click="procesarEntrega" :disabled="isSyncing || !entrega.cedula || !entrega.nombre || !entrega.equipo"
+                <div>
+                    <label class="md-label">Fecha de Entrega</label>
+                    <input v-model="entrega.fecha" type="date" class="md-input">
+                </div>
+
+                <button @click="procesarEntrega" :disabled="isSyncing || !entrega.cedula || !entrega.nombre || !entrega.equipo || !entrega.talla || entrega.cantidad < 1"
                         class="md-btn-filled w-full py-4 text-sm mt-2">
                     <span class="material-symbols-outlined" v-if="!isSyncing">check_circle</span>
-                    <span>{{ isSyncing ? 'PROCESANDO...' : 'REGISTRAR ENTREGA' }}</span>
+                    <span>{{ isSyncing ? 'PROCESANDO...' : 'REGISTRAR ENTREGA & DESCONTAR STOCK' }}</span>
                 </button>
             </section>
 
@@ -291,7 +303,7 @@
                             <span class="material-symbols-outlined text-lg">shield</span>
                         </div>
                         <div>
-                            <p class="text-xs font-black text-slate-900 leading-tight">{{ h.equipo }} (Talla: {{ h.talla || 'S/T' }})</p>
+                            <p class="text-xs font-black text-slate-900 leading-tight">{{ h.equipo }} (Talla: {{ h.talla || 'S/T' }}) - {{ h.cantidad || 1 }} unid(s).</p>
                             <p class="text-[10px] text-slate-600 font-bold mt-0.5">{{ h.nombre }} (CI: {{ h.cedula }})</p>
                             <p class="text-[9px] text-slate-400 mt-0.5">{{ h.puesto || h.cargo || 'S/C' }} | {{ h.unidad || h.area || 'S/A' }}</p>
                             <p class="text-[9px] text-slate-400 font-mono mt-0.5">{{ formatearFecha(h.fecha) }}</p>
@@ -391,11 +403,13 @@
     </script>
 
     <script>
-        // DEXIE DATABASE SETUP
-        const db = new Dexie("NEXUS_EPP_ENTREGAS_DB");
+        // DEXIE DATABASE SETUP - SHARED DB FOR INVENTORY & DELIVERIES
+        const db = new Dexie("NEXUS_EPP_DB");
         db.version(1).stores({
+            inventario: '++id, equipo, talla, cantidad, lote, fechaIngreso',
+            movimientos: '++id, equipo, talla, cantidad, tipo, motivo, fecha',
             trabajadores: 'cedula, nombre, cargo, area',
-            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla'
+            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla, cantidad'
         });
 
         const { createApp } = Vue;
@@ -411,14 +425,12 @@
                     menuConfig: false,
                     modalTrabajador: false,
                     isSyncing: false,
+                    inventarioLocal: [],
                     trabajadoresLocal: [],
                     historialEntregas: [],
+                    tallasDisponibles: [],
+                    stockDisponibleTalla: null,
                     trabajadorSeleccionado: null,
-                    listaEquipos: [
-                        'Botas de Seguridad', 'Casco de Seguridad', 'Guantes de Carnaza',
-                        'Lentes de Protección', 'Protector Auditivo', 'Mascarilla N95',
-                        'Overol / Braga', 'Faja Sacrolumbar', 'Impermeable'
-                    ],
                     nuevoTrabajador: { cedula: '', nombre: '', cargo: '', area: '' },
                     entrega: {
                         fecha: new Date().toISOString().split('T')[0],
@@ -427,11 +439,16 @@
                         puesto: '',
                         unidad: '',
                         equipo: '',
-                        talla: ''
+                        talla: '',
+                        cantidad: 1
                     }
                 }
             },
             computed: {
+                listaEquiposConStock() {
+                    const equipos = this.inventarioLocal.filter(i => i.cantidad > 0).map(i => i.equipo);
+                    return [...new Set(equipos)];
+                },
                 trabajadoresFiltrados() {
                     const q = this.searchTrabajador.toLowerCase();
                     if (!q) return this.trabajadoresLocal;
@@ -449,8 +466,26 @@
             },
             methods: {
                 async cargarDatosDexie() {
+                    this.inventarioLocal = await db.inventario.toArray();
                     this.trabajadoresLocal = await db.trabajadores.toArray();
                     this.historialEntregas = (await db.entregas.toArray()).reverse().slice(0, 100);
+                },
+                actualizarTallasDisponibles() {
+                    const registros = this.inventarioLocal.filter(i => i.equipo === this.entrega.equipo && i.cantidad > 0);
+                    this.tallasDisponibles = [...new Set(registros.map(r => r.talla))];
+                    this.entrega.talla = '';
+                    this.stockDisponibleTalla = null;
+                },
+                actualizarStockMaximo() {
+                    if (!this.entrega.equipo || !this.entrega.talla) {
+                        this.stockDisponibleTalla = null;
+                        return;
+                    }
+                    const registros = this.inventarioLocal.filter(i => i.equipo === this.entrega.equipo && i.talla === this.entrega.talla && i.cantidad > 0);
+                    this.stockDisponibleTalla = registros.reduce((acc, curr) => acc + curr.cantidad, 0);
+                    if (this.entrega.cantidad > this.stockDisponibleTalla) {
+                        this.entrega.cantidad = Math.max(1, this.stockDisponibleTalla);
+                    }
                 },
                 buscarTrabajador() {
                     const c = this.cedulaBusqueda.trim().toLowerCase();
@@ -505,40 +540,89 @@
                     });
                 },
                 async procesarEntrega() {
-                    if (!this.entrega.cedula || !this.entrega.nombre || !this.entrega.equipo) {
+                    const cantEntregar = Number(this.entrega.cantidad || 1);
+
+                    if (!this.entrega.cedula || !this.entrega.nombre || !this.entrega.equipo || !this.entrega.talla) {
                         return Swal.fire({
                             title: 'Campos Incompletos',
-                            text: 'Cédula, Nombre y Equipo son obligatorios.',
+                            text: 'Cédula, Nombre, Equipo y Talla son obligatorios.',
                             icon: 'warning',
                             confirmButtonText: 'Entendido'
                         });
                     }
 
+                    // Validar existencias reales en el inventario local
+                    const lotesDisponibles = await db.inventario
+                        .where({ equipo: this.entrega.equipo, talla: this.entrega.talla })
+                        .filter(i => i.cantidad > 0)
+                        .toArray();
+
+                    const totalDisponible = lotesDisponibles.reduce((acc, curr) => acc + curr.cantidad, 0);
+
+                    if (totalDisponible < cantEntregar) {
+                        return Swal.fire({
+                            title: 'Stock Insuficiente',
+                            text: `Solo existen ${totalDisponible} unidades disponibles en inventario de ${this.entrega.equipo} Talla ${this.entrega.talla}.`,
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar'
+                        });
+                    }
+
                     this.isSyncing = true;
 
-                    const registro = {
+                    // 1. Descontar existencias del inventario local (FIFO por lote)
+                    let restante = cantEntregar;
+                    for (let item of lotesDisponibles) {
+                        if (restante <= 0) break;
+                        if (item.cantidad <= restante) {
+                            restante -= item.cantidad;
+                            await db.inventario.update(item.id, { cantidad: 0 });
+                        } else {
+                            await db.inventario.update(item.id, { cantidad: item.cantidad - restante });
+                            restante = 0;
+                        }
+                    }
+
+                    // 2. Registrar el movimiento de salida
+                    const movimientoSalida = {
+                        equipo: this.entrega.equipo,
+                        talla: this.entrega.talla,
+                        cantidad: cantEntregar,
+                        tipo: 'SALIDA_EPP',
+                        motivo: `Entrega asignada a: ${this.entrega.nombre} (${this.entrega.cedula})`,
+                        fecha: new Date().toISOString()
+                    };
+                    await db.movimientos.add(movimientoSalida);
+
+                    // 3. Registrar la entrega asignada al trabajador
+                    const registroEntrega = {
                         fecha: this.entrega.fecha || new Date().toISOString().split('T')[0],
                         cedula: this.entrega.cedula.trim(),
                         nombre: this.entrega.nombre.trim(),
                         puesto: this.entrega.puesto.trim(),
                         unidad: this.entrega.unidad.trim(),
                         equipo: this.entrega.equipo,
-                        talla: this.entrega.talla ? this.entrega.talla.toUpperCase().trim() : 'S/T'
+                        talla: this.entrega.talla,
+                        cantidad: cantEntregar
                     };
+                    await db.entregas.add(registroEntrega);
 
-                    await db.entregas.add(registro);
-
+                    // 4. Actualizar trabajador local
                     await db.trabajadores.put({
-                        cedula: registro.cedula,
-                        nombre: registro.nombre,
-                        cargo: registro.puesto,
-                        area: registro.unidad
+                        cedula: registroEntrega.cedula,
+                        nombre: registroEntrega.nombre,
+                        cargo: registroEntrega.puesto,
+                        area: registroEntrega.unidad
                     });
 
-                    await this.sincronizarConGoogle({ type: 'entrega', data: registro, token: this.apiToken });
+                    // 5. Enviar registros a Google Sheets (tanto entrega como descuento)
+                    await this.sincronizarConGoogle({ type: 'entrega', data: registroEntrega, token: this.apiToken });
+                    await this.sincronizarConGoogle({ type: 'descuento_epp', data: movimientoSalida, token: this.apiToken });
 
                     await this.cargarDatosDexie();
+                    this.actualizarTallasDisponibles();
                     this.isSyncing = false;
+
                     this.entrega = {
                         fecha: new Date().toISOString().split('T')[0],
                         cedula: '',
@@ -546,16 +630,17 @@
                         puesto: '',
                         unidad: '',
                         equipo: '',
-                        talla: ''
+                        talla: '',
+                        cantidad: 1
                     };
                     this.trabajadorSeleccionado = null;
                     this.cedulaBusqueda = '';
 
                     Swal.fire({
-                        title: 'Entrega Registrada',
-                        text: 'La entrega de EPP ha sido registrada correctamente.',
+                        title: 'Entrega Exitosa',
+                        text: 'Se ha registrado la entrega y descontado la unidad del inventario.',
                         icon: 'success',
-                        timer: 2000,
+                        timer: 2200,
                         showConfirmButton: false
                     });
                 },
@@ -582,6 +667,18 @@
                         let totalTrabajadores = 0;
                         let totalEntregas = 0;
 
+                        if (data.inventario && Array.isArray(data.inventario)) {
+                            await db.inventario.clear();
+                            const recs = data.inventario.map(i => ({
+                                equipo: i.equipo,
+                                talla: String(i.talla || '').toUpperCase(),
+                                cantidad: Number(i.cantidad || 0),
+                                lote: i.lote || 'S/L',
+                                fechaIngreso: i.fecha_ingreso || new Date().toISOString()
+                            }));
+                            await db.inventario.bulkAdd(recs);
+                        }
+
                         if (data.trabajadores && Array.isArray(data.trabajadores)) {
                             await db.trabajadores.clear();
                             const recs = data.trabajadores.map(t => ({
@@ -606,7 +703,8 @@
                                 puesto: String(e.cargo || e.puesto || '').trim(),
                                 unidad: String(e.unidad_área || e.unidad || e.area || '').trim(),
                                 equipo: String(e.equipo || '').trim(),
-                                talla: String(e.talla || 'S/T').trim()
+                                talla: String(e.talla || 'S/T').trim(),
+                                cantidad: Number(e.cantidad || 1)
                             })).filter(e => e.cedula || e.nombre || e.equipo);
 
                             if (ent.length > 0) {
@@ -620,7 +718,7 @@
                         if (mostrarAlerta) {
                             Swal.fire({
                                 title: 'Sincronización Completa',
-                                text: `Se cargaron ${totalTrabajadores} trabajadores y ${totalEntregas} entregas desde Google Sheets.`,
+                                text: `Se cargaron ${totalTrabajadores} trabajadores, ${totalEntregas} entregas e inventario actualizado desde Google Sheets.`,
                                 icon: 'success',
                                 timer: 2500,
                                 showConfirmButton: false
