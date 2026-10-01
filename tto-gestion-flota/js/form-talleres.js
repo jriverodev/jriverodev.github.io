@@ -111,7 +111,9 @@ async function cargarUnidadesFlotaModal() {
                     Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                     Tipo_Flota: getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "Liviana",
                         Gerencia: getV(["GERENCIA"]) || u["Gerencia"] || "",
-                        Responsable_Usuario: getV(["RESPONSABLEUSUARIO","RESPONSABLE","USUARIO"]) || u["Responsable_Usuario"] || ""
+                        Responsable_Usuario: getV(["RESPONSABLEUSUARIO","RESPONSABLE","USUARIO"]) || u["Responsable_Usuario"] || "",
+                        Fecha_Trans80: getV(["FECHATRANS80", "TRANS80"]) || u["fecha_trans80"] || u["Fecha_Trans80"] || "",
+                        Avisos_Trans80: getV(["AVISOSTRANS80", "AVISOS"]) || u["avisos_trans80"] || u["Avisos_Trans80"] || ""
                     };
             });
 
@@ -145,6 +147,7 @@ function renderizarUnidadesFlotaModal(unidades) {
                 <td class="p-3 font-mono text-slate-600 dark:text-slate-400 uppercase">${escapeHTML(u.VIN)}</td>
                 <td class="p-3 uppercase font-bold text-slate-800 dark:text-slate-200">${marcaEscaped}</td>
                 <td class="p-3 uppercase"><span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[9px] font-black">${tipoEscaped}</span></td>
+                <td class="p-3">${obtenerEstatusTrans80Html(u.Fecha_Trans80, u.Avisos_Trans80)}</td>
                 <td class="p-3 text-center">
                     <button type="button" onclick="seleccionarUnidadFlota('${idEscaped}', '${marcaEscaped}', '${tipoEscaped}', '${escapeHTML(u.VIN)}', '${escapeHTML(u.Modelo)}', '${escapeHTML(u.Color)}', '${escapeHTML(u.Anio)}', '${escapeHTML(u.Tipo_Vehiculo)}', '${escapeHTML(u.Gerencia)}', '${escapeHTML(u.Responsable_Usuario)}')" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95">
                         Seleccionar
@@ -425,7 +428,53 @@ function filtrarMatriz() {
     renderizarMatriz(filtrados);
 }
 
+var mapaActivosInfo = {};
+async function obtenerMapaActivosTalleres() {
+    try {
+        let activos = [];
+        if (typeof obtenerActivosLocalSeguro === 'function') {
+            activos = await obtenerActivosLocalSeguro();
+        }
+        if (!activos || activos.length === 0) {
+            const response = await fetch(APP_CONFIG.URL_API, {
+                method: "POST",
+                body: JSON.stringify({ accion: "leer_activos" })
+            });
+            const res = await response.json();
+            if (res.status === "SUCCESS") activos = res.datos || [];
+        }
+        mapaActivosInfo = {};
+        activos.forEach(item => {
+            let normalized = {};
+            for (let key in item) {
+                normalized[key.toUpperCase().replace(/_/g, "").replace(/\s/g, "")] = item[key];
+            }
+            const getV = (terms) => {
+                const key = Object.keys(normalized).find(k => terms.some(t => k.includes(t)));
+                return (key !== undefined && normalized[key] !== null) ? String(normalized[key]) : "";
+            };
+            const rawId = getV(["IDUNIDAD", "UNIDAD"]) || item["ID_Unidad"] || "";
+            const idKey = String(rawId).toUpperCase();
+            if (idKey) {
+                mapaActivosInfo[idKey] = {
+                    VIN: getV(["VIN"]) || item["VIN"] || "",
+                    Modelo: normalized["MODELO"] || item["Modelo"] || "",
+                    Color: normalized["COLOR"] || item["Color"] || "",
+                    Anio: getV(["ANIO", "ANO"]) || item["Anio"] || "",
+                    Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || item["Tipo_Vehiculo"] || "",
+                    Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || item["Cargo_Usuario"] || "",
+                    Fecha_Trans80: getV(["FECHATRANS80", "TRANS80"]) || item["fecha_trans80"] || item["Fecha_Trans80"] || "",
+                    Avisos_Trans80: getV(["AVISOSTRANS80", "AVISOS"]) || item["avisos_trans80"] || item["Avisos_Trans80"] || ""
+                };
+            }
+        });
+    } catch(e) {
+        console.warn("Error en obtenerMapaActivosTalleres:", e);
+    }
+}
+
 async function cargarTablaEditable() {
+    await obtenerMapaActivosTalleres();
     const tbody = document.getElementById("tablaEditableCuerpo");
     if (!tbody) return;
 
@@ -507,9 +556,13 @@ async function cargarTablaEditable() {
 
             const regIdRaw = getV(["IDREGISTRO", "REGISTRO"]) || normalized["ID"] || u["id"] || u["id_registro"] || u["ID_Registro"] || "S/I";
 
+            const idUnidadKey = String(getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I").toUpperCase();
+            const infoActivo = (typeof mapaActivosInfo !== 'undefined' ? mapaActivosInfo[idUnidadKey] : {}) || {};
             return {
                 ID_Registro: String(regIdRaw),
                 ID_Unidad: String(getV(["IDUNIDAD", "UNIDAD"]) || u["ID_Unidad"] || "S/I"),
+                Fecha_Trans80: infoActivo.Fecha_Trans80 || getV(["FECHATRANS80", "TRANS80"]) || u["fecha_trans80"] || "",
+                Avisos_Trans80: infoActivo.Avisos_Trans80 || getV(["AVISOSTRANS80"]) || u["avisos_trans80"] || "",
                 Tipo_Flota: String(getV(["TIPOFLOTA", "FLOTA"]) || u["Tipo_Flota"] || "S/I"),
                 Nombre_Taller: String(getV(["NOMBRETALLER", "TALLER"]) || u["Nombre_Taller"] || "No especificado"),
                 Nombre_Taller_Ext: String(getV(["TALLEREXT"]) || u["Nombre_Taller_Ext"] || ""),
