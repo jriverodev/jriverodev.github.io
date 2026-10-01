@@ -50,6 +50,7 @@
     <script src="js/supabase-sync.js" defer></script>
     <script src="js/sync-manager.js" defer></script>
     <script src="js/ui.js" defer></script>
+    <script src="js/ui-utils.js" defer></script>
     <script src="js/tema.js" defer></script>
     <script src="js/visor-talleres.js" defer></script>
     <script src="js/auth-gatekeeper.js" defer></script>
@@ -353,6 +354,7 @@
                             <th class="p-4">Ubicación Taller</th>
                             <th class="p-4">Avance</th>
                             <th class="p-4">Estatus</th>
+                            <th class="p-4">Fecha Trans80</th>
                             <th class="p-4">Observaciones Técnicas</th>
                             <th class="p-4 w-36">Fechas</th>
                             <th class="p-4 text-center">Detalle</th>
@@ -392,6 +394,10 @@
                     <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
                         <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1">Estatus Actual</span>
                         <span id="det-estatus" class="text-xs font-bold uppercase"></span>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
+                        <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1">Fecha Trans80</span>
+                        <div id="det-trans80"></div>
                     </div>
                     <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
                         <span class="block text-[9px] uppercase font-black text-slate-500 dark:text-slate-400 mb-1">Ubicación</span>

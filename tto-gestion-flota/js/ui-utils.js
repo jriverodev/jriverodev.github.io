@@ -240,3 +240,82 @@
         document.addEventListener('DOMContentLoaded', () => addDebugFooterButtons());
     }
 })();
+
+
+function obtenerEstatusTrans80Html(fechaInput, avisosInput) {
+    const avisosStr = String(avisosInput || '').trim().toUpperCase();
+    const fechaStr = String(fechaInput || '').trim().toUpperCase();
+
+    if (avisosStr === 'NO APLICA' || fechaStr === 'NO APLICA') {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-400">No Aplica</span></div>`;
+    }
+    if (avisosStr.includes('SIN SOLICITUD') || fechaStr.includes('SIN SOLICITUD')) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-400">Sin Solicitud</span></div>`;
+    }
+
+    if (!fechaInput) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
+    }
+
+    let str = String(fechaInput).trim();
+    if (!str || str === 'S/F' || str === 'N/A' || str === 'null' || str === 'undefined' || str === 'NULL') {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
+    }
+
+    let fecha;
+    if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+        fecha = new Date(str);
+    } else {
+        const partes = str.split('-');
+        if (partes.length === 3) {
+            if (partes[0].length === 4) {
+                fecha = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10));
+            } else {
+                fecha = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+            }
+        } else {
+            fecha = new Date(str);
+        }
+    }
+
+    if (isNaN(fecha.getTime())) {
+        return `<div class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">${typeof escapeHTML === 'function' ? escapeHTML(str) : str} <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-500/10 border border-slate-500/30 text-slate-500">Sin Fecha</span></div>`;
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const target = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const diffMs = target - hoy;
+    const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    const fechaFormateada = fecha.toISOString().slice(0, 10);
+
+    let badge = '';
+    if (diffDias > 30) {
+        badge = `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Vigente</span>`;
+    } else if (diffDias >= 0) {
+        const texto = diffDias === 0 ? 'Vence hoy' : (diffDias === 1 ? 'Queda 1 día' : `Quedan ${diffDias} días`);
+        badge = `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">${texto}</span>`;
+    } else {
+        const diasVencidos = Math.abs(diffDias);
+        let vencioTexto = '';
+        if (diasVencidos < 30) {
+            vencioTexto = `Venció hace ${diasVencidos} ${diasVencidos === 1 ? 'día' : 'días'}`;
+        } else if (diasVencidos < 365) {
+            const meses = Math.floor(diasVencidos / 30);
+            vencioTexto = `Venció hace ${meses} ${meses === 1 ? 'mes' : 'meses'}`;
+        } else {
+            const anios = Math.floor(diasVencidos / 365);
+            vencioTexto = `Venció hace ${anios} ${anios === 1 ? 'año' : 'años'}`;
+        }
+        badge = `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400">${vencioTexto}</span>`;
+    }
+
+    return `<div class="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200"><i class="fa-solid fa-calendar-check text-[10px] mr-1 text-slate-400"></i>${fechaFormateada}</div><div class="mt-0.5">${badge}</div>`;
+}
+
+window.obtenerEstatusTrans80Html = obtenerEstatusTrans80Html;
+if (window.SIAGOP_UI_UTILS) {
+    window.SIAGOP_UI_UTILS.obtenerEstatusTrans80Html = obtenerEstatusTrans80Html;
+}

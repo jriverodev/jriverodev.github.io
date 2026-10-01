@@ -152,7 +152,9 @@ async function obtenerMapaActivos() {
                         Color: normalized["COLOR"] || item["Color"] || "",
                         Anio: getV(["ANIO", "ANO"]) || item["Anio"] || "",
                         Tipo_Vehiculo: getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || item["Tipo_Vehiculo"] || "",
-                        Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || item["Cargo_Usuario"] || ""
+                        Cargo_Usuario: getV(["CARGOUSUARIO", "CARGO"]) || item["Cargo_Usuario"] || "",
+                        Fecha_Trans80: getV(["FECHATRANS80", "TRANS80"]) || item["fecha_trans80"] || item["Fecha_Trans80"] || "",
+                        Avisos_Trans80: getV(["AVISOSTRANS80", "AVISOS"]) || item["avisos_trans80"] || item["Avisos_Trans80"] || ""
                     };
                 }
             });
@@ -262,6 +264,8 @@ async function cargarDatosAnaliticos() {
                 Anio: infoActivo.Anio || getV(["ANIO", "ANO"]) || u["Anio"] || "",
                 Tipo_Vehiculo: infoActivo.Tipo_Vehiculo || getV(["TIPOVEHICULO", "TIPOVEH", "CLASE"]) || u["Tipo_Vehiculo"] || "",
                 Cargo_Usuario: infoActivo.Cargo_Usuario || getV(["CARGOUSUARIO", "CARGO"]) || u["Cargo_Usuario"] || "",
+                Fecha_Trans80: infoActivo.Fecha_Trans80 || getV(["FECHATRANS80", "TRANS80"]) || u["fecha_trans80"] || "",
+                Avisos_Trans80: infoActivo.Avisos_Trans80 || getV(["AVISOSTRANS80"]) || u["avisos_trans80"] || "",
                 Gerencia: getV(["GERENCIA", "USUARIA"]) || u["Gerencia"] || "N/A",
                 Usuario: getV(["USUARIO", "CHOFER", "CONDUCTOR"]) || u["Usuario"] || "S/I",
                 Avance: parseInt(getV(["AVANCE", "PORCENTAJE"]) || 0, 10),
@@ -505,6 +509,16 @@ function renderizarVisor(datos) {
                     </div>
                 </td>
 
+                <td class="flex justify-between items-center md:table-cell p-2 md:p-4 border-b md:border-b-0 border-slate-100 dark:border-slate-800/30 transition-colors">
+                    <span class="md:hidden text-slate-500 dark:text-slate-400 uppercase text-[9px] font-black tracking-widest transition-colors">
+                        Fecha Trans80
+                    </span>
+
+                    <div class="flex items-center justify-end md:justify-start">
+                        ${obtenerEstatusTrans80Html(reg.Fecha_Trans80, reg.Avisos_Trans80)}
+                    </div>
+                </td>
+
                 <td class="flex flex-col md:table-cell p-2 md:p-1.5 border-b border-slate-100 dark:border-slate-800/30 md:border-none text-left min-w-0 w-full md:w-auto transition-colors">
                     <span class="md:hidden text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 block transition-colors">Obs:</span>
 
@@ -552,6 +566,8 @@ async function abrirModalDetalle(id) {
     document.getElementById("detalle-subtitulo-id").textContent = `ID REGISTRO: #${reg.ID_Registro} | FLOTA: ${reg.Tipo_Flota}`;
 
     document.getElementById("det-estatus").textContent = reg.Estatus;
+    const elTrans = document.getElementById("det-trans80");
+    if (elTrans) elTrans.innerHTML = obtenerEstatusTrans80Html(reg.Fecha_Trans80, reg.Avisos_Trans80);
     document.getElementById("det-ubicacion").textContent = reg.Nombre_Taller === "TALLER EXTERNO (Terceros)" ? reg.Nombre_Taller_Ext : reg.Nombre_Taller;
     document.getElementById("det-marca-flota").textContent = `${reg.Marca} ${reg.Modelo} (${reg.Tipo_Flota})`;
     document.getElementById("det-fecha-ingr").innerHTML = `${escapeHTML(reg.Fecha_Registro)} <span class="text-[10px] text-slate-400 dark:text-slate-500 lowercase font-normal ml-1">(${tiempoTranscurrido(reg.Fecha_Registro)})</span>`;
