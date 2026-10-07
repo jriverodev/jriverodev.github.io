@@ -1,0 +1,201 @@
+/* Material Design 3 Custom Tokens & WhatsApp Template Styles */
+
+:root {
+  --md-sys-color-primary: #0061A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #D1E4FF;
+  --md-sys-color-on-primary-container: #001D36;
+  --md-sys-color-surface: #F8FDFF;
+  --md-sys-color-surface-container: #F0F4F9;
+  --md-sys-color-surface-container-high: #E2E8F0;
+  --md-sys-color-outline: #74777F;
+  --wa-brand-color: #25D366;
+  --wa-brand-hover: #20bd5a;
+  --wa-bg-light: #efeae2;
+  --wa-bg-dark: #0b141a;
+  --wa-bubble-light: #ffffff;
+  --wa-bubble-dark: #202c33;
+}
+
+.dark {
+  --md-sys-color-primary: #9ECAFF;
+  --md-sys-color-on-primary: #003258;
+  --md-sys-color-primary-container: #00497D;
+  --md-sys-color-on-primary-container: #D1E4FF;
+  --md-sys-color-surface: #0F172A;
+  --md-sys-color-surface-container: #1E293B;
+  --md-sys-color-surface-container-high: #334155;
+  --md-sys-color-outline: #8E9199;
+}
+
+body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--md-sys-color-surface);
+  color: #1e293b;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dark body {
+  color: #f1f5f9;
+}
+
+/* Material Design 3 Input Fields */
+.m3-field {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.m3-input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2.75rem;
+  font-size: 0.95rem;
+  background-color: transparent;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 0.75rem;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.m3-input:focus {
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 97, 164, 0.15);
+}
+
+.dark .m3-input {
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+.dark .m3-input:focus {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 3px rgba(158, 202, 255, 0.2);
+}
+
+.m3-field-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 1.25rem;
+  pointer-events: none;
+}
+
+.m3-label {
+  position: absolute;
+  left: 2.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: #64748b;
+  pointer-events: none;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--md-sys-color-surface);
+  padding: 0 0.25rem;
+}
+
+.m3-input:focus ~ .m3-label,
+.m3-input:not(:placeholder-shown) ~ .m3-label {
+  top: 0;
+  transform: translateY(-50%) scale(0.85);
+  color: var(--md-sys-color-primary);
+  font-weight: 500;
+}
+
+/* WhatsApp Bubble Preview Card */
+.wa-preview-card {
+  background-color: var(--wa-bg-light);
+  background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 0);
+  background-size: 16px 16px;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.dark .wa-preview-card {
+  background-color: var(--wa-bg-dark);
+  background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 0);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.wa-chat-bubble {
+  background-color: var(--wa-bubble-light);
+  border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dark .wa-chat-bubble {
+  background-color: var(--wa-bubble-dark);
+  color: #e9edef;
+}
+
+.wa-chat-bubble::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 10px solid var(--wa-bubble-light);
+  border-left: 8px solid transparent;
+}
+
+.dark .wa-chat-bubble::before {
+  border-top-color: var(--wa-bubble-dark);
+}
+
+/* WhatsApp Primary Button */
+.btn-whatsapp {
+  background-color: var(--wa-brand-color);
+  color: #ffffff;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
+}
+
+.btn-whatsapp:hover, .btn-whatsapp:active {
+  background-color: var(--wa-brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.45);
+}
+
+/* Bottom Navigation active indicator */
+.nav-tab-active .nav-icon-wrap {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: 9999px;
+  padding: 0.25rem 1.25rem;
+}
+
+.nav-tab-active span.nav-text {
+  color: var(--md-sys-color-primary);
+  font-weight: 700;
+}
+
+/* Material Ripple & Pill Animations */
+.m3-chip {
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+}
+
+.m3-chip:active {
+  transform: scale(0.96);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}

@@ -1,0 +1,26 @@
+{
+  "short_name": "TPI Reportes",
+  "name": "TPI Reportes - Plantillas WhatsApp PDVSA",
+  "description": "Sistema PWA de generación de reportes operativos TPI con exportación instantánea a WhatsApp e historial fuera de línea.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0061A4",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["productivity", "utilities", "business"],
+  "lang": "es-VE",
+  "scope": "./"
+}

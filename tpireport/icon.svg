@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f2027"/>
+      <stop offset="50%" stop-color="#203a43"/>
+      <stop offset="100%" stop-color="#2c5364"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#25D366"/>
+      <stop offset="100%" stop-color="#128C7E"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f0f4f8"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Shield Base Outer Ring -->
+  <path d="M256 48 L390 100 V230 C390 326 333 414 256 450 C179 414 122 326 122 230 V100 Z" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/>
+
+  <!-- Main Shield Body -->
+  <path d="M256 64 L374 110 V226 C374 312 323 391 256 424 C189 391 138 312 138 226 V110 Z" fill="url(#shieldGrad)" filter="url(#dropShadow)"/>
+
+  <!-- Report Clipboard Surface inside Shield -->
+  <rect x="180" y="140" width="152" height="210" rx="16" fill="url(#cardGrad)" filter="url(#dropShadow)"/>
+
+  <!-- Clipboard Clip Top -->
+  <rect x="220" y="128" width="72" height="24" rx="6" fill="#203a43"/>
+  <circle cx="256" cy="140" r="4" fill="#25D366"/>
+
+  <!-- Report Document Header line -->
+  <rect x="200" y="176" width="70" height="12" rx="4" fill="#0061A4"/>
+  <rect x="280" y="176" width="32" height="12" rx="4" fill="#25D366"/>
+
+  <!-- Text lines (simulating template fields) -->
+  <rect x="200" y="202" width="112" height="8" rx="3" fill="#64748b"/>
+  <rect x="200" y="220" width="96" height="8" rx="3" fill="#94a3b8"/>
+  <rect x="200" y="238" width="104" height="8" rx="3" fill="#94a3b8"/>
+  <rect x="200" y="256" width="80" height="8" rx="3" fill="#94a3b8"/>
+
+  <!-- WhatsApp Check Icon Badge at bottom right of clipboard -->
+  <circle cx="310" cy="320" r="32" fill="#25D366" filter="url(#dropShadow)"/>
+  <path d="M298 320 L306 328 L322 312" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
