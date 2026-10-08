@@ -2,8 +2,8 @@
 <html lang="es" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>TPI Reportes - Plantillas WhatsApp PDVSA</title>
+  <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
+  <title>TPI Reportes - NABEP Oil & Gas | Plantillas WhatsApp</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
@@ -26,23 +26,23 @@
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="./style.css">
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-28 transition-colors duration-200">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
 
   <!-- App Wrapper Container -->
   <div class="max-w-2xl mx-auto min-h-screen flex flex-col shadow-xl bg-white dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800">
 
-    <!-- Top App Bar (M3 Design) -->
-    <header class="sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 shadow-md flex items-center justify-between">
+    <!-- Top App Bar (M3 Industrial NABEP Theme) -->
+    <header class="sticky top-0 z-40 bg-[#0B2545] dark:bg-[#080E15] text-white px-4 py-3.5 shadow-md flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-          <span class="material-symbols-outlined text-2xl">shield_person</span>
+        <div class="w-10 h-10 rounded-xl bg-[#00A896]/20 border border-[#00A896]/40 flex items-center justify-center text-[#00A896]">
+          <span class="material-symbols-outlined text-2xl">oil_barrel</span>
         </div>
         <div>
-          <h1 class="text-base font-bold leading-tight flex items-center gap-2">
-            TPI Reportes
+          <h1 class="text-base font-bold leading-tight flex items-center gap-2 tracking-wide">
+            TPI Reportes NABEP
             <span id="led-network-status" class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" title="Estado de conexión"></span>
           </h1>
-          <p class="text-xs text-slate-300 font-medium">PDVSA el Menito • Plantillas WhatsApp</p>
+          <p class="text-xs text-slate-300 font-medium">PDVSA el Menito • Inspección Operativa</p>
         </div>
       </div>
 
@@ -62,19 +62,19 @@
         <!-- Preset Quick Bar -->
         <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider shrink-0">Plantillas:</span>
-          <button type="button" onclick="cargarPreset('sin_novedad')" class="m3-chip px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shrink-0 hover:bg-emerald-200">
+          <button type="button" onclick="cargarPreset('sin_novedad')" class="m3-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shrink-0 hover:bg-emerald-200">
             <span class="material-symbols-outlined text-base">check_circle</span>
             Sin Novedad
           </button>
-          <button type="button" onclick="cargarPreset('con_novedad')" class="m3-chip px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5 shrink-0 hover:bg-amber-200">
+          <button type="button" onclick="cargarPreset('con_novedad')" class="m3-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5 shrink-0 hover:bg-amber-200">
             <span class="material-symbols-outlined text-base">warning</span>
             Con Novedad
           </button>
-          <button type="button" onclick="cargarPreset('cambio_guardia')" class="m3-chip px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1.5 shrink-0 hover:bg-blue-200">
+          <button type="button" onclick="cargarPreset('cambio_guardia')" class="m3-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-300 dark:border-sky-800 flex items-center gap-1.5 shrink-0 hover:bg-sky-200">
             <span class="material-symbols-outlined text-base">published_with_changes</span>
             Cambio Guardia
           </button>
-          <button type="button" onclick="limpiarFormulario()" class="m3-chip px-2.5 py-1.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 shrink-0 hover:bg-slate-300">
+          <button type="button" onclick="limpiarFormulario()" class="m3-chip px-2.5 py-1.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 shrink-0 hover:bg-slate-300">
             <span class="material-symbols-outlined text-base">restart_alt</span>
             Limpiar
           </button>
@@ -84,13 +84,13 @@
         <form id="form-reporte" class="space-y-4" onsubmit="event.preventDefault();">
 
           <!-- Section 1: Ubicación y Tiempo -->
-          <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/80 space-y-3">
             <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-[#134074] dark:text-[#8ECAE6] flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-base">location_on</span>
                 Ubicación y Horario
               </span>
-              <button type="button" onclick="actualizarFechaHoraActual()" class="text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 flex items-center gap-1">
+              <button type="button" onclick="actualizarFechaHoraActual()" class="text-xs font-semibold text-[#00A896] hover:underline flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">schedule</span>
                 Ahora
               </button>
@@ -103,36 +103,56 @@
               <label for="input-lugar" class="m3-label">Lugar / Instalación</label>
             </div>
 
-            <!-- Fecha, Hora y Turno Grid -->
+            <!-- Fecha Picker, Hora Picker y Turno Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <!-- Native Date Picker with Auto Format -->
               <div class="m3-field">
                 <span class="material-symbols-outlined m3-field-icon">calendar_today</span>
-                <input type="text" id="input-fecha" class="m3-input" placeholder=" " required>
-                <label for="input-fecha" class="m3-label">Fecha (DD/MM/YYYY)</label>
+                <input type="date" id="input-fecha-native" class="m3-input" onchange="sincronizarFechaPicker()" required>
+                <input type="hidden" id="input-fecha" value="06/10/2026">
+                <label for="input-fecha-native" class="m3-label">Fecha del Reporte</label>
               </div>
 
+              <!-- Native Time Picker with Auto Format -->
               <div class="m3-field">
                 <span class="material-symbols-outlined m3-field-icon">schedule</span>
-                <input type="text" id="input-hora" class="m3-input" placeholder=" " required>
-                <label for="input-hora" class="m3-label">Hora (e.g. 1552horas)</label>
+                <input type="time" id="input-hora-native" class="m3-input" onchange="sincronizarHoraPicker()" required>
+                <input type="hidden" id="input-hora" value="1552horas">
+                <label for="input-hora-native" class="m3-label">Hora (e.g. 1552horas)</label>
               </div>
 
               <div class="m3-field">
                 <span class="material-symbols-outlined m3-field-icon">hourglass_bottom</span>
-                <input type="text" id="input-turno" class="m3-input" placeholder=" " value="12 hrs." required>
+                <select id="input-turno" class="m3-select" onchange="actualizarVistaPreviaWhatsApp()">
+                  <option value="12 hrs." selected>12 hrs.</option>
+                  <option value="8 hrs.">8 hrs.</option>
+                  <option value="24 hrs.">24 hrs.</option>
+                  <option value="Diurno">Diurno</option>
+                  <option value="Nocturno">Nocturno</option>
+                </select>
                 <label for="input-turno" class="m3-label">Turno</label>
               </div>
+            </div>
+
+            <!-- Quick Time Selection Buttons -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pt-1 no-scrollbar">
+              <span class="text-[11px] text-slate-500 font-medium shrink-0">Atajos Hora:</span>
+              <button type="button" onclick="setAtajoHora('07:00')" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[11px] font-semibold hover:bg-slate-300">07:00</button>
+              <button type="button" onclick="setAtajoHora('12:00')" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[11px] font-semibold hover:bg-slate-300">12:00</button>
+              <button type="button" onclick="setAtajoHora('15:00')" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[11px] font-semibold hover:bg-slate-300">15:00</button>
+              <button type="button" onclick="setAtajoHora('19:00')" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[11px] font-semibold hover:bg-slate-300">19:00</button>
+              <button type="button" onclick="setAtajoHora('23:00')" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[11px] font-semibold hover:bg-slate-300">23:00</button>
             </div>
           </div>
 
           <!-- Section 2: Datos del Técnico TPI -->
-          <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/80 space-y-3">
             <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-[#134074] dark:text-[#8ECAE6] flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-base">badge</span>
                 Datos del TPI / Inspector
               </span>
-              <a href="#perfil" onclick="cambiarTab('perfil')" class="text-xs font-medium text-slate-500 dark:text-slate-400 hover:underline">Editar perfil predeterminado</a>
+              <a href="#perfil" onclick="cambiarTab('perfil')" class="text-xs font-medium text-slate-500 dark:text-slate-400 hover:underline">Perfil guardado</a>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -171,9 +191,9 @@
           </div>
 
           <!-- Section 3: Asunto, Observaciones y Notificado -->
-          <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+          <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/80 space-y-3">
             <div class="border-b border-slate-200 dark:border-slate-700 pb-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-[#134074] dark:text-[#8ECAE6] flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-base">description</span>
                 Detalle del Reporte
               </span>
@@ -182,13 +202,13 @@
             <!-- Asunto -->
             <div>
               <label for="input-asunto" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Asunto:</label>
-              <textarea id="input-asunto" rows="3" class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm" placeholder="Escriba el asunto del reporte...">para conocimiento de los superiores se envía reporte sala COA PDVSA el Menito encontrandose hasta la hora, sin novedad.</textarea>
+              <textarea id="input-asunto" rows="3" class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-[#134074] focus:outline-none text-sm" placeholder="Escriba el asunto del reporte...">para conocimiento de los superiores se envía reporte sala COA PDVSA el Menito encontrandose hasta la hora, sin novedad.</textarea>
             </div>
 
             <!-- Observaciones -->
             <div>
               <label for="input-observaciones" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Observaciones:</label>
-              <textarea id="input-observaciones" rows="2" class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm" placeholder="Escriba las observaciones...">Sin novedad.</textarea>
+              <textarea id="input-observaciones" rows="2" class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-[#134074] focus:outline-none text-sm" placeholder="Escriba las observaciones...">Sin novedad.</textarea>
             </div>
 
             <!-- Notificado -->
@@ -196,6 +216,15 @@
               <span class="material-symbols-outlined m3-field-icon">supervisor_account</span>
               <input type="text" id="input-notificado" class="m3-input" placeholder=" " required value="Supervisor de Guardia Jorge Sara">
               <label for="input-notificado" class="m3-label">Notificado A:</label>
+            </div>
+
+            <!-- Attached GPS Location Link Checkbox -->
+            <div class="flex items-center gap-2 pt-1">
+              <input type="checkbox" id="chk-incluir-gps-wa" onchange="actualizarVistaPreviaWhatsApp()" class="w-4 h-4 text-[#134074] rounded focus:ring-sky-500">
+              <label for="chk-incluir-gps-wa" class="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm text-[#00A896]">location_searching</span>
+                Incluir enlace Google Maps de coordenadas GPS en el mensaje
+              </label>
             </div>
           </div>
 
@@ -210,7 +239,7 @@
             </span>
             <div class="flex items-center gap-2">
               <button type="button" id="btn-toggle-bold" onclick="toggleFormatoWhatsApp()" class="text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-300">
-                Formato: <span id="label-formato" class="font-bold text-sky-600 dark:text-sky-400">Texto Exacto</span>
+                Formato: <span id="label-formato" class="font-bold text-[#134074] dark:text-[#8ECAE6]">Texto Exacto</span>
               </button>
             </div>
           </div>
@@ -237,7 +266,7 @@
               <span class="material-symbols-outlined text-base">content_copy</span>
               Copiar
             </button>
-            <button type="button" onclick="guardarEHistorial()" class="py-2.5 px-3 rounded-xl bg-sky-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-sky-700 shadow-sm">
+            <button type="button" onclick="guardarEHistorial()" class="py-2.5 px-3 rounded-xl bg-[#134074] text-white font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#0B2545] shadow-sm">
               <span class="material-symbols-outlined text-base">save</span>
               Guardar
             </button>
@@ -250,11 +279,115 @@
 
       </section>
 
-      <!-- TAB 2: HISTORIAL DE REPORTES -->
+      <!-- TAB 2: CAPTURA FOTOS CON GPS MARCA DE AGUA -->
+      <section id="view-fotos" class="space-y-4 hidden">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-2xl text-[#00A896]">photo_camera</span>
+            <div>
+              <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Captura de Foto con GPS</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Agregue marca de agua con coordenadas GPS, fecha y datos del TPI.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- GPS Coordinates Live Status Box -->
+        <div class="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#134074] dark:text-[#8ECAE6] flex items-center gap-1">
+              <span class="material-symbols-outlined text-base text-[#00A896]">my_location</span>
+              Ubicación GPS Satelital
+            </span>
+            <button type="button" onclick="obtenerCoordenadasGPS()" class="text-xs font-bold text-[#00A896] hover:underline flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">refresh</span>
+              Actualizar GPS
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs font-mono bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div>
+              <span class="text-slate-400 text-[10px] block">LATITUD:</span>
+              <strong id="gps-lat" class="text-slate-800 dark:text-slate-200">Consultando...</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">LONGITUD:</span>
+              <strong id="gps-lon" class="text-slate-800 dark:text-slate-200">Consultando...</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">PRECISIÓN:</span>
+              <strong id="gps-acc" class="text-slate-800 dark:text-slate-200">--</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">ALTITUD:</span>
+              <strong id="gps-alt" class="text-slate-800 dark:text-slate-200">--</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera / Gallery Upload Controls -->
+        <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+          <label class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300">
+            Tomar o Seleccionar Fotografía:
+          </label>
+
+          <div class="grid grid-cols-2 gap-2">
+            <!-- Camera Button -->
+            <label class="py-3 px-3 rounded-xl bg-[#134074] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-[#0B2545] shadow-md text-center">
+              <span class="material-symbols-outlined text-lg">photo_camera</span>
+              <span>Cámara</span>
+              <input type="file" accept="image/*" capture="environment" id="input-camera" onchange="procesarFotoConMarcaDeAgua(event)" class="hidden">
+            </label>
+
+            <!-- Gallery Button -->
+            <label class="py-3 px-3 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 text-center">
+              <span class="material-symbols-outlined text-lg">image</span>
+              <span>Galería</span>
+              <input type="file" accept="image/*" id="input-gallery" onchange="procesarFotoConMarcaDeAgua(event)" class="hidden">
+            </label>
+          </div>
+        </div>
+
+        <!-- Live Canvas Processing Preview -->
+        <div id="preview-foto-container" class="hidden space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block">
+            Foto procesada con Marca de Agua GPS:
+          </span>
+          <div class="rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 bg-black">
+            <canvas id="canvas-watermark" class="w-full h-auto block"></canvas>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" onclick="guardarFotoEnHistorial()" class="flex-1 py-3 rounded-xl bg-[#00A896] hover:bg-[#0284c7] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md">
+              <span class="material-symbols-outlined text-base">save</span>
+              Guardar Foto con GPS
+            </button>
+            <button type="button" onclick="descartarFotoActual()" class="py-3 px-4 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-300">
+              Descartar
+            </button>
+          </div>
+        </div>
+
+        <!-- Saved Photos Gallery Container -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-[#134074] dark:text-[#8ECAE6]">collections</span>
+              Galería de Evidencias Guardadas
+            </h3>
+            <span id="badge-total-fotos" class="text-[11px] font-bold text-slate-400">0 fotos</span>
+          </div>
+
+          <div id="fotos-galeria-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: HISTORIAL DE REPORTES -->
       <section id="view-historial" class="space-y-4 hidden">
         <div class="flex items-center justify-between">
           <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <span class="material-symbols-outlined text-sky-600 dark:text-sky-400">history</span>
+            <span class="material-symbols-outlined text-[#134074] dark:text-[#8ECAE6]">history</span>
             Historial de Reportes
           </h2>
           <span id="badge-total-historial" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
@@ -265,7 +398,7 @@
         <!-- Search input -->
         <div class="relative">
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-          <input type="text" id="input-buscar-historial" oninput="filtrarHistorial()" class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Buscar por lugar, asunto, fecha...">
+          <input type="text" id="input-buscar-historial" oninput="filtrarHistorial()" class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#134074]" placeholder="Buscar por lugar, asunto, fecha...">
           <button type="button" onclick="limpiarBusqueda()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 hidden" id="btn-limpiar-busqueda">
             <span class="material-symbols-outlined text-base">cancel</span>
           </button>
@@ -273,7 +406,7 @@
 
         <!-- Actions toolbar -->
         <div class="flex justify-between items-center text-xs">
-          <button type="button" onclick="exportarHistorialJSON()" class="text-sky-600 dark:text-sky-400 font-semibold hover:underline flex items-center gap-1">
+          <button type="button" onclick="exportarHistorialJSON()" class="text-[#134074] dark:text-[#8ECAE6] font-semibold hover:underline flex items-center gap-1">
             <span class="material-symbols-outlined text-sm">download</span>
             Exportar Historial (JSON)
           </button>
@@ -289,10 +422,10 @@
         </div>
       </section>
 
-      <!-- TAB 3: PERFIL TPI Y CONFIGURACIÓN -->
+      <!-- TAB 4: PERFIL TPI Y CONFIGURACIÓN -->
       <section id="view-perfil" class="space-y-4 hidden">
         <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-          <span class="material-symbols-outlined text-2xl text-sky-600 dark:text-sky-400">badge</span>
+          <span class="material-symbols-outlined text-2xl text-[#134074] dark:text-[#8ECAE6]">badge</span>
           <div>
             <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Configuración de Perfil TPI</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400">Guarde sus datos predeterminados para auto-llenar los reportes diarios automáticamente.</p>
@@ -354,7 +487,7 @@
             </div>
           </div>
 
-          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2">
+          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-[#134074] hover:bg-[#0B2545] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2">
             <span class="material-symbols-outlined text-lg">save</span>
             <span>Guardar Mi Perfil TPI</span>
           </button>
@@ -381,32 +514,40 @@
 
     </main>
 
-    <!-- Fixed Material Design 3 Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 max-w-2xl mx-auto">
-      <div class="grid grid-cols-3 h-16">
+    <!-- Fixed Material Design 3 Bottom Navigation Bar (4 Tabs) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 max-w-2xl mx-auto safe-area-bottom">
+      <div class="grid grid-cols-4 h-16">
 
         <!-- Tab 1: Nuevo -->
         <button id="tab-btn-nuevo" onclick="cambiarTab('nuevo')" class="nav-tab nav-tab-active flex flex-col items-center justify-center gap-1 transition-all">
           <div class="nav-icon-wrap flex items-center justify-center">
             <span class="material-symbols-outlined text-xl">edit_note</span>
           </div>
-          <span class="nav-text text-xs text-slate-500 dark:text-slate-400">Nuevo</span>
+          <span class="nav-text text-[11px] text-slate-500 dark:text-slate-400">Nuevo</span>
         </button>
 
-        <!-- Tab 2: Historial -->
+        <!-- Tab 2: Fotos GPS -->
+        <button id="tab-btn-fotos" onclick="cambiarTab('fotos')" class="nav-tab flex flex-col items-center justify-center gap-1 transition-all">
+          <div class="nav-icon-wrap flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">photo_camera</span>
+          </div>
+          <span class="nav-text text-[11px] text-slate-500 dark:text-slate-400">Fotos GPS</span>
+        </button>
+
+        <!-- Tab 3: Historial -->
         <button id="tab-btn-historial" onclick="cambiarTab('historial')" class="nav-tab flex flex-col items-center justify-center gap-1 transition-all">
           <div class="nav-icon-wrap flex items-center justify-center">
             <span class="material-symbols-outlined text-xl">history</span>
           </div>
-          <span class="nav-text text-xs text-slate-500 dark:text-slate-400">Historial</span>
+          <span class="nav-text text-[11px] text-slate-500 dark:text-slate-400">Historial</span>
         </button>
 
-        <!-- Tab 3: Perfil -->
+        <!-- Tab 4: Perfil -->
         <button id="tab-btn-perfil" onclick="cambiarTab('perfil')" class="nav-tab flex flex-col items-center justify-center gap-1 transition-all">
           <div class="nav-icon-wrap flex items-center justify-center">
             <span class="material-symbols-outlined text-xl">account_circle</span>
           </div>
-          <span class="nav-text text-xs text-slate-500 dark:text-slate-400">Mi Perfil</span>
+          <span class="nav-text text-[11px] text-slate-500 dark:text-slate-400">Mi Perfil</span>
         </button>
 
       </div>
@@ -417,7 +558,7 @@
   <!-- Detail Modal for History Items -->
   <div id="modal-detalle-reporte" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="p-4 bg-[#0B2545] text-white flex items-center justify-between">
         <h3 class="font-bold text-sm flex items-center gap-2">
           <span class="material-symbols-outlined text-emerald-400">verified</span>
           Detalle del Reporte

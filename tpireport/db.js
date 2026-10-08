@@ -1,5 +1,5 @@
 /**
- * TPI Reportes - Base de datos IndexedDB con Dexie.js
+ * TPI Reportes - Base de datos IndexedDB con Dexie.js (Versión 2 con soporte de Fotos GPS)
  */
 
 // Inicialización de la base de datos Dexie
@@ -8,6 +8,12 @@ const db = new Dexie('TPIReportDB');
 db.version(1).stores({
   reports: '++id, timestamp, fecha, hora, lugar, turno, tpi, ci, tlf, radio, bateria, asunto, observaciones, notificado',
   profile: 'id, tpi, ci, tlf, radio, bateria, lugarDefault, notificadoDefault, turnoDefault'
+});
+
+db.version(2).stores({
+  reports: '++id, timestamp, fecha, hora, lugar, turno, tpi, ci, tlf, radio, bateria, asunto, observaciones, notificado, fotoId, gpsCoords',
+  profile: 'id, tpi, ci, tlf, radio, bateria, lugarDefault, notificadoDefault, turnoDefault',
+  photos: '++id, timestamp, reportId, dataUrl, latitude, longitude, altitude, accuracy, lugar, tpi'
 });
 
 /**
@@ -23,7 +29,6 @@ async function guardarReporteDB(reporte) {
     return id;
   } catch (error) {
     console.error('Error al guardar reporte en IndexedDB:', error);
-    // Fallback a localStorage si IndexedDB falla
     guardarReporteLocalStorage(reporte);
     return Date.now();
   }
@@ -94,6 +99,48 @@ async function vaciarHistorialDB() {
 }
 
 /**
+ * Guarda una foto capturada con marca de agua y GPS
+ */
+async function guardarFotoDB(fotoData) {
+  try {
+    const payload = {
+      ...fotoData,
+      timestamp: fotoData.timestamp || new Date().toISOString()
+    };
+    const id = await db.photos.put(payload);
+    return id;
+  } catch (error) {
+    console.error('Error al guardar foto en IndexedDB:', error);
+    return Date.now();
+  }
+}
+
+/**
+ * Obtiene todas las fotos guardadas
+ */
+async function obtenerFotosDB() {
+  try {
+    return await db.photos.orderBy('id').reverse().toArray();
+  } catch (error) {
+    console.error('Error al leer fotos de IndexedDB:', error);
+    return [];
+  }
+}
+
+/**
+ * Elimina una foto por ID
+ */
+async function eliminarFotoDB(id) {
+  try {
+    await db.photos.delete(Number(id));
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar foto:', error);
+    return false;
+  }
+}
+
+/**
  * Guarda la configuración del perfil del TPI (Operador)
  */
 async function guardarPerfilTPI(perfil) {
@@ -133,7 +180,6 @@ async function obtenerPerfilTPI() {
     }
   }
 
-  // Valores predeterminados basados en la plantilla de ejemplo
   return {
     tpi: 'Miguel Rivero',
     ci: '20.458.588',
