@@ -1,10 +1,12 @@
 /**
- * TPI Reportes - Lógica de Aplicación PWA y Exportación a WhatsApp
+ * TPI Reportes - Lógica de Aplicación PWA, Fotos GPS y Exportación a WhatsApp
  */
 
 // Estado global de la aplicación
 let modoFormatoBold = false;
 let perfilActual = null;
+let coordenadasGPSActuales = { lat: null, lon: null, alt: null, acc: null };
+let fotoCanvasProcessedData = null;
 
 // Inicialización cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
@@ -13,42 +15,103 @@ document.addEventListener('DOMContentLoaded', async () => {
   escucharEventosFormulario();
   actualizarVistaPreviaWhatsApp();
   await cargarHistorial();
+  await cargarGaleriaFotos();
+  obtenerCoordenadasGPS();
   registrarServiceWorker();
   inicializarEstadoRed();
   inicializarTema();
 });
 
 /**
- * Genera la fecha actual en formato DD/MM/YYYY
+ * Convierte fecha YYYY-MM-DD a DD/MM/YYYY
  */
-function obtenerFechaFormateada(date = new Date()) {
-  const dia = String(date.getDate()).padStart(2, '0');
-  const mes = String(date.getMonth() + 1).padStart(2, '0');
-  const anio = date.getFullYear();
-  return `${dia}/${mes}/${anio}`;
+function formatearFechaEspanol(isoDate) {
+  if (!isoDate) return '';
+  const partes = isoDate.split('-');
+  if (partes.length === 3) {
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+  return isoDate;
 }
 
 /**
- * Genera la hora actual en formato HHMMhoras (ej: 1552horas)
+ * Convierte hora HH:MM a HHMMhoras (ej: 15:52 -> 1552horas)
  */
-function obtenerHoraFormateada(date = new Date()) {
+function formatearHoraWhatsApp(timeStr) {
+  if (!timeStr) return '';
+  const limpia = timeStr.replace(':', '');
+  return `${limpia}horas`;
+}
+
+/**
+ * Sincroniza la fecha seleccionada en el input nativo con la plantilla WhatsApp
+ */
+function sincronizarFechaPicker() {
+  const nativePicker = document.getElementById('input-fecha-native');
+  const hiddenInput = document.getElementById('input-fecha');
+  if (nativePicker && hiddenInput) {
+    hiddenInput.value = formatearFechaEspanol(nativePicker.value);
+    actualizarVistaPreviaWhatsApp();
+  }
+}
+
+/**
+ * Sincroniza la hora seleccionada en el input nativo con la plantilla WhatsApp
+ */
+function sincronizarHoraPicker() {
+  const nativePicker = document.getElementById('input-hora-native');
+  const hiddenInput = document.getElementById('input-hora');
+  if (nativePicker && hiddenInput) {
+    hiddenInput.value = formatearHoraWhatsApp(nativePicker.value);
+    actualizarVistaPreviaWhatsApp();
+  }
+}
+
+/**
+ * Establece un atajo rápido de hora
+ */
+function setAtajoHora(horaStr) {
+  const nativePicker = document.getElementById('input-hora-native');
+  if (nativePicker) {
+    nativePicker.value = horaStr;
+    sincronizarHoraPicker();
+    mostrarToast(`Hora fijada a ${horaStr}`, 'info');
+  }
+}
+
+/**
+ * Genera la fecha actual en formato ISO YYYY-MM-DD
+ */
+function obtenerFechaISOHoy(date = new Date()) {
+  const dia = String(date.getDate()).padStart(2, '0');
+  const mes = String(date.getMonth() + 1).padStart(2, '0');
+  const anio = date.getFullYear();
+  return `${anio}-${mes}-${dia}`;
+}
+
+/**
+ * Genera la hora actual en formato HH:MM
+ */
+function obtenerHoraISOHoy(date = new Date()) {
   const horas = String(date.getHours()).padStart(2, '0');
   const minutos = String(date.getMinutes()).padStart(2, '0');
-  return `${horas}${minutos}horas`;
+  return `${horas}:${minutos}`;
 }
 
 /**
  * Inicializa los campos de fecha y hora en el formulario
  */
 function inicializarFechaYHoraDefault() {
-  const inputFecha = document.getElementById('input-fecha');
-  const inputHora = document.getElementById('input-hora');
+  const nativeDate = document.getElementById('input-fecha-native');
+  const nativeTime = document.getElementById('input-hora-native');
 
-  if (inputFecha && !inputFecha.value) {
-    inputFecha.value = obtenerFechaFormateada();
+  if (nativeDate && !nativeDate.value) {
+    nativeDate.value = obtenerFechaISOHoy();
+    sincronizarFechaPicker();
   }
-  if (inputHora && !inputHora.value) {
-    inputHora.value = obtenerHoraFormateada();
+  if (nativeTime && !nativeTime.value) {
+    nativeTime.value = obtenerHoraISOHoy();
+    sincronizarHoraPicker();
   }
 }
 
@@ -56,10 +119,64 @@ function inicializarFechaYHoraDefault() {
  * Actualiza fecha y hora al momento actual
  */
 function actualizarFechaHoraActual() {
-  document.getElementById('input-fecha').value = obtenerFechaFormateada();
-  document.getElementById('input-hora').value = obtenerHoraFormateada();
-  actualizarVistaPreviaWhatsApp();
+  const nativeDate = document.getElementById('input-fecha-native');
+  const nativeTime = document.getElementById('input-hora-native');
+
+  if (nativeDate) nativeDate.value = obtenerFechaISOHoy();
+  if (nativeTime) nativeTime.value = obtenerHoraISOHoy();
+
+  sincronizarFechaPicker();
+  sincronizarHoraPicker();
   mostrarToast('Fecha y hora actualizadas', 'info');
+}
+
+/**
+ * Obtiene las coordenadas GPS del dispositivo mediante Geolocation API
+ */
+function obtenerCoordenadasGPS() {
+  const latEl = document.getElementById('gps-lat');
+  const lonEl = document.getElementById('gps-lon');
+  const accEl = document.getElementById('gps-acc');
+  const altEl = document.getElementById('gps-alt');
+
+  if (latEl) latEl.textContent = 'Buscando satélites...';
+  if (lonEl) lonEl.textContent = 'Buscando satélites...';
+
+  if (!('geolocation' in navigator)) {
+    if (latEl) latEl.textContent = 'No soportado';
+    if (lonEl) lonEl.textContent = 'No soportado';
+    return;
+  }
+
+  const opciones = {
+    enableHighAccuracy: true,
+    timeout: 12000,
+    maximumAge: 0
+  };
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      coordenadasGPSActuales = {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        alt: pos.coords.altitude ? `${Math.round(pos.coords.altitude)}m` : 'N/A',
+        acc: pos.coords.accuracy ? `±${Math.round(pos.coords.accuracy)}m` : 'N/A'
+      };
+
+      if (latEl) latEl.textContent = coordenadasGPSActuales.lat.toFixed(6);
+      if (lonEl) lonEl.textContent = coordenadasGPSActuales.lon.toFixed(6);
+      if (accEl) accEl.textContent = coordenadasGPSActuales.acc;
+      if (altEl) altEl.textContent = coordenadasGPSActuales.alt;
+
+      actualizarVistaPreviaWhatsApp();
+    },
+    (err) => {
+      console.warn('Error al obtener GPS:', err.message);
+      if (latEl) latEl.textContent = 'Ubicación desactivada';
+      if (lonEl) lonEl.textContent = 'Ubicación desactivada';
+    },
+    opciones
+  );
 }
 
 /**
@@ -69,7 +186,6 @@ async function cargarPerfilUsuario() {
   perfilActual = await obtenerPerfilTPI();
   if (!perfilActual) return;
 
-  // Llenar formulario de reporte con defaults si están vacíos o no modificados
   const setIfExist = (id, val) => {
     const el = document.getElementById(id);
     if (el && val) el.value = val;
@@ -82,9 +198,7 @@ async function cargarPerfilUsuario() {
   setIfExist('input-bateria', perfilActual.bateria);
   setIfExist('input-lugar', perfilActual.lugarDefault);
   setIfExist('input-notificado', perfilActual.notificadoDefault);
-  setIfExist('input-turno', perfilActual.turnoDefault);
 
-  // Llenar formulario de Perfil tab
   setIfExist('perfil-tpi', perfilActual.tpi);
   setIfExist('perfil-ci', perfilActual.ci);
   setIfExist('perfil-tlf', perfilActual.tlf);
@@ -130,7 +244,8 @@ function obtenerDatosFormulario() {
     bateria: document.getElementById('input-bateria')?.value.trim() || '',
     asunto: document.getElementById('input-asunto')?.value.trim() || '',
     observaciones: document.getElementById('input-observaciones')?.value.trim() || '',
-    notificado: document.getElementById('input-notificado')?.value.trim() || ''
+    notificado: document.getElementById('input-notificado')?.value.trim() || '',
+    incluirGpsLink: document.getElementById('chk-incluir-gps-wa')?.checked || false
   };
 }
 
@@ -138,6 +253,12 @@ function obtenerDatosFormulario() {
  * Genera el texto exacto según la plantilla requerida para WhatsApp
  */
 function generarTextoWhatsApp(datos = obtenerDatosFormulario(), boldMode = modoFormatoBold) {
+  let gpsText = '';
+  if (datos.incluirGpsLink && coordenadasGPSActuales.lat && coordenadasGPSActuales.lon) {
+    const mapsLink = `https://maps.google.com/?q=${coordenadasGPSActuales.lat},${coordenadasGPSActuales.lon}`;
+    gpsText = boldMode ? `\n\n*Ubicación GPS Satelital:*\n${mapsLink}` : `\n\nUbicación GPS Satelital:\n${mapsLink}`;
+  }
+
   if (boldMode) {
     return `*Reporte*
 *${datos.lugar}*
@@ -157,10 +278,9 @@ ${datos.asunto}
 ${datos.observaciones}
 
 *Notificado:*
-${datos.notificado}`;
+${datos.notificado}${gpsText}`;
   }
 
-  // Formato exacto estándar (como en la especificación del usuario)
   return `Reporte
 ${datos.lugar}
 Fecha ${datos.fecha}
@@ -179,7 +299,7 @@ Observaciones:
 ${datos.observaciones}
 
 Notificado:
-${datos.notificado}`;
+${datos.notificado}${gpsText}`;
 }
 
 /**
@@ -206,7 +326,7 @@ function toggleFormatoWhatsApp() {
 }
 
 /**
- * Carga plantillas predeterminadas en Asunto y Observaciones
+ * Carga plantillas predeterminadas
  */
 function cargarPreset(tipo) {
   const inputAsunto = document.getElementById('input-asunto');
@@ -242,6 +362,192 @@ function limpiarFormulario() {
 }
 
 /**
+ * Procesa la foto capturada imprimiendo una marca de agua completa en el canvas
+ */
+function procesarFotoConMarcaDeAgua(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('canvas-watermark');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // Dibujar imagen original
+      ctx.drawImage(img, 0, 0);
+
+      // Calcular proporciones de marca de agua
+      const bannerHeight = Math.max(120, img.height * 0.18);
+      const fontSizeHeading = Math.max(16, bannerHeight * 0.18);
+      const fontSizeBody = Math.max(13, bannerHeight * 0.14);
+
+      // Banner inferior translúcido estilo industrial
+      ctx.fillStyle = 'rgba(11, 37, 69, 0.88)';
+      ctx.fillRect(0, img.height - bannerHeight, img.width, bannerHeight);
+
+      // Borde decorativo verde turquesa
+      ctx.fillStyle = '#00A896';
+      ctx.fillRect(0, img.height - bannerHeight, img.width, 6);
+
+      // Datos a estampar
+      const datos = obtenerDatosFormulario();
+      const fechaHoraActual = `${datos.fecha || obtenerFechaISOHoy()} - ${datos.hora || '1200horas'}`;
+      const gpsStr = (coordenadasGPSActuales.lat && coordenadasGPSActuales.lon)
+        ? `GPS: Lat ${coordenadasGPSActuales.lat.toFixed(6)}, Lon ${coordenadasGPSActuales.lon.toFixed(6)} (${coordenadasGPSActuales.acc})`
+        : 'GPS: No disponible al momento de captura';
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `bold ${fontSizeHeading}px sans-serif`;
+      ctx.fillText(`TPI INSPECCIÓN: ${datos.tpi || 'Miguel Rivero'} (C.I. ${datos.ci || '20.458.588'})`, 20, img.height - bannerHeight + fontSizeHeading + 12);
+
+      ctx.fillStyle = '#E2EBF2';
+      ctx.font = `${fontSizeBody}px sans-serif`;
+      ctx.fillText(`LUGAR: ${datos.lugar || 'PDVSA el Menito (COA)'}`, 20, img.height - bannerHeight + fontSizeHeading + fontSizeBody + 20);
+
+      ctx.fillStyle = '#8ECAE6';
+      ctx.font = `bold ${fontSizeBody}px monospace`;
+      ctx.fillText(`FECHA/HORA: ${fechaHoraActual}`, 20, img.height - bannerHeight + fontSizeHeading + (fontSizeBody * 2) + 26);
+
+      ctx.fillStyle = '#00A896';
+      ctx.font = `bold ${fontSizeBody}px monospace`;
+      ctx.fillText(gpsStr, 20, img.height - bannerHeight + fontSizeHeading + (fontSizeBody * 3) + 32);
+
+      // Guardar objeto de datos procesados
+      fotoCanvasProcessedData = {
+        dataUrl: canvas.toDataURL('image/jpeg', 0.85),
+        latitude: coordenadasGPSActuales.lat,
+        longitude: coordenadasGPSActuales.lon,
+        altitude: coordenadasGPSActuales.alt,
+        accuracy: coordenadasGPSActuales.acc,
+        lugar: datos.lugar,
+        tpi: datos.tpi
+      };
+
+      const previewBox = document.getElementById('preview-foto-container');
+      if (previewBox) previewBox.classList.remove('hidden');
+
+      mostrarToast('Marca de agua GPS agregada', 'success');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Descarta la foto procesada actual
+ */
+function descartarFotoActual() {
+  fotoCanvasProcessedData = null;
+  const previewBox = document.getElementById('preview-foto-container');
+  if (previewBox) previewBox.classList.add('hidden');
+}
+
+/**
+ * Guarda la foto con marca de agua en la galería de evidencias IndexedDB
+ */
+async function guardarFotoEnHistorial() {
+  if (!fotoCanvasProcessedData) return;
+
+  await guardarFotoDB(fotoCanvasProcessedData);
+  descartarFotoActual();
+  await cargarGaleriaFotos();
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Foto Guardada',
+    text: 'La fotografía con marca de agua y GPS fue almacenada en la galería.',
+    confirmButtonColor: '#134074'
+  });
+}
+
+/**
+ * Carga las fotos guardadas en la galería
+ */
+async function cargarGaleriaFotos() {
+  const grid = document.getElementById('fotos-galeria-grid');
+  const badgeTotal = document.getElementById('badge-total-fotos');
+  if (!grid) return;
+
+  const fotos = await obtenerFotosDB();
+
+  if (badgeTotal) {
+    badgeTotal.textContent = `${fotos.length} foto${fotos.length === 1 ? '' : 's'}`;
+  }
+
+  if (fotos.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-8 px-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700">
+        <span class="material-symbols-outlined text-3xl text-slate-400">add_a_photo</span>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">No hay fotografías con GPS registradas</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = fotos.map(f => `
+    <div class="rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-2 pb-2">
+      <div class="relative h-44 bg-black">
+        <img src="${f.dataUrl}" alt="Foto GPS TPI" class="w-full h-full object-cover">
+        <div class="absolute inset-0 photo-card-overlay flex flex-col justify-end p-2.5 text-white">
+          <span class="text-[10px] font-bold text-[#8ECAE6] flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs text-[#00A896]">location_on</span>
+            ${escapeHtml(f.lugar || 'PDVSA el Menito')}
+          </span>
+          <span class="text-[9px] font-mono text-slate-200">
+            ${f.latitude ? `GPS: ${f.latitude.toFixed(5)}, ${f.longitude.toFixed(5)}` : 'Sin GPS'}
+          </span>
+        </div>
+      </div>
+      <div class="px-2.5 flex items-center justify-between text-xs">
+        <span class="text-[10px] text-slate-400">
+          Inspector: ${escapeHtml(f.tpi || 'TPI')}
+        </span>
+        <div class="flex items-center gap-1">
+          ${f.latitude ? `
+            <button type="button" onclick="copiarGpsEnlace(${f.latitude}, ${f.longitude})" class="p-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200" title="Copiar enlace GPS">
+              <span class="material-symbols-outlined text-sm">link</span>
+            </button>
+          ` : ''}
+          <button type="button" onclick="confirmarEliminarFoto(${f.id})" class="p-1 rounded bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400" title="Eliminar">
+            <span class="material-symbols-outlined text-sm">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copiarGpsEnlace(lat, lon) {
+  const url = `https://maps.google.com/?q=${lat},${lon}`;
+  navigator.clipboard.writeText(url).then(() => {
+    mostrarToast('Enlace de Google Maps copiado', 'success');
+  });
+}
+
+async function confirmarEliminarFoto(id) {
+  const res = await Swal.fire({
+    title: '¿Eliminar foto?',
+    text: 'Esta evidencia será eliminada del dispositivo.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#e11d48',
+    confirmButtonText: 'Eliminar'
+  });
+
+  if (res.isConfirmed) {
+    await eliminarFotoDB(id);
+    await cargarGaleriaFotos();
+    mostrarToast('Fotografía eliminada', 'success');
+  }
+}
+
+/**
  * Abre WhatsApp con el mensaje cargado
  */
 async function enviarWhatsApp() {
@@ -252,12 +558,11 @@ async function enviarWhatsApp() {
       icon: 'warning',
       title: 'Asunto Requerido',
       text: 'Por favor complete el asunto del reporte antes de enviar.',
-      confirmButtonColor: '#0061A4'
+      confirmButtonColor: '#134074'
     });
     return;
   }
 
-  // Guardar automáticamente en el historial local
   await guardarReporteDB(datos);
   await cargarHistorial();
 
@@ -265,7 +570,6 @@ async function enviarWhatsApp() {
   const urlEncoded = encodeURIComponent(mensaje);
   const whatsappUrl = `https://api.whatsapp.com/send?text=${urlEncoded}`;
 
-  // Abrir ventana de WhatsApp
   window.open(whatsappUrl, '_blank');
 }
 
@@ -278,7 +582,6 @@ async function copiarReporte() {
     await navigator.clipboard.writeText(texto);
     mostrarToast('Reporte copiado al portapapeles', 'success');
   } catch (err) {
-    // Fallback manual para navegadores antiguos
     const textArea = document.createElement('textarea');
     textArea.value = texto;
     document.body.appendChild(textArea);
@@ -290,7 +593,7 @@ async function copiarReporte() {
 }
 
 /**
- * Guarda el reporte en IndexedDB manualmente y notifica
+ * Guarda el reporte en IndexedDB manualmente
  */
 async function guardarEHistorial() {
   const datos = obtenerDatosFormulario();
@@ -354,7 +657,7 @@ async function cargarHistorial() {
     <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow space-y-3">
       <div class="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-2">
         <div>
-          <span class="text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1">
+          <span class="text-xs font-bold text-[#134074] dark:text-[#8ECAE6] flex items-center gap-1">
             <span class="material-symbols-outlined text-sm">domain</span>
             ${escapeHtml(r.lugar || 'Sin Lugar')}
           </span>
@@ -399,9 +702,6 @@ async function cargarHistorial() {
   `).join('');
 }
 
-/**
- * Filtra la lista del historial al escribir en la barra de búsqueda
- */
 function filtrarHistorial() {
   const input = document.getElementById('input-buscar-historial');
   const btnLimpiar = document.getElementById('btn-limpiar-busqueda');
@@ -424,9 +724,6 @@ function limpiarBusqueda() {
   }
 }
 
-/**
- * Muestra el detalle del reporte en un modal emergente
- */
 async function verDetalleReporte(id) {
   const reporte = await obtenerReportePorIdDB(id);
   if (!reporte) return;
@@ -471,9 +768,6 @@ function cerrarModalDetalle() {
   if (modalEl) modalEl.classList.add('hidden');
 }
 
-/**
- * Carga los datos de un reporte existente en el formulario principal
- */
 async function duplicarReporteAlFormulario(id) {
   const r = await obtenerReportePorIdDB(id);
   if (!r) return;
@@ -496,9 +790,6 @@ async function duplicarReporteAlFormulario(id) {
   mostrarToast('Reporte cargado en el formulario', 'info');
 }
 
-/**
- * Envía un reporte del historial directamente a WhatsApp
- */
 async function enviarReporteHistorialWhatsApp(id) {
   const reporte = await obtenerReportePorIdDB(id);
   if (!reporte) return;
@@ -508,9 +799,6 @@ async function enviarReporteHistorialWhatsApp(id) {
   window.open(whatsappUrl, '_blank');
 }
 
-/**
- * Confirma la eliminación de un reporte individual
- */
 async function confirmarEliminarReporte(id) {
   const res = await Swal.fire({
     title: '¿Eliminar reporte?',
@@ -530,9 +818,6 @@ async function confirmarEliminarReporte(id) {
   }
 }
 
-/**
- * Vacía todo el historial previa confirmación
- */
 async function confirmarVaciarHistorial() {
   const res = await Swal.fire({
     title: '¿Vaciar todo el historial?',
@@ -552,9 +837,6 @@ async function confirmarVaciarHistorial() {
   }
 }
 
-/**
- * Guarda los datos del perfil TPI desde la pestaña Perfil
- */
 async function guardarPerfilHandler() {
   const perfil = {
     tpi: document.getElementById('perfil-tpi').value.trim(),
@@ -574,27 +856,21 @@ async function guardarPerfilHandler() {
     icon: 'success',
     title: 'Perfil Guardado',
     text: 'Sus datos predeterminados fueron guardados correctamente.',
-    confirmButtonColor: '#0061A4'
+    confirmButtonColor: '#134074'
   });
 }
 
-/**
- * Exporta el historial en formato JSON
- */
 async function exportarHistorialJSON() {
   const reportes = await obtenerReportesDB();
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportes, null, 2));
   const downloadAnchor = document.createElement('a');
   downloadAnchor.setAttribute("href", dataStr);
-  downloadAnchor.setAttribute("download", `tpi_reportes_backup_${obtenerFechaFormateada().replace(/\//g, '-')}.json`);
+  downloadAnchor.setAttribute("download", `tpi_reportes_backup_${obtenerFechaISOHoy()}.json`);
   document.body.appendChild(downloadAnchor);
   downloadAnchor.click();
   downloadAnchor.remove();
 }
 
-/**
- * Importa reportes desde un archivo JSON
- */
 async function importarHistorialJSON(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -615,7 +891,7 @@ async function importarHistorialJSON(event) {
         icon: 'error',
         title: 'Error de importación',
         text: 'El archivo JSON seleccionado no tiene un formato válido.',
-        confirmButtonColor: '#0061A4'
+        confirmButtonColor: '#134074'
       });
     }
   };
@@ -623,10 +899,10 @@ async function importarHistorialJSON(event) {
 }
 
 /**
- * Manejo de pestañas principales (Nuevo, Historial, Perfil)
+ * Manejo de pestañas principales (Nuevo, Fotos, Historial, Perfil)
  */
 function cambiarTab(tabName) {
-  const views = ['nuevo', 'historial', 'perfil'];
+  const views = ['nuevo', 'fotos', 'historial', 'perfil'];
 
   views.forEach(v => {
     const sec = document.getElementById(`view-${v}`);
@@ -643,6 +919,9 @@ function cambiarTab(tabName) {
 
   if (tabName === 'historial') {
     cargarHistorial();
+  } else if (tabName === 'fotos') {
+    cargarGaleriaFotos();
+    obtenerCoordenadasGPS();
   }
 }
 
@@ -725,9 +1004,6 @@ function mostrarToast(mensaje, icono = 'success') {
   });
 }
 
-/**
- * Helpers para sanitizar HTML y JS strings
- */
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)

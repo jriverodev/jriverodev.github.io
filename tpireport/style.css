@@ -1,14 +1,17 @@
-/* Material Design 3 Custom Tokens & WhatsApp Template Styles */
+/* Material Design 3 Custom Tokens & NABEP Petroleum / Oil & Gas Palette */
 
 :root {
-  --md-sys-color-primary: #0061A4;
+  /* NABEP Industrial Oil & Gas Theme Tokens */
+  --md-sys-color-primary: #134074;
   --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #D1E4FF;
-  --md-sys-color-on-primary-container: #001D36;
-  --md-sys-color-surface: #F8FDFF;
-  --md-sys-color-surface-container: #F0F4F9;
-  --md-sys-color-surface-container-high: #E2E8F0;
-  --md-sys-color-outline: #74777F;
+  --md-sys-color-primary-container: #D1E3F8;
+  --md-sys-color-on-primary-container: #001D38;
+  --md-sys-color-secondary: #00A896;
+  --md-sys-color-surface: #F4F7FA;
+  --md-sys-color-surface-container: #EEF4F8;
+  --md-sys-color-surface-container-high: #E2EBF2;
+  --md-sys-color-outline: #6B7C93;
+  --md-sys-color-energy-amber: #D97706;
   --wa-brand-color: #25D366;
   --wa-brand-hover: #20bd5a;
   --wa-bg-light: #efeae2;
@@ -18,14 +21,16 @@
 }
 
 .dark {
-  --md-sys-color-primary: #9ECAFF;
+  --md-sys-color-primary: #8ECAE6;
   --md-sys-color-on-primary: #003258;
-  --md-sys-color-primary-container: #00497D;
-  --md-sys-color-on-primary-container: #D1E4FF;
-  --md-sys-color-surface: #0F172A;
-  --md-sys-color-surface-container: #1E293B;
-  --md-sys-color-surface-container-high: #334155;
-  --md-sys-color-outline: #8E9199;
+  --md-sys-color-primary-container: #0B2545;
+  --md-sys-color-on-primary-container: #D1E3F8;
+  --md-sys-color-secondary: #02C39A;
+  --md-sys-color-surface: #080E15;
+  --md-sys-color-surface-container: #0D1B2A;
+  --md-sys-color-surface-container-high: #1B2A4A;
+  --md-sys-color-outline: #7D8F9F;
+  --md-sys-color-energy-amber: #F59E0B;
 }
 
 body {
@@ -34,6 +39,8 @@ body {
   color: #1e293b;
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .dark body {
@@ -43,34 +50,48 @@ body {
 /* Material Design 3 Input Fields */
 .m3-field {
   position: relative;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
 }
 
-.m3-input {
+.m3-input, .m3-select {
   width: 100%;
-  padding: 1rem 1rem 1rem 2.75rem;
-  font-size: 0.95rem;
+  padding: 0.9rem 0.9rem 0.9rem 2.75rem;
+  font-size: 0.925rem;
   background-color: transparent;
-  border: 1px solid var(--md-sys-color-outline);
+  border: 1.5px solid var(--md-sys-color-outline);
   border-radius: 0.75rem;
   outline: none;
   transition: all 0.2s ease-in-out;
+  color: inherit;
 }
 
-.m3-input:focus {
+.m3-input:focus, .m3-select:focus {
   border-color: var(--md-sys-color-primary);
   border-width: 2px;
-  box-shadow: 0 0 0 3px rgba(0, 97, 164, 0.15);
+  box-shadow: 0 0 0 3px rgba(19, 64, 116, 0.15);
 }
 
-.dark .m3-input {
-  border-color: #475569;
+.dark .m3-input, .dark .m3-select {
+  border-color: #334155;
   color: #f8fafc;
 }
 
-.dark .m3-input:focus {
+.dark .m3-input:focus, .dark .m3-select:focus {
   border-color: var(--md-sys-color-primary);
-  box-shadow: 0 0 0 3px rgba(158, 202, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(142, 202, 230, 0.2);
+}
+
+/* Date and Time Native Input Polish */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: opacity(0.6);
+  padding: 2px;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9) opacity(0.8);
 }
 
 .m3-field-icon {
@@ -88,20 +109,22 @@ body {
   left: 2.75rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: #64748b;
   pointer-events: none;
   transition: all 0.2s ease-in-out;
   background-color: var(--md-sys-color-surface);
-  padding: 0 0.25rem;
+  padding: 0 0.35rem;
+  border-radius: 4px;
 }
 
 .m3-input:focus ~ .m3-label,
-.m3-input:not(:placeholder-shown) ~ .m3-label {
+.m3-input:not(:placeholder-shown) ~ .m3-label,
+.m3-select ~ .m3-label {
   top: 0;
   transform: translateY(-50%) scale(0.85);
   color: var(--md-sys-color-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* WhatsApp Bubble Preview Card */
@@ -169,7 +192,7 @@ body {
   background-color: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
   border-radius: 9999px;
-  padding: 0.25rem 1.25rem;
+  padding: 0.25rem 1rem;
 }
 
 .nav-tab-active span.nav-text {
@@ -177,14 +200,14 @@ body {
   font-weight: 700;
 }
 
-/* Material Ripple & Pill Animations */
-.m3-chip {
-  transition: all 0.15s ease-in-out;
-  user-select: none;
+/* Photo Gallery & GPS Badges */
+.photo-card-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
 }
 
-.m3-chip:active {
-  transform: scale(0.96);
+/* Safe area padding for Cordova / Capacitor / iOS Notch */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Custom Scrollbar */
@@ -196,6 +219,6 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(107, 124, 147, 0.4);
   border-radius: 9999px;
 }
