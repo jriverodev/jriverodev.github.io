@@ -1,25 +1,27 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boda & Festejo - Comparte tus Recuerdos</title>
+    <title>Boda & Festejo - Comparte tus Fotos</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center font-sans">
 
-    <!-- Header Elegante -->
+    <!-- Header -->
     <header class="w-full max-w-md p-6 text-center border-b border-slate-800/60 bg-slate-900/40 backdrop-blur sticky top-0 z-20">
-        <h1 class="text-2xl font-bold tracking-tight text-amber-400">Irama & Miguel</h1>
-        <p class="text-xs text-slate-400 mt-1">De la iglesia a la fiesta 📸 Comparte cada momento</p>
+        <h1 id="header-title" class="text-2xl font-bold tracking-tight text-amber-400">Irama & Miguel</h1>
+        <p class="text-xs text-slate-400 mt-1">Sube tus fotos desde la iglesia hasta la fiesta 📸</p>
     </header>
 
-    <!-- Feed de Fotos (Timeline Principal) -->
+    <!-- Timeline / Feed Principal -->
     <main id="feed-container" class="w-full max-w-md p-4 flex-1 flex flex-col gap-4 pb-28">
-        <div class="text-center py-10 text-slate-500 animate-pulse">Cargando momentos mágicos...</div>
+        <div class="text-center py-12 text-slate-500 animate-pulse">Cargando momentos mágicos...</div>
     </main>
 
-    <!-- Botón Flotante de Acción (Estilo Kululu) -->
+    <!-- Botón Flotante para Añadir Foto -->
     <div class="fixed bottom-6 z-30 w-full max-w-md px-4 flex justify-center">
         <button onclick="openUploadModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-8 rounded-full shadow-2xl flex items-center gap-2 transition transform active:scale-95">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
@@ -27,7 +29,7 @@
         </button>
     </div>
 
-    <!-- Modal de Subida (Bottom Sheet) -->
+    <!-- Modal de Subida (Bottom Sheet estilo Kululu) -->
     <div id="upload-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-end justify-center">
         <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -35,10 +37,10 @@
                 <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-200 p-2">✕</button>
             </div>
 
-            <!-- Selector de archivo -->
+            <!-- Drag & Drop / Input -->
             <label for="file-input" class="w-full border-2 border-dashed border-slate-700 hover:border-amber-400 rounded-2xl p-6 flex flex-col items-center cursor-pointer transition bg-slate-950/40 text-center">
                 <svg class="w-10 h-10 text-amber-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                <span class="text-sm font-medium text-slate-200">Toca para elegir foto o cámara</span>
+                <span class="text-sm font-medium text-slate-200">Toca para elegir foto o tomar una</span>
             </label>
             <input type="file" id="file-input" accept="image/*" class="hidden" onchange="previewFile(event)">
 
@@ -53,71 +55,78 @@
 
                 <div>
                     <label class="text-xs text-slate-400 block mb-1">Mensaje o dedicatoria:</label>
-                    <input type="text" id="input-caption" placeholder="¡Qué gran ceremonia!" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+                    <input type="text" id="input-caption" placeholder="¡Qué gran celebración!" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-400">
                 </div>
 
-                <button onclick="uploadPhoto()" id="submit-btn" class="mt-2 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+                <button onclick="processAndUpload()" id="submit-btn" class="mt-2 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
                     Publicar en el evento 🚀
                 </button>
             </div>
 
             <div id="loading-spinner" class="hidden mt-6 text-center text-amber-400 text-sm animate-pulse">
-                Subiendo recuerdo a la nube...
+                Guardando imagen en Google Drive y registrando...
             </div>
         </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT";
         let selectedFileBase64 = null;
         let selectedFileType = null;
         let selectedFileName = null;
 
-        window.onload = loadFeed;
+        window.onload = () => {
+            loadEventConfig();
+            loadFeed();
+        };
 
-        async function loadFeed() {
-            const feed = document.getElementById('feed-container');
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=getPhotos`);
-                const data = await res.json();
-                
-                if (data.status === 'success' && data.photos.length > 0) {
-                    feed.innerHTML = '';
-                    data.photos.forEach(photo => {
-                        const card = document.createElement('div');
-                        card.className = 'bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-lg';
-                        card.innerHTML = `
-                            <div class="p-3 flex items-center justify-between">
-                                <span class="text-xs font-semibold text-amber-400">📸 ${escapeHtml(photo.author)}</span>
-                            </div>
-                            <img src="${photo.url}" class="w-full max-h-96 object-cover bg-slate-950" loading="lazy">
-                            <div class="p-4 flex flex-col gap-2">
-                                ${photo.caption ? `<p class="text-sm text-slate-200">"${escapeHtml(photo.caption)}"</p>` : ''}
-                                <div class="flex items-center justify-between mt-1">
-                                    <button onclick="likePhoto('${photo.id}', this)" class="flex items-center gap-1.5 text-rose-500 hover:scale-110 transition active:scale-90">
-                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                        <span class="text-xs font-bold text-slate-300">${photo.likes}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        feed.appendChild(card);
-                    });
-                } else {
-                    feed.innerHTML = '<div class="text-center py-16 text-slate-500">Aún no hay fotos. ¡Sé el primero en subir una! ✨</div>';
-                }
-            } catch (err) {
-                feed.innerHTML = '<div class="text-center py-16 text-red-400">Error al cargar las fotos del evento.</div>';
+        async function loadEventConfig() {
+            const { data } = await supabaseClient.from('events').select('*').limit(1).single();
+            if (data) {
+                document.getElementById('header-title').innerText = data.event_name;
             }
         }
 
-        function openUploadModal() {
-            document.getElementById('upload-modal').classList.remove('hidden');
+        async function loadFeed() {
+            const feed = document.getElementById('feed-container');
+            const { data: photos, error } = await supabaseClient
+                .from('photos')
+                .select('*')
+                .eq('is_approved', true)
+                .order('created_at', { ascending: false });
+
+            if (error || !photos || photos.length === 0) {
+                feed.innerHTML = '<div class="text-center py-16 text-slate-500">Aún no hay fotos. ¡Sé el primero en subir una! ✨</div>';
+                return;
+            }
+
+            feed.innerHTML = '';
+            photos.forEach(photo => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-lg';
+                card.innerHTML = `
+                    <div class="p-3 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-amber-400">📸 ${escapeHtml(photo.author)}</span>
+                    </div>
+                    <img src="${photo.url}" class="w-full max-h-96 object-cover bg-slate-950" loading="lazy">
+                    <div class="p-4 flex flex-col gap-2">
+                        ${photo.caption ? `<p class="text-sm text-slate-200">"${escapeHtml(photo.caption)}"</p>` : ''}
+                        <div class="flex items-center justify-between mt-1">
+                            <button onclick="likePhoto('${photo.id}', ${photo.likes || 0}, this)" class="flex items-center gap-1.5 text-rose-500 hover:scale-110 transition active:scale-90">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <span class="text-xs font-bold text-slate-300">${photo.likes || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
         }
 
+        function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
         function closeUploadModal() {
             document.getElementById('upload-modal').classList.add('hidden');
-            resetForm();
+            document.getElementById('preview-section').classList.add('hidden');
+            selectedFileBase64 = null;
         }
 
         function previewFile(event) {
@@ -135,46 +144,52 @@
             reader.readAsDataURL(file);
         }
 
-        async function uploadPhoto() {
+        async function processAndUpload() {
             if (!selectedFileBase64) return;
-            
             document.getElementById('submit-btn').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
 
-            const payload = {
-                fileName: selectedFileName,
-                mimeType: selectedFileType,
-                fileBase64: selectedFileBase64,
-                author: document.getElementById('input-author').value || "Invitado Anónimo",
-                caption: document.getElementById('input-caption').value || ""
-            };
-
             try {
-                await fetch(SCRIPT_URL, {
+                // 1. Subir archivo a Google Drive vía Apps Script
+                const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
                     method: 'POST',
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        fileName: selectedFileName,
+                        mimeType: selectedFileType,
+                        fileBase64: selectedFileBase64
+                    })
                 });
-                closeUploadModal();
-                loadFeed();
+                const driveResult = await response.json();
+
+                if (driveResult.status === 'success') {
+                    // 2. Insertar metadatos en Supabase con RLS habilitado
+                    await supabaseClient.from('photos').insert([{
+                        drive_file_id: driveResult.fileId || 'drive_file',
+                        url: driveResult.url,
+                        author: document.getElementById('input-author').value || 'Invitado Anónimo',
+                        caption: document.getElementById('input-caption').value || '',
+                        likes: 0,
+                        is_approved: true
+                    }]);
+
+                    closeUploadModal();
+                    loadFeed();
+                } else {
+                    alert('Error en Google Drive: ' + driveResult.message);
+                }
             } catch (err) {
-                alert("Error al subir la foto. Intenta de nuevo.");
+                alert('Error al procesar la subida.');
+            } finally {
                 document.getElementById('submit-btn').classList.remove('hidden');
                 document.getElementById('loading-spinner').classList.add('hidden');
             }
         }
 
-        async function likePhoto(id, btnElement) {
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'like', id: id })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    btnElement.querySelector('span').innerText = data.likes;
-                }
-            } catch (err) {
-                console.error("Error al dar like");
+        async function likePhoto(id, currentLikes, btnElement) {
+            const newLikes = currentLikes + 1;
+            const { error } = await supabaseClient.from('photos').update({ likes: newLikes }).eq('id', id);
+            if (!error) {
+                btnElement.querySelector('span').innerText = newLikes;
             }
         }
 
