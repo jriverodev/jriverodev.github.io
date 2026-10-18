@@ -4,8 +4,8 @@ const CONFIG = {
     APPS_SCRIPT_URL: 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI',
     
     // Credenciales de tu proyecto Supabase
-    SUPABASE_URL: 'https://TU_PROYECTO.supabase.co',
-    SUPABASE_ANON_KEY: 'TU_SUPABASE_ANON_KEY_AQUI'
+    SUPABASE_URL: 'https://oydfrrdcgcmuqdkriibm.supabase.co',
+    SUPABASE_ANON_KEY: 'sb_publishable_MVSJ3kxyyzhIs1SChJyyYw_fYXXC0u2'
 };
 
 // Inicialización global del cliente Supabase
