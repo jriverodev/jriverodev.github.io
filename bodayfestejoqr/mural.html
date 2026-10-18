@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mural en Vivo - Irama & Miguel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes floatUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-float {
+            animation: floatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-hidden p-8 select-none">
+
+    <!-- Header del Evento para Proyector / TV -->
+    <header class="flex justify-between items-center z-10 border-b border-slate-800/80 pb-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-amber-400">Irama & Miguel</h1>
+            <p class="text-sm text-slate-400 mt-1">Sube tus fotos escaneando el código QR en tu mesa 📸</p>
+        </div>
+        <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 px-5 py-2.5 rounded-2xl shadow-lg">
+            <span class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
+            <span class="text-sm font-semibold text-slate-200 tracking-wide">EN VIVO</span>
+        </div>
+    </header>
+
+    <!-- Grid Central Dinámico de Fotos Recientes -->
+    <main class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 items-center justify-center my-6 overflow-hidden">
+        <div id="mural-grid" class="col-span-full grid grid-cols-2 md:grid-cols-4 gap-6 h-full w-full items-center">
+            <!-- Las fotos se cargan e insertan dinámicamente aquí con animación -->
+            <div class="col-span-full text-center text-slate-600 text-lg animate-pulse">
+                Esperando los primeros recuerdos de la celebración... ✨
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Informativo -->
+    <footer class="text-center text-xs text-slate-600 border-t border-slate-900 pt-4">
+        Disfruta cada instante de nuestra boda y fiesta • Actualización en tiempo real
+    </footer>
+
+    <script>
+        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT";
+        let lastLoadedCount = 0;
+
+        // Cargar fotos al iniciar y luego refrescar cada 6 segundos automáticamente
+        window.onload = () => {
+            fetchMuralPhotos();
+            setInterval(fetchMuralPhotos, 6000);
+        };
+
+        async function fetchMuralPhotos() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getPhotos`);
+                const data = await res.json();
+                
+                if (data.status === 'success' && data.photos.length > 0) {
+                    const grid = document.getElementById('mural-grid');
+                    
+                    // Si hay nuevas fotos, redibujamos el mural con animación flotante
+                    if (data.photos.length !== lastLoadedCount) {
+                        lastLoadedCount = data.photos.length;
+                        grid.innerHTML = '';
+                        
+                        // Tomamos las últimas 8 fotos para mostrarlas en gran formato en pantalla
+                        const latestPhotos = data.photos.slice(0, 8);
+                        
+                        latestPhotos.forEach((photo, index) => {
+                            const card = document.createElement('div');
+                            card.className = `relative group rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-800 shadow-2xl aspect-square animate-float`;
+                            card.style.animationDelay = `${index * 0.1}s`;
+                            
+                            card.innerHTML = `
+                                <img src="${photo.url}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent p-4 flex flex-col justify-end">
+                                    <span class="text-xs font-bold text-amber-400 drop-shadow">📸 ${escapeHtml(photo.author)}</span>
+                                    ${photo.caption ? `<p class="text-xs text-slate-200 truncate mt-0.5">"${escapeHtml(photo.caption)}"</p>` : ''}
+                                </div>
+                            `;
+                            grid.appendChild(card);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Error al actualizar el mural:", err);
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
