@@ -1,98 +1,206 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mural en Vivo - Irama & Miguel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes floatUp {
-            0% { transform: translateY(20px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
+        @keyframes floatSide {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(1.5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
         }
-        .animate-float {
-            animation: floatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-floating-card {
+            animation: floatSide 5s ease-in-out infinite;
         }
+        /* Ocultar barra de desplazamiento manteniendo funcionalidad */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-hidden p-8 select-none">
+<body class="bg-slate-950 text-slate-100 h-screen w-screen overflow-hidden flex flex-col justify-between p-6 select-none relative font-sans">
 
-    <!-- Header del Evento para Proyector / TV -->
-    <header class="flex justify-between items-center z-10 border-b border-slate-800/80 pb-4">
+    <!-- 1. HEADER (Título y Estado en Vivo) -->
+    <header class="flex justify-between items-center z-20 border-b border-slate-800/80 pb-4 px-2">
         <div>
             <h1 class="text-3xl font-extrabold tracking-tight text-amber-400">Irama & Miguel</h1>
-            <p class="text-sm text-slate-400 mt-1">Sube tus fotos escaneando el código QR en tu mesa 📸</p>
+            <p class="text-sm text-slate-400 mt-0.5">Sube tus fotos desde la iglesia hasta la fiesta escaneando el código QR 📸</p>
         </div>
-        <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 px-5 py-2.5 rounded-2xl shadow-lg">
+        <div class="flex items-center gap-3 bg-slate-900/80 backdrop-blur border border-slate-800 px-5 py-2.5 rounded-2xl shadow-xl">
             <span class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
             <span class="text-sm font-semibold text-slate-200 tracking-wide">EN VIVO</span>
         </div>
     </header>
 
-    <!-- Grid Central Dinámico de Fotos Recientes -->
-    <main class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 items-center justify-center my-6 overflow-hidden">
-        <div id="mural-grid" class="col-span-full grid grid-cols-2 md:grid-cols-4 gap-6 h-full w-full items-center">
-            <!-- Las fotos se cargan e insertan dinámicamente aquí con animación -->
-            <div class="col-span-full text-center text-slate-600 text-lg animate-pulse">
-                Esperando los primeros recuerdos de la celebración... ✨
+    <!-- 2. CONTENIDO PRINCIPAL (Miniaturas laterales + Spotlight Central) -->
+    <main class="flex-1 flex items-center justify-between relative my-2 overflow-hidden px-4">
+        
+        <!-- Carrusel Lateral Izquierdo (ThumbnailsAnimation) -->
+        <div class="w-48 hidden xl:flex flex-col justify-around h-full py-8 pointer-events-none z-10 opacity-85">
+            <div class="animate-floating-card bg-slate-900/90 backdrop-blur border border-slate-800 p-2.5 rounded-3xl shadow-2xl w-36 rotate-[-5deg]">
+                <img id="thumb-left-1" src="" class="w-full h-28 object-cover rounded-2xl bg-slate-950">
+            </div>
+            <div class="animate-floating-card bg-slate-900/90 backdrop-blur border border-slate-800 p-2.5 rounded-3xl shadow-2xl w-32 translate-x-6 rotate-[3deg]" style="animation-delay: 2.5s;">
+                <img id="thumb-left-2" src="" class="w-full h-24 object-cover rounded-2xl bg-slate-950">
+            </div>
+        </div>
+
+        <!-- Spotlight Central (StaringMedia / Foto en Grande) -->
+        <div class="flex-1 max-w-4xl mx-auto h-[72vh] flex items-center justify-center relative">
+            <div id="spotlight-container" class="relative w-full h-full bg-slate-900/60 backdrop-blur border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center group">
+                <img id="spotlight-img" src="" alt="Momento Destacado" class="w-full h-full object-contain bg-slate-950/80 transition-all duration-700">
+                
+                <!-- Overlay de Información y Likes -->
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/50 to-transparent p-6 flex justify-between items-end">
+                    <div>
+                        <span id="spotlight-author" class="text-base font-bold text-amber-400 drop-shadow">📸 Esperando recuerdos...</span>
+                        <p id="spotlight-caption" class="text-sm text-slate-200 mt-1 italic"></p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-slate-900/90 backdrop-blur border border-slate-700/60 px-4 py-2 rounded-full shadow-lg">
+                        <svg class="w-5 h-5 text-rose-500 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span id="spotlight-likes" class="text-sm font-bold text-slate-100">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carrusel Lateral Derecho (ThumbnailsAnimation) -->
+        <div class="w-48 hidden xl:flex flex-col justify-around h-full py-8 pointer-events-none z-10 opacity-85">
+            <div class="animate-floating-card bg-slate-900/90 backdrop-blur border border-slate-800 p-2.5 rounded-3xl shadow-2xl w-32 -translate-x-6 rotate-[4deg]" style="animation-delay: 1.2s;">
+                <img id="thumb-right-1" src="" class="w-full h-24 object-cover rounded-2xl bg-slate-950">
+            </div>
+            <div class="animate-floating-card bg-slate-900/90 backdrop-blur border border-slate-800 p-2.5 rounded-3xl shadow-2xl w-36 rotate-[-4deg]" style="animation-delay: 3.5s;">
+                <img id="thumb-right-2" src="" class="w-full h-28 object-cover rounded-2xl bg-slate-950">
             </div>
         </div>
     </main>
 
-    <!-- Footer Informativo -->
-    <footer class="text-center text-xs text-slate-600 border-t border-slate-900 pt-4">
-        Disfruta cada instante de nuestra boda y fiesta • Actualización en tiempo real
+    <!-- 3. COMPONENTE FLOTANTE INTERACTIVO DE QR (QRBox Arrastrable y Redimensionable) -->
+    <div id="qr-box" class="fixed top-24 right-8 z-50 bg-slate-900/95 border-2 border-amber-500/80 rounded-2xl p-4 shadow-2xl backdrop-blur-md cursor-move flex flex-col items-center group transition-all duration-200">
+        <!-- Controles de la caja -->
+        <div class="w-full flex justify-end gap-1.5 mb-2 opacity-70 group-hover:opacity-100 transition">
+            <button onclick="adjustQRSize(-20)" class="text-slate-400 hover:text-amber-400 p-1 rounded hover:bg-slate-800 transition" title="Reducir">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
+            </button>
+            <button onclick="adjustQRSize(20)" class="text-slate-400 hover:text-amber-400 p-1 rounded hover:bg-slate-800 transition" title="Agrandar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            </button>
+            <button onclick="toggleQRBox()" class="text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition ml-1" title="Ocultar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <p class="text-xs font-bold text-amber-400 mb-2 text-center max-w-[170px]">
+            Escanea para ver o añadir fotos 📸
+        </p>
+
+        <div class="bg-white p-2.5 rounded-xl shadow-inner border border-amber-400/50">
+            <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://tu-sitio.com" alt="QR Evento" class="w-36 h-36 object-contain transition-all duration-200">
+        </div>
+    </div>
+
+    <!-- 4. FOOTER / CRÉDITOS (Glassmorphism) -->
+    <footer class="flex justify-between items-center text-xs text-slate-500 border-t border-slate-900 pt-3 px-2 z-10">
+        <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+            <span class="text-amber-400 text-sm animate-pulse">❤️</span>
+            <span class="text-slate-300 font-medium">Festejo en Vivo • Sincronización Automática</span>
+        </div>
+        <span>Disfruta cada instante de la celebración</span>
     </footer>
 
+    <!-- 5. LÓGICA JAVASCRIPT (Polling, Rotación Spotlight y Draggable QR) -->
     <script>
-        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT";
-        let lastLoadedCount = 0;
+        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT"; // Reemplaza con tu Web App de GAS
+        let allPhotos = [];
+        let currentIndex = 0;
+        let spotlightInterval = null;
 
-        // Cargar fotos al iniciar y luego refrescar cada 6 segundos automáticamente
         window.onload = () => {
-            fetchMuralPhotos();
-            setInterval(fetchMuralPhotos, 6000);
+            fetchMuralData();
+            setInterval(fetchMuralData, 6000); // Refresca datos cada 6s
+            initDraggableQR();
         };
 
-        async function fetchMuralPhotos() {
+        async function fetchMuralData() {
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=getPhotos`);
                 const data = await res.json();
                 
                 if (data.status === 'success' && data.photos.length > 0) {
-                    const grid = document.getElementById('mural-grid');
+                    allPhotos = data.photos;
                     
-                    // Si hay nuevas fotos, redibujamos el mural con animación flotante
-                    if (data.photos.length !== lastLoadedCount) {
-                        lastLoadedCount = data.photos.length;
-                        grid.innerHTML = '';
-                        
-                        // Tomamos las últimas 8 fotos para mostrarlas en gran formato en pantalla
-                        const latestPhotos = data.photos.slice(0, 8);
-                        
-                        latestPhotos.forEach((photo, index) => {
-                            const card = document.createElement('div');
-                            card.className = `relative group rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-800 shadow-2xl aspect-square animate-float`;
-                            card.style.animationDelay = `${index * 0.1}s`;
-                            
-                            card.innerHTML = `
-                                <img src="${photo.url}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
-                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent p-4 flex flex-col justify-end">
-                                    <span class="text-xs font-bold text-amber-400 drop-shadow">📸 ${escapeHtml(photo.author)}</span>
-                                    ${photo.caption ? `<p class="text-xs text-slate-200 truncate mt-0.5">"${escapeHtml(photo.caption)}"</p>` : ''}
-                                </div>
-                            `;
-                            grid.appendChild(card);
-                        });
+                    // Actualizar miniaturas flotantes laterales si hay suficientes fotos
+                    if (allPhotos.length >= 4) {
+                        document.getElementById('thumb-left-1').src = allPhotos[0].url;
+                        document.getElementById('thumb-left-2').src = allPhotos[1].url;
+                        document.getElementById('thumb-right-1').src = allPhotos[2].url;
+                        document.getElementById('thumb-right-2').src = allPhotos[3].url;
+                    }
+
+                    // Iniciar rotación del spotlight si es la primera vez
+                    if (!spotlightInterval) {
+                        updateSpotlight();
+                        spotlightInterval = setInterval(() => {
+                            currentIndex = (currentIndex + 1) % allPhotos.length;
+                            updateSpotlight();
+                        }, 5000);
                     }
                 }
             } catch (err) {
-                console.error("Error al actualizar el mural:", err);
+                console.error("Error al sincronizar el mural:", err);
             }
         }
 
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        function updateSpotlight() {
+            if (allPhotos.length === 0) return;
+            const photo = allPhotos[currentIndex];
+            
+            document.getElementById('spotlight-img').src = photo.url;
+            document.getElementById('spotlight-author').innerText = `📸 ${photo.author || 'Invitado'}`;
+            document.getElementById('spotlight-caption').innerText = photo.caption ? `"${photo.caption}"` : '';
+            document.getElementById('spotlight-likes').innerText = photo.likes || 0;
+        }
+
+        // Lógica de Zoom del QR (+ / -)
+        let currentQRSize = 144;
+        function adjustQRSize(delta) {
+            const qrImg = document.getElementById('qr-img');
+            currentQRSize = Math.min(Math.max(100, currentQRSize + delta), 260);
+            qrImg.style.width = `${currentQRSize}px`;
+            qrImg.style.height = `${currentQRSize}px`;
+        }
+
+        // Ocultar / Mostrar Caja QR
+        function toggleQRBox() {
+            document.getElementById('qr-box').classList.toggle('hidden');
+        }
+
+        // Lógica para hacer el QR Arrastrable (Draggable) con Mouse
+        function initDraggableQR() {
+            const qrBox = document.getElementById("qr-box");
+            let isDragging = false, startX = 0, startY = 0;
+
+            qrBox.addEventListener("mousedown", (e) => {
+                if (e.target.closest('button')) return;
+                isDragging = true;
+                startX = e.clientX - qrBox.offsetLeft;
+                startY = e.clientY - qrBox.offsetTop;
+                qrBox.style.cursor = "grabbing";
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+                qrBox.style.left = `${e.clientX - startX}px`;
+                qrBox.style.top = `${e.clientY - startY}px`;
+                qrBox.style.right = "auto";
+            });
+
+            document.addEventListener("mouseup", () => {
+                isDragging = false;
+                qrBox.style.cursor = "grab";
+            });
         }
     </script>
 </body>
