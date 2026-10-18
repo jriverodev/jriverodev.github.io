@@ -3,169 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boda & Festejo - Comparte tus Fotos</title>
+    <title>Boda & Festejo - Comparte tus Recuerdos</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center font-sans">
 
-    <!-- Header -->
-    <header class="w-full max-w-md p-6 text-center">
-        <h1 class="text-3xl font-bold tracking-tight text-amber-400">Nuestra Boda y Festejo</h1>
-        <p class="text-sm text-slate-400 mt-1">Sube tus fotos desde la iglesia hasta la fiesta 📸</p>
+    <!-- Header Elegante -->
+    <header class="w-full max-w-md p-6 text-center border-b border-slate-800/60 bg-slate-900/40 backdrop-blur sticky top-0 z-20">
+        <h1 class="text-2xl font-bold tracking-tight text-amber-400">Irama & Miguel</h1>
+        <p class="text-xs text-slate-400 mt-1">De la iglesia a la fiesta 📸 Comparte cada momento</p>
     </header>
 
-    <!-- Contenedor Principal -->
-    <main class="w-full max-w-md p-4 flex-1 flex flex-col items-center">
-        
-        <!-- Vista de Subida -->
-        <div id="upload-view" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center">
-            
-            <label for="file-input" class="w-full border-2 border-dashed border-slate-700 hover:border-amber-400 rounded-xl p-8 flex flex-col items-center cursor-pointer transition bg-slate-950/50">
-                <svg class="w-12 h-12 text-amber-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-sm font-medium text-slate-200">Toca aquí para elegir fotos o tomar una</span>
-                <span class="text-xs text-slate-500 mt-1">Puedes seleccionar varias a la vez</span>
-            </label>
-            <input type="file" id="file-input" accept="image/*" multiple class="hidden">
-
-            <!-- Previsualización -->
-            <div id="preview-container" class="w-full grid grid-cols-3 gap-2 mt-4 hidden"></div>
-
-            <button id="upload-btn" onclick="uploadPhotos()" class="w-full mt-6 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold py-3 rounded-xl transition shadow-lg hidden">
-                Subir al Álbum 🚀
-            </button>
-
-            <div id="loading" class="hidden mt-4 text-amber-400 text-sm animate-pulse">
-                Subiendo recuerdos... Por favor espera.
-            </div>
-
-            <div id="success-msg" class="hidden mt-4 text-emerald-400 text-sm text-center font-medium">
-                ¡Fotos subidas con éxito! Gracias por compartir este momento 🎉
-            </div>
-        </div>
-
-        <!-- Botón para ver el Mural en Vivo (Estilo Kululu Slideshow) -->
-        <button onclick="toggleLiveWall()" class="mt-6 text-xs text-slate-400 hover:text-amber-400 underline transition">
-            🖥️ Abrir Mural en Vivo para Pantallas / Proyector
-        </button>
+    <!-- Feed de Fotos (Timeline Principal) -->
+    <main id="feed-container" class="w-full max-w-md p-4 flex-1 flex flex-col gap-4 pb-28">
+        <div class="text-center py-10 text-slate-500 animate-pulse">Cargando momentos mágicos...</div>
     </main>
 
-    <!-- Modal / Vista de Mural en Vivo -->
-    <div id="live-wall-modal" class="fixed inset-0 bg-slate-950/95 z-50 hidden flex flex-col p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-amber-400">Mural en Vivo - Festejo</h2>
-            <button onclick="toggleLiveWall()" class="bg-slate-800 px-4 py-2 rounded-lg text-sm hover:bg-slate-700">Cerrar ✕</button>
-        </div>
-        <div id="wall-grid" class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 overflow-y-auto p-2">
-            <!-- Las fotos se cargan aquí en tiempo real -->
+    <!-- Botón Flotante de Acción (Estilo Kululu) -->
+    <div class="fixed bottom-6 z-30 w-full max-w-md px-4 flex justify-center">
+        <button onclick="openUploadModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-8 rounded-full shadow-2xl flex items-center gap-2 transition transform active:scale-95">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            Añadir al álbum
+        </button>
+    </div>
+
+    <!-- Modal de Subida (Bottom Sheet) -->
+    <div id="upload-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+        <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-amber-400">Subir nueva foto</h3>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-200 p-2">✕</button>
+            </div>
+
+            <!-- Selector de archivo -->
+            <label for="file-input" class="w-full border-2 border-dashed border-slate-700 hover:border-amber-400 rounded-2xl p-6 flex flex-col items-center cursor-pointer transition bg-slate-950/40 text-center">
+                <svg class="w-10 h-10 text-amber-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                <span class="text-sm font-medium text-slate-200">Toca para elegir foto o cámara</span>
+            </label>
+            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="previewFile(event)">
+
+            <!-- Previsualización -->
+            <div id="preview-section" class="hidden mt-4 flex flex-col gap-3">
+                <img id="image-preview" class="w-full h-48 object-cover rounded-xl border border-slate-800">
+                
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Tu nombre o familia:</label>
+                    <input type="text" id="input-author" placeholder="Ej. Familia Gómez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Mensaje o dedicatoria:</label>
+                    <input type="text" id="input-caption" placeholder="¡Qué gran ceremonia!" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+                </div>
+
+                <button onclick="uploadPhoto()" id="submit-btn" class="mt-2 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+                    Publicar en el evento 🚀
+                </button>
+            </div>
+
+            <div id="loading-spinner" class="hidden mt-6 text-center text-amber-400 text-sm animate-pulse">
+                Subiendo recuerdo a la nube...
+            </div>
         </div>
     </div>
 
-    <footer class="w-full text-center py-4 text-xs text-slate-600">
-        Creado para un recuerdo inolvidable
-    </footer>
-
     <script>
-        const SCRIPT_URL = "TU_URL_DE_APLICACION_WEB_DE_APPS_SCRIPT";
-        let selectedFiles = [];
+        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT";
+        let selectedFileBase64 = null;
+        let selectedFileType = null;
+        let selectedFileName = null;
 
-        const fileInput = document.getElementById('file-input');
-        const previewContainer = document.getElementById('preview-container');
-        const uploadBtn = document.getElementById('upload-btn');
-        const loading = document.getElementById('loading');
-        const successMsg = document.getElementById('success-msg');
+        window.onload = loadFeed;
 
-        fileInput.addEventListener('change', (e) => {
-            selectedFiles = Array.from(e.target.files);
-            previewContainer.innerHTML = '';
-            if (selectedFiles.length > 0) {
-                previewContainer.classList.remove('hidden');
-                uploadBtn.classList.remove('hidden');
-                selectedFiles.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'w-full h-24 object-cover rounded-lg border border-slate-700';
-                        previewContainer.appendChild(img);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            } else {
-                previewContainer.classList.add('hidden');
-                uploadBtn.classList.add('hidden');
-            }
-        });
-
-        async function uploadPhotos() {
-            if (selectedFiles.length === 0) return;
-            uploadBtn.classList.add('hidden');
-            loading.classList.remove('hidden');
-
-            for (let file of selectedFiles) {
-                const base64 = await toBase64(file);
-                const payload = {
-                    fileName: file.name,
-                    mimeType: file.type,
-                    fileBase64: base64
-                };
-
-                try {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
-                } catch (err) {
-                    console.error("Error al subir:", err);
-                }
-            }
-
-            loading.classList.add('hidden');
-            successMsg.classList.remove('hidden');
-            selectedFiles = [];
-            previewContainer.innerHTML = '';
-            previewContainer.classList.add('hidden');
-            
-            setTimeout(() => {
-                successMsg.classList.add('hidden');
-            }, 5000);
-        }
-
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
-        // Funcionalidad del Mural en Vivo (Slideshow / Galería automática)
-        async function toggleLiveWall() {
-            const modal = document.getElementById('live-wall-modal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                loadWallPhotos();
-            }
-        }
-
-        async function loadWallPhotos() {
-            const grid = document.getElementById('wall-grid');
-            grid.innerHTML = '<p class="col-span-full text-center text-slate-500 animate-pulse">Cargando fotos del evento...</p>';
+        async function loadFeed() {
+            const feed = document.getElementById('feed-container');
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=getPhotos`);
                 const data = await res.json();
+                
                 if (data.status === 'success' && data.photos.length > 0) {
-                    grid.innerHTML = '';
+                    feed.innerHTML = '';
                     data.photos.forEach(photo => {
                         const card = document.createElement('div');
-                        card.className = 'relative group rounded-xl overflow-hidden bg-slate-900 border border-slate-800 aspect-square';
-                        card.innerHTML = `<img src="${photo.url}" class="w-full h-full object-cover">`;
-                        grid.appendChild(card);
+                        card.className = 'bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-lg';
+                        card.innerHTML = `
+                            <div class="p-3 flex items-center justify-between">
+                                <span class="text-xs font-semibold text-amber-400">📸 ${escapeHtml(photo.author)}</span>
+                            </div>
+                            <img src="${photo.url}" class="w-full max-h-96 object-cover bg-slate-950" loading="lazy">
+                            <div class="p-4 flex flex-col gap-2">
+                                ${photo.caption ? `<p class="text-sm text-slate-200">"${escapeHtml(photo.caption)}"</p>` : ''}
+                                <div class="flex items-center justify-between mt-1">
+                                    <button onclick="likePhoto('${photo.id}', this)" class="flex items-center gap-1.5 text-rose-500 hover:scale-110 transition active:scale-90">
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                        <span class="text-xs font-bold text-slate-300">${photo.likes}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        feed.appendChild(card);
                     });
                 } else {
-                    grid.innerHTML = '<p class="col-span-full text-center text-slate-500">Aún no hay fotos subidas. ¡Sé el primero!</p>';
+                    feed.innerHTML = '<div class="text-center py-16 text-slate-500">Aún no hay fotos. ¡Sé el primero en subir una! ✨</div>';
                 }
             } catch (err) {
-                grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error al cargar las fotos.</p>';
+                feed.innerHTML = '<div class="text-center py-16 text-red-400">Error al cargar las fotos del evento.</div>';
             }
+        }
+
+        function openUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+            resetForm();
+        }
+
+        function previewFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            selectedFileName = file.name;
+            selectedFileType = file.type;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedFileBase64 = e.target.result;
+                document.getElementById('image-preview').src = selectedFileBase64;
+                document.getElementById('preview-section').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadPhoto() {
+            if (!selectedFileBase64) return;
+            
+            document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+
+            const payload = {
+                fileName: selectedFileName,
+                mimeType: selectedFileType,
+                fileBase64: selectedFileBase64,
+                author: document.getElementById('input-author').value || "Invitado Anónimo",
+                caption: document.getElementById('input-caption').value || ""
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                closeUploadModal();
+                loadFeed();
+            } catch (err) {
+                alert("Error al subir la foto. Intenta de nuevo.");
+                document.getElementById('submit-btn').classList.remove('hidden');
+                document.getElementById('loading-spinner').classList.add('hidden');
+            }
+        }
+
+        async function likePhoto(id, btnElement) {
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'like', id: id })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    btnElement.querySelector('span').innerText = data.likes;
+                }
+            } catch (err) {
+                console.error("Error al dar like");
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
     </script>
 </body>
