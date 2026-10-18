@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Festejo en Vivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- Top Notification Banner (Plan Gratuito / Alertas) -->
+    <div class="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-xs text-amber-400 flex items-center justify-center gap-2">
+        <span>⚠️ Estás usando el plan gratuito respaldado en Google Drive. ¡Disfruta de tu evento sin límites de tiempo!</span>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="w-full bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">✨</span>
+            <h1 class="text-lg font-bold text-slate-100">Dashboard <span class="text-amber-400">Irama & Miguel</span></h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="index.html" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                🔗 Ver Web Invitados
+            </a>
+            <a href="mural.html" target="_blank" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg">
+                🖥️ Abrir Mural Proyector
+            </a>
+        </div>
+    </header>
+
+    <!-- Navegación por Pestañas (Estilo Dashboard del video) -->
+    <nav class="w-full bg-slate-900/50 border-b border-slate-800 px-6 flex gap-6">
+        <button onclick="switchTab('home')" id="nav-home" class="py-3 text-sm font-semibold border-b-2 border-amber-400 text-amber-400 transition flex items-center gap-2">
+            🏠 Home
+        </button>
+        <button onclick="switchTab('media')" id="nav-media" class="py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+            🖼️ Media (Galería)
+        </button>
+        <button onclick="switchTab('settings')" id="nav-settings" class="py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+            ⚙️ Settings
+        </button>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="w-full max-w-4xl mx-auto p-6 flex-1 flex flex-col gap-6">
+        
+        <!-- PESTAÑA 1: HOME -->
+        <section id="tab-home" class="flex flex-col gap-6">
+            <!-- Digital Album Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex-1">
+                    <h2 class="text-xl font-bold text-slate-100">Your Digital Album</h2>
+                    <p class="text-sm text-slate-400 mt-1">El álbum digital permite a tus invitados subir fotos o ver las existentes de forma instantánea escaneando el código QR.</p>
+                    <div class="mt-4 flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-xl p-2.5 max-w-md">
+                        <input type="text" readonly id="event-url" value="https://tu-sitio.com/index.html" class="bg-transparent text-xs text-amber-400 flex-1 px-2 focus:outline-none">
+                        <button onclick="copyEventUrl()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Copiar</button>
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-2xl shadow-inner flex flex-col items-center">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https://tu-sitio.com/index.html" alt="QR Evento" class="w-32 h-32 object-contain">
+                    <span class="text-[10px] text-slate-900 font-bold mt-2">Código QR del Evento</span>
+                </div>
+            </div>
+
+            <!-- Photo Wall Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col gap-4">
+                <h2 class="text-xl font-bold text-slate-100">Your Photo Wall</h2>
+                <p class="text-sm text-slate-400">Cada foto subida aparece automáticamente en tu Mural. Conéctalo a proyectores o Smart TVs en el salón.</p>
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
+                    <span class="text-xs text-slate-300 font-medium">¿Listo para proyectar?</span>
+                    <a href="mural.html" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold px-5 py-2.5 rounded-xl transition">
+                        Iniciar Proyección en Vivo 🖥️
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 2: MEDIA (Galería y Aprobaciones) -->
+        <section id="tab-media" class="hidden flex flex-col gap-6">
+            <!-- Barra de Límite de Subida (Estilo video) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-lg">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full border-2 border-amber-400 flex items-center justify-center text-xs font-bold text-amber-400">
+                        7%
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-200">Upload Limit [Free Plan]</h4>
+                        <p class="text-xs text-slate-400">Almacenamiento ilimitado en tu Google Drive vinculado.</p>
+                    </div>
+                </div>
+                <span class="bg-emerald-500/10 text-emerald-400 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-500/20">Activo</span>
+            </div>
+
+            <!-- Filtros de Estado -->
+            <div class="flex gap-4 border-b border-slate-800 pb-3">
+                <button class="text-sm font-bold text-amber-400 border-b-2 border-amber-400 pb-1">Published (<span id="pub-count">0</span>)</button>
+                <button class="text-sm font-semibold text-slate-400 hover:text-slate-200 pb-1">Need Approval (0)</button>
+            </div>
+
+            <!-- Grid de Fotos Administrables -->
+            <div id="admin-media-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="col-span-full text-center py-12 text-slate-500">Cargando galería de medios...</div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 3: SETTINGS -->
+        <section id="tab-settings" class="hidden flex flex-col gap-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+            <h2 class="text-xl font-bold text-slate-100 mb-2">Configuración del Evento</h2>
+            
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-slate-400">Event Name</label>
+                <input type="text" id="set-name" value="Irama y Miguel" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+                <span class="text-[11px] text-slate-500">Este nombre aparecerá en la web de tus invitados.</span>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-slate-400">Event Date</label>
+                <input type="date" id="set-date" value="2026-12-18" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-amber-400">
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-slate-400">Event Type</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-1">
+                    <button class="bg-amber-500/10 border border-amber-500 text-amber-400 text-xs font-bold py-3 rounded-xl">💍 Wedding</button>
+                    <button class="bg-slate-950 border border-slate-800 text-slate-400 text-xs font-semibold py-3 rounded-xl hover:border-slate-700">🎉 Party</button>
+                    <button class="bg-slate-950 border border-slate-800 text-slate-400 text-xs font-semibold py-3 rounded-xl hover:border-slate-700">🎂 Birthday</button>
+                    <button class="bg-slate-950 border border-slate-800 text-slate-400 text-xs font-semibold py-3 rounded-xl hover:border-slate-700">🎤 Other</button>
+                </div>
+            </div>
+
+            <button onclick="saveSettings()" class="mt-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+                Guardar Cambios 💾
+            </button>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-xs text-slate-600 border-t border-slate-900">
+        Panel de Control Exclusivo • Festejo en Vivo
+    </footer>
+
+    <!-- Script de Control del Dashboard -->
+    <script>
+        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT"; // Reemplaza con tu Web App de GAS
+
+        window.onload = () => {
+            loadAdminGallery();
+            // Actualizar URL base del input automático
+            document.getElementById('event-url').value = window.location.href.replace('dashboard.html', 'index.html');
+        };
+
+        function switchTab(tabName) {
+            ['home', 'media', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('border-amber-400', 'text-amber-400');
+                document.getElementById(`nav-${t}`).classList.add('border-transparent', 'text-slate-400');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).classList.add('border-amber-400', 'text-amber-400');
+            document.getElementById(`nav-${tabName}`).classList.remove('border-transparent', 'text-slate-400');
+        }
+
+        async function loadAdminGallery() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getPhotos`);
+                const data = await res.json();
+                const grid = document.getElementById('admin-media-grid');
+                
+                if (data.status === 'success' && data.photos.length > 0) {
+                    document.getElementById('pub-count').innerText = data.photos.length;
+                    grid.innerHTML = '';
+                    data.photos.forEach(photo => {
+                        const card = document.createElement('div');
+                        card.className = 'relative group rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 aspect-square shadow-md';
+                        card.innerHTML = `
+                            <img src="${photo.url}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-2">
+                                <span class="text-xs text-white font-medium bg-slate-900/80 px-2 py-1 rounded">❤️ ${photo.likes || 0}</span>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                } else {
+                    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500">Aún no hay fotos publicadas.</div>';
+                }
+            } catch (err) {
+                console.error("Error al cargar admin media");
+            }
+        }
+
+        function copyEventUrl() {
+            const input = document.getElementById('event-url');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            alert("¡Enlace copiado al portapapeles!");
+        }
+
+        function saveSettings() {
+            alert("¡Configuración guardada con éxito!");
+        }
+    </script>
+</body>
+</html>
