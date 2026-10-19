@@ -62,12 +62,12 @@
         /* Material Inputs */
         .md-input, .md-select {
             width: 100%;
-            padding: 16px;
+            padding: 12px 14px;
             border-radius: 16px;
             background-color: var(--md-sys-color-surface-container-low);
             border: 2px solid transparent;
             color: var(--md-sys-color-on-surface);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             outline: none;
             transition: all 0.2s ease;
@@ -80,7 +80,7 @@
         }
 
         .md-label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -177,7 +177,7 @@
                 </button>
                 <button @click="activeTab = 'historial'" :class="{'bg-white text-rose-700 shadow-sm': activeTab === 'historial'}" class="flex-1 py-2.5 rounded-xl transition-all flex justify-center items-center gap-1">
                     <span class="material-symbols-outlined text-sm">history</span>
-                    <span>Historial ({{ historialEntregas.length }})</span>
+                    <span>Historial ({{ historialFiltrado.length }})</span>
                 </button>
             </div>
 
@@ -297,23 +297,113 @@
 
             <!-- TAB 3: HISTORIAL -->
             <section v-if="activeTab === 'historial'" class="space-y-3">
-                <div v-for="h in historialEntregas" :key="h.id" class="md-card p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
+                <!-- Filtros Historial -->
+                <div class="md-card p-4 space-y-3">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
+                        <input v-model="historialSearch" type="text" placeholder="Buscar por cédula o nombre..."
+                               class="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <div>
+                            <label class="md-label">Tipo de EPP</label>
+                            <select v-model="historialFiltroTipo" class="md-select text-xs">
+                                <option value="todos">Todos</option>
+                                <option value="calzados">Calzados</option>
+                                <option value="otros">Otros</option>
+                                <option v-for="eq in equiposUnicosHistorial" :key="eq" :value="eq">{{ eq }}</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="md-label">Tiempo transcurrido</label>
+                            <select v-model="historialFiltroTiempo" class="md-select text-xs">
+                                <option value="todos">Todos</option>
+                                <option value="24h">Últimas 24 h</option>
+                                <option value="7d">Últimos 7 días</option>
+                                <option value="30d">Últimos 30 días</option>
+                                <option value="90d">Últimos 90 días</option>
+                                <option value="6m">Últimos 6 meses</option>
+                                <option value="recientes6m">&lt; 6 meses (Recientes)</option>
+                                <option value="mayores6m">&ge; 6 meses (Hace +6 meses)</option>
+                                <option value="1a">Último año</option>
+                                <option value="mas1a">Hace &gt; 1 año</option>
+                            </select>
+                        </div>
+
+                        <div class="col-span-2 sm:col-span-1 flex flex-col justify-end">
+                            <label class="flex items-center gap-2 px-2 py-2 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer select-none">
+                                <input v-model="historialSoloUltimaPorTrabajador" type="checkbox" class="w-4 h-4 accent-rose-600">
+                                <span class="text-[11px] font-bold leading-tight text-slate-700">
+                                    Solo última entrega por trabajador (por EPP)
+                                </span>
+                            </label>
+                            <p class="text-[9px] text-slate-400 mt-1 ml-2 leading-tight">
+                                Útil para ver cuándo les tocó la última entrega (criterio 6 meses)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                        <p class="text-[10px] text-slate-500">
+                            Mostrando: <b>{{ historialFiltrado.length }}</b> / {{ historialEntregas.length }} registros
+                        </p>
+                        <button @click="limpiarFiltrosHistorial" class="text-[10px] font-bold text-rose-600 flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-rose-50 transition">
+                            <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+                            Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Listado Historial -->
+                <div v-for="h in historialFiltrado" :key="h.id" class="md-card p-4 flex justify-between items-start gap-3">
+                    <div class="flex items-center gap-3 w-full">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black shrink-0">
                             <span class="material-symbols-outlined text-lg">shield</span>
                         </div>
-                        <div>
-                            <p class="text-xs font-black text-slate-900 leading-tight">{{ h.equipo }} (Talla: {{ h.talla || 'S/T' }}) - {{ h.cantidad || 1 }} unid(s).</p>
-                            <p class="text-[10px] text-slate-600 font-bold mt-0.5">{{ h.nombre }} (CI: {{ h.cedula }})</p>
-                            <p class="text-[9px] text-slate-400 mt-0.5">{{ h.puesto || h.cargo || 'S/C' }} | {{ h.unidad || h.area || 'S/A' }}</p>
-                            <p class="text-[9px] text-slate-400 font-mono mt-0.5">{{ formatearFecha(h.fecha) }}</p>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex justify-between items-start gap-2">
+                                <p class="text-xs font-black text-slate-900 leading-tight truncate">
+                                    {{ h.equipo }} (Talla: {{ h.talla || 'S/T' }}) - {{ h.cantidad || 1 }} unid(s.)
+                                </p>
+                                <div class="shrink-0">
+                                    <span v-if="esReciente(h.fecha, h.fechaRegistro)" class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block">
+                                        RECIENTE (&lt; 6 MESES)
+                                    </span>
+                                    <span v-else class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 inline-block">
+                                        MÁS DE 6 MESES
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-600 font-bold mt-0.5 truncate">
+                                {{ h.nombre }} (CI: {{ h.cedula }})
+                            </p>
+                            <p class="text-[9px] text-slate-400 mt-0.5 truncate">
+                                {{ h.puesto || h.cargo || 'S/C' }} | {{ h.unidad || h.area || 'S/A' }}
+                            </p>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                                <p class="text-[9px] text-slate-500 font-mono">
+                                    Entregado: {{ formatearFecha(h.fecha) }}{{ h.horaEntrega ? ' ' + h.horaEntrega : '' }}
+                                </p>
+                                <span class="text-slate-300">•</span>
+                                <p class="text-[9px] font-bold text-rose-600 flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[12px]">schedule</span>
+                                    <span>{{ tiempoTranscurrido(h.fecha, h.fechaRegistro) }}</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="historialEntregas.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
+                <div v-if="historialFiltrado.length === 0" class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
                     <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">history</span>
-                    <p class="text-slate-500 text-sm font-medium">No hay historial de entregas registrado.</p>
+                    <p class="text-slate-500 text-sm font-medium">No hay resultados con los filtros aplicados.</p>
+                    <button v-if="(historialSearch || historialFiltroTipo !== 'todos' || historialFiltroTiempo !== 'todos' || historialSoloUltimaPorTrabajador)"
+                            @click="limpiarFiltrosHistorial"
+                            class="mt-3 text-xs font-bold text-rose-600 px-3 py-1.5 bg-rose-50 rounded-xl">
+                        Limpiar filtros
+                    </button>
                 </div>
             </section>
 
@@ -415,7 +505,7 @@
             inventario: '++id, equipo, talla, cantidad, lote, fechaIngreso',
             movimientos: '++id, equipo, talla, cantidad, tipo, motivo, fecha',
             trabajadores: 'cedula, nombre, cargo, area',
-            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla, cantidad'
+            entregas: '++id, fecha, cedula, nombre, puesto, unidad, equipo, talla, cantidad, fechaRegistro, horaEntrega'
         });
 
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzbivG_jWmGIEcC8RUYxFe8LmRH_4smbrPFdtr6CsOKvRQBW-hsv-mspiKnAgnW9mEg/exec";
@@ -449,13 +539,24 @@
                         equipo: '',
                         talla: '',
                         cantidad: 1
-                    }
+                    },
+                    // Filtros Historial
+                    historialSearch: '',
+                    historialFiltroTipo: 'todos',
+                    historialFiltroTiempo: 'todos',
+                    historialSoloUltimaPorTrabajador: false,
+                    ahora: Date.now(),
+                    intervaloAhora: null
                 }
             },
             computed: {
                 listaEquiposConStock() {
                     const equipos = this.inventarioLocal.filter(i => i.cantidad > 0).map(i => i.equipo);
                     return [...new Set(equipos)];
+                },
+                equiposUnicosHistorial() {
+                    const list = this.historialEntregas.map(h => String(h.equipo || '').trim()).filter(Boolean);
+                    return [...new Set(list)].sort();
                 },
                 trabajadoresFiltrados() {
                     const q = this.searchTrabajador.toLowerCase();
@@ -464,6 +565,84 @@
                         String(t.cedula).toLowerCase().includes(q) ||
                         String(t.nombre).toLowerCase().includes(q)
                     );
+                },
+                historialFiltrado() {
+                    let lista = [...this.historialEntregas];
+
+                    // 1. Buscador por Cédula o Nombre
+                    const q = this.historialSearch.trim().toLowerCase();
+                    if (q) {
+                        lista = lista.filter(h =>
+                            String(h.cedula || '').toLowerCase().includes(q) ||
+                            String(h.nombre || '').toLowerCase().includes(q)
+                        );
+                    }
+
+                    // 2. Filtro por Tipo de EPP / Equipo
+                    if (this.historialFiltroTipo === 'calzados') {
+                        lista = lista.filter(h => this.esCalzado(h.equipo));
+                    } else if (this.historialFiltroTipo === 'otros') {
+                        lista = lista.filter(h => !this.esCalzado(h.equipo));
+                    } else if (this.historialFiltroTipo !== 'todos') {
+                        lista = lista.filter(h => String(h.equipo || '').trim().toLowerCase() === String(this.historialFiltroTipo).trim().toLowerCase());
+                    }
+
+                    // 3. Filtro por Tiempo Transcurrido
+                    if (this.historialFiltroTiempo !== 'todos') {
+                        const ahoraMs = this.ahora;
+                        lista = lista.filter(h => {
+                            const f = this.obtenerFechaMs(h.fecha, h.fechaRegistro);
+                            if (isNaN(f)) return false;
+                            const diff = ahoraMs - f;
+                            const horaMs = 3600 * 1000;
+                            const diaMs = 24 * horaMs;
+                            const seisMesesMs = 182.625 * diaMs;
+                            const unAnioMs = 365.25 * diaMs;
+
+                            switch (this.historialFiltroTiempo) {
+                                case '24h': return diff <= 24 * horaMs;
+                                case '7d': return diff <= 7 * diaMs;
+                                case '30d': return diff <= 30 * diaMs;
+                                case '90d': return diff <= 90 * diaMs;
+                                case '6m': return diff <= seisMesesMs;
+                                case 'recientes6m': return diff < seisMesesMs;
+                                case 'mayores6m': return diff >= seisMesesMs;
+                                case '1a': return diff <= unAnioMs;
+                                case 'mas1a': return diff > unAnioMs;
+                                default: return true;
+                            }
+                        });
+                    }
+
+                    // 4. Solo última entrega por trabajador (por EPP)
+                    if (this.historialSoloUltimaPorTrabajador) {
+                        const mapasUltimos = new Map();
+                        // Asumiendo lista está en orden cronológico o con fecha
+                        for (let h of lista) {
+                            const key = `${String(h.cedula || h.nombre || '').trim().toLowerCase()}__${this.normalizarEquipo(h.equipo)}`;
+                            const fechaMs = this.obtenerFechaMs(h.fecha, h.fechaRegistro);
+                            if (!mapasUltimos.has(key)) {
+                                mapasUltimos.set(key, { registro: h, ms: fechaMs });
+                            } else {
+                                const prev = mapasUltimos.get(key);
+                                if (isNaN(prev.ms) || (!isNaN(fechaMs) && fechaMs > prev.ms)) {
+                                    mapasUltimos.set(key, { registro: h, ms: fechaMs });
+                                }
+                            }
+                        }
+                        lista = Array.from(mapasUltimos.values()).map(v => v.registro);
+                    }
+
+                    // Ordenar por fecha descendente
+                    lista.sort((a, b) => {
+                        const fA = this.obtenerFechaMs(a.fecha, a.fechaRegistro);
+                        const fB = this.obtenerFechaMs(b.fecha, b.fechaRegistro);
+                        if (isNaN(fA)) return 1;
+                        if (isNaN(fB)) return -1;
+                        return fB - fA;
+                    });
+
+                    return lista;
                 }
             },
             mounted() {
@@ -471,12 +650,18 @@
                 if (this.googleSheetUrl && navigator.onLine) {
                     this.sincronizarDesdeGoogle(false);
                 }
+                this.intervaloAhora = setInterval(() => {
+                    this.ahora = Date.now();
+                }, 60000);
+            },
+            beforeUnmount() {
+                if (this.intervaloAhora) clearInterval(this.intervaloAhora);
             },
             methods: {
                 async cargarDatosDexie() {
                     this.inventarioLocal = await db.inventario.toArray();
                     this.trabajadoresLocal = await db.trabajadores.toArray();
-                    this.historialEntregas = (await db.entregas.toArray()).reverse().slice(0, 100);
+                    this.historialEntregas = (await db.entregas.toArray()).reverse();
                 },
                 actualizarTallasDisponibles() {
                     const registros = this.inventarioLocal.filter(i => i.equipo === this.entrega.equipo && i.cantidad > 0);
@@ -547,6 +732,74 @@
                         showConfirmButton: false
                     });
                 },
+                normalizarEquipo(equipo) {
+                    return String(equipo || '').trim().toUpperCase();
+                },
+                esCalzado(equipo) {
+                    if (!equipo) return false;
+                    const e = String(equipo).toLowerCase();
+                    const keywords = [
+                        'calzado', 'calzados', 'zapato', 'zapatos', 'bota', 'botas', 'botin', 'botines',
+                        'tenis', 'zapatilla', 'zapatillas', 'sneaker', 'sneakers', 'borceguí', 'borceguies', 'borcegui', 'shoe', 'shoes', 'boot', 'boots'
+                    ];
+                    return keywords.some(k => e.includes(k));
+                },
+                obtenerFechaMs(fecha, fechaRegistro) {
+                    if (fechaRegistro) {
+                        const d = new Date(fechaRegistro);
+                        if (!isNaN(d.getTime())) return d.getTime();
+                    }
+                    if (!fecha) return NaN;
+                    let d = new Date(fecha);
+                    if (!isNaN(d.getTime()) && String(fecha).includes('T')) return d.getTime();
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+                        d = new Date(fecha + 'T23:59:59');
+                    }
+                    if (!isNaN(d.getTime())) return d.getTime();
+                    return NaN;
+                },
+                tiempoTranscurrido(fecha, fechaRegistro) {
+                    const f = this.obtenerFechaMs(fecha, fechaRegistro);
+                    if (isNaN(f)) return 'Fecha desconocida';
+                    const ahoraMs = this.ahora;
+                    let diff = ahoraMs - f;
+                    if (diff < 0) diff = 0;
+                    const anioMs = 365.25 * 24 * 60 * 60 * 1000;
+                    const mesMs = anioMs / 12;
+
+                    const anos = Math.floor(diff / anioMs);
+                    let resto = diff % anioMs;
+                    const meses = Math.floor(resto / mesMs);
+                    resto = resto % mesMs;
+                    const diasRestantes = Math.floor(resto / (24 * 60 * 60 * 1000));
+                    const horasRestantes = Math.floor((resto % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                    const minutosRestantes = Math.floor((resto % (60 * 60 * 1000)) / (60 * 1000));
+
+                    const partes = [];
+                    if (anos > 0) partes.push(`${anos} año${anos === 1 ? '' : 's'}`);
+                    if (meses > 0) partes.push(`${meses} mes${meses === 1 ? '' : 'es'}`);
+                    if (diasRestantes > 0 && anos === 0) partes.push(`${diasRestantes} día${diasRestantes === 1 ? '' : 's'}`);
+                    if (partes.length === 0) {
+                        if (horasRestantes > 0) partes.push(`${horasRestantes} h`);
+                        if (minutosRestantes > 0) partes.push(`${minutosRestantes} min`);
+                        if (partes.length === 0) return 'Hace menos de 1 min';
+                    }
+                    let texto = partes.slice(0, 3).join(' y ');
+                    return `Hace ${texto}`;
+                },
+                esReciente(fecha, fechaRegistro) {
+                    const f = this.obtenerFechaMs(fecha, fechaRegistro);
+                    if (isNaN(f)) return false;
+                    const diff = this.ahora - f;
+                    const seisMesesMs = 182.625 * 24 * 60 * 60 * 1000;
+                    return diff < seisMesesMs;
+                },
+                limpiarFiltrosHistorial() {
+                    this.historialSearch = '';
+                    this.historialFiltroTipo = 'todos';
+                    this.historialFiltroTiempo = 'todos';
+                    this.historialSoloUltimaPorTrabajador = false;
+                },
                 async procesarEntrega() {
                     const cantEntregar = Number(this.entrega.cantidad || 1);
 
@@ -592,26 +845,32 @@
                     }
 
                     // 2. Registrar el movimiento de salida
+                    const ahoraISO = new Date().toISOString();
                     const movimientoSalida = {
                         equipo: this.entrega.equipo,
                         talla: this.entrega.talla,
                         cantidad: cantEntregar,
                         tipo: 'SALIDA_EPP',
                         motivo: `Entrega asignada a: ${this.entrega.nombre} (${this.entrega.cedula})`,
-                        fecha: new Date().toISOString()
+                        fecha: ahoraISO
                     };
                     await db.movimientos.add(movimientoSalida);
 
                     // 3. Registrar la entrega asignada al trabajador
+                    const fechaEntrega = this.entrega.fecha || new Date().toISOString().split('T')[0];
+                    const dAhora = new Date();
+                    const horaEntregaStr = dAhora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
                     const registroEntrega = {
-                        fecha: this.entrega.fecha || new Date().toISOString().split('T')[0],
+                        fecha: fechaEntrega,
                         cedula: this.entrega.cedula.trim(),
                         nombre: this.entrega.nombre.trim(),
                         puesto: this.entrega.puesto.trim(),
                         unidad: this.entrega.unidad.trim(),
                         equipo: this.entrega.equipo,
                         talla: this.entrega.talla,
-                        cantidad: cantEntregar
+                        cantidad: cantEntregar,
+                        fechaRegistro: ahoraISO,
+                        horaEntrega: horaEntregaStr
                     };
                     await db.entregas.add(registroEntrega);
 
@@ -746,7 +1005,9 @@
                                 unidad: String(e.unidad_área || e.unidad || e.area || '').trim(),
                                 equipo: String(e.equipo || '').trim(),
                                 talla: String(e.talla || 'S/T').trim(),
-                                cantidad: Number(e.cantidad || 1)
+                                cantidad: Number(e.cantidad || 1),
+                                fechaRegistro: e.fechaRegistro || e.fecha_registro || null,
+                                horaEntrega: e.horaEntrega || e.hora_entrega || ''
                             })).filter(e => e.cedula || e.nombre || e.equipo);
 
                             if (ent.length > 0) {
