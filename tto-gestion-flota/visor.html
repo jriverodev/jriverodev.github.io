@@ -124,13 +124,7 @@
             } else if (showTalleres || showFlota) {
                 if (gridContainer) gridContainer.className = "flex justify-center w-full max-w-md mx-auto";
             } else {
-                if (perm.esTalleres) {
-                    window.location.href = "panel.html";
-                } else if (perm.esFlota) {
-                    window.location.href = "form-flota.html";
-                } else {
-                    window.location.href = "index.html";
-                }
+                window.location.href = "index.html";
             }
         });
     </script>
