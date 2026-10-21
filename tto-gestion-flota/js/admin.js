@@ -503,6 +503,12 @@ async function guardarUsuario(event) {
     const moduloVal = document.getElementById("usr-modulo").value;
     const activoVal = document.getElementById("usr-activo").value === "true";
 
+    const existingUser = listaUsuariosGlobal.find(item => String(item.id) === String(idInput) || String(item.usuario) === String(usuarioVal));
+    const orgId = (existingUser && existingUser.organizacion_id) ||
+                  localStorage.getItem('siagop_user_org_id') ||
+                  sessionStorage.getItem('SIAGOP_USER_ORG_ID') ||
+                  '11111111-1111-1111-1111-111111111111';
+
     const payload = {
         id: idInput || (crypto && crypto.randomUUID ? crypto.randomUUID() : `usr-${Date.now()}`),
         usuario: usuarioVal,
@@ -511,6 +517,7 @@ async function guardarUsuario(event) {
         rol_id: rolVal,
         modulo: moduloVal,
         activo: activoVal,
+        organizacion_id: orgId,
         updated_at: new Date().toISOString()
     };
 
