@@ -956,8 +956,8 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
 }
 
 function cerrarSesion() {
-    sessionStorage.removeItem(SESSION_TOKEN_KEY);
-    sessionStorage.removeItem(OPERADOR_KEY);
+    sessionStorage.clear();
+    localStorage.clear();
 }
 
 

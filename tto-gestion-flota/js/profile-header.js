@@ -73,7 +73,8 @@
             try { await client.auth.signOut(); } catch (e) {}
         }
 
-        // 2. Limpiar Session Storage
+        // 2. Purga total de LocalStorage y SessionStorage
+        localStorage.clear();
         sessionStorage.clear();
 
         // 3. Purga opcional de IndexedDB
