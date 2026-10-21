@@ -17,9 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : null;
-    if (perm && !perm.esAdmin && !perm.esTalleres) {
-        if (perm.esFlota) {
+    const tieneAcceso = perm ? Boolean(perm.esVisorTalleres) : true;
+
+    if (perm && !tieneAcceso) {
+        if (perm.esVisorFlota) {
             window.location.href = "visor-flota.html";
+        } else if (perm.esTalleres) {
+            window.location.href = "panel.html";
+        } else if (perm.esFlota) {
+            window.location.href = "form-flota.html";
         } else {
             window.location.href = "index.html";
         }

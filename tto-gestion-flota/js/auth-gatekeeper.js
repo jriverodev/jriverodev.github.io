@@ -231,10 +231,12 @@
         const modulo = String(sessionStorage.getItem('SIAGOP_MODULO') || localStorage.getItem('siagop_user_modulo') || '').toUpperCase().trim();
 
         const esAdmin = rol === 'admin' || rol === 'administrador' || modulo === 'TODOS';
-        const esTalleres = esAdmin || rol === 'operador_talleres' || modulo === 'TALLERES';
-        const esFlota = esAdmin || rol === 'operador_flota' || modulo === 'FLOTA';
+        const esTalleres = esAdmin || rol === 'operador_talleres' || modulo === 'TALLERES' || modulo === 'TALLERES_Y_VISOR';
+        const esVisorTalleres = esAdmin || modulo === 'VISOR_TALLERES' || modulo === 'TALLERES_Y_VISOR' || modulo === 'TODOS';
+        const esFlota = esAdmin || rol === 'operador_flota' || modulo === 'FLOTA' || modulo === 'FLOTA_Y_VISOR';
+        const esVisorFlota = esAdmin || modulo === 'VISOR_FLOTA' || modulo === 'FLOTA_Y_VISOR' || modulo === 'TODOS';
 
-        return { rol, modulo, esAdmin, esTalleres, esFlota };
+        return { rol, modulo, esAdmin, esTalleres, esVisorTalleres, esFlota, esVisorFlota };
     }
 
     window.obtenerRolYModuloUsuario = obtenerRolYModuloUsuario;
