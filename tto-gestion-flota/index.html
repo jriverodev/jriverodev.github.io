@@ -179,7 +179,15 @@
                             localStorage.setItem('siagop_user_rol', userRol);
                             localStorage.setItem('siagop_user_modulo', userMod);
 
-                            window.location.href = 'visor.html';
+                            if (userMod === 'VISOR_TALLERES' || userMod === 'VISOR_FLOTA' || userMod === 'TALLERES_Y_VISOR' || userMod === 'FLOTA_Y_VISOR' || userMod === 'TODOS' || userRol === 'admin' || userRol === 'administrador') {
+                                window.location.href = 'visor.html';
+                            } else if (userMod === 'TALLERES' || userRol === 'operador_talleres') {
+                                window.location.href = 'panel.html';
+                            } else if (userMod === 'FLOTA' || userRol === 'operador_flota') {
+                                window.location.href = 'form-flota.html';
+                            } else {
+                                window.location.href = 'visor.html';
+                            }
                             return;
                         } else if (res && res.mensaje) {
                             if (errDiv) {

@@ -46,7 +46,16 @@
 
         // SI HAY SESIÓN O TOKEN Y INTENTA ACCEDER A INDEX.HTML
         if ((session || localUserId || localToken) && (paginaActual === 'index.html' || paginaActual === '')) {
-            window.location.href = 'visor.html';
+            const perm = obtenerRolYModuloUsuario();
+            if (perm.esVisorTalleres || perm.esVisorFlota) {
+                window.location.href = 'visor.html';
+            } else if (perm.esTalleres) {
+                window.location.href = 'panel.html';
+            } else if (perm.esFlota) {
+                window.location.href = 'form-flota.html';
+            } else {
+                window.location.href = 'visor.html';
+            }
             return;
         }
 
