@@ -128,9 +128,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : null;
-    if (perm && !perm.esAdmin && !perm.esFlota) {
-        if (perm.esTalleres) {
+    const tieneAcceso = perm ? Boolean(perm.esVisorFlota) : true;
+
+    if (perm && !tieneAcceso) {
+        if (perm.esVisorTalleres) {
             window.location.href = "visor-talleres.html";
+        } else if (perm.esFlota) {
+            window.location.href = "form-flota.html";
+        } else if (perm.esTalleres) {
+            window.location.href = "panel.html";
         } else {
             window.location.href = "index.html";
         }

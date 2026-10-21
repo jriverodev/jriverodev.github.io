@@ -103,17 +103,33 @@
             const cardFlota = document.getElementById('card-visor-flota');
             const gridContainer = document.getElementById('contenedor-tarjetas-visor');
 
-            const perm = typeof obtenerRolYModuloUsuario === 'function' ? obtenerRolYModuloUsuario() : { esAdmin: true, esTalleres: true, esFlota: true };
+            const perm = typeof obtenerRolYModuloUsuario === 'function'
+                ? obtenerRolYModuloUsuario()
+                : { esAdmin: true, esVisorTalleres: true, esVisorFlota: true, esTalleres: true, esFlota: true };
 
-            if (!perm.esAdmin) {
-                if (perm.esFlota && !perm.esTalleres) {
-                    if (cardTalleres) cardTalleres.classList.add('hidden');
-                    if (cardFlota) cardFlota.classList.remove('hidden');
-                    if (gridContainer) gridContainer.className = "flex justify-center w-full max-w-md mx-auto";
-                } else if (perm.esTalleres && !perm.esFlota) {
-                    if (cardFlota) cardFlota.classList.add('hidden');
-                    if (cardTalleres) cardTalleres.classList.remove('hidden');
-                    if (gridContainer) gridContainer.className = "flex justify-center w-full max-w-md mx-auto";
+            const showTalleres = Boolean(perm.esVisorTalleres);
+            const showFlota = Boolean(perm.esVisorFlota);
+
+            if (cardTalleres) {
+                if (showTalleres) cardTalleres.classList.remove('hidden');
+                else cardTalleres.classList.add('hidden');
+            }
+            if (cardFlota) {
+                if (showFlota) cardFlota.classList.remove('hidden');
+                else cardFlota.classList.add('hidden');
+            }
+
+            if (showTalleres && showFlota) {
+                if (gridContainer) gridContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-6 w-full";
+            } else if (showTalleres || showFlota) {
+                if (gridContainer) gridContainer.className = "flex justify-center w-full max-w-md mx-auto";
+            } else {
+                if (perm.esTalleres) {
+                    window.location.href = "panel.html";
+                } else if (perm.esFlota) {
+                    window.location.href = "form-flota.html";
+                } else {
+                    window.location.href = "index.html";
                 }
             }
         });

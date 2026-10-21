@@ -143,10 +143,10 @@ async function handleLocalApiGateway(payload) {
                     const userRol = String(data.rol_id || '').toLowerCase();
 
                     if (userRol !== 'admin' && userMod !== 'TODOS' && moduloReq) {
-                        if (moduloReq === 'TALLERES' && userMod !== 'TALLERES' && userRol !== 'operador_talleres') {
+                        if (moduloReq === 'TALLERES' && userMod !== 'TALLERES' && userMod !== 'TALLERES_Y_VISOR' && userRol !== 'operador_talleres') {
                             return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Talleres.' }, 403);
                         }
-                        if (moduloReq === 'FLOTA' && userMod !== 'FLOTA' && userRol !== 'operador_flota') {
+                        if (moduloReq === 'FLOTA' && userMod !== 'FLOTA' && userMod !== 'FLOTA_Y_VISOR' && userRol !== 'operador_flota') {
                             return toJsonResponse({ status: 'ERROR', message: 'Su usuario no tiene permisos para acceder al módulo de Flota.' }, 403);
                         }
                     }
@@ -224,8 +224,8 @@ async function handleLocalApiGateway(payload) {
         const moduloReq = String(payload && payload.modulo_requerido || '').toUpperCase();
         let esPermitido = true;
         if (storedRol !== 'admin' && storedMod && storedMod !== 'TODOS' && moduloReq) {
-            if (moduloReq === 'TALLERES' && storedMod !== 'TALLERES' && storedRol !== 'operador_talleres') esPermitido = false;
-            if (moduloReq === 'FLOTA' && storedMod !== 'FLOTA' && storedRol !== 'operador_flota') esPermitido = false;
+            if (moduloReq === 'TALLERES' && storedMod !== 'TALLERES' && storedMod !== 'TALLERES_Y_VISOR' && storedRol !== 'operador_talleres') esPermitido = false;
+            if (moduloReq === 'FLOTA' && storedMod !== 'FLOTA' && storedMod !== 'FLOTA_Y_VISOR' && storedRol !== 'operador_flota') esPermitido = false;
         }
 
         return toJsonResponse({
@@ -904,8 +904,8 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
                     const mod = String(u.modulo || 'TODOS').toUpperCase();
                     const rol = String(u.rol_id || '').toLowerCase();
                     if (mod === 'TODOS' || rol === 'admin') return true;
-                    if (moduloRequerido.toUpperCase() === 'TALLERES' && (mod === 'TALLERES' || rol === 'operador_talleres')) return true;
-                    if (moduloRequerido.toUpperCase() === 'FLOTA' && (mod === 'FLOTA' || rol === 'operador_flota')) return true;
+                    if (moduloRequerido.toUpperCase() === 'TALLERES' && (mod === 'TALLERES' || mod === 'TALLERES_Y_VISOR' || rol === 'operador_talleres')) return true;
+                    if (moduloRequerido.toUpperCase() === 'FLOTA' && (mod === 'FLOTA' || mod === 'FLOTA_Y_VISOR' || rol === 'operador_flota')) return true;
                     return false;
                 });
 
@@ -936,8 +936,8 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
                     const mod = String(u.modulo || 'TODOS').toUpperCase();
                     const rol = String(u.rol_id || '').toLowerCase();
                     if (mod === 'TODOS' || rol === 'admin') return true;
-                    if (moduloRequerido.toUpperCase() === 'TALLERES' && (mod === 'TALLERES' || rol === 'operador_talleres')) return true;
-                    if (moduloRequerido.toUpperCase() === 'FLOTA' && (mod === 'FLOTA' || rol === 'operador_flota')) return true;
+                    if (moduloRequerido.toUpperCase() === 'TALLERES' && (mod === 'TALLERES' || mod === 'TALLERES_Y_VISOR' || rol === 'operador_talleres')) return true;
+                    if (moduloRequerido.toUpperCase() === 'FLOTA' && (mod === 'FLOTA' || mod === 'FLOTA_Y_VISOR' || rol === 'operador_flota')) return true;
                     return false;
                 });
 
