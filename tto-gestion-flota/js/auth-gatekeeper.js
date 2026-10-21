@@ -152,8 +152,7 @@
             try { await client.auth.signOut(); } catch (e) {}
         }
 
-        localStorage.removeItem('siagop_user_id');
-        localStorage.removeItem('organizacion_nombre');
+        localStorage.clear();
         sessionStorage.clear();
 
         if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && typeof dbSIAGOP.delete === 'function') {
@@ -178,8 +177,7 @@
             try { await client.auth.signOut(); } catch (e) {}
         }
 
-        localStorage.removeItem('siagop_user_id');
-        localStorage.removeItem('organizacion_nombre');
+        localStorage.clear();
         sessionStorage.clear();
 
         window.location.href = 'index.html';
