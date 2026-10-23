@@ -39,13 +39,12 @@ async function verificarAccesoAdmin(event) {
     // 1. Validar contra Supabase si hay conexión
     if (navigator.onLine && client) {
         try {
-            const { data, error } = await client.from("usuarios")
-                .select("password_plain, rol_id, activo")
-                .eq("usuario", "ADMINISTRADOR")
-                .maybeSingle();
-
-            if (!error && data && data.activo) {
-                if (String(data.password_plain).trim() === val) {
+            if (client.auth && typeof client.auth.signInWithPassword === 'function') {
+                const { error: authErr } = await client.auth.signInWithPassword({
+                    email: "administrador@tto-fleet.local",
+                    password: val
+                });
+                if (!authErr) {
                     esAutorizado = true;
                 }
             }
@@ -440,7 +439,7 @@ function renderizarUsuarios(usuarios) {
         const nombreEscaped = escapeHTML(u.nombre_completo || u.usuario);
         const rolEscaped = escapeHTML(u.rol_id || "operador_talleres");
         const moduloEscaped = escapeHTML(u.modulo || "TODOS");
-        const passwordEscaped = escapeHTML(u.password_plain || "*****");
+        const passwordEscaped = "*****";
         const activoFlag = Boolean(u.activo);
 
         const badgeEstado = activoFlag
@@ -485,7 +484,7 @@ function editarUsuario(id) {
     document.getElementById("usr-id").value = u.id;
     document.getElementById("usr-usuario").value = u.usuario;
     document.getElementById("usr-nombre").value = u.nombre_completo || "";
-    document.getElementById("usr-password").value = u.password_plain || "";
+    document.getElementById("usr-password").value = "";
     document.getElementById("usr-rol").value = u.rol_id || "operador_talleres";
     document.getElementById("usr-modulo").value = u.modulo || "TODOS";
     document.getElementById("usr-activo").value = String(Boolean(u.activo));
@@ -546,7 +545,6 @@ async function guardarUsuario(event) {
         id: targetUserId,
         usuario: usuarioVal,
         nombre_completo: nombreVal,
-        password_plain: passVal,
         rol_id: rolVal,
         modulo: moduloVal,
         activo: activoVal,

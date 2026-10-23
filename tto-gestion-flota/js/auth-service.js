@@ -131,7 +131,7 @@
 
                 // 2. Consultar perfil en public.usuarios
                 let query = client.from('usuarios')
-                    .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id, password_plain');
+                    .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id');
 
                 if (authUser && authUser.id) {
                     query = query.eq('id', authUser.id);
@@ -150,10 +150,7 @@
                         return { exito: false, mensaje: 'El usuario se encuentra inactivo o bloqueado.' };
                     }
 
-                    // Si Supabase Auth tuvo éxito o si la contraseña coincide con password_plain (compatibilidad)
-                    const passMatches = !authError || (perfil.password_plain && String(perfil.password_plain).trim() === passClean);
-
-                    if (passMatches) {
+                    if (!authError) {
                         guardarSesionLocal(perfil);
                         return { exito: true, usuario: perfil };
                     } else {
