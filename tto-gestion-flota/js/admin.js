@@ -512,12 +512,38 @@ async function guardarUsuario(event) {
 
     const existingUser = listaUsuariosGlobal.find(item => String(item.id) === String(idInput) || String(item.usuario) === String(usuarioVal));
     const orgId = (existingUser && existingUser.organizacion_id) ||
+                  (window.SIAGOP_AUTH_SERVICE && window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva ? window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva().orgId : '') ||
                   localStorage.getItem('siagop_user_org_id') ||
                   sessionStorage.getItem('SIAGOP_USER_ORG_ID') ||
                   '11111111-1111-1111-1111-111111111111';
 
+    let targetUserId = idInput || (existingUser && existingUser.id);
+
+    // 1. Si es un nuevo usuario o actualización de clave, registrar/actualizar en Supabase Auth
+    if (client.auth && passVal) {
+        const authEmail = `${usuarioVal.toLowerCase()}@tto-fleet.local`;
+        try {
+            if (!targetUserId) {
+                const { data: signUpData, error: signUpErr } = await client.auth.signUp({
+                    email: authEmail,
+                    password: passVal,
+                    options: { data: { usuario: usuarioVal, nombre_completo: nombreVal, organizacion_id: orgId } }
+                });
+                if (!signUpErr && signUpData && signUpData.user) {
+                    targetUserId = signUpData.user.id;
+                }
+            }
+        } catch (eAuth) {
+            console.warn('[Admin Auth] Error registrando cuenta en Supabase Auth:', eAuth);
+        }
+    }
+
+    if (!targetUserId) {
+        targetUserId = (crypto && crypto.randomUUID ? crypto.randomUUID() : `usr-${Date.now()}`);
+    }
+
     const payload = {
-        id: idInput || (crypto && crypto.randomUUID ? crypto.randomUUID() : `usr-${Date.now()}`),
+        id: targetUserId,
         usuario: usuarioVal,
         nombre_completo: nombreVal,
         password_plain: passVal,
@@ -529,7 +555,7 @@ async function guardarUsuario(event) {
     };
 
     try {
-        const { error } = await client.from("usuarios").upsert(payload, { onConflict: "usuario" });
+        const { error } = await client.from("usuarios").upsert(payload, { onConflict: "id" });
         if (error) throw error;
 
         cerrarModalUsuario();
