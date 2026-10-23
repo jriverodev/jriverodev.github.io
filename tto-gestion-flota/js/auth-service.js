@@ -1,13 +1,14 @@
 /**
- * SIAGOP System - Service de Autenticación, Licencia y Persistencia Multi-Tenant
+ * SIAGOP System - Service de Autenticación Nativa Supabase Auth, Licencia y Persistencia Multi-Tenant
  * js/auth-service.js
  */
 "use strict";
 
 (function () {
-    const LICENCIA_CODIGO_KEY = 'siagop_licencia_codigo';
-    const ORG_ID_KEY = 'siagop_user_org_id';
-    const ORG_NOMBRE_KEY = 'organizacion_nombre';
+    const TTO_ORG_LICENSE_KEY = 'tto_org_license';
+    const LEGACY_LICENCIA_CODIGO_KEY = 'siagop_licencia_codigo';
+    const LEGACY_ORG_ID_KEY = 'siagop_user_org_id';
+    const LEGACY_ORG_NOMBRE_KEY = 'organizacion_nombre';
 
     const USER_ID_KEY = 'siagop_user_id';
     const USER_ROL_KEY = 'siagop_user_rol';
@@ -15,9 +16,16 @@
     const USER_NAME_KEY = 'siagop_user_nombre';
 
     function obtenerLicenciaActiva() {
-        const codigo = localStorage.getItem(LICENCIA_CODIGO_KEY) || '';
-        const orgId = localStorage.getItem(ORG_ID_KEY) || '';
-        const orgNombre = localStorage.getItem(ORG_NOMBRE_KEY) || '';
+        let licenseData = null;
+        try {
+            const raw = localStorage.getItem(TTO_ORG_LICENSE_KEY);
+            if (raw) licenseData = JSON.parse(raw);
+        } catch (e) {}
+
+        const codigo = (licenseData && licenseData.codigo) || localStorage.getItem(LEGACY_LICENCIA_CODIGO_KEY) || '';
+        const orgId = (licenseData && licenseData.orgId) || localStorage.getItem(LEGACY_ORG_ID_KEY) || '';
+        const orgNombre = (licenseData && licenseData.orgNombre) || localStorage.getItem(LEGACY_ORG_NOMBRE_KEY) || '';
+
         return { codigo, orgId, orgNombre, tieneLicencia: Boolean(codigo && orgId) };
     }
 
@@ -30,7 +38,6 @@
         const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
 
         if (!navigator.onLine || !client) {
-            // Fallback offline si ya existía la licencia
             const actual = obtenerLicenciaActiva();
             if (actual.codigo === cleanCodigo) {
                 return { exito: true, orgId: actual.orgId, orgNombre: actual.orgNombre };
@@ -60,9 +67,13 @@
             const orgId = data.id;
             const orgNombre = data.nombre || cleanCodigo;
 
-            localStorage.setItem(LICENCIA_CODIGO_KEY, cleanCodigo);
-            localStorage.setItem(ORG_ID_KEY, orgId);
-            localStorage.setItem(ORG_NOMBRE_KEY, orgNombre);
+            const licensePayload = { codigo: cleanCodigo, orgId, orgNombre };
+            localStorage.setItem(TTO_ORG_LICENSE_KEY, JSON.stringify(licensePayload));
+
+            // Legacy keys for backward compatibility
+            localStorage.setItem(LEGACY_LICENCIA_CODIGO_KEY, cleanCodigo);
+            localStorage.setItem(LEGACY_ORG_ID_KEY, orgId);
+            localStorage.setItem(LEGACY_ORG_NOMBRE_KEY, orgNombre);
 
             sessionStorage.setItem('SIAGOP_USER_ORG_ID', orgId);
             sessionStorage.setItem('SIAGOP_ORG_NOMBRE', orgNombre);
@@ -88,7 +99,7 @@
     async function iniciarSesionUsuario(usuario, password) {
         const { orgId } = obtenerLicenciaActiva();
         if (!orgId) {
-            return { exito: false, mensaje: 'No hay una licencia de organización activa.' };
+            return { exito: false, mensaje: 'No hay una licencia de organización activa en el dispositivo.' };
         }
 
         const usernameClean = String(usuario || '').trim().toUpperCase();
@@ -102,28 +113,57 @@
 
         if (navigator.onLine && client) {
             try {
-                const { data, error } = await client.from('usuarios')
-                    .select('id, usuario, nombre_completo, password_plain, rol_id, modulo, activo, organizacion_id')
-                    .eq('usuario', usernameClean)
-                    .eq('organizacion_id', orgId)
-                    .maybeSingle();
+                // Mapear nombre de usuario a correo para Supabase Auth nativo
+                const authEmail = `${usernameClean.toLowerCase()}@tto-fleet.local`;
 
-                if (error) {
-                    console.error('[AuthService] Error consultando usuario:', error);
-                } else if (data) {
-                    if (!data.activo) {
+                // 1. Intentar inicio de sesión con Supabase Auth Nativo
+                let authUser = null;
+                let authError = null;
+
+                if (client.auth && typeof client.auth.signInWithPassword === 'function') {
+                    const authRes = await client.auth.signInWithPassword({
+                        email: authEmail,
+                        password: passClean
+                    });
+                    authError = authRes.error;
+                    authUser = authRes.data?.user || null;
+                }
+
+                // 2. Consultar perfil en public.usuarios
+                let query = client.from('usuarios')
+                    .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id, password_plain');
+
+                if (authUser && authUser.id) {
+                    query = query.eq('id', authUser.id);
+                } else {
+                    query = query.eq('usuario', usernameClean);
+                }
+
+                const { data: perfil, error: profileErr } = await query.eq('organizacion_id', orgId).maybeSingle();
+
+                if (profileErr) {
+                    console.error('[AuthService] Error consultando perfil de usuario:', profileErr);
+                }
+
+                if (perfil) {
+                    if (!perfil.activo) {
                         return { exito: false, mensaje: 'El usuario se encuentra inactivo o bloqueado.' };
                     }
 
-                    if (String(data.password_plain || '').trim() === passClean) {
-                        guardarSesionLocal(data);
-                        return { exito: true, usuario: data };
+                    // Si Supabase Auth tuvo éxito o si la contraseña coincide con password_plain (compatibilidad)
+                    const passMatches = !authError || (perfil.password_plain && String(perfil.password_plain).trim() === passClean);
+
+                    if (passMatches) {
+                        guardarSesionLocal(perfil);
+                        return { exito: true, usuario: perfil };
                     } else {
                         return { exito: false, mensaje: 'Contraseña incorrecta.' };
                     }
+                } else if (authError) {
+                    return { exito: false, mensaje: 'Credenciales incorrectas o usuario no registrado para esta organización.' };
                 }
             } catch (e) {
-                console.warn('[AuthService] Excepción autenticando usuario en línea:', e);
+                console.warn('[AuthService] Excepción autenticando con Supabase Auth:', e);
             }
         }
 
@@ -173,30 +213,40 @@
         sessionStorage.setItem('SIAGOP_USER_ID', userId);
     }
 
-    function cerrarSesionUsuario() {
-        // Borra la sesión del usuario pero CONSERVA la licencia (codigo_interno / organizacion_id)
+    async function cerrarSesionUsuario() {
+        const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
+        if (client && client.auth && typeof client.auth.signOut === 'function') {
+            try { await client.auth.signOut(); } catch (e) {}
+        }
+
+        // Borra únicamente las claves de sesión del usuario
         localStorage.removeItem(USER_ID_KEY);
         localStorage.removeItem(USER_ROL_KEY);
         localStorage.removeItem(USER_MODULO_KEY);
         localStorage.removeItem(USER_NAME_KEY);
 
         sessionStorage.clear();
-
-        const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
-        if (client && client.auth && typeof client.auth.signOut === 'function') {
-            try { client.auth.signOut(); } catch (e) {}
-        }
     }
 
-    function desvincularLicencia() {
-        // Borra la sesión del usuario Y la licencia de la organización
-        localStorage.clear();
-        sessionStorage.clear();
-
+    async function desvincularLicencia() {
         const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
         if (client && client.auth && typeof client.auth.signOut === 'function') {
-            try { client.auth.signOut(); } catch (e) {}
+            try { await client.auth.signOut(); } catch (e) {}
         }
+
+        // Borra tanto la sesión de usuario como la licencia de organización
+        localStorage.removeItem(TTO_ORG_LICENSE_KEY);
+        localStorage.removeItem(LEGACY_LICENCIA_CODIGO_KEY);
+        localStorage.removeItem(LEGACY_ORG_ID_KEY);
+        localStorage.removeItem(LEGACY_ORG_NOMBRE_KEY);
+
+        localStorage.removeItem(USER_ID_KEY);
+        localStorage.removeItem(USER_ROL_KEY);
+        localStorage.removeItem(USER_MODULO_KEY);
+        localStorage.removeItem(USER_NAME_KEY);
+
+        localStorage.clear();
+        sessionStorage.clear();
     }
 
     window.SIAGOP_AUTH_SERVICE = {
