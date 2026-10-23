@@ -890,7 +890,7 @@ async function poblarSelectOperadores(selectId, moduloRequerido) {
     if (navigator.onLine && client) {
         try {
             const { data, error } = await client.from('usuarios')
-                .select('usuario, nombre_completo, modulo, rol_id, activo, password_plain')
+                .select('usuario, nombre_completo, modulo, rol_id, activo')
                 .eq('activo', true)
                 .order('usuario', { ascending: true });
 
