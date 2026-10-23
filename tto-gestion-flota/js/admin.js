@@ -307,12 +307,18 @@ async function procesarImportacionMasiva() {
 }
 
 function MapearFilasAModelo(rawJson, tablaTarget) {
+    const activeOrgId = (window.SIAGOP_AUTH_SERVICE && window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva ? window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva().orgId : '') ||
+                        localStorage.getItem('siagop_user_org_id') ||
+                        sessionStorage.getItem('SIAGOP_USER_ORG_ID') ||
+                        '11111111-1111-1111-1111-111111111111';
+
     if (tablaTarget === "maestro_activos") {
         return rawJson.map(row => {
             const idUnidad = String(row["ID_Unidad"] || row["id_unidad"] || row["ID"] || "").trim();
             if (!idUnidad) return null;
             return {
                 id_unidad: idUnidad,
+                organizacion_id: activeOrgId,
                 placa: String(row["Placa"] || row["placa"] || "").trim(),
                 vin: String(row["Serial"] || row["VIN"] || row["vin"] || "").trim(),
                 marca: String(row["Marca"] || row["marca"] || "").trim(),
@@ -351,6 +357,7 @@ function MapearFilasAModelo(rawJson, tablaTarget) {
 
             return {
                 id: id,
+                organizacion_id: activeOrgId,
                 id_unidad: String(row["ID_Unidad"] || row["id_unidad"] || "").trim(),
                 tipo_flota: String(row["Tipo_Flota"] || row["tipo_flota"] || row["flota"] || "S/I").trim(),
                 nombre_taller: String(row["Nombre_Taller"] || row["nombre_taller"] || "").trim(),
