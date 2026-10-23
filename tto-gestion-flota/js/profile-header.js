@@ -54,6 +54,9 @@
                             <button type="button" onclick="window.SIAGOP_PROFILE.cerrarSesionCompleta()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer text-left">
                                 <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
                             </button>
+                            <button type="button" onclick="window.SIAGOP_PROFILE.desvincularLicenciaCompleta()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer text-left">
+                                <i class="fa-solid fa-arrows-rotate"></i> Cambiar Licencia
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -67,22 +70,34 @@
     }
 
     async function cerrarSesionCompleta() {
-        // 1. Supabase SignOut si aplica
-        const client = typeof ensureSupabaseClient === 'function' ? ensureSupabaseClient() : null;
-        if (client && client.auth && typeof client.auth.signOut === 'function') {
-            try { await client.auth.signOut(); } catch (e) {}
+        if (window.SIAGOP_AUTH_SERVICE && typeof window.SIAGOP_AUTH_SERVICE.cerrarSesionUsuario === 'function') {
+            window.SIAGOP_AUTH_SERVICE.cerrarSesionUsuario();
+        } else {
+            sessionStorage.clear();
         }
 
-        // 2. Purga total de LocalStorage y SessionStorage
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // 3. Purga opcional de IndexedDB
         if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && typeof dbSIAGOP.delete === 'function') {
             try { await dbSIAGOP.delete(); } catch (e) {}
         }
 
         window.location.href = 'index.html';
+    }
+
+    async function desvincularLicenciaCompleta() {
+        if (confirm('¿Desea desvincular la licencia de esta organización en el dispositivo?')) {
+            if (window.SIAGOP_AUTH_SERVICE && typeof window.SIAGOP_AUTH_SERVICE.desvincularLicencia === 'function') {
+                window.SIAGOP_AUTH_SERVICE.desvincularLicencia();
+            } else {
+                localStorage.clear();
+                sessionStorage.clear();
+            }
+
+            if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && typeof dbSIAGOP.delete === 'function') {
+                try { await dbSIAGOP.delete(); } catch (e) {}
+            }
+
+            window.location.href = 'index.html';
+        }
     }
 
     function escapeHTML(str) {
@@ -109,7 +124,8 @@
     window.SIAGOP_PROFILE = {
         renderizarProfilePillHeader,
         toggleDropdown,
-        cerrarSesionCompleta
+        cerrarSesionCompleta,
+        desvincularLicenciaCompleta
     };
 
     document.addEventListener('DOMContentLoaded', renderizarProfilePillHeader);
