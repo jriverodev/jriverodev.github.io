@@ -152,8 +152,25 @@
             try { await client.auth.signOut(); } catch (e) {}
         }
 
-        localStorage.clear();
+        // Preservar la licencia del dispositivo ('tto_org_license' y claves asociadas) al expulsar por falta de sesión
+        const licenciaActiva = window.SIAGOP_AUTH_SERVICE ? window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva() : null;
+
         sessionStorage.clear();
+        localStorage.removeItem('siagop_user_id');
+        localStorage.removeItem('siagop_user_rol');
+        localStorage.removeItem('siagop_user_modulo');
+        localStorage.removeItem('siagop_user_nombre');
+
+        if (licenciaActiva && licenciaActiva.tieneLicencia) {
+            localStorage.setItem('tto_org_license', JSON.stringify({
+                codigo: licenciaActiva.codigo,
+                orgId: licenciaActiva.orgId,
+                orgNombre: licenciaActiva.orgNombre
+            }));
+            localStorage.setItem('siagop_licencia_codigo', licenciaActiva.codigo);
+            localStorage.setItem('siagop_user_org_id', licenciaActiva.orgId);
+            localStorage.setItem('organizacion_nombre', licenciaActiva.orgNombre);
+        }
 
         if (typeof dbSIAGOP !== 'undefined' && dbSIAGOP && typeof dbSIAGOP.delete === 'function') {
             try {
