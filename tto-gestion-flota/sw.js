@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siagop-movil-v19';
+const CACHE_NAME = 'siagop-movil-v20';
 
 const ASSETS = [
   './',
@@ -66,7 +66,10 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   
-  // Excluir de caché llamadas a Google Apps Script, Supabase Rest/RPC o Supabase Storage dinámico
+  // 1. Filtrar esquemas no soportados por Cache Storage (como chrome-extension://)
+  if (!e.request.url.startsWith('http')) return;
+
+  // 2. Excluir de caché llamadas a Google Apps Script, Supabase Rest/RPC o Supabase Storage dinámico
   if (e.request.url.includes('script.google.com') || e.request.url.includes('supabase.co')) return;
 
   e.respondWith(
