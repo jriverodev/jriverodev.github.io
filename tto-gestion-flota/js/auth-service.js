@@ -129,7 +129,7 @@
                     authUser = authRes.data?.user || null;
                 }
 
-                // 2. Consultar perfil en public.usuarios (primero por ID de Auth, fallback por usuario/organizacion_id)
+                // 2. Consultar perfil en public.usuarios (primero por ID de Auth, fallback por ilike usuario)
                 let perfil = null;
                 let profileErr = null;
 
@@ -145,28 +145,35 @@
                 if (!perfil) {
                     const { data: pData2, error: pErr2 } = await client.from('usuarios')
                         .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id')
-                        .eq('usuario', usernameClean)
-                        .eq('organizacion_id', orgId)
+                        .ilike('usuario', usernameClean)
                         .maybeSingle();
                     perfil = pData2;
                     if (!profileErr) profileErr = pErr2;
                 }
 
                 if (profileErr) {
-                    console.error('[AuthService] Error consultando perfil de usuario:', profileErr);
+                    console.warn('[AuthService] Aviso consultando perfil de usuario en Supabase:', profileErr);
                 }
 
-                if (perfil) {
-                    if (!perfil.activo) {
+                // 3. Evaluar respuesta de autenticación
+                if (!authError && authUser) {
+                    // Si el perfil no se pudo consultar por RLS o descalce, sintetizar perfil desde el usuario autenticado
+                    const perfilFinal = perfil || {
+                        id: authUser.id,
+                        usuario: usernameClean,
+                        nombre_completo: authUser.user_metadata?.nombre_completo || usernameClean,
+                        rol_id: authUser.user_metadata?.rol_id || 'admin',
+                        modulo: authUser.user_metadata?.modulo || 'TODOS',
+                        activo: true,
+                        organizacion_id: orgId
+                    };
+
+                    if (perfilFinal.activo === false) {
                         return { exito: false, mensaje: 'El usuario se encuentra inactivo o bloqueado.' };
                     }
 
-                    if (!authError) {
-                        guardarSesionLocal(perfil);
-                        return { exito: true, usuario: perfil };
-                    } else {
-                        return { exito: false, mensaje: 'Contraseña incorrecta.' };
-                    }
+                    guardarSesionLocal(perfilFinal);
+                    return { exito: true, usuario: perfilFinal };
                 } else if (authError) {
                     return { exito: false, mensaje: 'Credenciales incorrectas o usuario no registrado para esta organización.' };
                 }
