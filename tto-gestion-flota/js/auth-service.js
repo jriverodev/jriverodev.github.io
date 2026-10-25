@@ -129,17 +129,28 @@
                     authUser = authRes.data?.user || null;
                 }
 
-                // 2. Consultar perfil en public.usuarios
-                let query = client.from('usuarios')
-                    .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id');
+                // 2. Consultar perfil en public.usuarios (primero por ID de Auth, fallback por usuario/organizacion_id)
+                let perfil = null;
+                let profileErr = null;
 
                 if (authUser && authUser.id) {
-                    query = query.eq('id', authUser.id);
-                } else {
-                    query = query.eq('usuario', usernameClean);
+                    const { data: pData, error: pErr } = await client.from('usuarios')
+                        .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id')
+                        .eq('id', authUser.id)
+                        .maybeSingle();
+                    perfil = pData;
+                    profileErr = pErr;
                 }
 
-                const { data: perfil, error: profileErr } = await query.eq('organizacion_id', orgId).maybeSingle();
+                if (!perfil) {
+                    const { data: pData2, error: pErr2 } = await client.from('usuarios')
+                        .select('id, usuario, nombre_completo, rol_id, modulo, activo, organizacion_id')
+                        .eq('usuario', usernameClean)
+                        .eq('organizacion_id', orgId)
+                        .maybeSingle();
+                    perfil = pData2;
+                    if (!profileErr) profileErr = pErr2;
+                }
 
                 if (profileErr) {
                     console.error('[AuthService] Error consultando perfil de usuario:', profileErr);
