@@ -518,27 +518,33 @@ async function guardarUsuario(event) {
 
     let targetUserId = idInput || (existingUser && existingUser.id);
 
-    // 1. Si es un nuevo usuario o actualización de clave, registrar/actualizar en Supabase Auth
-    if (client.auth && passVal) {
+    // 1. Si es un nuevo usuario, registrar en Supabase Auth usando cliente temporal (para no alterar la sesión del administrador)
+    if (client.auth && passVal && !targetUserId) {
         const authEmail = `${usuarioVal.toLowerCase()}@tto-fleet.local`;
         try {
-            if (!targetUserId) {
-                const { data: signUpData, error: signUpErr } = await client.auth.signUp({
-                    email: authEmail,
-                    password: passVal,
-                    options: { data: { usuario: usuarioVal, nombre_completo: nombreVal, organizacion_id: orgId } }
-                });
-                if (!signUpErr && signUpData && signUpData.user) {
-                    targetUserId = signUpData.user.id;
-                }
+            const tempAuthClient = (window.supabase && typeof window.supabase.createClient === 'function')
+                ? window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: false, autoRefreshToken: false }
+                  })
+                : client;
+
+            const { data: signUpData, error: signUpErr } = await tempAuthClient.auth.signUp({
+                email: authEmail,
+                password: passVal,
+                options: { data: { usuario: usuarioVal, nombre_completo: nombreVal, organizacion_id: orgId } }
+            });
+
+            if (!signUpErr && signUpData && signUpData.user) {
+                targetUserId = signUpData.user.id;
             }
         } catch (eAuth) {
             console.warn('[Admin Auth] Error registrando cuenta en Supabase Auth:', eAuth);
         }
     }
 
-    if (!targetUserId) {
-        targetUserId = (crypto && crypto.randomUUID ? crypto.randomUUID() : `usr-${Date.now()}`);
+    // Asegurar formato UUID válido en todo momento
+    if (!targetUserId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId)) {
+        targetUserId = (crypto && crypto.randomUUID ? crypto.randomUUID() : '00000000-0000-0000-0000-' + String(Date.now()).padStart(12, '0'));
     }
 
     const payload = {
