@@ -1,0 +1,41 @@
+name: Cloudflare Security Audit Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout del código fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar el Security Audit Skill de Cloudflare
+        run: |
+          npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global
+
+      - name: Ejecutar auditoría de seguridad automatizada
+        env:
+          # Si el agente o la herramienta requiere un LLM para evaluar los patrones
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }} 
+        run: |
+          # Comando para disparar la revisión sobre el directorio actual del proyecto
+          npx security-audit --target . --output ./security-report.md
+
+      - name: Subir artefacto con el reporte detallado
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-report
+          path: ./security-report.md
