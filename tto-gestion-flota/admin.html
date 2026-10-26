@@ -86,7 +86,7 @@
             <form onsubmit="verificarAccesoAdmin(event)" class="space-y-4" autocomplete="off">
                 <div>
                     <label class="block text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 tracking-widest text-left">Contraseña de Administrador</label>
-                    <input type="password" id="input-admin-pass" required placeholder="••••••••"
+                    <input type="password" id="input-admin-pass" autocomplete="current-password" required placeholder="••••••••"
                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-5 py-3.5 text-slate-900 dark:text-slate-50 text-center focus:outline-none focus:border-blue-600 text-lg font-mono tracking-widest">
                 </div>
                 <div id="error-admin-pass" class="text-[11px] text-red-600 dark:text-red-400 font-bold hidden bg-red-500/10 border border-red-500/20 py-2 rounded-lg">
@@ -294,7 +294,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Contraseña / PIN <span class="text-red-500">*</span></label>
-                        <input type="text" id="usr-password" required maxlength="10" placeholder="12345" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-50 font-mono focus:outline-none focus:border-blue-600">
+                        <input type="text" id="usr-password" autocomplete="new-password" required maxlength="10" placeholder="12345" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-50 font-mono focus:outline-none focus:border-blue-600">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">Rol</label>
