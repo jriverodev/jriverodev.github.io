@@ -509,7 +509,17 @@ async function guardarUsuario(event) {
     const moduloVal = document.getElementById("usr-modulo").value;
     const activoVal = document.getElementById("usr-activo").value === "true";
 
-    const existingUser = listaUsuariosGlobal.find(item => String(item.id) === String(idInput) || String(item.usuario) === String(usuarioVal));
+    let existingUser = listaUsuariosGlobal.find(item => String(item.id) === String(idInput) || String(item.usuario || "").toUpperCase() === usuarioVal);
+
+    if (!existingUser && usuarioVal) {
+        try {
+            const { data: dbUser } = await client.from("usuarios").select("*").ilike("usuario", usuarioVal).maybeSingle();
+            if (dbUser) existingUser = dbUser;
+        } catch (eFind) {
+            console.warn('[Admin] Aviso consultando usuario existente:', eFind);
+        }
+    }
+
     const orgId = (existingUser && existingUser.organizacion_id) ||
                   (window.SIAGOP_AUTH_SERVICE && window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva ? window.SIAGOP_AUTH_SERVICE.obtenerLicenciaActiva().orgId : '') ||
                   localStorage.getItem('siagop_user_org_id') ||
@@ -518,7 +528,7 @@ async function guardarUsuario(event) {
 
     let targetUserId = idInput || (existingUser && existingUser.id);
 
-    // 1. Si es un nuevo usuario, registrar en Supabase Auth usando cliente temporal (para no alterar la sesión del administrador)
+    // 1. Si es un nuevo usuario, registrar en Supabase Auth usando cliente temporal
     if (client.auth && passVal && !targetUserId) {
         const authEmail = `${usuarioVal.toLowerCase()}@tto-fleet.local`;
         try {
@@ -536,6 +546,8 @@ async function guardarUsuario(event) {
 
             if (!signUpErr && signUpData && signUpData.user) {
                 targetUserId = signUpData.user.id;
+            } else if (signUpErr) {
+                console.warn('[Admin Auth] Aviso al registrar cuenta en Supabase Auth:', signUpErr.message);
             }
         } catch (eAuth) {
             console.warn('[Admin Auth] Error registrando cuenta en Supabase Auth:', eAuth);
@@ -559,7 +571,11 @@ async function guardarUsuario(event) {
     };
 
     try {
-        const { error } = await client.from("usuarios").upsert(payload, { onConflict: "id" });
+        let { error } = await client.from("usuarios").upsert(payload, { onConflict: "id" });
+        if (error && error.code === '23505') {
+            const { error: upsertByUsrErr } = await client.from("usuarios").upsert(payload, { onConflict: "usuario" });
+            error = upsertByUsrErr;
+        }
         if (error) throw error;
 
         cerrarModalUsuario();
@@ -567,6 +583,6 @@ async function guardarUsuario(event) {
         SIAGOP_UI.success("Usuario Guardado", `Credenciales de ${usuarioVal} actualizadas correctamente.`);
     } catch (err) {
         console.error("Error guardando usuario:", err);
-        SIAGOP_UI.error("Error al Guardar", err.message);
+        SIAGOP_UI.error("Error al Guardar", err.message || "Error guardando usuario.");
     }
 }
