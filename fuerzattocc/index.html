@@ -609,7 +609,8 @@
                 <th>Nombre y Apellido</th>
                 <th>Puesto</th>
                 <th>Vacaciones</th>
-                <th>Licencia</th>
+                <th>Lic. Liviana</th>
+                <th>Lic. Pesada</th>
                 <th>Cédula Doc</th>
                 <th>Carta Médica</th>
                 <th>Anexo</th>
@@ -860,7 +861,8 @@
           <div class="md-grid">
             <div class="md-text-field"><label>Fecha Nacimiento</label><input type="date" id="fechaNacimiento"></div>
             <div class="md-text-field"><label>Fecha Aniversario</label><input type="date" id="fechaAniversario"></div>
-            <div class="md-text-field"><label>Venc. Licencia Manejar</label><input type="date" id="vencLicencia"></div>
+            <div class="md-text-field"><label>Venc. Lic. Flota Liviana</label><input type="date" id="vencLicenciaLiviana"></div>
+            <div class="md-text-field"><label>Venc. Lic. Flota Pesada</label><input type="date" id="vencLicenciaPesada"></div>
             <div class="md-text-field"><label>Venc. Cédula Identidad</label><input type="date" id="vencCedula"></div>
             <div class="md-text-field"><label>Venc. Carta Médica</label><input type="date" id="vencCartaMedica"></div>
           </div>
@@ -983,7 +985,8 @@
     document.getElementById('municipioVivienda').value = worker.municipioVivienda || "";
     document.getElementById('fechaNacimiento').value = worker.fechaNacimiento || "";
     document.getElementById('fechaAniversario').value = worker.fechaAniversario || "";
-    document.getElementById('vencLicencia').value = worker.vencLicencia || "";
+    document.getElementById('vencLicenciaLiviana').value = worker.vencLicenciaLiviana || worker.vencLicencia || "";
+    document.getElementById('vencLicenciaPesada').value = worker.vencLicenciaPesada || "";
     document.getElementById('vencCedula').value = worker.vencCedula || "";
     document.getElementById('vencCartaMedica').value = worker.vencCartaMedica || "";
   }
@@ -1033,7 +1036,9 @@
       municipioVivienda: document.getElementById('municipioVivienda').value,
       fechaNacimiento: document.getElementById('fechaNacimiento').value,
       fechaAniversario: document.getElementById('fechaAniversario').value,
-      vencLicencia: document.getElementById('vencLicencia').value,
+      vencLicenciaLiviana: document.getElementById('vencLicenciaLiviana').value,
+      vencLicenciaPesada: document.getElementById('vencLicenciaPesada').value,
+      vencLicencia: document.getElementById('vencLicenciaLiviana').value,
       vencCedula: document.getElementById('vencCedula').value,
       vencCartaMedica: document.getElementById('vencCartaMedica').value,
       fileData: currentBase64File,
@@ -1155,7 +1160,7 @@
 
     if (totalRecords === 0) {
       const emptyMsg = `<div style="text-align:center; padding: 24px; color: var(--md-sys-color-on-surface-variant);">No se encontraron registros.</div>`;
-      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No se encontraron registros.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;">No se encontraron registros.</td></tr>`;
       cardsContainer.innerHTML = emptyMsg;
       paginationContainer.style.display = 'none';
       return;
@@ -1184,6 +1189,9 @@
       const vacChip = w.estatusVacaciones === 'EN DISFRUTE' ? 'md-chip-warning' : (w.estatusVacaciones === 'PENDIENTE' ? 'md-chip-error' : 'md-chip-success');
       const inicial = w.nombreApellido ? w.nombreApellido.charAt(0).toUpperCase() : '?';
 
+      const licLiviana = w.vencLicenciaLiviana || w.vencLicencia || "";
+      const licPesada = w.vencLicenciaPesada || "";
+
       // 1. Fila de Tabla (Escritorio)
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -1191,7 +1199,8 @@
         <td>${w.nombreApellido}</td>
         <td>${w.puestoFuncional || '-'}</td>
         <td><span class="md-chip ${vacChip}">${w.estatusVacaciones || 'AL DIA'} (${w.diasPendientesVacaciones || 0}d)</span></td>
-        <td>${getSemaforo(w.vencLicencia)}</td>
+        <td>${getSemaforo(licLiviana)}</td>
+        <td>${getSemaforo(licPesada)}</td>
         <td>${getSemaforo(w.vencCedula)}</td>
         <td>${getSemaforo(w.vencCartaMedica)}</td>
         <td>${w.docUrl ? `<a href="${w.docUrl}" target="_blank" style="color:var(--md-sys-color-primary); font-weight:500;">Doc</a>` : (w.fileName || '-')}</td>
@@ -1226,7 +1235,8 @@
 
         <div class="m3-chips-row">
           <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500;">Vencimientos:</span>
-          ${getSemaforo(w.vencLicencia)} (Lic)
+          ${getSemaforo(licLiviana)} (Liv)
+          ${getSemaforo(licPesada)} (Pes)
           ${getSemaforo(w.vencCedula)} (Céd)
           ${getSemaforo(w.vencCartaMedica)} (Med)
         </div>
@@ -1285,7 +1295,7 @@
       "INSTALACION / EDIFICIO", "LOCALIDAD TRABAJO", "EXTENSION DE OFICINA", "CELULAR",
       "CÉDULA DEL SUPERVISOR", "NOMBRE DEL SUPERVISOR", "INDICADOR DEL SUPERVISOR", "TELÉFONO SUPERVISOR",
       "FL/RRHH RESPONSABLE", "UBICACIÓN DE ASIGNACIÓN", "DIRECCIÓN HABITACIÓN", "MUNICIPIO VIVIENDA",
-      "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC LICENCIA", "VENC CÉDULA", "VENC CARTA MÉDICA"
+      "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC LICENCIA FLOTA LIVIANA", "VENC LICENCIA FLOTA PESADA", "VENC CÉDULA", "VENC CARTA MÉDICA"
     ];
 
     const exampleRow = [
@@ -1296,7 +1306,7 @@
       "EDIFICIO MATRIZ", "LAGUNILLAS", "4102", "04141234567",
       "V-12345678", "CARLOS MENDOZA", "CM987", "04129876543",
       "PEDRO RRHH", "TALLER LAGUNILLAS", "AV 4 LAGO", "LAGUNILLAS",
-      "1988-05-12", "2015-08-20", "2026-12-31", "2028-04-15", "2026-11-30"
+      "1988-05-12", "2015-08-20", "2026-12-31", "2027-06-30", "2028-04-15", "2026-11-30"
     ];
 
     const csvContent = "\uFEFF" + headers.join(",") + "\n" + exampleRow.map(v => `"${v}"`).join(",");
@@ -1382,7 +1392,9 @@
               municipioVivienda: getKey(["MUNICIPIO"]),
               fechaNacimiento: getKey(["FECHA NACIMIENTO", "NACIMIENTO"]),
               fechaAniversario: getKey(["FECHA ANIVERSARIO", "ANIVERSARIO", "FECHA_ING"]),
-              vencLicencia: getKey(["VENC LICENCIA", "LICENCIA"]),
+              vencLicenciaLiviana: getKey(["VENC LICENCIA FLOTA LIVIANA", "LICENCIA LIVIANA", "VENC LICENCIA LIVIANA", "VENC LICENCIA", "LICENCIA"]),
+              vencLicenciaPesada: getKey(["VENC LICENCIA FLOTA PESADA", "LICENCIA PESADA", "VENC LICENCIA PESADA"]),
+              vencLicencia: getKey(["VENC LICENCIA FLOTA LIVIANA", "LICENCIA LIVIANA", "VENC LICENCIA LIVIANA", "VENC LICENCIA", "LICENCIA"]),
               vencCedula: getKey(["VENC CÉDULA", "VENC CEDULA"]),
               vencCartaMedica: getKey(["VENC CARTA", "CARTA MÉDICA", "CARTA MEDICA"]),
               fileData: null,
@@ -1488,7 +1500,9 @@
               municipioVivienda: cols[getIdx(["MUNICIPIO"])] || "",
               fechaNacimiento: cols[getIdx(["FECHA NACIMIENTO"])] || "",
               fechaAniversario: cols[getIdx(["FECHA ANIVERSARIO"])] || "",
-              vencLicencia: cols[getIdx(["VENC LICENCIA"])] || "",
+              vencLicenciaLiviana: cols[getIdx(["VENC LICENCIA FLOTA LIVIANA", "LICENCIA LIVIANA", "VENC LICENCIA LIVIANA", "VENC LICENCIA"])] || "",
+              vencLicenciaPesada: cols[getIdx(["VENC LICENCIA FLOTA PESADA", "LICENCIA PESADA", "VENC LICENCIA PESADA"])] || "",
+              vencLicencia: cols[getIdx(["VENC LICENCIA FLOTA LIVIANA", "LICENCIA LIVIANA", "VENC LICENCIA LIVIANA", "VENC LICENCIA"])] || "",
               vencCedula: cols[getIdx(["VENC CÉDULA"])] || "",
               vencCartaMedica: cols[getIdx(["VENC CARTA"])] || "",
               fileData: null,
@@ -1525,7 +1539,48 @@
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(workers);
+    const formattedData = workers.map((w, index) => ({
+      "ITEM": w.item || (index + 1),
+      "N° PERSONAL": w.nPersonal || "",
+      "CÉDULA": w.cedula || "",
+      "NOMBRE Y APELLIDO": w.nombreApellido || "",
+      "PUESTO FUNCIONAL": w.puestoFuncional || "",
+      "POSICIÓN SAP": w.posicionSap || "",
+      "DESCRIPCIÓN DE LA POSICIÓN": w.descripPosic || "",
+      "NÓMINA DEL TRABAJADOR": w.nomina || "",
+      "INDICADOR DEL TRABAJADOR": w.indicador || "",
+      "ESTATUS DE CONDICIÓN": w.estatusCondicion || "",
+      "STATUS DE FL": w.statusFl || "",
+      "DÍAS PENDIENTES VACACIONES": w.diasPendientesVacaciones || 0,
+      "PERÍODO VACACIONAL": w.periodoVacacional || "",
+      "ESTATUS VACACIONES": w.estatusVacaciones || "AL DIA",
+      "DIRECCIÓN ADJUNTA / HABILITADORA": w.dirAdjunta || "",
+      "GERENCIA 1RA LÍNEA ORG": w.gcia1raLinea || "",
+      "GCIA 2DA LÍNEA ORG": w.gcia2daLinea || "",
+      "GCIA 3ERA LÍNEA ORG": w.gcia3eraLinea || "",
+      "INSTALACIÓN / EDIFICIO": w.instalacionEdif || "",
+      "LOCALIDAD TRABAJO": w.localidadTrabajo || "",
+      "EXTENSIÓN DE OFICINA": w.extensionOfic || "",
+      "CELULAR": w.celular || "",
+      "CÉDULA DEL SUPERVISOR": w.cedulaSupervisor || "",
+      "NOMBRE DEL SUPERVISOR": w.nombreSupervisor || "",
+      "INDICADOR DEL SUPERVISOR": w.indicadorSupervisor || "",
+      "TELÉFONO SUPERVISOR": w.telefonoSupervisor || "",
+      "FL/RRHH RESPONSABLE": w.flRrhhResponsable || "",
+      "UBICACIÓN DE ASIGNACIÓN": w.ubicacionAsignacion || "",
+      "DIRECCIÓN HABITACIÓN": w.direccionHabitacion || "",
+      "MUNICIPIO VIVIENDA": w.municipioVivienda || "",
+      "FECHA NACIMIENTO": w.fechaNacimiento || "",
+      "FECHA ANIVERSARIO": w.fechaAniversario || "",
+      "VENC. LICENCIA FLOTA LIVIANA": w.vencLicenciaLiviana || w.vencLicencia || "",
+      "VENC. LICENCIA FLOTA PESADA": w.vencLicenciaPesada || "",
+      "VENC. CÉDULA": w.vencCedula || "",
+      "VENC. CARTA MÉDICA": w.vencCartaMedica || "",
+      "URL DOCUMENTO (DRIVE)": w.docUrl || "",
+      "ESTADO SINCRONIZACIÓN": w.syncStatus || "PENDIENTE"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Fuerza Laboral");
     XLSX.writeFile(workbook, "Reporte_Fuerza_Laboral_Vacaciones.xlsx");
