@@ -53,7 +53,7 @@ function doPost(e) {
           driveUrls[r.cedula] = docUrl;
         }
 
-        // Estructura ordenada de las 37 Columnas (Campos completos + Vacaciones + Fecha actualización)
+        // Estructura ordenada de las 38 Columnas (Campos completos + Vacaciones + Licencias + Fecha actualización)
         const rowData = [
           r.item || "",
           r.nPersonal || "",
@@ -88,7 +88,8 @@ function doPost(e) {
           // Campos Anexos y Alertas
           r.fechaNacimiento || "",
           r.fechaAniversario || "",
-          r.vencLicencia || "",
+          r.vencLicenciaLiviana || r.vencLicencia || "",
+          r.vencLicenciaPesada || "",
           r.vencCedula || "",
           r.vencCartaMedica || "",
           docUrl,
@@ -139,7 +140,7 @@ function ensureHeaders(sheet) {
       "INSTALACION / EDIFICIO", "LOCALIDAD TRABAJO", "EXTENSION DE OFICINA", "CELULAR",
       "CÉDULA DEL SUPERVISOR", "NOMBRE DEL SUPERVISOR", "INDICADOR DEL SUPERVISOR", "TELÉFONO SUPERVISOR",
       "FL/RRHH RESPONSABLE", "UBICACIÓN DE ASIGNACIÓN", "DIRECCIÓN HABITACIÓN", "MUNICIPIO VIVIENDA",
-      "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC. LICENCIA", "VENC. CÉDULA", "VENC. CARTA MÉDICA",
+      "FECHA NACIMIENTO", "FECHA ANIVERSARIO", "VENC. LIC. FLOTA LIVIANA", "VENC. LIC. FLOTA PESADA", "VENC. CÉDULA", "VENC. CARTA MÉDICA",
       "URL DOCUMENTO (DRIVE)", "FECHA ACTUALIZACIÓN"
     ];
     targetSheet.appendRow(headers);
@@ -226,10 +227,12 @@ function fetchAllRecords(sheet) {
       municipioVivienda: String(row[29] || ""),
       fechaNacimiento: row[30] ? String(row[30]) : "",
       fechaAniversario: row[31] ? String(row[31]) : "",
+      vencLicenciaLiviana: row[32] ? String(row[32]) : "",
+      vencLicenciaPesada: row[33] ? String(row[33]) : "",
       vencLicencia: row[32] ? String(row[32]) : "",
-      vencCedula: row[33] ? String(row[33]) : "",
-      vencCartaMedica: row[34] ? String(row[34]) : "",
-      docUrl: String(row[35] || ""),
+      vencCedula: row[34] ? String(row[34]) : "",
+      vencCartaMedica: row[35] ? String(row[35]) : "",
+      docUrl: String(row[36] || ""),
       syncStatus: 'EN_NUBE'
     });
   }
