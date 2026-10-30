@@ -47,8 +47,17 @@ function doPost(e) {
       data.records.forEach(r => {
         let docUrl = r.docUrl || "";
 
+        if (r.deleteDoc) {
+          deleteFileFromDrive(docUrl);
+          docUrl = "";
+          driveUrls[r.cedula] = "";
+        }
+
         // Subir archivo a Google Drive si existe
         if (r.fileData && r.fileName) {
+          if (docUrl) {
+            deleteFileFromDrive(docUrl);
+          }
           docUrl = uploadFileToDrive(r.fileData, r.fileName, r.cedula);
           driveUrls[r.cedula] = docUrl;
         }
@@ -149,6 +158,27 @@ function ensureHeaders(sheet) {
 }
 
 /**
+ * Elimina o traslada a la papelera un archivo de Google Drive dado su URL.
+ */
+function deleteFileFromDrive(fileUrl) {
+  if (!fileUrl || typeof fileUrl !== 'string') return;
+  try {
+    let fileId = "";
+    const matchD = fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    const matchId = fileUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (matchD) fileId = matchD[1];
+    else if (matchId) fileId = matchId[1];
+
+    if (fileId) {
+      const file = DriveApp.getFileById(fileId);
+      file.setTrashed(true);
+    }
+  } catch (err) {
+    console.warn("No se pudo eliminar el archivo de Drive:", err);
+  }
+}
+
+/**
  * Sube archivos codificados en Base64 a Google Drive.
  */
 function uploadFileToDrive(base64Data, fileName, cedula) {
@@ -178,6 +208,21 @@ function uploadFileToDrive(base64Data, fileName, cedula) {
 /**
  * Obtiene todos los registros guardados en la hoja de cálculo de Google.
  */
+function formatDateCell(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    const yyyy = val.getFullYear();
+    const mm = String(val.getMonth() + 1).padStart(2, '0');
+    const dd = String(val.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  const str = String(val).trim();
+  if (!str) return "";
+  const isoMatch = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  return str;
+}
+
 function fetchAllRecords(sheet) {
   const targetSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   if (!targetSheet) return [];
@@ -186,7 +231,6 @@ function fetchAllRecords(sheet) {
   if (lastRow < 2) return [];
 
   const data = targetSheet.getDataRange().getValues();
-  const headers = data[0];
   const list = [];
 
   for (let i = 1; i < data.length; i++) {
@@ -225,13 +269,13 @@ function fetchAllRecords(sheet) {
       ubicacionAsignacion: String(row[27] || ""),
       direccionHabitacion: String(row[28] || ""),
       municipioVivienda: String(row[29] || ""),
-      fechaNacimiento: row[30] ? String(row[30]) : "",
-      fechaAniversario: row[31] ? String(row[31]) : "",
-      vencLicenciaLiviana: row[32] ? String(row[32]) : "",
-      vencLicenciaPesada: row[33] ? String(row[33]) : "",
-      vencLicencia: row[32] ? String(row[32]) : "",
-      vencCedula: row[34] ? String(row[34]) : "",
-      vencCartaMedica: row[35] ? String(row[35]) : "",
+      fechaNacimiento: formatDateCell(row[30]),
+      fechaAniversario: formatDateCell(row[31]),
+      vencLicenciaLiviana: formatDateCell(row[32]),
+      vencLicenciaPesada: formatDateCell(row[33]),
+      vencLicencia: formatDateCell(row[32]),
+      vencCedula: formatDateCell(row[34]),
+      vencCartaMedica: formatDateCell(row[35]),
       docUrl: String(row[36] || ""),
       syncStatus: 'EN_NUBE'
     });

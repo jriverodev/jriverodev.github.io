@@ -874,7 +874,18 @@
           </div>
           <div class="md-grid">
             <div class="md-text-field" style="grid-column: 1 / -1;">
-              <label>Cargar Archivo/Foto (PDF/PNG)</label>
+              <div id="currentDocContainer" style="display: none; margin-bottom: 8px; padding: 10px; background: var(--md-sys-color-surface-container-low); border-radius: var(--md-shape-corner-small); border: 1px solid var(--md-sys-color-outline-variant);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                    <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">description</span>
+                    <a id="currentDocLink" href="#" target="_blank" style="font-size: 13px; font-weight: 500; color: var(--md-sys-color-primary); text-decoration: underline; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Ver Documento Actual</a>
+                  </div>
+                  <button type="button" class="md-button md-button-outlined" style="height: 32px; padding: 0 10px; font-size: 12px; color: var(--md-sys-color-error); border-color: var(--md-sys-color-error);" onclick="markDocumentForDeletion()">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">delete</span> Eliminar Documento
+                  </button>
+                </div>
+              </div>
+              <label id="labelFileAnexo">Cargar Nuevo Archivo/Foto (PDF/PNG)</label>
               <input type="file" id="fileAnexo" accept="image/*,application/pdf">
             </div>
           </div>
@@ -921,11 +932,45 @@
   let currentBase64File = null;
   let currentFileName = null;
   let isEditingCedula = null;
+  let shouldDeleteDoc = false;
+
+  // Formateador de fechas seguro para campos <input type="date">
+  function formatDateForInput(dateVal) {
+    if (!dateVal) return "";
+    const str = String(dateVal).trim();
+    if (!str) return "";
+
+    const isoMatch = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    }
+
+    const slashMatch = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (slashMatch) {
+      let p1 = slashMatch[1].padStart(2, '0');
+      let p2 = slashMatch[2].padStart(2, '0');
+      let year = slashMatch[3];
+      if (parseInt(p1, 10) > 12) {
+        return `${year}-${p2}-${p1}`;
+      }
+      return `${year}-${p2}-${p1}`;
+    }
+
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   // Modal Dialog Controllers
   function openWorkerModal(cedulaToEdit = null) {
     const overlay = document.getElementById('workerModalOverlay');
     const title = document.getElementById('modalWorkerTitle');
+
+    shouldDeleteDoc = false;
+    document.getElementById('currentDocContainer').style.display = 'none';
 
     if (cedulaToEdit) {
       isEditingCedula = cedulaToEdit;
@@ -945,6 +990,16 @@
     document.getElementById('workerModalOverlay').classList.remove('active');
     workerForm.reset();
     isEditingCedula = null;
+    currentBase64File = null;
+    currentFileName = null;
+    shouldDeleteDoc = false;
+    document.getElementById('currentDocContainer').style.display = 'none';
+  }
+
+  function markDocumentForDeletion() {
+    shouldDeleteDoc = true;
+    document.getElementById('currentDocContainer').style.display = 'none';
+    document.getElementById('fileAnexo').value = "";
     currentBase64File = null;
     currentFileName = null;
   }
@@ -983,12 +1038,28 @@
     document.getElementById('ubicacionAsignacion').value = worker.ubicacionAsignacion || "";
     document.getElementById('direccionHabitacion').value = worker.direccionHabitacion || "";
     document.getElementById('municipioVivienda').value = worker.municipioVivienda || "";
-    document.getElementById('fechaNacimiento').value = worker.fechaNacimiento || "";
-    document.getElementById('fechaAniversario').value = worker.fechaAniversario || "";
-    document.getElementById('vencLicenciaLiviana').value = worker.vencLicenciaLiviana || worker.vencLicencia || "";
-    document.getElementById('vencLicenciaPesada').value = worker.vencLicenciaPesada || "";
-    document.getElementById('vencCedula').value = worker.vencCedula || "";
-    document.getElementById('vencCartaMedica').value = worker.vencCartaMedica || "";
+    document.getElementById('fechaNacimiento').value = formatDateForInput(worker.fechaNacimiento);
+    document.getElementById('fechaAniversario').value = formatDateForInput(worker.fechaAniversario);
+    document.getElementById('vencLicenciaLiviana').value = formatDateForInput(worker.vencLicenciaLiviana || worker.vencLicencia);
+    document.getElementById('vencLicenciaPesada').value = formatDateForInput(worker.vencLicenciaPesada);
+    document.getElementById('vencCedula').value = formatDateForInput(worker.vencCedula);
+    document.getElementById('vencCartaMedica').value = formatDateForInput(worker.vencCartaMedica);
+
+    const docContainer = document.getElementById('currentDocContainer');
+    const docLink = document.getElementById('currentDocLink');
+    if (worker.docUrl || worker.fileName) {
+      docContainer.style.display = 'block';
+      docLink.innerText = worker.fileName ? `Documento: ${worker.fileName}` : "Ver Documento Adjunto";
+      if (worker.docUrl) {
+        docLink.href = worker.docUrl;
+        docLink.style.pointerEvents = 'auto';
+      } else {
+        docLink.removeAttribute('href');
+        docLink.style.pointerEvents = 'none';
+      }
+    } else {
+      docContainer.style.display = 'none';
+    }
   }
 
   // Guardado desde el Modal
@@ -1002,6 +1073,22 @@
     }
 
     const existingWorker = isEditingCedula ? await db.workers.get(isEditingCedula) : null;
+
+    let finalDocUrl = existingWorker?.docUrl || "";
+    let finalFileName = existingWorker?.fileName || null;
+    let finalFileData = existingWorker?.fileData || null;
+    let isDocDeleted = false;
+
+    if (shouldDeleteDoc) {
+      finalDocUrl = "";
+      finalFileName = null;
+      finalFileData = null;
+      isDocDeleted = true;
+    } else if (currentBase64File) {
+      finalFileData = currentBase64File;
+      finalFileName = currentFileName;
+      finalDocUrl = "";
+    }
 
     const workerData = {
       item: existingWorker?.item || "",
@@ -1041,8 +1128,10 @@
       vencLicencia: document.getElementById('vencLicenciaLiviana').value,
       vencCedula: document.getElementById('vencCedula').value,
       vencCartaMedica: document.getElementById('vencCartaMedica').value,
-      fileData: currentBase64File,
-      fileName: currentFileName,
+      docUrl: finalDocUrl,
+      fileData: finalFileData,
+      fileName: finalFileName,
+      deleteDoc: isDocDeleted,
       syncStatus: 'PENDIENTE'
     };
 
@@ -1752,9 +1841,13 @@
       if (resData.status === "success") {
         for (let w of unsyncedWorkers) {
           w.syncStatus = 'EN_NUBE';
-          if (resData.urls && resData.urls[w.cedula]) {
+          delete w.deleteDoc;
+          if (resData.urls && resData.urls[w.cedula] !== undefined) {
             w.docUrl = resData.urls[w.cedula];
             w.fileData = null;
+            if (!resData.urls[w.cedula]) {
+              w.fileName = null;
+            }
           }
           await db.workers.put(w);
         }
