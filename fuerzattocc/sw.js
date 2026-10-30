@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fuerza-laboral-m3-v4';
+const CACHE_NAME = 'fuerza-laboral-m3-v5';
 const ASSETS = [
   './',
   './index.html',
