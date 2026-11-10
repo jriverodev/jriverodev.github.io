@@ -1,590 +1,152 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Tasa Oficial BCV del Dólar en Venezuela | Calculadora y Guía Financiera</title>
-<meta name="description" content="Consulta en tiempo real la tasa oficial del dólar del Banco Central de Venezuela (BCV). Herramienta de conversión rápida, guías financieras y análisis actualizado.">
-<link rel="manifest" href="./manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Tasa BCV">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
-<link rel="icon" type="image/png" href="./icons/icon-192.png">
-<link rel="shortcut icon" href="./icons/favicon.ico" type="image/x-icon">
-​<!-- Google Material Fonts & Icons -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-​<!-- AdSense Script -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6117764498778389" crossorigin="anonymous"></script>
-​<style>
-/* ==========================================
-MATERIAL DESIGN 3 SPECIFICATION TOKENS
-========================================== */
-:root {
---md-sys-color-primary: #1059a1;
---md-sys-color-on-primary: #ffffff;
---md-sys-color-primary-container: #d3e4ff;
---md-sys-color-on-primary-container: #001c38;
---md-sys-color-surface: #f8f9ff;
---md-sys-color-surface-container-lowest: #ffffff;
---md-sys-color-surface-container-low: #f3f3fa;
---md-sys-color-surface-container: #ededf4;
---md-sys-color-surface-container-high: #e7e8ee;
---md-sys-color-on-surface: #191c20;
---md-sys-color-on-surface-variant: #43474e;
---md-sys-color-outline: #73777f;
---md-sys-color-outline-variant: #c3c7d0;
---md-sys-color-error: #ba1a1a;
---md-sys-color-error-container: #ffdad6;
---md-sys-color-on-error-container: #410002;
---md-sys-color-success-container: #cce8d7;
---md-sys-color-on-success-container: #052114;
-​--md-corner-small: 8px;
---md-corner-medium: 12px;
---md-corner-large: 16px;
---md-corner-extra-large: 28px;
---md-corner-full: 9999px;
-​--md-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.08), 0px 1px 2px 0px rgba(0, 0, 0, 0.12);
---md-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.08), 0px 1px 2px 0px rgba(0, 0, 0, 0.12);
-}
-​@media (prefers-color-scheme: dark) {
-:root {
---md-sys-color-primary: #a2c9ff;
---md-sys-color-on-primary: #00315f;
---md-sys-color-primary-container: #004786;
---md-sys-color-on-primary-container: #d3e4ff;
---md-sys-color-surface: #111318;
---md-sys-color-surface-container-lowest: #0c0e13;
---md-sys-color-surface-container-low: #191c20;
---md-sys-color-surface-container: #1d2024;
---md-sys-color-surface-container-high: #282a2f;
---md-sys-color-on-surface: #e2e2e9;
---md-sys-color-on-surface-variant: #c3c7d0;
---md-sys-color-outline: #8d9199;
---md-sys-color-outline-variant: #43474e;
---md-sys-color-error: #ffb4ab;
---md-sys-color-error-container: #93000a;
---md-sys-color-on-error-container: #ffdad6;
---md-sys-color-success-container: #1b3728;
---md-sys-color-on-success-container: #cce8d7;
-}
-}
-​* {
-box-sizing: border-box;
-margin: 0;
-padding: 0;
-font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
--webkit-tap-highlight-color: transparent;
-}
-​body {
-background-color: var(--md-sys-color-surface);
-color: var(--md-sys-color-on-surface);
-min-height: 100vh;
-display: flex;
-justify-content: center;
-align-items: flex-start;
-padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px) 16px;
-transition: background-color 0.25s ease, color 0.25s ease;
-}
-​.m3-app {
-width: 100%;
-max-width: 480px;
-display: flex;
-flex-direction: column;
-gap: 16px;
-margin: 0 auto;
-}
-​.m3-top-app-bar {
-padding: 12px 4px 4px 4px;
-}
-​.m3-app-bar-content {
-display: flex;
-align-items: center;
-gap: 12px;
-}
-​.m3-app-logo {
-font-size: 32px;
-color: var(--md-sys-color-primary);
-background-color: var(--md-sys-color-primary-container);
-padding: 8px;
-border-radius: var(--md-corner-medium);
-}
-​.m3-title {
-font-size: 1.35rem;
-font-weight: 700;
-letter-spacing: -0.2px;
-color: var(--md-sys-color-on-surface);
-line-height: 1.2;
-}
-​.m3-subtitle {
-font-size: 0.85rem;
-color: var(--md-sys-color-on-surface-variant);
-font-weight: 400;
-}
-​.m3-main-content {
-display: flex;
-flex-direction: column;
-gap: 16px;
-}
-​.m3-card {
-background-color: var(--md-sys-color-surface-container-lowest);
-border-radius: var(--md-corner-extra-large);
-padding: 24px;
-box-shadow: var(--md-elevation-1);
-border: 1px solid var(--md-sys-color-outline-variant);
-}
-​.m3-hero-card {
-text-align: center;
-background-color: var(--md-sys-color-surface-container-low);
-}
-​.m3-badge {
-display: inline-flex;
-align-items: center;
-gap: 6px;
-background-color: var(--md-sys-color-success-container);
-color: var(--md-sys-color-on-success-container);
-padding: 6px 14px;
-border-radius: var(--md-corner-full);
-font-size: 0.85rem;
-font-weight: 500;
-margin-bottom: 20px;
-}
-​.m3-price-container {
-margin-bottom: 16px;
-min-height: 80px;
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-}
-​.m3-price-display {
-font-size: 3.2rem;
-font-weight: 700;
-color: var(--md-sys-color-on-surface);
-line-height: 1.1;
-letter-spacing: -1px;
-}
-​.m3-price-unit {
-display: block;
-font-size: 0.85rem;
-color: var(--md-sys-color-on-surface-variant);
-margin-top: 6px;
-font-weight: 500;
-}
-​.m3-loading-state {
-display: flex;
-align-items: center;
-gap: 10px;
-font-size: 1rem;
-color: var(--md-sys-color-on-surface-variant);
-}
-​.m3-spinner {
-width: 22px;
-height: 22px;
-border: 3px solid var(--md-sys-color-outline-variant);
-border-top-color: var(--md-sys-color-primary);
-border-radius: 50%;
-animation: spin 0.8s linear infinite;
-}
-​@keyframes spin {
-to { transform: rotate(360deg); }
-}
-​.m3-divider {
-height: 1px;
-background-color: var(--md-sys-color-outline-variant);
-margin: 16px 0;
-opacity: 0.6;
-}
-​.m3-update-info {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-font-size: 0.85rem;
-color: var(--md-sys-color-on-surface-variant);
-}
-​.m3-calc-card {
-background-color: var(--md-sys-color-surface-container-lowest);
-}
-​.m3-calc-header {
-display: flex;
-align-items: center;
-gap: 10px;
-margin-bottom: 20px;
-color: var(--md-sys-color-on-surface);
-}
-​.m3-calc-header h2 {
-font-size: 1.15rem;
-font-weight: 600;
-}
-​.m3-textfield {
-display: flex;
-flex-direction: column;
-gap: 6px;
-margin-bottom: 4px;
-}
-​.m3-textfield-label {
-font-size: 0.825rem;
-font-weight: 500;
-color: var(--md-sys-color-on-surface-variant);
-}
-​.m3-textfield-input-wrap {
-display: flex;
-align-items: center;
-background-color: var(--md-sys-color-surface-container);
-border: 1.5px solid var(--md-sys-color-outline-variant);
-border-radius: var(--md-corner-medium);
-padding: 0 16px;
-min-height: 52px;
-}
-​.m3-textfield-input-wrap:focus-within {
-border-color: var(--md-sys-color-primary);
-background-color: var(--md-sys-color-surface-container-lowest);
-box-shadow: 0 0 0 1px var(--md-sys-color-primary);
-}
-​.m3-prefix {
-font-weight: 700;
-color: var(--md-sys-color-primary);
-font-size: 1rem;
-margin-right: 12px;
-}
-​.m3-textfield-input-wrap input {
-width: 100%;
-border: none;
-background: transparent;
-font-size: 1.15rem;
-font-weight: 600;
-color: var(--md-sys-color-on-surface);
-outline: none;
-}
-​.m3-swap-divider {
-display: flex;
-justify-content: center;
-margin: 8px 0;
-}
-​.m3-icon-button {
-background-color: var(--md-sys-color-primary-container);
-color: var(--md-sys-color-on-primary-container);
-border: none;
-width: 40px;
-height: 40px;
-border-radius: var(--md-corner-full);
-display: inline-flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-}
-​.m3-button {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 10px;
-width: 100%;
-min-height: 52px;
-border: none;
-border-radius: var(--md-corner-full);
-font-size: 1rem;
-font-weight: 600;
-cursor: pointer;
-box-shadow: var(--md-elevation-1);
-}
-​.m3-filled-button {
-background-color: var(--md-sys-color-primary);
-color: var(--md-sys-color-on-primary);
-}
-​.m3-banner {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-padding: 12px 16px;
-border-radius: var(--md-corner-medium);
-font-size: 0.85rem;
-font-weight: 500;
-}
-​.m3-banner-offline {
-background-color: var(--md-sys-color-error-container);
-color: var(--md-sys-color-on-error-container);
-}
-​.editorial-content h3 {
-font-size: 1.1rem;
-font-weight: 600;
-margin: 16px 0 8px 0;
-color: var(--md-sys-color-primary);
-}
-​.editorial-content p {
-font-size: 0.95rem;
-line-height: 1.6;
-margin-bottom: 12px;
-color: var(--md-sys-color-on-surface-variant);
-}
-​.editorial-content ul {
-margin-left: 20px;
-margin-bottom: 12px;
-font-size: 0.95rem;
-line-height: 1.6;
-color: var(--md-sys-color-on-surface-variant);
-}
-​.hidden {
-display: none !important;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tasa Oficial BCV Venezuela - Calculadora y Monitor Cambiario</title>
+  <meta name="description" content="Consulta en tiempo real la tasa oficial del dólar del Banco Central de Venezuela (BCV). Herramienta rápida, ligera y calculadora de conversión exacta en Bolívares y Dólares.">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tasa BCV">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="shortcut icon" href="./icons/favicon.ico" type="image/x-icon">
+  
+  <!-- Google Material Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- Google AdSense Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6117764498778389" crossorigin="anonymous"></script>
 </head>
 <body>
-<div class="m3-app">
-<!-- M3 Top App Bar -->
-<header class="m3-top-app-bar">
-<div class="m3-app-bar-content">
-<span class="material-symbols-outlined m3-app-logo">account_balance</span>
-<div>
-<h1 class="m3-title">Tasa Oficial BCV</h1>
-<p class="m3-subtitle">Banco Central de Venezuela</p>
-</div>
-</div>
-</header>
-​<main class="m3-main-content">
-<!-- M3 Hero Card: Rate Visualizer -->
-<section class="m3-card m3-hero-card">
-<div class="m3-badge">
-<span class="material-symbols-outlined">attach_money</span>
-<span class="m3-badge-label">Dólar Estadounidense (USD)</span>
-</div>
-<div class="m3-price-container">
-<div class="m3-loading-state" id="loading">
-<span class="m3-spinner"></span>
-<span>Cargando tasa oficial...</span>
-</div>
-<div class="m3-price-display" id="price-value">--,--</div>
-<span class="m3-price-unit">Bolívares (Bs.) por 1 USD</span>
-</div>
-<div class="m3-divider"></div>
-<div class="m3-update-info">
-<span class="material-symbols-outlined" style="font-size: 18px; color: var(--md-sys-color-primary);">calendar_today</span>
-<p>Fecha Valor: <strong id="update-date">--/--/----</strong></p>
-</div>
-</section>
-​<!-- Bloque de Anuncios AdSense -->
-<div class="m3-card" style="text-align: center; padding: 12px; background: rgba(0,0,0,0.01); min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-<span style="font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Publicidad</span>
-<ins class="adsbygoogle"
-style="display:block"
-data-ad-client="ca-pub-6117764498778389"
-data-ad-slot="auto"
-data-ad-format="auto"
-data-full-width-responsive="true"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-</div>
-​<!-- M3 Card: Conversion Calculator -->
-<section class="m3-card m3-calc-card">
-<div class="m3-calc-header">
-<span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">calculate</span>
-<h2>Calculadora de Conversión Cambiaria</h2>
-</div>
-<div class="m3-textfield">
-<label for="input-usd" class="m3-textfield-label">Monto en Dólares (USD)</label>
-<div class="m3-textfield-input-wrap">
-<span class="m3-prefix">$</span>
-<input type="number" id="input-usd" placeholder="0.00" step="any" inputmode="decimal">
-</div>
-</div>
-<div class="m3-swap-divider">
-<button type="button" class="m3-icon-button" id="swap-btn" aria-label="Intercambiar campos">
-<span class="material-symbols-outlined">swap_vert</span>
-</button>
-</div>
-<div class="m3-textfield">
-<label for="input-bs" class="m3-textfield-label">Monto en Bolívares (Bs.)</label>
-<div class="m3-textfield-input-wrap">
-<span class="m3-prefix">Bs</span>
-<input type="number" id="input-bs" placeholder="0.00" step="any" inputmode="decimal">
-</div>
-</div>
-</section>
-​<!-- M3 Action Button -->
-<button id="refresh-btn" class="m3-button m3-filled-button">
-<span class="material-symbols-outlined">refresh</span>
-<span>Actualizar Precio Actual</span>
-</button>
-​<!-- SECCIÓN EDITORIAL AMPLIADA (Clave para pasar la revisión de AdSense) -->
-<section class="m3-card editorial-content" style="padding: 24px;">
-<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-<span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">menu_book</span>
-<h3 style="font-size: 1.2rem; margin: 0; color: var(--md-sys-color-on-surface);">Guía Completa sobre la Tasa Oficial BCV</h3>
-</div>
-​<p>
-Bienvenido a nuestra plataforma de consulta en tiempo real del indicador cambiario oficial emitido por el <strong>Banco Central de Venezuela (BCV)</strong>. Esta herramienta ha sido desarrollada bajo estrictos estándares de accesibilidad y rapidez para ofrecerte información financiera confiable.
-</p>
-​<h3>¿Qué es la Tasa Oficial del BCV y cómo se determina?</h3>
-<p>
-El tipo de cambio oficial publicado diariamente por el Banco Central de Venezuela es el resultado ponderado de las operaciones de las mesas de cambio de las instituciones bancarias participantes del país. Este valor sirve como referencia legal obligatoria para transacciones comerciales, contratos, tributos y operaciones financieras dentro del territorio nacional.
-</p>
-​<h3>Importancia del seguimiento diario del tipo de cambio</h3>
-<p>
-Monitorear con precisión la tasa oficial de cambio permite a ciudadanos, comerciantes y PyMEs:
-</p>
-<ul>
-<li><strong>Cumplimiento fiscal y legal:</strong> Facturar y declarar impuestos en concordancia con las normativas contables vigentes en el país.</li>
-<li><strong>Protección del poder adquisitivo:</strong> Calcular de forma exacta los montos equivalentes en bolívares para la adquisición de bienes y servicios.</li>
-<li><strong>Planificación financiera:</strong> Estimar presupuestos operativos estables frente a la fluctuación de precios.</li>
-</ul>
-​<h3>Preguntas Frecuentes (FAQ)</h3>
-<p>
-<strong>¿A qué hora se actualiza la tasa oficial?</strong>
+  <div class="m3-app">
+    <!-- M3 Top App Bar -->
+    <header class="m3-top-app-bar">
+      <div class="m3-app-bar-content">
+        <span class="material-symbols-outlined m3-app-logo">account_balance</span>
+        <div>
+          <h1 class="m3-title">Tasa Oficial BCV</h1>
+          <p class="m3-subtitle">Banco Central de Venezuela</p>
+        </div>
+      </div>
+    </header>
 
-El Banco Central de Venezuela publica el tipo de cambio aplicable para cada día hábil bancario al finalizar la tarde del día anterior o en el transcurso de la mañana siguiente. Nuestra aplicación sincroniza estos datos automáticamente para mantenerte al día.
-</p>
-<p>
-<strong>¿Esta herramienta genera algún costo?</strong>
+    <main class="m3-main-content">
+      <!-- M3 Hero Card: Rate Visualizer -->
+      <section class="m3-card m3-hero-card">
+        <div class="m3-badge">
+          <span class="material-symbols-outlined m3-badge-icon">attach_money</span>
+          <span class="m3-badge-label">Dólar Estadounidense (USD)</span>
+        </div>
+        <div class="m3-price-container">
+          <div class="m3-loading-state" id="loading">
+            <span class="m3-spinner"></span>
+            <span>Cargando tasa oficial...</span>
+          </div>
+          <div class="m3-price-display hidden" id="price-value">--,--</div>
+          <span class="m3-price-unit">Bolívares (Bs.) por USD</span>
+        </div>
+        <div class="m3-divider"></div>
+        <div class="m3-update-info">
+          <span class="material-symbols-outlined m3-info-icon">calendar_today</span>
+          <p>Fecha Valor: <strong id="update-date">--/--/----</strong></p>
+        </div>
+      </section>
 
-No, nuestro servicio de consulta y calculadora de conversión es totalmente gratuito y accesible desde cualquier dispositivo móvil, tableta o computadora.
-</p>
-</section>
-​<!-- Offline Banner -->
-<div id="offline-message" class="m3-banner m3-banner-offline hidden">
-<span class="material-symbols-outlined">wifi_off</span>
-<span>Sin conexión a internet. Mostrando los últimos datos guardados.</span>
-</div>
-</main>
-​<!-- M3 Footer -->
-<footer style="margin-top: 32px; padding: 24px 16px; border-top: 1px solid rgba(0,0,0,0.08); font-size: 12px; opacity: 0.8;">
-<div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
-<div>
-<p style="font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">Aviso Legal y Descargo de Responsabilidad</p>
-<p style="line-height: 1.5; margin: 0;">
-Los datos mostrados tienen carácter meramente informativo y se obtienen de fuentes públicas oficiales. Esta herramienta no constituye asesoramiento financiero profesional.
-</p>
-</div>
-<div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.04); padding-top: 12px;">
-<a href="privacy.html" style="color: inherit; text-decoration: underline;">Política de Privacidad</a>
-<span>© 2026 Todos los derechos reservados</span>
-</div>
-</div>
-</footer>
-</div>
-​<script>
-const priceEl = document.getElementById('price-value');
-const dateEl = document.getElementById('update-date');
-const loadingEl = document.getElementById('loading');
-const refreshBtn = document.getElementById('refresh-btn');
-const offlineMsg = document.getElementById('offline-message');
-const inputUsd = document.getElementById('input-usd');
-const inputBs = document.getElementById('input-bs');
-const swapBtn = document.getElementById('swap-btn');
-​const DOLAR_API_URL = 'https://ve.dolarapi.com/v1/dolares/oficial';
-const BCV_URL = 'https://www.bcv.org.ve/';
-const PROXY_SCRAPE_URL = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(BCV_URL);
-​let tasaNumerica = 0;
-​if ('serviceWorker' in navigator) {
-window.addEventListener('load', () => {
-navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW error:', err));
-});
-}
-​function formatearFecha(fechaStr) {
-if (!fechaStr) return new Date().toLocaleDateString('es-VE');
-const d = new Date(fechaStr);
-if (isNaN(d.getTime())) return fechaStr;
-return d.toLocaleDateString('es-VE', {
-weekday: 'long',
-year: 'numeric',
-month: 'long',
-day: 'numeric'
-});
-}
-​async function obtenerTasaBCV() {
-priceEl.classList.add('hidden');
-loadingEl.style.display = 'flex';
-try {
-let precioRaw = null;
-let fecha = null;
-​try {
-const res = await fetch(DOLAR_API_URL);
-if (res.ok) {
-const data = await res.json();
-if (data && data.promedio) {
-const numPromedio = Number(data.promedio);
-precioRaw = numPromedio.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
-if (data.fechaActualizacion) {
-fecha = formatearFecha(data.fechaActualizacion);
-}
-}
-}
-} catch (eApi) {
-console.warn('Fallo DolarAPI:', eApi);
-}
-​if (!precioRaw) {
-const response = await fetch(PROXY_SCRAPE_URL);
-if (!response.ok) throw new Error('Error de proxy');
-const htmlContenido = await response.text();
-const parser = new DOMParser();
-const doc = parser.parseFromString(htmlContenido, 'text/html');
-const dolarContainer = doc.querySelector('#dolar');
-if (!dolarContainer) throw new Error('Estructura no encontrada');
-precioRaw = dolarContainer.querySelector('strong').textContent.trim();
-const fechaContainer = doc.querySelector('.date-display-single');
-fecha = fechaContainer ? fechaContainer.textContent.trim() : new Date().toLocaleDateString('es-VE');
-}
-​if (!precioRaw) throw new Error('No se obtuvo precio');
-if (!fecha) fecha = new Date().toLocaleDateString('es-VE');
-​updateUI(precioRaw, fecha);
-localStorage.setItem('last_price', precioRaw);
-localStorage.setItem('last_date', fecha);
-offlineMsg.classList.add('hidden');
-} catch (error) {
-console.error('Error:', error);
-loadLocalData();
-} finally {
-loadingEl.style.display = 'none';
-priceEl.classList.remove('hidden');
-}
-}
-​function updateUI(price, date) {
-priceEl.textContent = price;
-dateEl.textContent = date;
-tasaNumerica = parseFloat(price.replace(/./g, '').replace(',', '.'));
-if (inputUsd.value) calcularDeUsdaBs();
-}
-​function loadLocalData() {
-const localPrice = localStorage.getItem('last_price');
-const localDate = localStorage.getItem('last_date');
-if (localPrice && localDate) {
-updateUI(localPrice, localDate);
-if (!navigator.onLine) offlineMsg.classList.remove('hidden');
-} else {
-priceEl.textContent = "--,--";
-dateEl.textContent = "No disponible";
-}
-}
-​function calcularDeUsdaBs() {
-if (!tasaNumerica || inputUsd.value === '') {
-inputBs.value = '';
-return;
-}
-const usd = parseFloat(inputUsd.value);
-inputBs.value = (usd * tasaNumerica).toFixed(2);
-}
-​function calcularDeBsaUsd() {
-if (!tasaNumerica || inputBs.value === '') {
-inputUsd.value = '';
-return;
-}
-const bs = parseFloat(inputBs.value);
-inputUsd.value = (bs / tasaNumerica).toFixed(2);
-}
-​refreshBtn.addEventListener('click', obtenerTasaBCV);
-inputUsd.addEventListener('input', calcularDeUsdaBs);
-inputBs.addEventListener('input', calcularDeBsaUsd);
-​window.addEventListener('online', () => offlineMsg.classList.add('hidden'));
-window.addEventListener('offline', () => offlineMsg.classList.remove('hidden'));
-​if (navigator.onLine) {
-obtenerTasaBCV();
-} else {
-loadLocalData();
-}
-</script>
+      <!-- Bloque de Anuncios AdSense -->
+      <div class="m3-card" style="text-align: center; padding: 12px; background: rgba(255,255,255,0.02); min-height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <span style="font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Publicidad</span>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6117764498778389" crossorigin="anonymous"></script>
+        <ins class="adsbygoogle"
+             style="display:block; width:100%;"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </div>
+
+      <!-- M3 Card: Conversion Calculator -->
+      <section class="m3-card m3-calc-card">
+        <div class="m3-calc-header">
+          <span class="material-symbols-outlined m3-calc-icon">calculate</span>
+          <h2>Calculadora de Conversión</h2>
+        </div>
+        <div class="m3-textfield">
+          <label for="input-usd" class="m3-textfield-label">Monto en Dólares (USD)</label>
+          <div class="m3-textfield-input-wrap">
+            <span class="m3-prefix">$</span>
+            <input type="number" id="input-usd" placeholder="0.00" step="any" inputmode="decimal">
+          </div>
+        </div>
+        <div class="m3-swap-divider">
+          <button type="button" class="m3-icon-button" id="swap-btn" aria-label="Intercambiar campos">
+            <span class="material-symbols-outlined">swap_vert</span>
+          </button>
+        </div>
+        <div class="m3-textfield">
+          <label for="input-bs" class="m3-textfield-label">Monto en Bolívares (Bs.)</label>
+          <div class="m3-textfield-input-wrap">
+            <span class="m3-prefix">Bs</span>
+            <input type="number" id="input-bs" placeholder="0.00" step="any" inputmode="decimal">
+          </div>
+        </div>
+      </section>
+
+      <!-- M3 Action Button -->
+      <button id="refresh-btn" class="m3-button m3-filled-button">
+        <span class="material-symbols-outlined">refresh</span>
+        <span>Actualizar Precio</span>
+      </button>
+
+      <!-- Sección Editorial Extendida (Clave para cumplir políticas de AdSense) -->
+      <section class="m3-card" style="padding: 24px; font-size: 14px; line-height: 1.6; opacity: 0.95;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary, #1059a1);">info</span>
+          <h3 style="font-size: 16px; font-weight: 500; margin: 0;">Guía y Contexto Económico del Indicador BCV</h3>
+        </div>
+        <p style="margin-bottom: 12px;">
+          La tasa oficial del Banco Central de Venezuela (BCV) representa el promedio ponderado resultante de las operaciones diarias de las mesas de cambio activas de las instituciones bancarias participantes en el territorio nacional. Este valor es la referencia legal obligatoria para transacciones comerciales, contratos y operaciones financieras en el país.
+        </p>
+        <h4 style="font-size: 14px; font-weight: 600; margin-top: 16px; margin-bottom: 8px; color: var(--md-sys-color-primary, #1059a1);">Preguntas Frecuentes (FAQ)</h4>
+        <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <li><strong>¿A qué hora se actualiza la tasa?</strong> El Banco Central publica la tasa oficial en días hábiles bancarios al cierre de la jornada operativa, la cual entra en vigencia para el día hábil siguiente.</li>
+          <li><strong>¿Cómo funciona la calculadora?</strong> Al introducir un monto en dólares o bolívares, el sistema realiza la conversión automática utilizando el factor oficial vigente almacenado en la memoria local o consultado directamente en tiempo real.</li>
+          <li><strong>¿Funciona sin internet?</strong> Sí. Gracias a la tecnología de Aplicación Web Progresiva (PWA), la plataforma almacena el último precio consultado en el dispositivo, permitiendo realizar conversiones de forma offline de manera segura.</li>
+        </ul>
+      </section>
+
+      <!-- Offline Banner -->
+      <div id="offline-message" class="m3-banner m3-banner-offline hidden">
+        <span class="material-symbols-outlined">wifi_off</span>
+        <span>Sin conexión. Mostrando datos guardados.</span>
+      </div>
+    </main>
+
+    <!-- M3 Footer -->
+    <footer style="margin-top: 32px; padding: 24px 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; opacity: 0.8;">
+      <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <p style="font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">Aviso Legal y Descargo de Responsabilidad</p>
+          <p style="line-height: 1.5; margin: 0;">
+            La información y tasas mostradas tienen carácter meramente informativo y se obtienen de fuentes públicas oficiales. Esta herramienta no constituye asesoramiento financiero.
+          </p>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 12px;">
+          <div style="display: flex; gap: 16px;">
+            <a href="privacy.html" style="color: inherit; text-decoration: underline;">Política de Privacidad</a>
+          </div>
+          <span>&copy; 2026 Todos los derechos reservados</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
 </body>
 </html>
